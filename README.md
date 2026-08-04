@@ -4,7 +4,7 @@ A local-first portfolio module for curating authorized student work, preserving 
 
 ## Current status
 
-Vitrine is in its v0.1.0 foundation-design phase. The repository currently contains research and architecture documentation; it does not yet contain a production application, package, persistence layer, producer adapters, authorization engine, or snapshot renderer.
+Vitrine is in its v0.1.0 foundation-design phase. The repository currently contains research, architecture, and conceptual design documentation; it does not yet contain a production application, package, persistence layer, producer adapters, authorization engine, or snapshot renderer.
 
 ## Documentation
 
@@ -14,4 +14,5 @@ Key entry points:
 
 - [Portfolio-purpose research](docs/research/portfolio-purpose-workflows.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)
+- [Portfolio Subject identity and cross-class linking](docs/design/portfolio-subject-identity.md)
 - [Architecture Decision Records](docs/decisions/README.md)

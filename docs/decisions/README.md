@@ -7,6 +7,7 @@ Architecture Decision Records document significant Vitrine decisions, their cont
 | ADR | Decision | Status |
 | --- | --- | --- |
 | [0001](0001-vitrine-module-boundaries-and-authority.md) | Vitrine Module Boundaries and Authority | Proposed |
+| [0002](0002-portfolio-subject-identity-and-roster-linking.md) | Portfolio Subject Identity and Roster Linking | Proposed |
 
 ## Status meanings
 
@@ -38,11 +39,13 @@ The proposal was considered but not adopted. It may remain documented when the r
 - Do not silently reverse or materially expand an Accepted ADR.
 - Use a new ADR to supersede an earlier accepted decision.
 - Preserve the earlier decision and rationale.
-- Link supporting research, architecture, contracts, and sibling decisions.
+- Link supporting research, architecture, contracts, examples, and sibling decisions.
 
 ## Relationship to other documentation
 
 - [Architecture index](../architecture/README.md)
+- [Portfolio Subject identity design](../design/portfolio-subject-identity.md)
+- [Representative identity examples](../examples/portfolio-subject-identity-examples.md)
 - [Foundation research](../research/portfolio-purpose-workflows.md)
 - [Repository documentation index](../README.md)
 

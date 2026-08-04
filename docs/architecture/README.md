@@ -6,12 +6,18 @@ This directory contains system-level Vitrine architecture documents. Architectur
 
 - [Module boundaries and authority](module-boundaries.md) — defines Vitrine's ownership, authority hierarchy, dependency directions, sibling-module boundaries, prohibited behavior, edge cases, and downstream implications.
 
+## Related conceptual designs
+
+- [Portfolio Subject identity and cross-class linking](../design/portfolio-subject-identity.md) — applies the module-boundary architecture to Portfolio identity, workspace-scoped subject identity, exact roster references, confirmation, and nondestructive correction.
+- [Representative identity examples](../examples/portfolio-subject-identity-examples.md) — exercises the identity design with synthetic cases.
+
 ## Reading order
 
 1. Review the [foundation research](../research/portfolio-purpose-workflows.md).
 2. Read [module boundaries and authority](module-boundaries.md).
 3. Read the related [Architecture Decision Records](../decisions/README.md).
-4. Use later contract documents for exact serialized structures once they are added.
+4. Read the [Portfolio Subject identity design](../design/portfolio-subject-identity.md).
+5. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 
@@ -21,6 +27,7 @@ When documents disagree:
 2. a final accepted contract governs detailed record shape and validation while remaining subordinate to ADRs;
 3. implementation documentation describes current behavior;
 4. architecture documents provide consolidated context and constraints;
-5. research documents provide evidence and design inputs but do not establish final contracts.
+5. conceptual design documents provide reviewed record-level recommendations;
+6. research documents provide evidence and design inputs but do not establish final contracts.
 
-The current module-boundary ADR is **Proposed**. Until explicitly accepted, it records the reviewed recommendation and must not be represented as an accepted decision.
+The current ADRs are **Proposed**. Until explicitly accepted, they record reviewed recommendations and must not be represented as accepted decisions.
