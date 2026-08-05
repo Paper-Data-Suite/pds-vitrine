@@ -18,12 +18,15 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 
 - [Portfolio Subject identity and cross-class linking](design/portfolio-subject-identity.md) — Portfolio and subject identity, exact roster references, teacher-confirmed associations, historical resolution, correction, merge, and split.
 - [Representative identity examples](examples/portfolio-subject-identity-examples.md) — privacy-safe scenarios exercising cross-class, cross-year, correction, merge, split, Concord, and Portia boundaries.
+- [Versioned Portfolio Profiles](design/portfolio-profile-contract.md) — Profile families, immutable revisions, requirements, audience rules, approvals, retention references, composition, and migration.
+- [Representative Portfolio Profile examples](examples/portfolio-profile-examples.md) — synthetic improvement, showcase, conference, regulated, migration, composition, and failure scenarios.
 
 ## Architecture decisions
 
 - [ADR index](decisions/README.md)
 - [ADR 0001: Vitrine Module Boundaries and Authority](decisions/0001-vitrine-module-boundaries-and-authority.md) — currently **Proposed** pending explicit maintainer acceptance.
 - [ADR 0002: Portfolio Subject Identity and Roster Linking](decisions/0002-portfolio-subject-identity-and-roster-linking.md) — currently **Proposed** pending explicit maintainer acceptance.
+- [ADR 0003: Versioned Portfolio Profiles](decisions/0003-versioned-portfolio-profiles.md) — currently **Proposed** pending explicit maintainer acceptance.
 
 ## Document status and authority
 

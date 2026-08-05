@@ -10,6 +10,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 
 - [Portfolio Subject identity and cross-class linking](../design/portfolio-subject-identity.md) — applies the module-boundary architecture to Portfolio identity, workspace-scoped subject identity, exact roster references, confirmation, and nondestructive correction.
 - [Representative identity examples](../examples/portfolio-subject-identity-examples.md) — exercises the identity design with synthetic cases.
+- [Versioned Portfolio Profiles](../design/portfolio-profile-contract.md) — applies the architecture to purpose-specific policy, immutable revisions, requirement identity, audience rules, retention references, and migration.
+- [Representative Portfolio Profile examples](../examples/portfolio-profile-examples.md) — exercises the Profile design with synthetic policy families, revisions, conditions, overlays, and failure states.
 
 ## Reading order
 
@@ -17,7 +19,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 2. Read [module boundaries and authority](module-boundaries.md).
 3. Read the related [Architecture Decision Records](../decisions/README.md).
 4. Read the [Portfolio Subject identity design](../design/portfolio-subject-identity.md).
-5. Use later contract documents for exact serialized structures once they are added.
+5. Read the [Versioned Portfolio Profile design](../design/portfolio-profile-contract.md).
+6. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 
