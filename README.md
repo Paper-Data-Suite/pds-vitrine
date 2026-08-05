@@ -16,4 +16,5 @@ Key entry points:
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)
 - [Portfolio Subject identity and cross-class linking](docs/design/portfolio-subject-identity.md)
 - [Versioned Portfolio Profiles](docs/design/portfolio-profile-contract.md)
+- [Candidate and source-reference contract](docs/design/candidate-source-reference-contract.md)
 - [Architecture Decision Records](docs/decisions/README.md)
