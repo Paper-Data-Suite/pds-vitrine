@@ -14,6 +14,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 - [Representative Portfolio Profile examples](../examples/portfolio-profile-examples.md) — exercises the Profile design with synthetic policy families, revisions, conditions, overlays, and failure states.
 - [Candidate and source-reference contract](../design/candidate-source-reference-contract.md) — applies the trust architecture to catalog discovery, canonical publication verification, producer readers, source identity, subject relationships, privacy, availability, and Candidate evaluation.
 - [Representative Candidate and source-reference examples](../examples/candidate-source-reference-examples.md) — exercises the Candidate design across discovery, integrity, support, producer, privacy, lifecycle, duplicate, and correction cases.
+- [Producer artifact exposure boundaries](../design/producer-artifact-exposure-boundaries.md) — applies the Candidate architecture to exact producer-owned projection kinds, allowlists, retained-scan restrictions, readiness, and sensitive-source suppression.
+- [Representative producer artifact exposure examples](../examples/producer-artifact-exposure-examples.md) — exercises ScoreForm, Quillan, Concord, Portia, multi-subject, revision, and digest boundaries.
 
 ## Reading order
 
@@ -23,7 +25,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 4. Read the [Portfolio Subject identity design](../design/portfolio-subject-identity.md).
 5. Read the [Versioned Portfolio Profile design](../design/portfolio-profile-contract.md).
 6. Read the [Candidate and source-reference design](../design/candidate-source-reference-contract.md).
-7. Use later contract documents for exact serialized structures once they are added.
+7. Read the [producer artifact exposure design](../design/producer-artifact-exposure-boundaries.md).
+8. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 
