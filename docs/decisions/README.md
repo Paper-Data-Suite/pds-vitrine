@@ -8,6 +8,7 @@ Architecture Decision Records document significant Vitrine decisions, their cont
 | --- | --- | --- |
 | [0001](0001-vitrine-module-boundaries-and-authority.md) | Vitrine Module Boundaries and Authority | Proposed |
 | [0002](0002-portfolio-subject-identity-and-roster-linking.md) | Portfolio Subject Identity and Roster Linking | Proposed |
+| [0003](0003-versioned-portfolio-profiles.md) | Versioned Portfolio Profiles | Proposed |
 
 ## Status meanings
 
@@ -46,6 +47,8 @@ The proposal was considered but not adopted. It may remain documented when the r
 - [Architecture index](../architecture/README.md)
 - [Portfolio Subject identity design](../design/portfolio-subject-identity.md)
 - [Representative identity examples](../examples/portfolio-subject-identity-examples.md)
+- [Versioned Portfolio Profile design](../design/portfolio-profile-contract.md)
+- [Representative Portfolio Profile examples](../examples/portfolio-profile-examples.md)
 - [Foundation research](../research/portfolio-purpose-workflows.md)
 - [Repository documentation index](../README.md)
 

@@ -15,4 +15,5 @@ Key entry points:
 - [Portfolio-purpose research](docs/research/portfolio-purpose-workflows.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)
 - [Portfolio Subject identity and cross-class linking](docs/design/portfolio-subject-identity.md)
+- [Versioned Portfolio Profiles](docs/design/portfolio-profile-contract.md)
 - [Architecture Decision Records](docs/decisions/README.md)
