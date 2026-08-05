@@ -11,6 +11,7 @@ Architecture Decision Records document significant Vitrine decisions, their cont
 | [0003](0003-versioned-portfolio-profiles.md) | Versioned Portfolio Profiles | Proposed |
 | [0004](0004-candidate-discovery-and-source-references.md) | Candidate Discovery and Source References | Proposed |
 | [0005](0005-producer-artifact-exposure-boundaries.md) | Producer Artifact Exposure Boundaries | Proposed |
+| [0006](0006-selection-ordering-annotation-and-reflection.md) | Selection, Ordering, Annotation, and Reflection | Proposed |
 
 ## Status meanings
 
@@ -55,6 +56,8 @@ The proposal was considered but not adopted. It may remain documented when the r
 - [Representative Candidate and source-reference examples](../examples/candidate-source-reference-examples.md)
 - [Producer artifact exposure design](../design/producer-artifact-exposure-boundaries.md)
 - [Representative producer artifact exposure examples](../examples/producer-artifact-exposure-examples.md)
+- [Selection and curation design](../design/selection-curation-records.md)
+- [Representative selection and curation examples](../examples/selection-curation-examples.md)
 - [Foundation research](../research/portfolio-purpose-workflows.md)
 - [Repository documentation index](../README.md)
 

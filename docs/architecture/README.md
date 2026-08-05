@@ -16,6 +16,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 - [Representative Candidate and source-reference examples](../examples/candidate-source-reference-examples.md) — exercises the Candidate design across discovery, integrity, support, producer, privacy, lifecycle, duplicate, and correction cases.
 - [Producer artifact exposure boundaries](../design/producer-artifact-exposure-boundaries.md) — applies the Candidate architecture to exact producer-owned projection kinds, allowlists, retained-scan restrictions, readiness, and sensitive-source suppression.
 - [Representative producer artifact exposure examples](../examples/producer-artifact-exposure-examples.md) — exercises ScoreForm, Quillan, Concord, Portia, multi-subject, revision, and digest boundaries.
+- [Selection, ordering, annotation, and reflection records](../design/selection-curation-records.md) — applies Profiles and Candidates to explicit proposals, decisions, Selections, Placements, ordering, presentation, reflection, approval, and working-composition revisions.
+- [Representative selection and curation examples](../examples/selection-curation-examples.md) — exercises student and teacher curation, ordering conflicts, producer boundaries, reflection, approval, replacement, migration, and exact composition history.
 
 ## Reading order
 
@@ -26,7 +28,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 5. Read the [Versioned Portfolio Profile design](../design/portfolio-profile-contract.md).
 6. Read the [Candidate and source-reference design](../design/candidate-source-reference-contract.md).
 7. Read the [producer artifact exposure design](../design/producer-artifact-exposure-boundaries.md).
-8. Use later contract documents for exact serialized structures once they are added.
+8. Read the [selection and curation design](../design/selection-curation-records.md).
+9. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 
