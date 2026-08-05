@@ -18,4 +18,5 @@ Key entry points:
 - [Versioned Portfolio Profiles](docs/design/portfolio-profile-contract.md)
 - [Candidate and source-reference contract](docs/design/candidate-source-reference-contract.md)
 - [Producer artifact exposure boundaries](docs/design/producer-artifact-exposure-boundaries.md)
+- [Selection, ordering, annotation, and reflection records](docs/design/selection-curation-records.md)
 - [Architecture Decision Records](docs/decisions/README.md)

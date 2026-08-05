@@ -24,6 +24,8 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [Representative Candidate and source-reference examples](examples/candidate-source-reference-examples.md) — synthetic discovery, integrity, adapter, producer, privacy, lifecycle, and correction scenarios.
 - [Producer artifact exposure boundaries](design/producer-artifact-exposure-boundaries.md) — producer-owned projection kinds, exposure and readiness states, field allowlists, retained-scan policy, and ScoreForm, Quillan, Concord, and Portia matrices.
 - [Representative producer artifact exposure examples](examples/producer-artifact-exposure-examples.md) — synthetic source-only, eligible, conditional, prohibited, suppressed, group, privacy, revision, and digest scenarios.
+- [Selection, ordering, annotation, and reflection records](design/selection-curation-records.md) — proposals, decisions, Selections, Placements, immutable ordering, presentation, rationale, annotation, reflection, approval, composition revisions, and replacement history.
+- [Representative selection and curation examples](examples/selection-curation-examples.md) — synthetic proposal, ordering, reflection, approval, producer-boundary, migration, correction, and composition scenarios.
 
 ## Architecture decisions
 
@@ -33,6 +35,7 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [ADR 0003: Versioned Portfolio Profiles](decisions/0003-versioned-portfolio-profiles.md) — currently **Proposed** pending explicit maintainer acceptance.
 - [ADR 0004: Candidate Discovery and Source References](decisions/0004-candidate-discovery-and-source-references.md) — currently **Proposed** pending explicit maintainer acceptance.
 - [ADR 0005: Producer Artifact Exposure Boundaries](decisions/0005-producer-artifact-exposure-boundaries.md) — currently **Proposed** pending explicit maintainer acceptance.
+- [ADR 0006: Selection, Ordering, Annotation, and Reflection](decisions/0006-selection-ordering-annotation-and-reflection.md) — currently **Proposed** pending explicit maintainer acceptance.
 
 ## Document status and authority
 
