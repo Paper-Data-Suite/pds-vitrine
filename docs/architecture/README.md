@@ -12,6 +12,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 - [Representative identity examples](../examples/portfolio-subject-identity-examples.md) — exercises the identity design with synthetic cases.
 - [Versioned Portfolio Profiles](../design/portfolio-profile-contract.md) — applies the architecture to purpose-specific policy, immutable revisions, requirement identity, audience rules, retention references, and migration.
 - [Representative Portfolio Profile examples](../examples/portfolio-profile-examples.md) — exercises the Profile design with synthetic policy families, revisions, conditions, overlays, and failure states.
+- [Candidate and source-reference contract](../design/candidate-source-reference-contract.md) — applies the trust architecture to catalog discovery, canonical publication verification, producer readers, source identity, subject relationships, privacy, availability, and Candidate evaluation.
+- [Representative Candidate and source-reference examples](../examples/candidate-source-reference-examples.md) — exercises the Candidate design across discovery, integrity, support, producer, privacy, lifecycle, duplicate, and correction cases.
 
 ## Reading order
 
@@ -20,7 +22,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 3. Read the related [Architecture Decision Records](../decisions/README.md).
 4. Read the [Portfolio Subject identity design](../design/portfolio-subject-identity.md).
 5. Read the [Versioned Portfolio Profile design](../design/portfolio-profile-contract.md).
-6. Use later contract documents for exact serialized structures once they are added.
+6. Read the [Candidate and source-reference design](../design/candidate-source-reference-contract.md).
+7. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 
