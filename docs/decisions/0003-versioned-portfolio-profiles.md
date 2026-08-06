@@ -1,7 +1,8 @@
 # ADR 0003: Versioned Portfolio Profiles
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-04
+- **Accepted:** 2026-08-06 — approved by issue #13 portfolio foundation audit
 - **Decision owners:** Paper Data Suite maintainers
 - **Applies to:** `pds-vitrine` v0.1.0 foundation
 - **Related issue:** #5, “Define portfolio profiles and versioned requirements”

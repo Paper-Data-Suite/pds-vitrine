@@ -31,7 +31,7 @@ It defines:
 - deterministic duplicate handling;
 - and downstream boundaries for selection, producer exposure, snapshots, and privacy enforcement.
 
-The paired architectural decision is [ADR 0004: Candidate Discovery and Source References](../decisions/0004-candidate-discovery-and-source-references.md). It remains **Proposed** until maintainers explicitly accept it.
+The paired architectural decision is [ADR 0004: Candidate Discovery and Source References](../decisions/0004-candidate-discovery-and-source-references.md). It is **Accepted** following the issue #13 portfolio foundation audit.
 
 ## 2. Governing boundary
 

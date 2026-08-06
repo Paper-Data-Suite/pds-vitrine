@@ -23,6 +23,7 @@
       ]
     }
   ],
-  "reviewed_baseline": "8202aeff46a6e3e30e4de07e4adc00ad38cd5348",
-  "runtime_support": "synthetic_consumer_projection_over_implemented_publication_workflow"
+  "reviewed_baseline": "c2fa06f1a4c33df01f3e0d9c8dd27702d4a06419",
+  "runtime_boundary": "ScoreForm generates immutable producer-owned academic result manifests at this baseline; producer-profile advertisement, Core publication, and a Vitrine attempt-summary reader remain future work.",
+  "runtime_support": "synthetic_consumer_projection_over_implemented_manifest_generation_only"
 }

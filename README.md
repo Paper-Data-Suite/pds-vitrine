@@ -4,7 +4,7 @@ A local-first portfolio module for curating authorized student work, preserving 
 
 ## Current status
 
-Vitrine is in its v0.1.0 foundation-design phase. The repository currently contains research, architecture, and conceptual design documentation; it does not yet contain a production application, package, persistence layer, producer adapters, authorization engine, or snapshot renderer.
+Vitrine has completed its v0.1.0 portfolio foundation audit with a `ready_for_implementation` verdict. The repository contains accepted architecture decisions, conceptual contracts, a deterministic representative fixture corpus, and offline validation. It does not yet contain a production application, package, persistence layer, producer readers, authorization engine, or snapshot renderer.
 
 ## Documentation
 
@@ -23,4 +23,6 @@ Key entry points:
 - [Privacy, redaction, and audience controls](docs/design/privacy-redaction-audience-controls.md)
 - [Regulated Portfolio and compliance profiles](docs/design/regulated-portfolio-compliance-profiles.md)
 - [Representative synthetic Portfolio corpus](docs/examples/representative-synthetic-portfolios.md)
+- [Portfolio foundation audit](docs/audits/portfolio-foundation-audit.md)
+- [Portfolio foundation traceability](docs/audits/portfolio-foundation-traceability.md)
 - [Architecture Decision Records](docs/decisions/README.md)

@@ -1,7 +1,8 @@
 # ADR 0008: Privacy, Redaction, and Audience Controls
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-05
+- **Accepted:** 2026-08-06 — approved by issue #13 portfolio foundation audit
 - **Decision owners:** Paper Data Suite maintainers
 - **Applies to:** `pds-vitrine` v0.1.0 foundation
 - **Related issue:** #10, “Define privacy, redaction, and audience controls”
@@ -836,6 +837,6 @@ Future producer and Meridian work should expose only reviewed public projections
 
 ## Decision status
 
-This ADR remains **Proposed**.
+This ADR is **Accepted** following the issue #13 portfolio foundation audit.
 
 It becomes governing architecture only after explicit maintainer acceptance.

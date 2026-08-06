@@ -25,6 +25,7 @@ This directory contains system-level Vitrine architecture documents. Architectur
 - [Regulated Portfolio and compliance profiles](../design/regulated-portfolio-compliance-profiles.md) — specializes immutable Profiles for authority sources, cases, independent components, pathways, checklists, records, attestations, deadlines, approvals, batches, submissions, receipts, outcomes, migration, and a researched New Jersey reference family.
 - [Representative regulated Portfolio and compliance examples](../examples/regulated-portfolio-compliance-examples.md) — exercises source activation, components, pathways, missing and defective evidence, signer authority, deadlines, approvals, rolling submissions, external outcomes, producer boundaries, and replay.
 - [Representative synthetic Portfolio corpus](../examples/representative-synthetic-portfolios.md) — composes the identity, Profile, source, exposure, curation, Snapshot, privacy, and regulated-workflow contracts into validated improvement, showcase, conference, and NJ-style fixtures.
+- [Portfolio foundation audit](../audits/portfolio-foundation-audit.md) — evaluates the complete foundation, reconciles sibling drift, accepts ADRs 0001-0009, and records the readiness verdict.
 
 ## Reading order
 
@@ -40,7 +41,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 10. Read the [privacy, redaction, and audience-control design](../design/privacy-redaction-audience-controls.md).
 11. Read the [regulated Portfolio and compliance-profile design](../design/regulated-portfolio-compliance-profiles.md).
 12. Review and validate the [representative synthetic Portfolio corpus](../examples/representative-synthetic-portfolios.md).
-13. Use later contract documents for exact serialized structures once they are added.
+13. Read the [portfolio foundation audit](../audits/portfolio-foundation-audit.md) and [traceability matrix](../audits/portfolio-foundation-traceability.md).
+14. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 
@@ -53,4 +55,4 @@ When documents disagree:
 5. conceptual design documents provide reviewed record-level recommendations;
 6. research documents provide evidence and design inputs but do not establish final contracts.
 
-The current ADRs are **Proposed**. Until explicitly accepted, they record reviewed recommendations and must not be represented as accepted decisions.
+ADRs 0001 through 0009 are **Accepted** following the issue #13 portfolio foundation audit.

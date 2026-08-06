@@ -32,7 +32,7 @@ It defines:
 - producer boundaries;
 - and one researched New Jersey Graduation Portfolio Appeal reference family.
 
-The paired decision is [ADR 0009: Regulated Portfolio and Compliance Profiles](../decisions/0009-regulated-portfolio-and-compliance-profiles.md). It remains **Proposed** until maintainers explicitly accept it.
+The paired decision is [ADR 0009: Regulated Portfolio and Compliance Profiles](../decisions/0009-regulated-portfolio-and-compliance-profiles.md). It is **Accepted** following the issue #13 portfolio foundation audit.
 
 The representative scenarios are in [regulated-portfolio-compliance-examples.md](../examples/regulated-portfolio-compliance-examples.md).
 

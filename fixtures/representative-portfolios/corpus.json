@@ -1,5 +1,12 @@
 {
   "artifact_index": "shared/artifacts.json",
+  "baseline_policy": {
+    "audit_date": "2026-08-06",
+    "audited_at_vitrine_commit": "21a7e900de7c9247e05769c355f941a5e6fd58e3",
+    "kind": "historical_construction_snapshot",
+    "rule": "Historical fixture baselines remain attributable; invalid or inaccurate commit references are corrected rather than preserved.",
+    "vitrine_construction_baseline": "840cf492b3503d5d6eba77c7ca2130cf21125d0c"
+  },
   "fixture_contract": "pds-vitrine.representative-portfolio-corpus",
   "fixture_version": "1",
   "forbidden_audience_markers": [
@@ -44,7 +51,7 @@
     "pds-meridian": "44778d43b13b8c5f66b9adc24a6674692816300f",
     "pds-portia": "0841bd946c6c3a098ebaad4bfb90669816ecc93b",
     "pds-quillan": "05fecf23d29e56b45cba58ed97906f5353290033",
-    "pds-scoreform": "8202aeff46a6e3e30e4de07e4adc00ad38cd5348"
+    "pds-scoreform": "c2fa06f1a4c33df01f3e0d9c8dd27702d4a06419"
   },
   "shared_record_files": [
     "shared/identities.json",
@@ -53,6 +60,5 @@
     "shared/producers/scoreform.json",
     "shared/producers/concord.json",
     "shared/producers/portia-restricted.json"
-  ],
-  "vitrine_baseline": "840cf492b3503d5d6eba77c7ca2130cf21125d0c"
+  ]
 }

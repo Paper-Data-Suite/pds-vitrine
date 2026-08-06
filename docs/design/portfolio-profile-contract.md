@@ -31,7 +31,7 @@ It defines:
 - failure states;
 - and downstream constraints for later Vitrine contracts.
 
-The paired architectural decision is [ADR 0003: Versioned Portfolio Profiles](../decisions/0003-versioned-portfolio-profiles.md). It remains **Proposed** until maintainers explicitly accept it.
+The paired architectural decision is [ADR 0003: Versioned Portfolio Profiles](../decisions/0003-versioned-portfolio-profiles.md). It is **Accepted** following the issue #13 portfolio foundation audit.
 
 ## 2. Governing boundary
 

@@ -1,6 +1,6 @@
 # Vitrine Documentation
 
-Vitrine is in its foundation-design phase. The documents in this repository distinguish research findings, architecture decisions, conceptual designs, later data contracts, and eventual implementation behavior.
+Vitrine has completed its v0.1.0 foundation audit with a `ready_for_implementation` verdict. The documents in this repository distinguish accepted architecture, conceptual designs, validated fixtures, later data contracts, and eventual implementation behavior.
 
 ## Foundation research
 
@@ -34,18 +34,26 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [Representative regulated Portfolio and compliance examples](examples/regulated-portfolio-compliance-examples.md) — synthetic Profile activation, component, pathway, evidence, checklist, attestation, deadline, batch, resubmission, external-outcome, privacy, producer, and historical-replay scenarios.
 - [Representative synthetic Portfolio corpus](examples/representative-synthetic-portfolios.md) — executable cross-contract fixtures for improvement, showcase, parent/guardian conference, and research-only NJ-style regulated Portfolios, with actual bytes, checksums, producer boundaries, expected outcomes, and negative cases.
 
+## Foundation audit
+
+- [Audit index](audits/README.md)
+- [Portfolio foundation audit](audits/portfolio-foundation-audit.md) — skeptical closure review and final `ready_for_implementation` verdict.
+- [Portfolio foundation traceability](audits/portfolio-foundation-traceability.md) — maps every foundation issue and exit condition to direct evidence.
+- [Portfolio foundation findings](audits/portfolio-foundation-findings.md) — preserved finding register and dispositions.
+- [Issue #13 validation](validation/issue-13-portfolio-foundation-validation.md) — offline validation commands and results.
+
 ## Architecture decisions
 
 - [ADR index](decisions/README.md)
-- [ADR 0001: Vitrine Module Boundaries and Authority](decisions/0001-vitrine-module-boundaries-and-authority.md) — currently **Proposed** pending explicit maintainer acceptance.
-- [ADR 0002: Portfolio Subject Identity and Roster Linking](decisions/0002-portfolio-subject-identity-and-roster-linking.md) — currently **Proposed** pending explicit maintainer acceptance.
-- [ADR 0003: Versioned Portfolio Profiles](decisions/0003-versioned-portfolio-profiles.md) — currently **Proposed** pending explicit maintainer acceptance.
-- [ADR 0004: Candidate Discovery and Source References](decisions/0004-candidate-discovery-and-source-references.md) — currently **Proposed** pending explicit maintainer acceptance.
-- [ADR 0005: Producer Artifact Exposure Boundaries](decisions/0005-producer-artifact-exposure-boundaries.md) — currently **Proposed** pending explicit maintainer acceptance.
-- [ADR 0006: Selection, Ordering, Annotation, and Reflection](decisions/0006-selection-ordering-annotation-and-reflection.md) — currently **Proposed** pending explicit maintainer acceptance.
-- [ADR 0007: Snapshot, Export, Checksum, and Immutability](decisions/0007-snapshot-export-checksum-and-immutability.md) — currently **Proposed** pending explicit maintainer acceptance.
-- [ADR 0008: Privacy, Redaction, and Audience Controls](decisions/0008-privacy-redaction-and-audience-controls.md) — currently **Proposed** pending explicit maintainer acceptance.
-- [ADR 0009: Regulated Portfolio and Compliance Profiles](decisions/0009-regulated-portfolio-and-compliance-profiles.md) — currently **Proposed** pending explicit maintainer acceptance.
+- [ADR 0001: Vitrine Module Boundaries and Authority](decisions/0001-vitrine-module-boundaries-and-authority.md) — accepted by the issue #13 portfolio foundation audit.
+- [ADR 0002: Portfolio Subject Identity and Roster Linking](decisions/0002-portfolio-subject-identity-and-roster-linking.md) — accepted by the issue #13 portfolio foundation audit.
+- [ADR 0003: Versioned Portfolio Profiles](decisions/0003-versioned-portfolio-profiles.md) — accepted by the issue #13 portfolio foundation audit.
+- [ADR 0004: Candidate Discovery and Source References](decisions/0004-candidate-discovery-and-source-references.md) — accepted by the issue #13 portfolio foundation audit.
+- [ADR 0005: Producer Artifact Exposure Boundaries](decisions/0005-producer-artifact-exposure-boundaries.md) — accepted by the issue #13 portfolio foundation audit.
+- [ADR 0006: Selection, Ordering, Annotation, and Reflection](decisions/0006-selection-ordering-annotation-and-reflection.md) — accepted by the issue #13 portfolio foundation audit.
+- [ADR 0007: Snapshot, Export, Checksum, and Immutability](decisions/0007-snapshot-export-checksum-and-immutability.md) — accepted by the issue #13 portfolio foundation audit.
+- [ADR 0008: Privacy, Redaction, and Audience Controls](decisions/0008-privacy-redaction-and-audience-controls.md) — accepted by the issue #13 portfolio foundation audit.
+- [ADR 0009: Regulated Portfolio and Compliance Profiles](decisions/0009-regulated-portfolio-and-compliance-profiles.md) — accepted by the issue #13 portfolio foundation audit.
 
 ## Document status and authority
 
