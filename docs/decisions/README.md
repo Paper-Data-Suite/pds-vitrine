@@ -12,6 +12,7 @@ Architecture Decision Records document significant Vitrine decisions, their cont
 | [0004](0004-candidate-discovery-and-source-references.md) | Candidate Discovery and Source References | Proposed |
 | [0005](0005-producer-artifact-exposure-boundaries.md) | Producer Artifact Exposure Boundaries | Proposed |
 | [0006](0006-selection-ordering-annotation-and-reflection.md) | Selection, Ordering, Annotation, and Reflection | Proposed |
+| [0007](0007-snapshot-export-checksum-and-immutability.md) | Snapshot, Export, Checksum, and Immutability | Proposed |
 
 ## Status meanings
 
@@ -58,6 +59,8 @@ The proposal was considered but not adopted. It may remain documented when the r
 - [Representative producer artifact exposure examples](../examples/producer-artifact-exposure-examples.md)
 - [Selection and curation design](../design/selection-curation-records.md)
 - [Representative selection and curation examples](../examples/selection-curation-examples.md)
+- [Snapshot, export, checksum, and immutability design](../design/snapshot-export-immutability-contracts.md)
+- [Representative snapshot and export examples](../examples/snapshot-export-examples.md)
 - [Foundation research](../research/portfolio-purpose-workflows.md)
 - [Repository documentation index](../README.md)
 

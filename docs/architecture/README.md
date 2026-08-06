@@ -18,6 +18,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 - [Representative producer artifact exposure examples](../examples/producer-artifact-exposure-examples.md) — exercises ScoreForm, Quillan, Concord, Portia, multi-subject, revision, and digest boundaries.
 - [Selection, ordering, annotation, and reflection records](../design/selection-curation-records.md) — applies Profiles and Candidates to explicit proposals, decisions, Selections, Placements, ordering, presentation, reflection, approval, and working-composition revisions.
 - [Representative selection and curation examples](../examples/selection-curation-examples.md) — exercises student and teacher curation, ordering conflicts, producer boundaries, reflection, approval, replacement, migration, and exact composition history.
+- [Snapshot, export, checksum, and immutability contracts](../design/snapshot-export-immutability-contracts.md) — applies exact Composition state to guarded source acquisition, copied/generated Entries, explicit omissions, canonical manifests, layered digests, immutable Editions, exports, issuance, submission, and lifecycle.
+- [Representative snapshot and export examples](../examples/snapshot-export-examples.md) — exercises source changes, rendering, checksum layers, omission policy, format differences, concurrency, partial success, external handoff, and historical preservation.
 
 ## Reading order
 
@@ -29,7 +31,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 6. Read the [Candidate and source-reference design](../design/candidate-source-reference-contract.md).
 7. Read the [producer artifact exposure design](../design/producer-artifact-exposure-boundaries.md).
 8. Read the [selection and curation design](../design/selection-curation-records.md).
-9. Use later contract documents for exact serialized structures once they are added.
+9. Read the [snapshot, export, checksum, and immutability design](../design/snapshot-export-immutability-contracts.md).
+10. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 
