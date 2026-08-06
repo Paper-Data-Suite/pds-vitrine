@@ -20,4 +20,5 @@ Key entry points:
 - [Producer artifact exposure boundaries](docs/design/producer-artifact-exposure-boundaries.md)
 - [Selection, ordering, annotation, and reflection records](docs/design/selection-curation-records.md)
 - [Snapshot, export, checksum, and immutability contracts](docs/design/snapshot-export-immutability-contracts.md)
+- [Privacy, redaction, and audience controls](docs/design/privacy-redaction-audience-controls.md)
 - [Architecture Decision Records](docs/decisions/README.md)
