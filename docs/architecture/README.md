@@ -20,6 +20,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 - [Representative selection and curation examples](../examples/selection-curation-examples.md) — exercises student and teacher curation, ordering conflicts, producer boundaries, reflection, approval, replacement, migration, and exact composition history.
 - [Snapshot, export, checksum, and immutability contracts](../design/snapshot-export-immutability-contracts.md) — applies exact Composition state to guarded source acquisition, copied/generated Entries, explicit omissions, canonical manifests, layered digests, immutable Editions, exports, issuance, submission, and lifecycle.
 - [Representative snapshot and export examples](../examples/snapshot-export-examples.md) — exercises source changes, rendering, checksum layers, omission policy, format differences, concurrency, partial success, external handoff, and historical preservation.
+- [Privacy, redaction, and audience controls](../design/privacy-redaction-audience-controls.md) — applies Profiles, source boundaries, curation, and immutable Editions to exact authorization gates, audience and recipient scope, no-leakage discovery, redaction, de-identification, disclosure, and revocation.
+- [Representative privacy, redaction, and audience examples](../examples/privacy-redaction-audience-examples.md) — exercises student, family, teacher, reviewer, regulated, public, producer, collaborator, transformation, consent, logging, and historical-access cases.
 
 ## Reading order
 
@@ -32,7 +34,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 7. Read the [producer artifact exposure design](../design/producer-artifact-exposure-boundaries.md).
 8. Read the [selection and curation design](../design/selection-curation-records.md).
 9. Read the [snapshot, export, checksum, and immutability design](../design/snapshot-export-immutability-contracts.md).
-10. Use later contract documents for exact serialized structures once they are added.
+10. Read the [privacy, redaction, and audience-control design](../design/privacy-redaction-audience-controls.md).
+11. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 

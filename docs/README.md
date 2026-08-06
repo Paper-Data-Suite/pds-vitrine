@@ -28,6 +28,8 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [Representative selection and curation examples](examples/selection-curation-examples.md) — synthetic proposal, ordering, reflection, approval, producer-boundary, migration, correction, and composition scenarios.
 - [Snapshot, export, checksum, and immutability contracts](design/snapshot-export-immutability-contracts.md) — exact Composition input, source acquisition, copied and generated Entries, omissions, manifests, checksums, immutable Editions, exports, issuance, submission, and lifecycle.
 - [Representative snapshot and export examples](examples/snapshot-export-examples.md) — synthetic copy, render, digest, omission, export, concurrency, partial-success, issuance, submission, lifecycle, and exceptional-removal scenarios.
+- [Privacy, redaction, and audience controls](design/privacy-redaction-audience-controls.md) — separate authorization gates, audience and recipient scope, authority evidence, no-leakage discovery, redaction, de-identification, collaborator treatment, disclosure authorization, events, and revocation.
+- [Representative privacy, redaction, and audience examples](examples/privacy-redaction-audience-examples.md) — synthetic student, family, teacher, reviewer, regulated, public, producer, redaction, de-identification, delivery, and historical-authorization scenarios.
 
 ## Architecture decisions
 
@@ -39,6 +41,7 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [ADR 0005: Producer Artifact Exposure Boundaries](decisions/0005-producer-artifact-exposure-boundaries.md) — currently **Proposed** pending explicit maintainer acceptance.
 - [ADR 0006: Selection, Ordering, Annotation, and Reflection](decisions/0006-selection-ordering-annotation-and-reflection.md) — currently **Proposed** pending explicit maintainer acceptance.
 - [ADR 0007: Snapshot, Export, Checksum, and Immutability](decisions/0007-snapshot-export-checksum-and-immutability.md) — currently **Proposed** pending explicit maintainer acceptance.
+- [ADR 0008: Privacy, Redaction, and Audience Controls](decisions/0008-privacy-redaction-and-audience-controls.md) — currently **Proposed** pending explicit maintainer acceptance.
 
 ## Document status and authority
 

@@ -13,6 +13,7 @@ Architecture Decision Records document significant Vitrine decisions, their cont
 | [0005](0005-producer-artifact-exposure-boundaries.md) | Producer Artifact Exposure Boundaries | Proposed |
 | [0006](0006-selection-ordering-annotation-and-reflection.md) | Selection, Ordering, Annotation, and Reflection | Proposed |
 | [0007](0007-snapshot-export-checksum-and-immutability.md) | Snapshot, Export, Checksum, and Immutability | Proposed |
+| [0008](0008-privacy-redaction-and-audience-controls.md) | Privacy, Redaction, and Audience Controls | Proposed |
 
 ## Status meanings
 
@@ -61,6 +62,8 @@ The proposal was considered but not adopted. It may remain documented when the r
 - [Representative selection and curation examples](../examples/selection-curation-examples.md)
 - [Snapshot, export, checksum, and immutability design](../design/snapshot-export-immutability-contracts.md)
 - [Representative snapshot and export examples](../examples/snapshot-export-examples.md)
+- [Privacy, redaction, and audience-control design](../design/privacy-redaction-audience-controls.md)
+- [Representative privacy, redaction, and audience examples](../examples/privacy-redaction-audience-examples.md)
 - [Foundation research](../research/portfolio-purpose-workflows.md)
 - [Repository documentation index](../README.md)
 
