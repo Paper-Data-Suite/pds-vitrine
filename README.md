@@ -21,4 +21,5 @@ Key entry points:
 - [Selection, ordering, annotation, and reflection records](docs/design/selection-curation-records.md)
 - [Snapshot, export, checksum, and immutability contracts](docs/design/snapshot-export-immutability-contracts.md)
 - [Privacy, redaction, and audience controls](docs/design/privacy-redaction-audience-controls.md)
+- [Regulated Portfolio and compliance profiles](docs/design/regulated-portfolio-compliance-profiles.md)
 - [Architecture Decision Records](docs/decisions/README.md)

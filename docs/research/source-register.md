@@ -1,7 +1,7 @@
 # Portfolio Research Source Register
 
-- **Research date:** 2026-08-04
-- **Applies to:** Issue #2, “Research portfolio purposes, workflows, and compliance constraints”
+- **Research date:** 2026-08-05
+- **Applies to:** Issue #2 research and issue #11 regulated-Profile revalidation
 - **Status:** Foundation research input; not a compliance certification or legal opinion
 
 This register identifies the sources used by the Vitrine foundation research. Source identifiers are cited throughout the accompanying research documents. Temporal scope and authority are explicit because a regulated portfolio profile must be reviewed whenever its governing sources, cohort, school year, or submission system changes.
@@ -34,7 +34,7 @@ This register identifies the sources used by the Vitrine foundation research. So
 
 | ID | Source | Publisher / authority | Date or scope | Authority level | Status | Claims supported |
 | --- | --- | --- | --- | --- | --- | --- |
-| NJ-REG-01 | [N.J.A.C. 6A:8, Standards and Assessment](https://www.nj.gov/education/code/current/title6a/chap8.pdf) | New Jersey Department of Education / New Jersey Administrative Code | Current chapter accessed 2026-08-04 | Regulation | Current; review before profile use | Defines the portfolio appeals process; establishes alternative graduation-assessment means, prerequisites, native-language availability, diploma/reporting responsibilities, and 100-year State-assessment performance retention. |
+| NJ-REG-01 | [N.J.A.C. 6A:8, Standards and Assessment](https://www.nj.gov/education/code/current/title6a/chap8.pdf) | New Jersey Department of Education / New Jersey Administrative Code | Current chapter accessed 2026-08-05 | Regulation | Current; review before profile use | Defines the portfolio appeals process; establishes alternative graduation-assessment means, prerequisites, native-language availability, diploma/reporting responsibilities, and 100-year State-assessment performance retention. |
 | NJ-REQ-01 | [Graduation Assessment Requirements](https://www.nj.gov/education/assessment/requirements/) | New Jersey Department of Education (NJDOE) | Class of 2026 requirements; page identifies December 2025 portfolio update | Official agency guidance hub | Current, cohort-specific | Identifies the three graduation-assessment pathways and links current Class of 2026 guidance and forms. |
 | NJ-APP-01 | [Graduation Portfolio Appeal Guidance](https://www.nj.gov/education/assessment/requirements/appeals/) | NJDOE | Accessed 2026-08-04 | Official agency guidance index | Current, cohort-specific | Authoritative index for ELA, mathematics, submission, special-population, streamlined, and FAQ guidance. |
 | NJ-APP-02 | [Portfolio Appeals Submission Process for 2025-2026](https://www.nj.gov/education/assessment/requirements/appeals/process.shtml) | NJDOE | 2025-2026 / Class of 2026 | Official agency submission guidance | Current, cohort-specific | Coordinator role, Homeroom submission, SOA and spreadsheet, signatories, dates, formats, naming, rolling uploads, receipts, local evidence retention, and possible onsite review. |
@@ -91,6 +91,23 @@ This register identifies the sources used by the Vitrine foundation research. So
 | NJ-RST-03 | NJDOE Homeroom project behavior and receipt/outcome details | Restricted operational system | Controls roles, upload semantics, receipts, error handling, and outcome retrieval; public guidance describes but does not fully specify it. |
 | NJ-FUT-01 | Complete Class of 2027 portfolio appeal requirements | Not publicly complete as of 2026-08-04 | Only the Class of 2027 NJGPA-A relationship and the 2026-2027 appeal window were confirmed publicly. The Class of 2026 profile must not be relabeled for Class of 2027. |
 | LOCAL-01 | District records classification, publication-consent, access, and approval policies | Local policy | Determines record-series classification, responsible roles, audience permissions, retention/disposition, and approval chains. |
+
+## Issue #11 regulated-Profile revalidation
+
+The New Jersey source family was rechecked on 2026-08-05 for issue #11.
+
+| Source group | Revalidation result | Profile implication |
+| --- | --- | --- |
+| Class of 2026 requirements hub and appeal index | Public guidance remains available and identifies the December 2025 Portfolio Appeal update | `reference_profile_revision`; retain the Class of 2026 research scope |
+| ELA and mathematics guides | Separate component, task, scoring, local-evidence, and translation structures remain public | `reference_profile_revision`; preserve independently evaluated components |
+| Streamlined guidance and FAQ | ASVAB AFQT threshold and reduced task structures remain public | `reference_profile_revision`; preserve a simultaneous alternative pathway |
+| 2025-2026 submission process | Local evidence, school-specific SOA/data files, rolling uploads, receipts, and local retention remain public | `reference_profile_revision`; separate case, batch, Submission, Receipt, and Outcome |
+| Restricted SOA, spreadsheet, field definitions, and Homeroom behavior | Still unavailable through public sources | `restricted_source_dependency`; block operational activation until authorized review |
+| Local records, approval, identity, accommodation, and task-development policy | Institution-specific and unresolved by statewide public pages | `local_policy_dependency`; require an attributable local overlay |
+| 2026-2027 Portfolio Appeals schedule | A later public window is confirmed | `future_cohort_concern`; do not reuse Class of 2026 details |
+| NJGPA-Adaptive Class of 2027 information | Assessment transition and continued second/third pathways are public | `future_cohort_concern`; a complete Class of 2027 Portfolio Profile is not established |
+
+No source reviewed on 2026-08-05 supports activating a Class of 2027 operational Profile from the Class of 2026 rule set.
 
 ## Temporal review triggers
 

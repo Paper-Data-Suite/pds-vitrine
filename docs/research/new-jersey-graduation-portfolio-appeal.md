@@ -1,9 +1,9 @@
 # New Jersey Graduation Portfolio Appeal: Versioned Workflow Case Study
 
-- **Research date:** 2026-08-04
+- **Research date:** 2026-08-05
 - **Primary profile:** New Jersey, Graduation Portfolio Appeal, 2025-2026 school year / Class of 2026
 - **Future-cohort note:** Limited confirmed information for 2026-2027 / Class of 2027 is recorded separately
-- **Status:** Foundation research input; not legal advice, compliance certification, or an operative submission profile
+- **Status:** Foundation research input revalidated for issue #11; not legal advice, compliance certification, or an operative submission profile
 
 ## 1. Purpose and scope
 
@@ -37,7 +37,7 @@ A future profile derived from this research should carry, at minimum, the follow
 | Primary graduating cohort | Class of 2026, defined by NJDOE as students graduating from September 1, 2025 through August 31, 2026 for the submission window |
 | Public guidance family | NJDOE Graduation Assessment Requirements and Graduation Portfolio Appeal guidance |
 | Public guidance update marker | Class of 2026 requirements; portfolio materials updated December 2025 |
-| Research access date | 2026-08-04 |
+| Research access date | 2026-08-05 |
 | Restricted operational system | NJDOE Homeroom, Portfolio Appeals project |
 | Profile status | Historical/current cohort example; review required before any operational use |
 
@@ -489,7 +489,98 @@ Before an implementation claims support for a specific NJ Graduation Portfolio A
 - [ ] outcome-record handling; and
 - [ ] profile approver, activation date, and required re-review date.
 
-## 19. Conclusion
+## 19. Issue #11 revalidation and Profile disposition
+
+The source family was revalidated on 2026-08-05 before defining the regulated Profile specialization.
+
+### 19.1 Confirmed Class of 2026 public sources
+
+The following public sources remained available and materially consistent with the research summarized above:
+
+- the Graduation Assessment Requirements hub and Class of 2026 Portfolio Appeal guidance family;
+- the ELA informational guide;
+- the mathematics informational guide;
+- the streamlined ASVAB option;
+- the general Portfolio Appeal FAQ;
+- the special-populations guidance;
+- the 2025-2026 electronic submission process;
+- and the 2025-2026 statewide assessment schedule.
+
+The revalidation confirmed these architecture-relevant facts:
+
+- ELA and mathematics remain independently satisfiable components;
+- different graduation pathways may be used for the two components;
+- the streamlined option remains tied to an ASVAB AFQT score of at least 35;
+- standard and streamlined requirements are simultaneous alternatives rather than chronological replacements;
+- substantive student evidence remains locally retained;
+- the routine electronic handoff remains school-specific and uses a Statement of Assurance plus a data spreadsheet;
+- repeated rolling submissions and corrected `RESUBMISSION` files remain supported;
+- local evidence, school-level batch files, receipt, and outcome remain distinct;
+- and restricted spreadsheet field definitions continue to control important validation details.
+
+These confirmations are a `research_documentation_update` and `reference_profile_revision` input. They do not activate an operational Profile.
+
+### 19.2 Restricted dependencies remain unresolved publicly
+
+The revalidation did not make these restricted details public:
+
+- exact Statement of Assurance text;
+- exact spreadsheet columns and value domains;
+- exact field-validation rules;
+- Homeroom role and error semantics;
+- receipt schema;
+- and complete outcome-retrieval behavior.
+
+They remain `restricted_source_dependency` inputs.
+
+An operational Profile must remain blocked until authorized reviewers verify the exact current restricted materials.
+
+### 19.3 Future-cohort concern
+
+The public 2026-2027 assessment schedule lists a Portfolio Appeals window of January 4 through May 3, 2027.
+
+The NJGPA-Adaptive FAQ identifies the Class of 2027 as the first NJGPA-Adaptive cohort and states that students who do not demonstrate graduation readiness may use the second or third pathway.
+
+Those facts are classified as `future_cohort_concern`.
+
+They do not establish:
+
+- complete Class of 2027 eligibility rules;
+- Class of 2027 CRT quantities or scoring;
+- Class of 2027 forms;
+- Class of 2027 streamlined-option rules;
+- Class of 2027 submission fields;
+- or an operational successor Profile.
+
+The Class of 2026 research must not be relabeled or silently copied forward.
+
+### 19.4 Profile-family disposition
+
+For issue #11, the New Jersey material is treated as:
+
+```text
+Portfolio Profile Family:
+  New Jersey Graduation Portfolio Appeal
+
+Reference Profile series:
+  standard pathway
+  streamlined ASVAB pathway
+
+Reference revision scope:
+  2025-2026 school year
+  Class of 2026
+
+Component scopes:
+  English language arts
+  mathematics
+
+Activation status:
+  research_only
+```
+
+This structure is a design example, not an institution-approved policy.
+
+## 20. Conclusion
 
 The New Jersey Graduation Portfolio Appeal demonstrates that a regulated portfolio is not simply a collection of student work. It is a versioned institutional workflow combining content-area eligibility, locally created and scored evidence, intervention and supporting records, accommodations, formal attestation, restricted submission contracts, external review, outcome records, and records-management obligations.
 

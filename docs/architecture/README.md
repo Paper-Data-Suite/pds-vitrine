@@ -22,6 +22,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 - [Representative snapshot and export examples](../examples/snapshot-export-examples.md) — exercises source changes, rendering, checksum layers, omission policy, format differences, concurrency, partial success, external handoff, and historical preservation.
 - [Privacy, redaction, and audience controls](../design/privacy-redaction-audience-controls.md) — applies Profiles, source boundaries, curation, and immutable Editions to exact authorization gates, audience and recipient scope, no-leakage discovery, redaction, de-identification, disclosure, and revocation.
 - [Representative privacy, redaction, and audience examples](../examples/privacy-redaction-audience-examples.md) — exercises student, family, teacher, reviewer, regulated, public, producer, collaborator, transformation, consent, logging, and historical-access cases.
+- [Regulated Portfolio and compliance profiles](../design/regulated-portfolio-compliance-profiles.md) — specializes immutable Profiles for authority sources, cases, independent components, pathways, checklists, records, attestations, deadlines, approvals, batches, submissions, receipts, outcomes, migration, and a researched New Jersey reference family.
+- [Representative regulated Portfolio and compliance examples](../examples/regulated-portfolio-compliance-examples.md) — exercises source activation, components, pathways, missing and defective evidence, signer authority, deadlines, approvals, rolling submissions, external outcomes, producer boundaries, and replay.
 
 ## Reading order
 
@@ -35,7 +37,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 8. Read the [selection and curation design](../design/selection-curation-records.md).
 9. Read the [snapshot, export, checksum, and immutability design](../design/snapshot-export-immutability-contracts.md).
 10. Read the [privacy, redaction, and audience-control design](../design/privacy-redaction-audience-controls.md).
-11. Use later contract documents for exact serialized structures once they are added.
+11. Read the [regulated Portfolio and compliance-profile design](../design/regulated-portfolio-compliance-profiles.md).
+12. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 
