@@ -1,7 +1,8 @@
 # ADR 0001: Vitrine Module Boundaries and Authority
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-04
+- **Accepted:** 2026-08-06 — approved by issue #13 portfolio foundation audit
 - **Decision owners:** Paper Data Suite maintainers
 - **Applies to:** `pds-vitrine` foundation architecture and all later Vitrine contracts and implementation
 - **Issue:** #3, “Define module boundaries and ownership”

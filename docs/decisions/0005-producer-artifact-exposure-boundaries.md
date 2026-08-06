@@ -1,7 +1,8 @@
 # ADR 0005: Producer Artifact Exposure Boundaries
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-05
+- **Accepted:** 2026-08-06 — approved by issue #13 portfolio foundation audit
 - **Decision owners:** Paper Data Suite maintainers
 - **Applies to:** `pds-vitrine` v0.1.0 foundation
 - **Related issue:** #7, “Define producer artifact exposure boundaries”
@@ -10,9 +11,9 @@
 
 Vitrine can discover Core Publication Records and, after authorization and exact manifest verification, invoke producer-owned public readers. That capability does not determine which producer fields, native records, or files are appropriate Portfolio Candidate representations.
 
-The current producers expose materially different domains:
+The producer domains and approved future-facing projection boundaries differ materially:
 
-- ScoreForm publishes structured academic results with every represented attempt and scan provenance;
+- ScoreForm defines and generates immutable structured academic-result manifests with every represented attempt and bounded scan provenance; Core publication and a Vitrine reader remain future work;
 - Quillan owns selected written evidence, teacher review, student-facing feedback exports, and private notes;
 - Concord owns collaborative Artifacts, pages, authorship, subjects, Groups, Scores, moderation, and privacy;
 - Portia owns sensitive behavior-support records that must not enter ordinary portfolio discovery.

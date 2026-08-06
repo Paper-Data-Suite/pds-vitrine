@@ -1,0 +1,470 @@
+{
+  "adr_dispositions": [
+    {
+      "accepted": "2026-08-06",
+      "adr": "0001",
+      "rationale": "Confirms Vitrine ownership and dependency direction without absorbing Core, producer, Meridian, Portia, Sunset, or institutional authority.",
+      "status": "Accepted"
+    },
+    {
+      "accepted": "2026-08-06",
+      "adr": "0002",
+      "rationale": "Preserves exact class-qualified identity and explicit cross-class confirmation without name-based inference.",
+      "status": "Accepted"
+    },
+    {
+      "accepted": "2026-08-06",
+      "adr": "0003",
+      "rationale": "Provides immutable purpose-specific Profile revisions, explicit activation, overlays, and migration.",
+      "status": "Accepted"
+    },
+    {
+      "accepted": "2026-08-06",
+      "adr": "0004",
+      "rationale": "Preserves staged Core discovery, canonical reload, exact compatibility, source authority, and Candidate evaluation.",
+      "status": "Accepted"
+    },
+    {
+      "accepted": "2026-08-06",
+      "adr": "0005",
+      "rationale": "Keeps producer-owned projections, field allowlists, native meaning, and Portia suppression intact.",
+      "status": "Accepted"
+    },
+    {
+      "accepted": "2026-08-06",
+      "adr": "0006",
+      "rationale": "Separates Candidate, Selection, Placement, presentation, annotation, reflection, approval, and exact Composition revisions.",
+      "status": "Accepted"
+    },
+    {
+      "accepted": "2026-08-06",
+      "adr": "0007",
+      "rationale": "Defines exact bytes, digest layers, immutable Editions, exports, issuance, submission, and nondestructive history.",
+      "status": "Accepted"
+    },
+    {
+      "accepted": "2026-08-06",
+      "adr": "0008",
+      "rationale": "Defines action-specific authorization, recipient scope, no-leakage behavior, redaction verification, and disclosure history.",
+      "status": "Accepted"
+    },
+    {
+      "accepted": "2026-08-06",
+      "adr": "0009",
+      "rationale": "Specializes Profiles for authority sources, cases, components, checklists, attestations, deadlines, batches, and external outcomes.",
+      "status": "Accepted"
+    }
+  ],
+  "audit_contract": "pds-vitrine.portfolio-foundation-audit",
+  "audit_date": "2026-08-06",
+  "audit_version": "1",
+  "current_repository_baselines": {
+    "pds-concord": "31b0efd2864cd7a0945ff29f5af99b2a00db52ae",
+    "pds-core": "6c507213618b68a6dd3ea096e1a898201ff029e6",
+    "pds-meridian": "d55432f88848705cf9812586673db2bc81e01337",
+    "pds-portia": "d60966f8486bf93fb0185e3662b76d3b79ce9dcb",
+    "pds-quillan": "05fecf23d29e56b45cba58ed97906f5353290033",
+    "pds-scoreform": "c2fa06f1a4c33df01f3e0d9c8dd27702d4a06419",
+    "pds-vitrine": "21a7e900de7c9247e05769c355f941a5e6fd58e3"
+  },
+  "exit_conditions": [
+    {
+      "condition": "Portfolio remains a separate module.",
+      "evidence": [
+        "ADR 0001",
+        "module boundaries",
+        "PF-AUD-011"
+      ],
+      "id": "EC-001",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Candidate discovery uses Core plus exact producer contracts.",
+      "evidence": [
+        "ADR 0004",
+        "candidate design",
+        "negative stale-catalog and unsupported-contract cases"
+      ],
+      "id": "EC-002",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Cross-class identity is explicit and never guessed.",
+      "evidence": [
+        "ADR 0002",
+        "identity design",
+        "name-only and repeated-ID negative cases"
+      ],
+      "id": "EC-003",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Purpose-specific Profiles are immutable and versioned.",
+      "evidence": [
+        "ADR 0003",
+        "profile design",
+        "four purpose-specific portfolio fixtures"
+      ],
+      "id": "EC-004",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Source artifacts and copied Snapshot bytes preserve exact provenance.",
+      "evidence": [
+        "ADR 0007",
+        "snapshot design",
+        "39 verified byte files"
+      ],
+      "id": "EC-005",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Portia inclusion remains exceptional and privacy-governed.",
+      "evidence": [
+        "ADR 0005",
+        "ADR 0008",
+        "Portia no-leakage scan"
+      ],
+      "id": "EC-006",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Issued Snapshot Editions never silently update.",
+      "evidence": [
+        "ADR 0007",
+        "silent-refresh negative case"
+      ],
+      "id": "EC-007",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Audience and recipient authorization remain separate.",
+      "evidence": [
+        "ADR 0008",
+        "parent Recipient Scope fixture",
+        "indeterminate-authorization negative case"
+      ],
+      "id": "EC-008",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Regulated examples remain versioned and non-operational.",
+      "evidence": [
+        "ADR 0009",
+        "NJ research",
+        "NJ-style fixture"
+      ],
+      "id": "EC-009",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Producer-native meanings remain intact.",
+      "evidence": [
+        "ADR 0005",
+        "ScoreForm non-score states",
+        "Concord Group Score boundary"
+      ],
+      "id": "EC-010",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Core, producer, Meridian, and Portia boundaries are current.",
+      "evidence": [
+        "current audit baseline table",
+        "PF-AUD-006",
+        "PF-AUD-007"
+      ],
+      "id": "EC-011",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Sibling commit references are valid and accurately characterized.",
+      "evidence": [
+        "PF-AUD-001",
+        "known-invalid-SHA validator"
+      ],
+      "id": "EC-012",
+      "status": "satisfied"
+    },
+    {
+      "condition": "No blocker or major finding remains unresolved.",
+      "evidence": [
+        "findings register",
+        "foundation validator"
+      ],
+      "id": "EC-013",
+      "status": "satisfied"
+    },
+    {
+      "condition": "ADR statuses are explicitly dispositioned.",
+      "evidence": [
+        "ADRs 0001-0009 Accepted",
+        "decision index"
+      ],
+      "id": "EC-014",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Positive and negative corpus validation passes.",
+      "evidence": [
+        "representative validator"
+      ],
+      "id": "EC-015",
+      "status": "satisfied"
+    },
+    {
+      "condition": "Documentation and audit validation passes.",
+      "evidence": [
+        "foundation validator",
+        "Markdown link and fence checks"
+      ],
+      "id": "EC-016",
+      "status": "satisfied"
+    },
+    {
+      "condition": "No real or restricted student data is present.",
+      "evidence": [
+        "synthetic data policy",
+        "Portia marker containment"
+      ],
+      "id": "EC-017",
+      "status": "satisfied"
+    },
+    {
+      "condition": "No sibling repository is modified and no new Core kind is required.",
+      "evidence": [
+        "ADR 0001",
+        "PF-AUD-011",
+        "repository diff scope"
+      ],
+      "id": "EC-018",
+      "status": "satisfied"
+    }
+  ],
+  "findings": [
+    {
+      "disposition": "fixed_in_audit",
+      "domain": "cross_repository_baselines",
+      "evidence": [
+        "docs/examples/representative-synthetic-portfolios.md",
+        "fixtures/representative-portfolios/corpus.json",
+        "fixtures/representative-portfolios/shared/producers/scoreform.json",
+        "docs/decisions/0005-producer-artifact-exposure-boundaries.md"
+      ],
+      "id": "PF-AUD-001",
+      "resolution": "Replaced the invalid SHA with c2fa06f..., limited current ScoreForm behavior to immutable manifest generation, corrected the accepted producer-boundary ADR, and recorded Core publication and the Vitrine reader as future work.",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The representative corpus recorded an unreachable ScoreForm commit and overstated implemented publication behavior.",
+      "validation": [
+        "known invalid SHA absent",
+        "foundation validator baseline check"
+      ]
+    },
+    {
+      "disposition": "fixed_in_audit",
+      "domain": "architecture_decisions",
+      "evidence": [
+        "docs/decisions/0001-vitrine-module-boundaries-and-authority.md",
+        "docs/decisions/0002-portfolio-subject-identity-and-roster-linking.md",
+        "docs/decisions/0003-versioned-portfolio-profiles.md",
+        "docs/decisions/0004-candidate-discovery-and-source-references.md",
+        "docs/decisions/0005-producer-artifact-exposure-boundaries.md",
+        "docs/decisions/0006-selection-ordering-annotation-and-reflection.md",
+        "docs/decisions/0007-snapshot-export-checksum-and-immutability.md",
+        "docs/decisions/0008-privacy-redaction-and-audience-controls.md",
+        "docs/decisions/0009-regulated-portfolio-and-compliance-profiles.md"
+      ],
+      "id": "PF-AUD-002",
+      "resolution": "Reviewed each ADR against the final designs and corpus, accepted ADRs 0001-0009, and recorded the audit acceptance date.",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "All nine load-bearing ADRs remained Proposed at the planned foundation exit.",
+      "validation": [
+        "ADR headers and index agree",
+        "all accepted ADRs are represented in traceability"
+      ]
+    },
+    {
+      "disposition": "fixed_in_audit",
+      "domain": "documentation_authority",
+      "evidence": [
+        "docs/README.md",
+        "docs/decisions/README.md",
+        "docs/design/portfolio-subject-identity.md",
+        "docs/design/portfolio-profile-contract.md",
+        "docs/design/candidate-source-reference-contract.md",
+        "docs/design/privacy-redaction-audience-controls.md",
+        "docs/design/regulated-portfolio-compliance-profiles.md"
+      ],
+      "id": "PF-AUD-003",
+      "resolution": "Reconciled index tables, authority language, and design status notes with the accepted ADR set.",
+      "severity": "minor",
+      "status": "resolved",
+      "summary": "Documentation indexes and design status notes described the governing ADR set as Proposed.",
+      "validation": [
+        "status text scan",
+        "ADR index/status agreement"
+      ]
+    },
+    {
+      "disposition": "fixed_in_audit",
+      "domain": "fixture_baselines",
+      "evidence": [
+        "fixtures/representative-portfolios/corpus.json",
+        "docs/examples/representative-synthetic-portfolios.md"
+      ],
+      "id": "PF-AUD-004",
+      "resolution": "Added explicit historical-construction baseline policy and an audited-at Vitrine commit.",
+      "severity": "minor",
+      "status": "resolved",
+      "summary": "The corpus did not explicitly distinguish its historical construction baseline from later audit baselines.",
+      "validation": [
+        "audit manifest baseline policy check"
+      ]
+    },
+    {
+      "disposition": "fixed_in_audit",
+      "domain": "validation",
+      "evidence": [
+        "scripts/validate_representative_portfolios.py"
+      ],
+      "id": "PF-AUD-005",
+      "resolution": "Added scripts/validate_portfolio_foundation.py and machine-readable audit metadata.",
+      "severity": "major",
+      "status": "resolved",
+      "summary": "The corpus validator did not provide milestone-wide ADR, traceability, findings, Markdown, or known-invalid-baseline checks.",
+      "validation": [
+        "foundation validator passes",
+        "representative validator invoked by foundation validator"
+      ]
+    },
+    {
+      "disposition": "not_a_defect",
+      "domain": "meridian_boundary",
+      "evidence": [
+        "current audit baseline d55432f..."
+      ],
+      "id": "PF-AUD-006",
+      "resolution": "Retained the valid historical corpus baseline and documented the current no-real-adapter, no-ingestion, no-grading boundary.",
+      "severity": "observation",
+      "status": "closed",
+      "summary": "Meridian advanced from typed evidence inventory to an exact adapter interface and registry after corpus construction.",
+      "validation": [
+        "current baseline recorded in audit report"
+      ]
+    },
+    {
+      "disposition": "not_a_defect",
+      "domain": "portia_boundary",
+      "evidence": [
+        "current audit baseline d60966f..."
+      ],
+      "id": "PF-AUD-007",
+      "resolution": "Confirmed that Vitrine still consumes no Portia-private state and that deny-by-default/no-leakage rules remain unchanged.",
+      "severity": "observation",
+      "status": "closed",
+      "summary": "Portia added coordinated persistence, recovery, Quarantine, and derived-index contracts after corpus construction.",
+      "validation": [
+        "Portia marker scan",
+        "audience package exclusion checks"
+      ]
+    },
+    {
+      "disposition": "accepted_limitation",
+      "domain": "producer_runtime",
+      "evidence": [
+        "producer exposure design",
+        "current sibling baselines"
+      ],
+      "id": "PF-AUD-008",
+      "resolution": "The foundation defines exact fail-closed boundaries and labels future-facing fixtures accurately; runtime readers belong to implementation milestones.",
+      "severity": "accepted_limitation",
+      "status": "open_nonblocking",
+      "summary": "Most producer-specific Vitrine readers and projections remain future implementation work.",
+      "validation": [
+        "no fixture claims executable sibling integration"
+      ]
+    },
+    {
+      "disposition": "accepted_limitation",
+      "domain": "runtime_contracts",
+      "evidence": [
+        "unresolved implementation question sections in the design documents"
+      ],
+      "id": "PF-AUD-009",
+      "resolution": "Confirmed these questions are downstream mechanics constrained by accepted invariants and do not alter the foundation architecture.",
+      "severity": "accepted_limitation",
+      "status": "open_nonblocking",
+      "summary": "Exact serialization, persistence, transaction, renderer, authorization-provider, and retention mechanics remain unresolved.",
+      "validation": [
+        "no unresolved question authorizes broad fallback or weakens a settled invariant"
+      ]
+    },
+    {
+      "disposition": "not_a_defect",
+      "domain": "regulated_profiles",
+      "evidence": [
+        "regulated design",
+        "NJ research",
+        "NJ-style fixture"
+      ],
+      "id": "PF-AUD-010",
+      "resolution": "Verified cohort binding, separate ELA/mathematics components, local-versus-batch separation, and explicit non-operational status.",
+      "severity": "observation",
+      "status": "closed",
+      "summary": "The New Jersey-style fixture is research-only and cannot be used as an operational or later-cohort Profile.",
+      "validation": [
+        "regulated fixture checks",
+        "documentation terminology scan"
+      ]
+    },
+    {
+      "disposition": "not_a_defect",
+      "domain": "core_compatibility",
+      "evidence": [
+        "module boundaries",
+        "candidate contract",
+        "producer exposure contract"
+      ],
+      "id": "PF-AUD-011",
+      "resolution": "Confirmed that Core publication identity, exact manifest binding, compatibility metadata, and the producer-owned reader/projection boundary are sufficient architectural primitives.",
+      "severity": "observation",
+      "status": "closed",
+      "summary": "Vitrine does not need a new Core publication kind to close the foundation.",
+      "validation": [
+        "traceability exit condition EC-018"
+      ]
+    },
+    {
+      "disposition": "not_a_defect",
+      "domain": "corpus_integrity",
+      "evidence": [
+        "fixtures/representative-portfolios",
+        "scripts/validate_representative_portfolios.py"
+      ],
+      "id": "PF-AUD-012",
+      "resolution": "No corpus byte or semantic correction was required beyond the ScoreForm baseline metadata and capability boundary.",
+      "severity": "observation",
+      "status": "closed",
+      "summary": "The representative corpus passes all positive and negative integrity, path, digest, audience, and no-leakage checks.",
+      "validation": [
+        "4 portfolios, 20 entries, 20 negative cases, 39 byte files"
+      ]
+    }
+  ],
+  "historical_fixture_baseline_policy": {
+    "audit_date": "2026-08-06",
+    "audited_at_vitrine_commit": "21a7e900de7c9247e05769c355f941a5e6fd58e3",
+    "kind": "historical_construction_snapshot",
+    "rule": "Historical fixture baselines remain attributable; invalid or inaccurate commit references are corrected rather than preserved.",
+    "vitrine_construction_baseline": "840cf492b3503d5d6eba77c7ca2130cf21125d0c"
+  },
+  "issue": 13,
+  "validation_commands": [
+    "python scripts/validate_representative_portfolios.py",
+    "python scripts/validate_portfolio_foundation.py",
+    "git diff --check"
+  ],
+  "verdict": "ready_for_implementation"
+}

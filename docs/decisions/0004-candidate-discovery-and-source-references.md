@@ -1,7 +1,8 @@
 # ADR 0004: Candidate Discovery and Source References
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-05
+- **Accepted:** 2026-08-06 — approved by issue #13 portfolio foundation audit
 - **Decision owners:** Paper Data Suite maintainers
 - **Applies to:** `pds-vitrine` v0.1.0 foundation
 - **Related issue:** #6, “Define candidate and source-reference contracts”

@@ -66,13 +66,19 @@ The corpus records the exact repository states reviewed when it was built.
 | --- | --- | --- |
 | `pds-vitrine` | `840cf492b3503d5d6eba77c7ca2130cf21125d0c` | Complete conceptual foundation through regulated Profile ADR 0009. |
 | `pds-core` | `6c507213618b68a6dd3ea096e1a898201ff029e6` | Immutable registrations and Publication Records, exact manifest binding, lifecycle, compatibility metadata, and rebuildable discovery. |
-| `pds-scoreform` | `8202aeff46a6e3e30e4de07e4adc00ad38cd5348` | Implemented publication operations and audit evidence; the Portfolio attempt-summary projection remains synthetic and consumer-facing. |
+| `pds-scoreform` | `c2fa06f1a4c33df01f3e0d9c8dd27702d4a06419` | Immutable producer-owned manifest generation is implemented; producer-profile advertisement, Core publication, and the Portfolio attempt-summary reader remain future work. |
 | `pds-quillan` | `05fecf23d29e56b45cba58ed97906f5353290033` | Submission, review, selected-evidence, feedback, and privacy boundaries; Core 0.6 public projection work remains future work. |
 | `pds-concord` | `31b0efd2864cd7a0945ff29f5af99b2a00db52ae` | Foundational models and guarded persistence; the public Artifact projection remains synthetic future-facing fixture data. |
 | `pds-portia` | `0841bd946c6c3a098ebaad4bfb90669816ecc93b` | Sensitive lifecycle, correction, migration, and integrity boundaries; ordinary Portfolio exposure remains suppressed. |
 | `pds-meridian` | `44778d43b13b8c5f66b9adc24a6674692816300f` | Typed producer-neutral evidence inventory exists; adapters, ingestion, selection policy, proficiency, Grades, and reports remain unimplemented. |
 
 A future projection fixture illustrates a reviewed architectural boundary. It does not claim current executable sibling integration.
+
+### Historical construction baseline and current audit baseline
+
+The table above records the repository states used to construct the corpus. Those historical references remain attributable even when a sibling repository later advances.
+
+Issue #13 audited the corpus at Vitrine commit `21a7e900de7c9247e05769c355f941a5e6fd58e3` and recorded newer current audit baselines separately in the foundation audit. Historical baseline metadata must not be presented as a claim about the latest sibling implementation. Invalid or unreachable commit references are defects and are corrected rather than preserved.
 
 ## Corpus layout
 

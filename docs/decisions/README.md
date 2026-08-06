@@ -6,15 +6,15 @@ Architecture Decision Records document significant Vitrine decisions, their cont
 
 | ADR | Decision | Status |
 | --- | --- | --- |
-| [0001](0001-vitrine-module-boundaries-and-authority.md) | Vitrine Module Boundaries and Authority | Proposed |
-| [0002](0002-portfolio-subject-identity-and-roster-linking.md) | Portfolio Subject Identity and Roster Linking | Proposed |
-| [0003](0003-versioned-portfolio-profiles.md) | Versioned Portfolio Profiles | Proposed |
-| [0004](0004-candidate-discovery-and-source-references.md) | Candidate Discovery and Source References | Proposed |
-| [0005](0005-producer-artifact-exposure-boundaries.md) | Producer Artifact Exposure Boundaries | Proposed |
-| [0006](0006-selection-ordering-annotation-and-reflection.md) | Selection, Ordering, Annotation, and Reflection | Proposed |
-| [0007](0007-snapshot-export-checksum-and-immutability.md) | Snapshot, Export, Checksum, and Immutability | Proposed |
-| [0008](0008-privacy-redaction-and-audience-controls.md) | Privacy, Redaction, and Audience Controls | Proposed |
-| [0009](0009-regulated-portfolio-and-compliance-profiles.md) | Regulated Portfolio and Compliance Profiles | Proposed |
+| [0001](0001-vitrine-module-boundaries-and-authority.md) | Vitrine Module Boundaries and Authority | Accepted |
+| [0002](0002-portfolio-subject-identity-and-roster-linking.md) | Portfolio Subject Identity and Roster Linking | Accepted |
+| [0003](0003-versioned-portfolio-profiles.md) | Versioned Portfolio Profiles | Accepted |
+| [0004](0004-candidate-discovery-and-source-references.md) | Candidate Discovery and Source References | Accepted |
+| [0005](0005-producer-artifact-exposure-boundaries.md) | Producer Artifact Exposure Boundaries | Accepted |
+| [0006](0006-selection-ordering-annotation-and-reflection.md) | Selection, Ordering, Annotation, and Reflection | Accepted |
+| [0007](0007-snapshot-export-checksum-and-immutability.md) | Snapshot, Export, Checksum, and Immutability | Accepted |
+| [0008](0008-privacy-redaction-and-audience-controls.md) | Privacy, Redaction, and Audience Controls | Accepted |
+| [0009](0009-regulated-portfolio-and-compliance-profiles.md) | Regulated Portfolio and Compliance Profiles | Accepted |
 
 ## Status meanings
 
@@ -71,3 +71,9 @@ The proposal was considered but not adopted. It may remain documented when the r
 - [Repository documentation index](../README.md)
 
 When documents disagree, an Accepted ADR governs the architectural decision. Exact accepted contracts may add detail but must remain consistent with the ADR set.
+
+## Foundation audit disposition
+
+Issue #13 reviewed ADRs 0001 through 0009 against the complete design set, current sibling boundaries, and the representative synthetic Portfolio corpus. All nine decisions were accepted on 2026-08-06. Exact serialization and runtime mechanics remain downstream work constrained by the accepted decisions.
+
+See the [Portfolio foundation audit](../audits/portfolio-foundation-audit.md) and [traceability matrix](../audits/portfolio-foundation-traceability.md).

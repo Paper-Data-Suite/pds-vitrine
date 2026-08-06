@@ -2258,4 +2258,4 @@ This design is paired with:
 - [ADR 0008: Privacy, Redaction, and Audience Controls](../decisions/0008-privacy-redaction-and-audience-controls.md); and
 - [Representative Privacy, Redaction, and Audience Examples](../examples/privacy-redaction-audience-examples.md).
 
-The ADR remains **Proposed** until maintainers explicitly accept it.
+The ADR is **Accepted** following the issue #13 portfolio foundation audit.

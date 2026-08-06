@@ -17,6 +17,9 @@ From the repository root:
 
 ```powershell
 python scripts/validate_representative_portfolios.py
+python scripts/validate_portfolio_foundation.py
 ```
 
 The validator uses only the Python standard library, performs no network access, imports no sibling package, mutates no fixture, and exits nonzero for any mismatch.
+
+The corpus preserves its historical construction baselines. The issue #13 audit records current sibling baselines separately and corrects invalid or inaccurate historical references.
