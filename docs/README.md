@@ -26,6 +26,8 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [Representative producer artifact exposure examples](examples/producer-artifact-exposure-examples.md) — synthetic source-only, eligible, conditional, prohibited, suppressed, group, privacy, revision, and digest scenarios.
 - [Selection, ordering, annotation, and reflection records](design/selection-curation-records.md) — proposals, decisions, Selections, Placements, immutable ordering, presentation, rationale, annotation, reflection, approval, composition revisions, and replacement history.
 - [Representative selection and curation examples](examples/selection-curation-examples.md) — synthetic proposal, ordering, reflection, approval, producer-boundary, migration, correction, and composition scenarios.
+- [Snapshot, export, checksum, and immutability contracts](design/snapshot-export-immutability-contracts.md) — exact Composition input, source acquisition, copied and generated Entries, omissions, manifests, checksums, immutable Editions, exports, issuance, submission, and lifecycle.
+- [Representative snapshot and export examples](examples/snapshot-export-examples.md) — synthetic copy, render, digest, omission, export, concurrency, partial-success, issuance, submission, lifecycle, and exceptional-removal scenarios.
 
 ## Architecture decisions
 
@@ -36,6 +38,7 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [ADR 0004: Candidate Discovery and Source References](decisions/0004-candidate-discovery-and-source-references.md) — currently **Proposed** pending explicit maintainer acceptance.
 - [ADR 0005: Producer Artifact Exposure Boundaries](decisions/0005-producer-artifact-exposure-boundaries.md) — currently **Proposed** pending explicit maintainer acceptance.
 - [ADR 0006: Selection, Ordering, Annotation, and Reflection](decisions/0006-selection-ordering-annotation-and-reflection.md) — currently **Proposed** pending explicit maintainer acceptance.
+- [ADR 0007: Snapshot, Export, Checksum, and Immutability](decisions/0007-snapshot-export-checksum-and-immutability.md) — currently **Proposed** pending explicit maintainer acceptance.
 
 ## Document status and authority
 
