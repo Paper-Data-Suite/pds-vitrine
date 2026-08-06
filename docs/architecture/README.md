@@ -56,3 +56,7 @@ When documents disagree:
 6. research documents provide evidence and design inputs but do not establish final contracts.
 
 ADRs 0001 through 0009 are **Accepted** following the issue #13 portfolio foundation audit.
+
+## Runtime baseline
+
+The [package foundation](../development/package-foundation.md) establishes the installable v0.2.0 shell and released Core 0.6 dependency without adding Portfolio runtime records, producer readers, persistence, or Snapshot behavior.

@@ -1,0 +1,13 @@
+README text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.ps1 text eol=crlf
+
+# Preserve digest-bound synthetic artifact payloads byte-for-byte.
+fixtures/representative-portfolios/*/snapshot/export/*.txt -text !eol
+fixtures/representative-portfolios/shared/artifact-bytes/*/*.txt -text !eol
+fixtures/representative-portfolios/shared/restricted/*/*.txt -text !eol
