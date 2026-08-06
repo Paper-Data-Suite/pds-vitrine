@@ -1,0 +1,58 @@
+{
+  "artifact_index": "shared/artifacts.json",
+  "fixture_contract": "pds-vitrine.representative-portfolio-corpus",
+  "fixture_version": "1",
+  "forbidden_audience_markers": [
+    "PORTIA-RESTRICTED-MARKER-7F3A",
+    "portia-restricted-source-syn-001",
+    "source-portia-restricted",
+    "PRIVATE-QUILLAN-NOTE-MARKER",
+    "PRIVATE-SCOREFORM-SECURE-MARKER"
+  ],
+  "generated_for_issue": 12,
+  "negative_cases": "negative/cases.json",
+  "not_runtime_contract": true,
+  "portfolios": [
+    {
+      "expected": "improvement/expected.json",
+      "fixture": "improvement/fixture.json",
+      "portfolio_id": "portfolio-improvement-syn-001",
+      "walkthrough": "improvement/walkthrough.md"
+    },
+    {
+      "expected": "showcase/expected.json",
+      "fixture": "showcase/fixture.json",
+      "portfolio_id": "portfolio-showcase-syn-001",
+      "walkthrough": "showcase/walkthrough.md"
+    },
+    {
+      "expected": "parent-conference/expected.json",
+      "fixture": "parent-conference/fixture.json",
+      "portfolio_id": "portfolio-parent-syn-001",
+      "walkthrough": "parent-conference/walkthrough.md"
+    },
+    {
+      "expected": "nj-style-pathway/expected.json",
+      "fixture": "nj-style-pathway/fixture.json",
+      "portfolio_id": "portfolio-njstyle-syn-001",
+      "walkthrough": "nj-style-pathway/walkthrough.md"
+    }
+  ],
+  "reviewed_repositories": {
+    "pds-concord": "31b0efd2864cd7a0945ff29f5af99b2a00db52ae",
+    "pds-core": "6c507213618b68a6dd3ea096e1a898201ff029e6",
+    "pds-meridian": "44778d43b13b8c5f66b9adc24a6674692816300f",
+    "pds-portia": "0841bd946c6c3a098ebaad4bfb90669816ecc93b",
+    "pds-quillan": "05fecf23d29e56b45cba58ed97906f5353290033",
+    "pds-scoreform": "8202aeff46a6e3e30e4de07e4adc00ad38cd5348"
+  },
+  "shared_record_files": [
+    "shared/identities.json",
+    "shared/core/publications.json",
+    "shared/producers/quillan.json",
+    "shared/producers/scoreform.json",
+    "shared/producers/concord.json",
+    "shared/producers/portia-restricted.json"
+  ],
+  "vitrine_baseline": "840cf492b3503d5d6eba77c7ca2130cf21125d0c"
+}

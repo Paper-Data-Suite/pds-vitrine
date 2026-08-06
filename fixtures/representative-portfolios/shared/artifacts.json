@@ -1,0 +1,132 @@
+{
+  "artifacts": [
+    {
+      "path": "shared/artifact-bytes/quillan/baseline-argument.txt",
+      "producer": "pds-quillan",
+      "projection_kind": "selected_work",
+      "sha256": "66d20828ce14e1ae2222d0b0dd05a3efe239cc2ad559bd944512adff4d06058a",
+      "size": 270,
+      "source_id": "source-quillan-baseline",
+      "visibility": "portfolio_candidate"
+    },
+    {
+      "path": "shared/artifact-bytes/quillan/revised-argument.txt",
+      "producer": "pds-quillan",
+      "projection_kind": "selected_work",
+      "sha256": "d9bc726f0d5b1779b2ec5e5fcc7f557d95cd83afc48780b60285f06fda0af8d0",
+      "size": 347,
+      "source_id": "source-quillan-revised",
+      "visibility": "portfolio_candidate"
+    },
+    {
+      "path": "shared/artifact-bytes/quillan/polished-literary-analysis.txt",
+      "producer": "pds-quillan",
+      "projection_kind": "selected_work",
+      "sha256": "5a86178f64b55c4774c919bf0c7c863e8c7d74268ec86ce6194fa22af519c575",
+      "size": 377,
+      "source_id": "source-quillan-polished",
+      "visibility": "portfolio_candidate"
+    },
+    {
+      "path": "shared/artifact-bytes/quillan/baseline-feedback.txt",
+      "producer": "pds-quillan",
+      "projection_kind": "student_facing_feedback",
+      "sha256": "e99f3808caec392f31601843417accb37d764843f37b49681d7b2f46650bdea2",
+      "size": 165,
+      "source_id": "source-quillan-feedback-baseline",
+      "visibility": "portfolio_candidate"
+    },
+    {
+      "path": "shared/artifact-bytes/quillan/revised-feedback.txt",
+      "producer": "pds-quillan",
+      "projection_kind": "student_facing_feedback",
+      "sha256": "87c44d69b3366bef44358b1d75ffb54175dc35551042cfcb06294fa0a2e1d4f9",
+      "size": 172,
+      "source_id": "source-quillan-feedback-revised",
+      "visibility": "portfolio_candidate"
+    },
+    {
+      "path": "shared/artifact-bytes/quillan/family-safe-feedback.txt",
+      "producer": "pds-quillan",
+      "projection_kind": "student_facing_feedback",
+      "sha256": "a262e4f96380cbdc05b37ed8c87b57883d8b8ebbb1a36082e3004ae3ae2568a8",
+      "size": 159,
+      "source_id": "source-quillan-feedback-family",
+      "visibility": "portfolio_candidate"
+    },
+    {
+      "path": "shared/artifact-bytes/private/quillan-teacher-note.txt",
+      "producer": "pds-quillan",
+      "projection_kind": "private_note",
+      "sha256": "67aa9cce0de052830f9e4701a66d1e5f652a459461013be5ae11615624dd9567",
+      "size": 125,
+      "source_id": "source-quillan-private-note",
+      "visibility": "prohibited"
+    },
+    {
+      "path": "shared/artifact-bytes/scoreform/attempt-summary.json",
+      "producer": "pds-scoreform",
+      "projection_kind": "attempt_summary",
+      "sha256": "28fdbddeab9bcce9d003cd7d7a862bc8062083184b290797fd015645b8cd00e3",
+      "size": 1074,
+      "source_id": "source-scoreform-summary",
+      "visibility": "portfolio_candidate"
+    },
+    {
+      "path": "shared/artifact-bytes/private/scoreform-secure-material.txt",
+      "producer": "pds-scoreform",
+      "projection_kind": "secure_assessment_material",
+      "sha256": "19a7893d5f93e21ea6f8ac5853ccfa2b5ae0fb994db2fa0bb88d050eb68db6e2",
+      "size": 113,
+      "source_id": "source-scoreform-secure",
+      "visibility": "prohibited"
+    },
+    {
+      "path": "shared/artifact-bytes/concord/group-artifact.txt",
+      "producer": "pds-concord",
+      "projection_kind": "artifact",
+      "sha256": "0b9ffbb18e44d698ffb51e8973bb3647df45995d815ba5dcea949a9dafe1cbc8",
+      "size": 322,
+      "source_id": "source-concord-group",
+      "visibility": "conditional"
+    },
+    {
+      "path": "shared/artifact-bytes/concord/audience-safe-attribution.txt",
+      "producer": "pds-concord",
+      "projection_kind": "audience_safe_attribution",
+      "sha256": "1f51f05825c7907d4398c7807de97c1fd968cffe139f27c6d1b15e09f195d58e",
+      "size": 190,
+      "source_id": "source-concord-attribution",
+      "visibility": "portfolio_candidate"
+    },
+    {
+      "path": "shared/artifact-bytes/regulated/ela-reading-response.txt",
+      "producer": "vitrine-synthetic-local",
+      "projection_kind": "regulated_supporting_record",
+      "sha256": "4c17c621fc0e92753e0990624b4b67d595d41e06e74386a0def3650953359875",
+      "size": 222,
+      "source_id": "source-regulated-ela",
+      "visibility": "regulated_internal"
+    },
+    {
+      "path": "shared/artifact-bytes/regulated/transcript-summary.json",
+      "producer": "vitrine-synthetic-local",
+      "projection_kind": "regulated_supporting_record",
+      "sha256": "91c013893d03e9e7c81a943821e1f8e8f41fcfd3d94754a6d02eb5cf1ba26a26",
+      "size": 186,
+      "source_id": "source-regulated-transcript",
+      "visibility": "regulated_internal"
+    },
+    {
+      "path": "shared/restricted/portia/internal-intervention-note.txt",
+      "producer": "pds-portia",
+      "projection_kind": "restricted_internal",
+      "sha256": "d58acaf2598750ee22fd0c627285a20b5d8239151ce08ed516539659af14d1ca",
+      "size": 154,
+      "source_id": "source-portia-restricted",
+      "visibility": "suppressed"
+    }
+  ],
+  "fixture_contract": "pds-vitrine.synthetic-artifact-index",
+  "fixture_version": "1"
+}

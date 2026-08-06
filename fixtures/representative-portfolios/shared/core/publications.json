@@ -1,0 +1,82 @@
+{
+  "fixture_contract": "pds-vitrine.synthetic-core-records",
+  "fixture_version": "1",
+  "records": [
+    {
+      "id": "registration-quillan-baseline",
+      "kind": "AcademicWorkRegistration",
+      "refs": [],
+      "work_ref": "quillan-work-baseline"
+    },
+    {
+      "id": "publication-quillan-baseline",
+      "kind": "PublicationRecord",
+      "producer": "pds-quillan",
+      "refs": [
+        "registration-quillan-baseline"
+      ],
+      "status": "future_synthetic_projection"
+    },
+    {
+      "id": "registration-quillan-revised",
+      "kind": "AcademicWorkRegistration",
+      "refs": [],
+      "work_ref": "quillan-work-revised"
+    },
+    {
+      "id": "publication-quillan-revised",
+      "kind": "PublicationRecord",
+      "producer": "pds-quillan",
+      "refs": [
+        "registration-quillan-revised"
+      ],
+      "status": "future_synthetic_projection"
+    },
+    {
+      "id": "registration-quillan-polished",
+      "kind": "AcademicWorkRegistration",
+      "refs": [],
+      "work_ref": "quillan-work-polished"
+    },
+    {
+      "id": "publication-quillan-polished",
+      "kind": "PublicationRecord",
+      "producer": "pds-quillan",
+      "refs": [
+        "registration-quillan-polished"
+      ],
+      "status": "future_synthetic_projection"
+    },
+    {
+      "id": "registration-scoreform-001",
+      "kind": "AcademicWorkRegistration",
+      "refs": [],
+      "work_ref": "scoreform-work-syn-001"
+    },
+    {
+      "id": "publication-scoreform-001",
+      "kind": "PublicationRecord",
+      "producer": "pds-scoreform",
+      "refs": [
+        "registration-scoreform-001"
+      ],
+      "status": "synthetic_projection_over_implemented_publication"
+    },
+    {
+      "id": "registration-concord-001",
+      "kind": "AcademicWorkRegistration",
+      "refs": [],
+      "work_ref": "concord-work-syn-001"
+    },
+    {
+      "id": "publication-concord-001",
+      "kind": "PublicationRecord",
+      "producer": "pds-concord",
+      "refs": [
+        "registration-concord-001"
+      ],
+      "status": "future_synthetic_projection"
+    }
+  ],
+  "reviewed_baseline": "6c507213618b68a6dd3ea096e1a898201ff029e6"
+}

@@ -1,0 +1,28 @@
+{
+  "fixture_contract": "pds-vitrine.synthetic-producer-records",
+  "fixture_version": "1",
+  "producer": "pds-scoreform",
+  "records": [
+    {
+      "artifact_source_id": "source-scoreform-summary",
+      "id": "scoreform-projection-attempt-summary",
+      "kind": "ProducerProjection",
+      "projection_kind": "attempt_summary",
+      "refs": [
+        "publication-scoreform-001",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "artifact_source_id": "source-scoreform-secure",
+      "exposure": "prohibited",
+      "id": "scoreform-secure-record",
+      "kind": "ProducerPrivateRecord",
+      "refs": [
+        "publication-scoreform-001"
+      ]
+    }
+  ],
+  "reviewed_baseline": "8202aeff46a6e3e30e4de07e4adc00ad38cd5348",
+  "runtime_support": "synthetic_consumer_projection_over_implemented_publication_workflow"
+}

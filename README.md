@@ -22,4 +22,5 @@ Key entry points:
 - [Snapshot, export, checksum, and immutability contracts](docs/design/snapshot-export-immutability-contracts.md)
 - [Privacy, redaction, and audience controls](docs/design/privacy-redaction-audience-controls.md)
 - [Regulated Portfolio and compliance profiles](docs/design/regulated-portfolio-compliance-profiles.md)
+- [Representative synthetic Portfolio corpus](docs/examples/representative-synthetic-portfolios.md)
 - [Architecture Decision Records](docs/decisions/README.md)

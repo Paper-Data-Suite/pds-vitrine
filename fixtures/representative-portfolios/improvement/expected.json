@@ -1,0 +1,21 @@
+{
+  "assertions": [
+    "cross_class_identity_is_explicit",
+    "work_and_feedback_are_separate",
+    "improvement_is_not_calculated",
+    "issued_edition_is_immutable"
+  ],
+  "excluded_source_ids": [
+    "source-quillan-private-note",
+    "source-portia-restricted"
+  ],
+  "expected_result": "pass",
+  "included_entry_ids": [
+    "entry-imp-baseline-work",
+    "entry-imp-baseline-feedback",
+    "entry-imp-revised-work",
+    "entry-imp-revised-feedback",
+    "entry-imp-reflection",
+    "entry-imp-index"
+  ]
+}

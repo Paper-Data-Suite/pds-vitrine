@@ -1,0 +1,47 @@
+{
+  "attempts": [
+    {
+      "attempt_id": "attempt-sf-001",
+      "earned_points": 14,
+      "possible_points": 20,
+      "question_states": [
+        {
+          "earned_points": 2,
+          "possible_points": 2,
+          "question_id": "q-sf-01",
+          "state": "answered"
+        },
+        {
+          "question_id": "q-sf-02",
+          "state": "blank"
+        }
+      ],
+      "sequence": 1
+    },
+    {
+      "attempt_id": "attempt-sf-002",
+      "earned_points": 17,
+      "possible_points": 20,
+      "question_states": [
+        {
+          "earned_points": 2,
+          "possible_points": 2,
+          "question_id": "q-sf-01",
+          "state": "answered"
+        },
+        {
+          "question_id": "q-sf-02",
+          "state": "ambiguous"
+        }
+      ],
+      "sequence": 2
+    }
+  ],
+  "fixture_contract": "synthetic-scoreform-attempt-summary",
+  "fixture_version": "1",
+  "grade_claimed": false,
+  "official_attempt_selected": false,
+  "proficiency_claimed": false,
+  "student_id": "student-syn-001",
+  "work_id": "scoreform-work-syn-001"
+}

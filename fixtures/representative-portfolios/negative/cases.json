@@ -1,0 +1,172 @@
+{
+  "cases": [
+    {
+      "case_id": "neg-01-name-only-subject-match",
+      "expected_error": "identity.name_only_match",
+      "payload": {
+        "match_basis": "name_only"
+      }
+    },
+    {
+      "case_id": "neg-02-stale-catalog-only",
+      "expected_error": "source.catalog_without_canonical_verification",
+      "payload": {
+        "catalog_only": true
+      }
+    },
+    {
+      "case_id": "neg-03-unsupported-producer-contract",
+      "expected_error": "source.unsupported_producer_contract",
+      "payload": {
+        "producer_contract_supported": false
+      }
+    },
+    {
+      "case_id": "neg-04-digest-mismatch",
+      "expected_error": "integrity.digest_mismatch",
+      "payload": {
+        "actual_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "declared_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "case_id": "neg-05-silent-candidate-successor",
+      "expected_error": "curation.silent_source_replacement",
+      "payload": {
+        "replacement_record": null,
+        "selected_source_id": "source-a",
+        "snapshot_source_id": "source-b"
+      }
+    },
+    {
+      "case_id": "neg-06-group-membership-authorship",
+      "expected_error": "concord.group_membership_as_authorship",
+      "payload": {
+        "authorship_basis": "group_membership"
+      }
+    },
+    {
+      "case_id": "neg-07-group-score-individualized",
+      "expected_error": "concord.group_score_as_individual_score",
+      "payload": {
+        "claimed_target": "individual",
+        "score_target": "group"
+      }
+    },
+    {
+      "case_id": "neg-08-private-quillan-family",
+      "expected_error": "quillan.private_material_in_audience_package",
+      "payload": {
+        "audience": "parent_guardian_facing",
+        "fields": [
+          "private_notes"
+        ]
+      }
+    },
+    {
+      "case_id": "neg-09-scoreform-secure-exposure",
+      "expected_error": "scoreform.secure_material_exposed",
+      "payload": {
+        "fields": [
+          "answer_key"
+        ]
+      }
+    },
+    {
+      "case_id": "neg-10-portia-existence-leak",
+      "expected_error": "portia.suppressed_existence_leak",
+      "payload": {
+        "audience_text": "PORTIA-RESTRICTED-MARKER-7F3A"
+      }
+    },
+    {
+      "case_id": "neg-11-internal-manifest-distributed",
+      "expected_error": "snapshot.internal_manifest_distributed",
+      "payload": {
+        "audience_entries": [
+          "internal_snapshot_manifest"
+        ]
+      }
+    },
+    {
+      "case_id": "neg-12-content-change-same-edition",
+      "expected_error": "snapshot.audience_content_changed_without_new_edition",
+      "payload": {
+        "digest_after": "b",
+        "digest_before": "a",
+        "edition_after": "edition-1",
+        "edition_before": "edition-1"
+      }
+    },
+    {
+      "case_id": "neg-13-checklist-without-evidence",
+      "expected_error": "regulated.checklist_satisfied_without_evidence",
+      "payload": {
+        "evidence_refs": [],
+        "finding": "satisfied"
+      }
+    },
+    {
+      "case_id": "neg-14-attestation-as-approval",
+      "expected_error": "regulated.attestation_as_approval",
+      "payload": {
+        "approval_basis": "attestation_only"
+      }
+    },
+    {
+      "case_id": "neg-15-resubmission-overwrite",
+      "expected_error": "regulated.resubmission_overwrites_predecessor",
+      "payload": {
+        "correction": true,
+        "predecessor_preserved": false
+      }
+    },
+    {
+      "case_id": "neg-16-indeterminate-allowed",
+      "expected_error": "authorization.indeterminate_treated_as_allowed",
+      "payload": {
+        "action_executed": true,
+        "decision": "indeterminate"
+      }
+    },
+    {
+      "case_id": "neg-17-unsafe-path",
+      "expected_error": "path.unsafe",
+      "payload": {
+        "path": "../outside.txt"
+      }
+    },
+    {
+      "case_id": "neg-18-duplicate-entry",
+      "expected_error": "snapshot.duplicate_entry_path",
+      "payload": {
+        "paths": [
+          "same.txt",
+          "same.txt"
+        ]
+      }
+    },
+    {
+      "case_id": "neg-19-manifest-order-mismatch",
+      "expected_error": "snapshot.manifest_order_mismatch",
+      "payload": {
+        "sequences": [
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "case_id": "neg-20-issued-snapshot-refresh",
+      "expected_error": "snapshot.issued_edition_silently_refreshed",
+      "payload": {
+        "edition_changed": false,
+        "issued": true,
+        "source_digest_after": "b",
+        "source_digest_before": "a"
+      }
+    }
+  ],
+  "fixture_contract": "pds-vitrine.representative-portfolio-negative-cases",
+  "fixture_version": "1"
+}

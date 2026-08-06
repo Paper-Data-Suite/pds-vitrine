@@ -1,0 +1,307 @@
+{
+  "exclusions": [
+    {
+      "audience_visible_notice": false,
+      "reason_code": "suppressed_no_existence_disclosure",
+      "source_id": "source-portia-restricted"
+    },
+    {
+      "audience_visible_notice": false,
+      "reason_code": "producer_private",
+      "source_id": "source-quillan-private-note"
+    }
+  ],
+  "fixture_contract": "pds-vitrine.representative-portfolio",
+  "fixture_version": "1",
+  "portfolio_id": "portfolio-showcase-syn-001",
+  "purpose_kind": "showcase",
+  "records": [
+    {
+      "id": "portfolio-showcase-syn-001",
+      "kind": "Portfolio",
+      "refs": [
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "profile-showcase-rev-001",
+      "kind": "PortfolioProfileRevision",
+      "purpose_kind": "showcase",
+      "refs": [
+        "profile-family-show-001"
+      ]
+    },
+    {
+      "id": "profile-binding-showcase-001",
+      "kind": "PortfolioProfileBinding",
+      "refs": [
+        "profile-showcase-rev-001",
+        "portfolio-showcase-syn-001"
+      ]
+    },
+    {
+      "id": "candidate-show-polished",
+      "kind": "Candidate",
+      "refs": [
+        "quillan-projection-polished-work",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "candidate-show-group",
+      "kind": "Candidate",
+      "refs": [
+        "concord-projection-artifact",
+        "concord-subject-syn-001",
+        "concord-contribution-syn-001"
+      ]
+    },
+    {
+      "id": "candidate-show-attribution",
+      "kind": "Candidate",
+      "refs": [
+        "concord-projection-attribution"
+      ]
+    },
+    {
+      "id": "selection-show-polished",
+      "kind": "Selection",
+      "refs": [
+        "candidate-show-polished"
+      ]
+    },
+    {
+      "id": "selection-show-group",
+      "kind": "Selection",
+      "refs": [
+        "candidate-show-group"
+      ]
+    },
+    {
+      "id": "selection-show-attribution",
+      "kind": "Selection",
+      "refs": [
+        "candidate-show-attribution"
+      ]
+    },
+    {
+      "id": "placement-show-001",
+      "kind": "Placement",
+      "refs": [
+        "selection-show-polished"
+      ],
+      "section": "individual_work"
+    },
+    {
+      "id": "placement-show-002",
+      "kind": "Placement",
+      "refs": [
+        "selection-show-group"
+      ],
+      "section": "collaborative_work"
+    },
+    {
+      "id": "placement-show-003",
+      "kind": "Placement",
+      "refs": [
+        "selection-show-attribution"
+      ],
+      "section": "collaborative_work"
+    },
+    {
+      "author": "actor-student-syn-001",
+      "id": "rationale-show-001",
+      "kind": "SelectionRationale",
+      "refs": [
+        "selection-show-polished",
+        "selection-show-group"
+      ]
+    },
+    {
+      "id": "collaborator-review-show-001",
+      "kind": "DisclosureReview",
+      "outcome": "approved_with_audience_safe_attribution",
+      "refs": [
+        "concord-artifact-syn-001",
+        "concord-contribution-syn-001"
+      ]
+    },
+    {
+      "id": "composition-show-rev-001",
+      "kind": "WorkingPortfolioCompositionRevision",
+      "refs": [
+        "placement-show-001",
+        "placement-show-002",
+        "placement-show-003",
+        "rationale-show-001",
+        "collaborator-review-show-001",
+        "presentation-show-001"
+      ]
+    },
+    {
+      "audience_class": "external_reviewer",
+      "id": "audience-show-external",
+      "kind": "AudienceContext",
+      "refs": [
+        "profile-binding-showcase-001"
+      ]
+    },
+    {
+      "id": "recipient-show-reviewer",
+      "kind": "RecipientScope",
+      "refs": [
+        "actor-reviewer-syn-001"
+      ]
+    },
+    {
+      "id": "authorization-show-001",
+      "kind": "AuthorizationDecision",
+      "outcome": "allowed",
+      "refs": [
+        "audience-show-external",
+        "recipient-show-reviewer"
+      ]
+    },
+    {
+      "id": "snapshot-edition-show-001",
+      "kind": "SnapshotEdition",
+      "refs": [
+        "composition-show-rev-001",
+        "audience-show-external",
+        "snapshot-seal-show-001"
+      ]
+    },
+    {
+      "event_kind": "delivered",
+      "id": "disclosure-event-show-001",
+      "kind": "DisclosureEvent",
+      "refs": [
+        "snapshot-edition-show-001",
+        "authorization-show-001",
+        "export-artifact-show-001"
+      ]
+    },
+    {
+      "id": "profile-family-show-001",
+      "kind": "PortfolioProfileFamily",
+      "purpose_kind": "showcase",
+      "refs": []
+    },
+    {
+      "id": "candidate-evaluation-show-001",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-show-polished"
+      ]
+    },
+    {
+      "id": "candidate-evaluation-show-002",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-show-group"
+      ]
+    },
+    {
+      "id": "candidate-evaluation-show-003",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-show-attribution"
+      ]
+    },
+    {
+      "id": "snapshot-build-request-show-001",
+      "kind": "SnapshotBuildRequest",
+      "refs": [
+        "composition-show-rev-001",
+        "audience-show-external"
+      ]
+    },
+    {
+      "id": "snapshot-build-plan-show-001",
+      "kind": "SnapshotBuildPlan",
+      "plan_state": "immutable",
+      "refs": [
+        "snapshot-build-request-show-001",
+        "source-quillan-polished",
+        "source-concord-group",
+        "source-concord-attribution"
+      ]
+    },
+    {
+      "id": "snapshot-build-attempt-show-001",
+      "kind": "SnapshotBuildAttempt",
+      "outcome": "sealed",
+      "refs": [
+        "snapshot-build-plan-show-001"
+      ]
+    },
+    {
+      "id": "snapshot-manifest-record-show-001",
+      "kind": "SnapshotManifest",
+      "manifest_path": "showcase/snapshot/manifest.json",
+      "manifest_sha256": "5c2f8ec7f1a59318a35316d89d5727f471d0c46707bd69dd6ff7971d26ea1000",
+      "refs": [
+        "snapshot-build-attempt-show-001"
+      ]
+    },
+    {
+      "id": "snapshot-seal-show-001",
+      "kind": "SnapshotSeal",
+      "logical_inventory_sha256": "157697cc8fbba4b28dab4eba30949a9f645eb8df72131044e6707062fbe4d3b3",
+      "refs": [
+        "snapshot-manifest-record-show-001"
+      ]
+    },
+    {
+      "format": "directory_package",
+      "id": "export-artifact-show-001",
+      "kind": "ExportArtifact",
+      "refs": [
+        "snapshot-edition-show-001",
+        "snapshot-seal-show-001"
+      ]
+    },
+    {
+      "display_mode": "showcase",
+      "id": "presentation-show-001",
+      "kind": "PresentationRevision",
+      "refs": [
+        "selection-show-polished",
+        "selection-show-group"
+      ]
+    }
+  ],
+  "shared_record_files": [
+    "shared/identities.json",
+    "shared/core/publications.json",
+    "shared/producers/quillan.json",
+    "shared/producers/scoreform.json",
+    "shared/producers/concord.json",
+    "shared/producers/portia-restricted.json"
+  ],
+  "snapshot": {
+    "audience_context_id": "audience-show-external",
+    "composition_revision_id": "composition-show-rev-001",
+    "edition_id": "snapshot-edition-show-001",
+    "entry_ids": [
+      "entry-show-polished",
+      "entry-show-group",
+      "entry-show-attribution",
+      "entry-show-rationale",
+      "entry-show-index"
+    ],
+    "export_root": "showcase/snapshot/export",
+    "issued": true,
+    "logical_inventory_sha256": "157697cc8fbba4b28dab4eba30949a9f645eb8df72131044e6707062fbe4d3b3",
+    "manifest_path": "showcase/snapshot/manifest.json",
+    "manifest_sha256": "5c2f8ec7f1a59318a35316d89d5727f471d0c46707bd69dd6ff7971d26ea1000"
+  },
+  "source_artifacts": [
+    "source-quillan-polished",
+    "source-concord-group",
+    "source-concord-attribution"
+  ]
+}

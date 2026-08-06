@@ -1,0 +1,20 @@
+{
+  "assertions": [
+    "research_only_profile",
+    "ela_and_math_are_independent",
+    "local_snapshot_and_school_batch_are_distinct",
+    "corrected_submission_preserves_predecessor",
+    "receipt_and_outcome_are_distinct"
+  ],
+  "excluded_source_ids": [
+    "source-portia-restricted",
+    "source-scoreform-secure"
+  ],
+  "expected_result": "pass",
+  "included_entry_ids": [
+    "entry-njstyle-cover",
+    "entry-njstyle-transcript",
+    "entry-njstyle-ela",
+    "entry-njstyle-checklist"
+  ]
+}

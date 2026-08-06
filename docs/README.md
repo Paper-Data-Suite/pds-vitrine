@@ -32,6 +32,7 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [Representative privacy, redaction, and audience examples](examples/privacy-redaction-audience-examples.md) — synthetic student, family, teacher, reviewer, regulated, public, producer, redaction, de-identification, delivery, and historical-authorization scenarios.
 - [Regulated Portfolio and compliance profiles](design/regulated-portfolio-compliance-profiles.md) — authority sources, regulated cases and components, pathways, checklists, supporting records, attestations, deadlines, approvals, batches, submissions, receipts, outcomes, migration, and the New Jersey reference family.
 - [Representative regulated Portfolio and compliance examples](examples/regulated-portfolio-compliance-examples.md) — synthetic Profile activation, component, pathway, evidence, checklist, attestation, deadline, batch, resubmission, external-outcome, privacy, producer, and historical-replay scenarios.
+- [Representative synthetic Portfolio corpus](examples/representative-synthetic-portfolios.md) — executable cross-contract fixtures for improvement, showcase, parent/guardian conference, and research-only NJ-style regulated Portfolios, with actual bytes, checksums, producer boundaries, expected outcomes, and negative cases.
 
 ## Architecture decisions
 

@@ -1,0 +1,363 @@
+{
+  "exclusions": [
+    {
+      "audience_visible_notice": false,
+      "reason_code": "producer_private",
+      "source_id": "source-quillan-private-note"
+    },
+    {
+      "audience_visible_notice": false,
+      "reason_code": "suppressed_no_existence_disclosure",
+      "source_id": "source-portia-restricted"
+    }
+  ],
+  "fixture_contract": "pds-vitrine.representative-portfolio",
+  "fixture_version": "1",
+  "portfolio_id": "portfolio-improvement-syn-001",
+  "purpose_kind": "improvement",
+  "records": [
+    {
+      "id": "portfolio-improvement-syn-001",
+      "kind": "Portfolio",
+      "refs": [
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "profile-improvement-rev-001",
+      "kind": "PortfolioProfileRevision",
+      "purpose_kind": "improvement",
+      "refs": [
+        "profile-family-imp-001"
+      ]
+    },
+    {
+      "id": "profile-binding-improvement-001",
+      "kind": "PortfolioProfileBinding",
+      "refs": [
+        "profile-improvement-rev-001",
+        "portfolio-improvement-syn-001"
+      ]
+    },
+    {
+      "id": "candidate-imp-baseline-work",
+      "kind": "Candidate",
+      "refs": [
+        "quillan-projection-baseline-work",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "candidate-imp-baseline-feedback",
+      "kind": "Candidate",
+      "refs": [
+        "quillan-projection-baseline-feedback",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "candidate-imp-revised-work",
+      "kind": "Candidate",
+      "refs": [
+        "quillan-projection-revised-work",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "candidate-imp-revised-feedback",
+      "kind": "Candidate",
+      "refs": [
+        "quillan-projection-revised-feedback",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "selection-imp-baseline-work",
+      "kind": "Selection",
+      "refs": [
+        "candidate-imp-baseline-work",
+        "selection-decision-imp-001"
+      ]
+    },
+    {
+      "id": "selection-imp-baseline-feedback",
+      "kind": "Selection",
+      "refs": [
+        "candidate-imp-baseline-feedback",
+        "selection-decision-imp-001"
+      ]
+    },
+    {
+      "id": "selection-imp-revised-work",
+      "kind": "Selection",
+      "refs": [
+        "candidate-imp-revised-work",
+        "selection-decision-imp-001"
+      ]
+    },
+    {
+      "id": "selection-imp-revised-feedback",
+      "kind": "Selection",
+      "refs": [
+        "candidate-imp-revised-feedback",
+        "selection-decision-imp-001"
+      ]
+    },
+    {
+      "id": "placement-imp-001",
+      "kind": "Placement",
+      "refs": [
+        "selection-imp-baseline-work"
+      ],
+      "section": "baseline"
+    },
+    {
+      "id": "placement-imp-002",
+      "kind": "Placement",
+      "refs": [
+        "selection-imp-baseline-feedback"
+      ],
+      "section": "baseline_feedback"
+    },
+    {
+      "id": "placement-imp-003",
+      "kind": "Placement",
+      "refs": [
+        "selection-imp-revised-work"
+      ],
+      "section": "later_work"
+    },
+    {
+      "id": "placement-imp-004",
+      "kind": "Placement",
+      "refs": [
+        "selection-imp-revised-feedback"
+      ],
+      "section": "later_feedback"
+    },
+    {
+      "author": "actor-student-syn-001",
+      "id": "reflection-imp-001",
+      "kind": "ReflectionRevision",
+      "refs": [
+        "selection-imp-baseline-work",
+        "selection-imp-revised-work"
+      ]
+    },
+    {
+      "decision": "approved",
+      "id": "curation-review-imp-001",
+      "kind": "CurationReviewDecision",
+      "refs": [
+        "profile-binding-improvement-001",
+        "reflection-imp-001"
+      ]
+    },
+    {
+      "id": "composition-imp-rev-001",
+      "kind": "WorkingPortfolioCompositionRevision",
+      "refs": [
+        "placement-imp-001",
+        "placement-imp-002",
+        "placement-imp-003",
+        "placement-imp-004",
+        "reflection-imp-001",
+        "curation-review-imp-001"
+      ]
+    },
+    {
+      "audience_class": "student_facing",
+      "id": "audience-imp-student",
+      "kind": "AudienceContext",
+      "refs": [
+        "profile-binding-improvement-001"
+      ]
+    },
+    {
+      "id": "recipient-imp-student",
+      "kind": "RecipientScope",
+      "refs": [
+        "actor-student-syn-001"
+      ]
+    },
+    {
+      "id": "authorization-imp-001",
+      "kind": "AuthorizationDecision",
+      "outcome": "allowed",
+      "refs": [
+        "audience-imp-student",
+        "recipient-imp-student"
+      ]
+    },
+    {
+      "id": "disclosure-review-imp-001",
+      "kind": "DisclosureReview",
+      "outcome": "approved_as_is",
+      "refs": [
+        "authorization-imp-001",
+        "composition-imp-rev-001"
+      ]
+    },
+    {
+      "id": "snapshot-edition-imp-001",
+      "kind": "SnapshotEdition",
+      "refs": [
+        "composition-imp-rev-001",
+        "audience-imp-student",
+        "snapshot-seal-imp-001"
+      ]
+    },
+    {
+      "id": "issuance-imp-001",
+      "kind": "Issuance",
+      "refs": [
+        "snapshot-edition-imp-001",
+        "authorization-imp-001",
+        "export-artifact-imp-001"
+      ]
+    },
+    {
+      "id": "profile-family-imp-001",
+      "kind": "PortfolioProfileFamily",
+      "purpose_kind": "improvement",
+      "refs": []
+    },
+    {
+      "id": "candidate-evaluation-imp-001",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-imp-baseline-work"
+      ]
+    },
+    {
+      "id": "candidate-evaluation-imp-002",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-imp-baseline-feedback"
+      ]
+    },
+    {
+      "id": "candidate-evaluation-imp-003",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-imp-revised-work"
+      ]
+    },
+    {
+      "id": "candidate-evaluation-imp-004",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-imp-revised-feedback"
+      ]
+    },
+    {
+      "id": "snapshot-build-request-imp-001",
+      "kind": "SnapshotBuildRequest",
+      "refs": [
+        "composition-imp-rev-001",
+        "audience-imp-student"
+      ]
+    },
+    {
+      "id": "snapshot-build-plan-imp-001",
+      "kind": "SnapshotBuildPlan",
+      "plan_state": "immutable",
+      "refs": [
+        "snapshot-build-request-imp-001",
+        "source-quillan-baseline",
+        "source-quillan-feedback-baseline",
+        "source-quillan-revised",
+        "source-quillan-feedback-revised"
+      ]
+    },
+    {
+      "id": "snapshot-build-attempt-imp-001",
+      "kind": "SnapshotBuildAttempt",
+      "outcome": "sealed",
+      "refs": [
+        "snapshot-build-plan-imp-001"
+      ]
+    },
+    {
+      "id": "snapshot-manifest-record-imp-001",
+      "kind": "SnapshotManifest",
+      "manifest_path": "improvement/snapshot/manifest.json",
+      "manifest_sha256": "836e6563eba69f61a3155136e71aded546abdb18733170df87044749d9f5814f",
+      "refs": [
+        "snapshot-build-attempt-imp-001"
+      ]
+    },
+    {
+      "id": "snapshot-seal-imp-001",
+      "kind": "SnapshotSeal",
+      "logical_inventory_sha256": "17bafff8e42b9693a9ef7c3bdb885ab944944a85a6b4209df092ece9c32ed26f",
+      "refs": [
+        "snapshot-manifest-record-imp-001"
+      ]
+    },
+    {
+      "format": "directory_package",
+      "id": "export-artifact-imp-001",
+      "kind": "ExportArtifact",
+      "refs": [
+        "snapshot-edition-imp-001",
+        "snapshot-seal-imp-001"
+      ]
+    },
+    {
+      "id": "selection-proposal-imp-001",
+      "kind": "SelectionProposal",
+      "proposed_by": "actor-student-syn-001",
+      "refs": [
+        "candidate-imp-baseline-work",
+        "candidate-imp-baseline-feedback",
+        "candidate-imp-revised-work",
+        "candidate-imp-revised-feedback"
+      ]
+    },
+    {
+      "id": "selection-decision-imp-001",
+      "kind": "SelectionDecision",
+      "outcome": "approved",
+      "refs": [
+        "selection-proposal-imp-001"
+      ]
+    }
+  ],
+  "shared_record_files": [
+    "shared/identities.json",
+    "shared/core/publications.json",
+    "shared/producers/quillan.json",
+    "shared/producers/scoreform.json",
+    "shared/producers/concord.json",
+    "shared/producers/portia-restricted.json"
+  ],
+  "snapshot": {
+    "audience_context_id": "audience-imp-student",
+    "composition_revision_id": "composition-imp-rev-001",
+    "edition_id": "snapshot-edition-imp-001",
+    "entry_ids": [
+      "entry-imp-baseline-work",
+      "entry-imp-baseline-feedback",
+      "entry-imp-revised-work",
+      "entry-imp-revised-feedback",
+      "entry-imp-reflection",
+      "entry-imp-index"
+    ],
+    "export_root": "improvement/snapshot/export",
+    "issued": true,
+    "logical_inventory_sha256": "17bafff8e42b9693a9ef7c3bdb885ab944944a85a6b4209df092ece9c32ed26f",
+    "manifest_path": "improvement/snapshot/manifest.json",
+    "manifest_sha256": "836e6563eba69f61a3155136e71aded546abdb18733170df87044749d9f5814f"
+  },
+  "source_artifacts": [
+    "source-quillan-baseline",
+    "source-quillan-feedback-baseline",
+    "source-quillan-revised",
+    "source-quillan-feedback-revised"
+  ]
+}

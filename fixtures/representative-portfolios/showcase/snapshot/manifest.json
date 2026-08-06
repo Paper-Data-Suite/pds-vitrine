@@ -1,0 +1,58 @@
+{
+  "audience_context_id": "audience-show-external",
+  "composition_revision_id": "composition-show-rev-001",
+  "entries": [
+    {
+      "entry_id": "entry-show-polished",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "01-polished-literary-analysis.txt",
+      "sequence": 1,
+      "sha256": "5a86178f64b55c4774c919bf0c7c863e8c7d74268ec86ce6194fa22af519c575",
+      "size": 377,
+      "source_path": "shared/artifact-bytes/quillan/polished-literary-analysis.txt"
+    },
+    {
+      "entry_id": "entry-show-group",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "02-group-water-quality-recommendation.txt",
+      "sequence": 2,
+      "sha256": "0b9ffbb18e44d698ffb51e8973bb3647df45995d815ba5dcea949a9dafe1cbc8",
+      "size": 322,
+      "source_path": "shared/artifact-bytes/concord/group-artifact.txt"
+    },
+    {
+      "entry_id": "entry-show-attribution",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "03-audience-safe-attribution.txt",
+      "sequence": 3,
+      "sha256": "1f51f05825c7907d4398c7807de97c1fd968cffe139f27c6d1b15e09f195d58e",
+      "size": 190,
+      "source_path": "shared/artifact-bytes/concord/audience-safe-attribution.txt"
+    },
+    {
+      "entry_id": "entry-show-rationale",
+      "kind": "vitrine_generated_representation",
+      "materialization_kind": "vitrine_render",
+      "relative_path": "04-curation-rationale.md",
+      "sequence": 4,
+      "sha256": "a167d8122a56a79b0b4befb37f4b2dfa29c391fe93453f81aadca94629ba8de9",
+      "size": 269
+    },
+    {
+      "entry_id": "entry-show-index",
+      "kind": "vitrine_generated_representation",
+      "materialization_kind": "vitrine_render",
+      "relative_path": "05-index.md",
+      "sequence": 5,
+      "sha256": "33809467460bfa0283a54cedd0ecb96b7f3bb7b979f50cf4abe554c0987a0f4f",
+      "size": 126
+    }
+  ],
+  "fixture_contract": "pds-vitrine.synthetic-snapshot-manifest",
+  "fixture_version": "1",
+  "omissions": [],
+  "snapshot_edition_id": "snapshot-edition-show-001"
+}
