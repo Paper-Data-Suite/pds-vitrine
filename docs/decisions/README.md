@@ -14,6 +14,7 @@ Architecture Decision Records document significant Vitrine decisions, their cont
 | [0006](0006-selection-ordering-annotation-and-reflection.md) | Selection, Ordering, Annotation, and Reflection | Proposed |
 | [0007](0007-snapshot-export-checksum-and-immutability.md) | Snapshot, Export, Checksum, and Immutability | Proposed |
 | [0008](0008-privacy-redaction-and-audience-controls.md) | Privacy, Redaction, and Audience Controls | Proposed |
+| [0009](0009-regulated-portfolio-and-compliance-profiles.md) | Regulated Portfolio and Compliance Profiles | Proposed |
 
 ## Status meanings
 
@@ -64,6 +65,8 @@ The proposal was considered but not adopted. It may remain documented when the r
 - [Representative snapshot and export examples](../examples/snapshot-export-examples.md)
 - [Privacy, redaction, and audience-control design](../design/privacy-redaction-audience-controls.md)
 - [Representative privacy, redaction, and audience examples](../examples/privacy-redaction-audience-examples.md)
+- [Regulated Portfolio and compliance-profile design](../design/regulated-portfolio-compliance-profiles.md)
+- [Representative regulated Portfolio and compliance examples](../examples/regulated-portfolio-compliance-examples.md)
 - [Foundation research](../research/portfolio-purpose-workflows.md)
 - [Repository documentation index](../README.md)
 

@@ -5,7 +5,7 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 ## Foundation research
 
 - [Portfolio purposes and workflows](research/portfolio-purpose-workflows.md) — compares improvement, showcase, parent/guardian conference, and regulated alternate-graduation-pathway portfolios.
-- [New Jersey Graduation Portfolio Appeal](research/new-jersey-graduation-portfolio-appeal.md) — versioned 2025-2026/Class of 2026 regulated-workflow case study.
+- [New Jersey Graduation Portfolio Appeal](research/new-jersey-graduation-portfolio-appeal.md) — revalidated 2025-2026/Class of 2026 regulated-workflow case study and non-operational reference Profile family.
 - [Compliance and policy constraints](research/compliance-constraints.md) — privacy, retention, accessibility, accommodations, intellectual property, and local-policy boundaries.
 - [Source register](research/source-register.md) — reviewable inventory of authorities, temporal scope, source status, and known gaps.
 
@@ -30,6 +30,8 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [Representative snapshot and export examples](examples/snapshot-export-examples.md) — synthetic copy, render, digest, omission, export, concurrency, partial-success, issuance, submission, lifecycle, and exceptional-removal scenarios.
 - [Privacy, redaction, and audience controls](design/privacy-redaction-audience-controls.md) — separate authorization gates, audience and recipient scope, authority evidence, no-leakage discovery, redaction, de-identification, collaborator treatment, disclosure authorization, events, and revocation.
 - [Representative privacy, redaction, and audience examples](examples/privacy-redaction-audience-examples.md) — synthetic student, family, teacher, reviewer, regulated, public, producer, redaction, de-identification, delivery, and historical-authorization scenarios.
+- [Regulated Portfolio and compliance profiles](design/regulated-portfolio-compliance-profiles.md) — authority sources, regulated cases and components, pathways, checklists, supporting records, attestations, deadlines, approvals, batches, submissions, receipts, outcomes, migration, and the New Jersey reference family.
+- [Representative regulated Portfolio and compliance examples](examples/regulated-portfolio-compliance-examples.md) — synthetic Profile activation, component, pathway, evidence, checklist, attestation, deadline, batch, resubmission, external-outcome, privacy, producer, and historical-replay scenarios.
 
 ## Architecture decisions
 
@@ -42,6 +44,7 @@ Vitrine is in its foundation-design phase. The documents in this repository dist
 - [ADR 0006: Selection, Ordering, Annotation, and Reflection](decisions/0006-selection-ordering-annotation-and-reflection.md) — currently **Proposed** pending explicit maintainer acceptance.
 - [ADR 0007: Snapshot, Export, Checksum, and Immutability](decisions/0007-snapshot-export-checksum-and-immutability.md) — currently **Proposed** pending explicit maintainer acceptance.
 - [ADR 0008: Privacy, Redaction, and Audience Controls](decisions/0008-privacy-redaction-and-audience-controls.md) — currently **Proposed** pending explicit maintainer acceptance.
+- [ADR 0009: Regulated Portfolio and Compliance Profiles](decisions/0009-regulated-portfolio-and-compliance-profiles.md) — currently **Proposed** pending explicit maintainer acceptance.
 
 ## Document status and authority
 
