@@ -66,3 +66,8 @@ Vitrine has completed its v0.1.0 foundation audit with a `ready_for_implementati
 - Implementation documentation will describe behavior that actually exists.
 
 No document in this repository provides legal advice, activates an operational New Jersey profile, or makes Vitrine an external compliance authority.
+
+## Runtime implementation
+
+- [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, validation, packaging, and CI.
+- [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
