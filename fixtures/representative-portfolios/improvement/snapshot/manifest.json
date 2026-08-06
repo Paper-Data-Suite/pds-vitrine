@@ -1,0 +1,68 @@
+{
+  "audience_context_id": "audience-imp-student",
+  "composition_revision_id": "composition-imp-rev-001",
+  "entries": [
+    {
+      "entry_id": "entry-imp-baseline-work",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "01-baseline-argument.txt",
+      "sequence": 1,
+      "sha256": "66d20828ce14e1ae2222d0b0dd05a3efe239cc2ad559bd944512adff4d06058a",
+      "size": 270,
+      "source_path": "shared/artifact-bytes/quillan/baseline-argument.txt"
+    },
+    {
+      "entry_id": "entry-imp-baseline-feedback",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "02-baseline-feedback.txt",
+      "sequence": 2,
+      "sha256": "e99f3808caec392f31601843417accb37d764843f37b49681d7b2f46650bdea2",
+      "size": 165,
+      "source_path": "shared/artifact-bytes/quillan/baseline-feedback.txt"
+    },
+    {
+      "entry_id": "entry-imp-revised-work",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "03-revised-argument.txt",
+      "sequence": 3,
+      "sha256": "d9bc726f0d5b1779b2ec5e5fcc7f557d95cd83afc48780b60285f06fda0af8d0",
+      "size": 347,
+      "source_path": "shared/artifact-bytes/quillan/revised-argument.txt"
+    },
+    {
+      "entry_id": "entry-imp-revised-feedback",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "04-revised-feedback.txt",
+      "sequence": 4,
+      "sha256": "87c44d69b3366bef44358b1d75ffb54175dc35551042cfcb06294fa0a2e1d4f9",
+      "size": 172,
+      "source_path": "shared/artifact-bytes/quillan/revised-feedback.txt"
+    },
+    {
+      "entry_id": "entry-imp-reflection",
+      "kind": "vitrine_generated_representation",
+      "materialization_kind": "vitrine_render",
+      "relative_path": "05-student-reflection.md",
+      "sequence": 5,
+      "sha256": "ff4597251a713f83a66af1fbf5eaafbaf4df6be1bd7552ff955ccad2f9ffd041",
+      "size": 230
+    },
+    {
+      "entry_id": "entry-imp-index",
+      "kind": "vitrine_generated_representation",
+      "materialization_kind": "vitrine_render",
+      "relative_path": "06-index.md",
+      "sequence": 6,
+      "sha256": "0a7e0f2835a0787b850c2b3bb5362bec86104e0b168e48bb82041d0ccdae40f5",
+      "size": 135
+    }
+  ],
+  "fixture_contract": "pds-vitrine.synthetic-snapshot-manifest",
+  "fixture_version": "1",
+  "omissions": [],
+  "snapshot_edition_id": "snapshot-edition-imp-001"
+}

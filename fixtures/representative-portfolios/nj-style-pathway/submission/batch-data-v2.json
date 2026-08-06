@@ -1,0 +1,14 @@
+{
+  "batch_id": "submission-batch-njstyle-001",
+  "corrects_revision": 1,
+  "fixture_contract": "synthetic-regulated-batch-data",
+  "official_form": false,
+  "revision": 2,
+  "rows": [
+    {
+      "case_id": "regulated-case-njstyle-001",
+      "component": "english_language_arts",
+      "status": "included_corrected"
+    }
+  ]
+}

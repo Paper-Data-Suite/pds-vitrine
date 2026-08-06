@@ -1,0 +1,21 @@
+{
+  "assertions": [
+    "attempts_are_not_officially_selected",
+    "summary_is_not_a_grade",
+    "teacher_private_content_is_absent",
+    "family_packet_is_not_a_full_record_response"
+  ],
+  "excluded_source_ids": [
+    "source-scoreform-secure",
+    "source-quillan-private-note",
+    "source-portia-restricted"
+  ],
+  "expected_result": "pass",
+  "included_entry_ids": [
+    "entry-parent-overview",
+    "entry-parent-scoreform",
+    "entry-parent-writing",
+    "entry-parent-feedback",
+    "entry-parent-reflection"
+  ]
+}

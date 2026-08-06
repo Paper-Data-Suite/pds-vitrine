@@ -1,0 +1,58 @@
+{
+  "audience_context_id": "audience-parent-family",
+  "composition_revision_id": "composition-parent-family-rev-001",
+  "entries": [
+    {
+      "entry_id": "entry-parent-overview",
+      "kind": "vitrine_generated_representation",
+      "materialization_kind": "vitrine_render",
+      "relative_path": "01-conference-overview.md",
+      "sequence": 1,
+      "sha256": "0dfffd47e35129583a3585a5230fe20707fe97eead9f1c615ff06eb6b77a62b8",
+      "size": 202
+    },
+    {
+      "entry_id": "entry-parent-scoreform",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "02-scoreform-attempt-summary.json",
+      "sequence": 2,
+      "sha256": "28fdbddeab9bcce9d003cd7d7a862bc8062083184b290797fd015645b8cd00e3",
+      "size": 1074,
+      "source_path": "shared/artifact-bytes/scoreform/attempt-summary.json"
+    },
+    {
+      "entry_id": "entry-parent-writing",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "03-writing-sample.txt",
+      "sequence": 3,
+      "sha256": "d9bc726f0d5b1779b2ec5e5fcc7f557d95cd83afc48780b60285f06fda0af8d0",
+      "size": 347,
+      "source_path": "shared/artifact-bytes/quillan/revised-argument.txt"
+    },
+    {
+      "entry_id": "entry-parent-feedback",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "04-family-safe-feedback.txt",
+      "sequence": 4,
+      "sha256": "a262e4f96380cbdc05b37ed8c87b57883d8b8ebbb1a36082e3004ae3ae2568a8",
+      "size": 159,
+      "source_path": "shared/artifact-bytes/quillan/family-safe-feedback.txt"
+    },
+    {
+      "entry_id": "entry-parent-reflection",
+      "kind": "vitrine_generated_representation",
+      "materialization_kind": "vitrine_render",
+      "relative_path": "05-student-reflection.md",
+      "sequence": 5,
+      "sha256": "eeef2e4e0f983ee412003e242b4505d2ae4292dc03662fdd616a8341a7fcb5d0",
+      "size": 155
+    }
+  ],
+  "fixture_contract": "pds-vitrine.synthetic-snapshot-manifest",
+  "fixture_version": "1",
+  "omissions": [],
+  "snapshot_edition_id": "snapshot-edition-parent-001"
+}

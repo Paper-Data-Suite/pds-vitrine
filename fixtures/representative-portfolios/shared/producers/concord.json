@@ -1,0 +1,98 @@
+{
+  "fixture_contract": "pds-vitrine.synthetic-producer-records",
+  "fixture_version": "1",
+  "producer": "pds-concord",
+  "records": [
+    {
+      "id": "concord-activity-syn-001",
+      "kind": "Activity",
+      "refs": []
+    },
+    {
+      "id": "concord-session-syn-001",
+      "kind": "Session",
+      "refs": [
+        "concord-activity-syn-001"
+      ]
+    },
+    {
+      "id": "concord-group-syn-007",
+      "kind": "Group",
+      "refs": [
+        "concord-session-syn-001"
+      ]
+    },
+    {
+      "id": "concord-membership-subject",
+      "kind": "GroupMembership",
+      "refs": [
+        "concord-group-syn-007",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "artifact_source_id": "source-concord-group",
+      "id": "concord-artifact-syn-001",
+      "kind": "Artifact",
+      "refs": [
+        "concord-group-syn-007",
+        "publication-concord-001"
+      ]
+    },
+    {
+      "id": "concord-author-group-syn-001",
+      "kind": "AuthorRelationship",
+      "refs": [
+        "concord-artifact-syn-001",
+        "concord-group-syn-007"
+      ]
+    },
+    {
+      "id": "concord-subject-syn-001",
+      "kind": "SubjectRelationship",
+      "refs": [
+        "concord-artifact-syn-001",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "contribution": "methods_paragraph_and_chart_explanation",
+      "id": "concord-contribution-syn-001",
+      "kind": "ContributionFinding",
+      "refs": [
+        "concord-artifact-syn-001",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "concord-score-group-syn-001",
+      "individual_score_created": false,
+      "kind": "Score",
+      "refs": [
+        "concord-artifact-syn-001",
+        "concord-group-syn-007"
+      ],
+      "target_kind": "group"
+    },
+    {
+      "artifact_source_id": "source-concord-group",
+      "id": "concord-projection-artifact",
+      "kind": "ProducerProjection",
+      "projection_kind": "artifact",
+      "refs": [
+        "concord-artifact-syn-001"
+      ]
+    },
+    {
+      "artifact_source_id": "source-concord-attribution",
+      "id": "concord-projection-attribution",
+      "kind": "ProducerProjection",
+      "projection_kind": "audience_safe_attribution",
+      "refs": [
+        "concord-artifact-syn-001"
+      ]
+    }
+  ],
+  "reviewed_baseline": "31b0efd2864cd7a0945ff29f5af99b2a00db52ae",
+  "runtime_support": "future_public_projection_fixture"
+}

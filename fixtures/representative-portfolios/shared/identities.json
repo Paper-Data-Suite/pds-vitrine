@@ -1,0 +1,90 @@
+{
+  "fixture_contract": "pds-vitrine.synthetic-shared-records",
+  "fixture_version": "1",
+  "records": [
+    {
+      "display_label": "Synthetic District High School",
+      "id": "institution-syn-001",
+      "kind": "Institution",
+      "refs": []
+    },
+    {
+      "id": "student-syn-001",
+      "kind": "StudentReference",
+      "opaque": true,
+      "refs": []
+    },
+    {
+      "id": "portfolio-subject-syn-001",
+      "kind": "PortfolioSubject",
+      "refs": [
+        "student-syn-001"
+      ]
+    },
+    {
+      "class_id": "class-ela10-syn",
+      "id": "roster-ref-ela10-2024",
+      "kind": "ClassQualifiedStudentReference",
+      "refs": [
+        "student-syn-001"
+      ],
+      "school_year": "2023-2024"
+    },
+    {
+      "class_id": "class-ela11-syn",
+      "id": "roster-ref-ela11-2025",
+      "kind": "ClassQualifiedStudentReference",
+      "refs": [
+        "student-syn-001"
+      ],
+      "school_year": "2024-2025"
+    },
+    {
+      "class_id": "class-ela12-syn",
+      "id": "roster-ref-ela12-2026",
+      "kind": "ClassQualifiedStudentReference",
+      "refs": [
+        "student-syn-001"
+      ],
+      "school_year": "2025-2026"
+    },
+    {
+      "id": "subject-link-syn-001",
+      "kind": "ConfirmedSubjectAssociation",
+      "match_basis": "authoritative_references_plus_human_confirmation",
+      "refs": [
+        "portfolio-subject-syn-001",
+        "roster-ref-ela10-2024",
+        "roster-ref-ela11-2025",
+        "roster-ref-ela12-2026"
+      ]
+    },
+    {
+      "id": "actor-teacher-syn-001",
+      "kind": "ActorReference",
+      "refs": []
+    },
+    {
+      "id": "actor-student-syn-001",
+      "kind": "ActorReference",
+      "refs": [
+        "student-syn-001"
+      ]
+    },
+    {
+      "id": "recipient-parent-syn-001",
+      "kind": "RecipientReference",
+      "refs": []
+    },
+    {
+      "id": "actor-reviewer-syn-001",
+      "kind": "ActorReference",
+      "refs": []
+    },
+    {
+      "id": "actor-coordinator-syn-001",
+      "kind": "ActorReference",
+      "refs": []
+    }
+  ]
+}

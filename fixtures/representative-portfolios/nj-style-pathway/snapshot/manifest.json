@@ -1,0 +1,56 @@
+{
+  "audience_context_id": "audience-njstyle-regulated",
+  "composition_revision_id": "composition-njstyle-local-rev-001",
+  "entries": [
+    {
+      "entry_id": "entry-njstyle-cover",
+      "kind": "vitrine_generated_representation",
+      "materialization_kind": "vitrine_render",
+      "relative_path": "01-local-review-cover.md",
+      "sequence": 1,
+      "sha256": "76e33a91fc494856fa817b008eca77ec3b035ddf3be15b6df5cc0f6b821f9a28",
+      "size": 140
+    },
+    {
+      "entry_id": "entry-njstyle-transcript",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "02-transcript-summary.json",
+      "sequence": 2,
+      "sha256": "91c013893d03e9e7c81a943821e1f8e8f41fcfd3d94754a6d02eb5cf1ba26a26",
+      "size": 186,
+      "source_path": "shared/artifact-bytes/regulated/transcript-summary.json"
+    },
+    {
+      "entry_id": "entry-njstyle-ela",
+      "kind": "copied_source_representation",
+      "materialization_kind": "exact_byte_copy",
+      "relative_path": "03-ela-reading-response.txt",
+      "sequence": 3,
+      "sha256": "4c17c621fc0e92753e0990624b4b67d595d41e06e74386a0def3650953359875",
+      "size": 222,
+      "source_path": "shared/artifact-bytes/regulated/ela-reading-response.txt"
+    },
+    {
+      "entry_id": "entry-njstyle-checklist",
+      "kind": "vitrine_generated_representation",
+      "materialization_kind": "vitrine_render",
+      "relative_path": "04-checklist-summary.md",
+      "sequence": 4,
+      "sha256": "3b6b6375b51ca50ef284e4acc5c517f40e1b2ec903c86177150666cff0a43bff",
+      "size": 264
+    }
+  ],
+  "fixture_contract": "pds-vitrine.synthetic-snapshot-manifest",
+  "fixture_version": "1",
+  "omissions": [
+    {
+      "audience_visible": false,
+      "expected_item_id": "checklist-njstyle-restricted-template",
+      "omission_id": "omission-njstyle-restricted-template",
+      "reason_code": "restricted_source_unverified",
+      "sealing_permitted": true
+    }
+  ],
+  "snapshot_edition_id": "snapshot-edition-njstyle-001"
+}

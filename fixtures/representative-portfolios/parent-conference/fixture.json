@@ -1,0 +1,306 @@
+{
+  "exclusions": [
+    {
+      "audience_visible_notice": false,
+      "reason_code": "secure_assessment_material",
+      "source_id": "source-scoreform-secure"
+    },
+    {
+      "audience_visible_notice": false,
+      "reason_code": "producer_private",
+      "source_id": "source-quillan-private-note"
+    },
+    {
+      "audience_visible_notice": false,
+      "reason_code": "suppressed_no_existence_disclosure",
+      "source_id": "source-portia-restricted"
+    }
+  ],
+  "fixture_contract": "pds-vitrine.representative-portfolio",
+  "fixture_version": "1",
+  "portfolio_id": "portfolio-parent-syn-001",
+  "purpose_kind": "parent_guardian_conference",
+  "records": [
+    {
+      "id": "portfolio-parent-syn-001",
+      "kind": "Portfolio",
+      "refs": [
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "profile-parent-rev-001",
+      "kind": "PortfolioProfileRevision",
+      "purpose_kind": "parent_guardian_conference",
+      "refs": [
+        "profile-family-parent-001"
+      ]
+    },
+    {
+      "id": "profile-binding-parent-001",
+      "kind": "PortfolioProfileBinding",
+      "refs": [
+        "profile-parent-rev-001",
+        "portfolio-parent-syn-001"
+      ]
+    },
+    {
+      "id": "candidate-parent-scoreform",
+      "kind": "Candidate",
+      "refs": [
+        "scoreform-projection-attempt-summary",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "candidate-parent-writing",
+      "kind": "Candidate",
+      "refs": [
+        "quillan-projection-revised-work"
+      ]
+    },
+    {
+      "id": "candidate-parent-feedback",
+      "kind": "Candidate",
+      "refs": [
+        "quillan-projection-family-feedback"
+      ]
+    },
+    {
+      "id": "selection-parent-scoreform",
+      "kind": "Selection",
+      "refs": [
+        "candidate-parent-scoreform"
+      ]
+    },
+    {
+      "id": "selection-parent-writing",
+      "kind": "Selection",
+      "refs": [
+        "candidate-parent-writing"
+      ]
+    },
+    {
+      "id": "selection-parent-feedback",
+      "kind": "Selection",
+      "refs": [
+        "candidate-parent-feedback"
+      ]
+    },
+    {
+      "id": "annotation-parent-scoreform",
+      "kind": "AnnotationRevision",
+      "refs": [
+        "selection-parent-scoreform"
+      ],
+      "text": "Two attempts are shown without selecting an official attempt or calculating a Grade."
+    },
+    {
+      "author": "actor-student-syn-001",
+      "id": "reflection-parent-001",
+      "kind": "ReflectionRevision",
+      "refs": [
+        "selection-parent-writing"
+      ]
+    },
+    {
+      "audience": "teacher_internal",
+      "id": "composition-parent-internal-rev-001",
+      "kind": "WorkingPortfolioCompositionRevision",
+      "refs": [
+        "selection-parent-scoreform",
+        "selection-parent-writing",
+        "selection-parent-feedback",
+        "annotation-parent-scoreform",
+        "reflection-parent-001"
+      ]
+    },
+    {
+      "audience": "parent_guardian_facing",
+      "id": "composition-parent-family-rev-001",
+      "kind": "WorkingPortfolioCompositionRevision",
+      "refs": [
+        "selection-parent-scoreform",
+        "selection-parent-writing",
+        "selection-parent-feedback",
+        "annotation-parent-scoreform",
+        "reflection-parent-001"
+      ]
+    },
+    {
+      "audience_class": "parent_guardian_facing",
+      "id": "audience-parent-family",
+      "kind": "AudienceContext",
+      "refs": [
+        "profile-binding-parent-001"
+      ]
+    },
+    {
+      "id": "recipient-parent-001",
+      "kind": "RecipientScope",
+      "refs": [
+        "recipient-parent-syn-001"
+      ],
+      "relationship_evidence": "synthetic_authority-evidence-parent-001"
+    },
+    {
+      "id": "synthetic_authority-evidence-parent-001",
+      "kind": "AuthorityEvidenceReference",
+      "refs": [
+        "portfolio-subject-syn-001",
+        "recipient-parent-syn-001"
+      ],
+      "status": "verified_for_fixture"
+    },
+    {
+      "id": "authorization-parent-001",
+      "kind": "AuthorizationDecision",
+      "outcome": "allowed",
+      "refs": [
+        "audience-parent-family",
+        "recipient-parent-001",
+        "synthetic_authority-evidence-parent-001"
+      ]
+    },
+    {
+      "id": "disclosure-review-parent-001",
+      "kind": "DisclosureReview",
+      "outcome": "approved_as_is",
+      "refs": [
+        "composition-parent-family-rev-001",
+        "authorization-parent-001"
+      ]
+    },
+    {
+      "id": "snapshot-edition-parent-001",
+      "kind": "SnapshotEdition",
+      "refs": [
+        "composition-parent-family-rev-001",
+        "audience-parent-family",
+        "snapshot-seal-parent-001"
+      ]
+    },
+    {
+      "id": "issuance-parent-001",
+      "kind": "Issuance",
+      "refs": [
+        "snapshot-edition-parent-001",
+        "authorization-parent-001",
+        "export-artifact-parent-001"
+      ]
+    },
+    {
+      "id": "profile-family-parent-001",
+      "kind": "PortfolioProfileFamily",
+      "purpose_kind": "parent_guardian_conference",
+      "refs": []
+    },
+    {
+      "id": "candidate-evaluation-parent-001",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-parent-scoreform"
+      ]
+    },
+    {
+      "id": "candidate-evaluation-parent-002",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-parent-writing"
+      ]
+    },
+    {
+      "id": "candidate-evaluation-parent-003",
+      "kind": "CandidateEvaluation",
+      "outcome": "eligible",
+      "refs": [
+        "candidate-parent-feedback"
+      ]
+    },
+    {
+      "id": "snapshot-build-request-parent-001",
+      "kind": "SnapshotBuildRequest",
+      "refs": [
+        "composition-parent-family-rev-001",
+        "audience-parent-family"
+      ]
+    },
+    {
+      "id": "snapshot-build-plan-parent-001",
+      "kind": "SnapshotBuildPlan",
+      "plan_state": "immutable",
+      "refs": [
+        "snapshot-build-request-parent-001",
+        "source-scoreform-summary",
+        "source-quillan-revised",
+        "source-quillan-feedback-family"
+      ]
+    },
+    {
+      "id": "snapshot-build-attempt-parent-001",
+      "kind": "SnapshotBuildAttempt",
+      "outcome": "sealed",
+      "refs": [
+        "snapshot-build-plan-parent-001"
+      ]
+    },
+    {
+      "id": "snapshot-manifest-record-parent-001",
+      "kind": "SnapshotManifest",
+      "manifest_path": "parent-conference/snapshot/manifest.json",
+      "manifest_sha256": "1830df07030e796375d2adf2026c3c6731561d33af34ec8b482f5ca6c8934773",
+      "refs": [
+        "snapshot-build-attempt-parent-001"
+      ]
+    },
+    {
+      "id": "snapshot-seal-parent-001",
+      "kind": "SnapshotSeal",
+      "logical_inventory_sha256": "698eafa7cf016e275229baa88bac515e131249c90f487cca3b94ab5f3ecda1ef",
+      "refs": [
+        "snapshot-manifest-record-parent-001"
+      ]
+    },
+    {
+      "format": "directory_package",
+      "id": "export-artifact-parent-001",
+      "kind": "ExportArtifact",
+      "refs": [
+        "snapshot-edition-parent-001",
+        "snapshot-seal-parent-001"
+      ]
+    }
+  ],
+  "shared_record_files": [
+    "shared/identities.json",
+    "shared/core/publications.json",
+    "shared/producers/quillan.json",
+    "shared/producers/scoreform.json",
+    "shared/producers/concord.json",
+    "shared/producers/portia-restricted.json"
+  ],
+  "snapshot": {
+    "audience_context_id": "audience-parent-family",
+    "composition_revision_id": "composition-parent-family-rev-001",
+    "edition_id": "snapshot-edition-parent-001",
+    "entry_ids": [
+      "entry-parent-overview",
+      "entry-parent-scoreform",
+      "entry-parent-writing",
+      "entry-parent-feedback",
+      "entry-parent-reflection"
+    ],
+    "export_root": "parent-conference/snapshot/export",
+    "issued": true,
+    "logical_inventory_sha256": "698eafa7cf016e275229baa88bac515e131249c90f487cca3b94ab5f3ecda1ef",
+    "manifest_path": "parent-conference/snapshot/manifest.json",
+    "manifest_sha256": "1830df07030e796375d2adf2026c3c6731561d33af34ec8b482f5ca6c8934773"
+  },
+  "source_artifacts": [
+    "source-scoreform-summary",
+    "source-quillan-revised",
+    "source-quillan-feedback-family"
+  ]
+}

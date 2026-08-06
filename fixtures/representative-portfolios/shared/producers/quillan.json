@@ -1,0 +1,78 @@
+{
+  "fixture_contract": "pds-vitrine.synthetic-producer-records",
+  "fixture_version": "1",
+  "producer": "pds-quillan",
+  "records": [
+    {
+      "artifact_source_id": "source-quillan-baseline",
+      "id": "quillan-projection-baseline-work",
+      "kind": "ProducerProjection",
+      "projection_kind": "selected_work",
+      "refs": [
+        "publication-quillan-baseline",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "artifact_source_id": "source-quillan-feedback-baseline",
+      "id": "quillan-projection-baseline-feedback",
+      "kind": "ProducerProjection",
+      "projection_kind": "student_facing_feedback",
+      "refs": [
+        "publication-quillan-baseline",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "artifact_source_id": "source-quillan-revised",
+      "id": "quillan-projection-revised-work",
+      "kind": "ProducerProjection",
+      "projection_kind": "selected_work",
+      "refs": [
+        "publication-quillan-revised",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "artifact_source_id": "source-quillan-feedback-revised",
+      "id": "quillan-projection-revised-feedback",
+      "kind": "ProducerProjection",
+      "projection_kind": "student_facing_feedback",
+      "refs": [
+        "publication-quillan-revised",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "artifact_source_id": "source-quillan-polished",
+      "id": "quillan-projection-polished-work",
+      "kind": "ProducerProjection",
+      "projection_kind": "selected_work",
+      "refs": [
+        "publication-quillan-polished",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "artifact_source_id": "source-quillan-feedback-family",
+      "id": "quillan-projection-family-feedback",
+      "kind": "ProducerProjection",
+      "projection_kind": "student_facing_feedback",
+      "refs": [
+        "publication-quillan-revised",
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "artifact_source_id": "source-quillan-private-note",
+      "exposure": "prohibited",
+      "id": "quillan-private-note-record",
+      "kind": "ProducerPrivateRecord",
+      "refs": [
+        "publication-quillan-revised"
+      ]
+    }
+  ],
+  "reviewed_baseline": "05fecf23d29e56b45cba58ed97906f5353290033",
+  "runtime_support": "future_public_projection_fixture"
+}

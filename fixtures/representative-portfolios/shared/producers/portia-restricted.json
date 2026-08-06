@@ -1,0 +1,19 @@
+{
+  "fixture_contract": "pds-vitrine.synthetic-producer-records",
+  "fixture_version": "1",
+  "producer": "pds-portia",
+  "records": [
+    {
+      "artifact_source_id": "source-portia-restricted",
+      "exposure": "suppressed",
+      "id": "portia-restricted-source-syn-001",
+      "kind": "RestrictedProducerRecord",
+      "metadata_visibility": "no_existence_disclosure",
+      "refs": [
+        "portfolio-subject-syn-001"
+      ]
+    }
+  ],
+  "reviewed_baseline": "0841bd946c6c3a098ebaad4bfb90669816ecc93b",
+  "runtime_support": "restricted_internal_exclusion_fixture"
+}

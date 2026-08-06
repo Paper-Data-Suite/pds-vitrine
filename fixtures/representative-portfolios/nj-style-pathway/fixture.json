@@ -1,0 +1,427 @@
+{
+  "exclusions": [
+    {
+      "audience_visible_notice": false,
+      "reason_code": "suppressed_no_existence_disclosure",
+      "source_id": "source-portia-restricted"
+    },
+    {
+      "audience_visible_notice": false,
+      "reason_code": "not_required_and_secure",
+      "source_id": "source-scoreform-secure"
+    }
+  ],
+  "external_artifacts": [
+    {
+      "kind": "submission_batch_data",
+      "path": "nj-style-pathway/submission/batch-data-v1.json",
+      "sha256": "506b31355271b749ddca337d46013f06e8864bbe6239805f9c29c283d579279e",
+      "size": 295
+    },
+    {
+      "kind": "corrected_submission_batch_data",
+      "path": "nj-style-pathway/submission/batch-data-v2.json",
+      "sha256": "3eb1a059d9bb159b58b781a68900f279185eb3b674f6cebea00496abb455ce59",
+      "size": 331
+    },
+    {
+      "kind": "external_receipt",
+      "path": "nj-style-pathway/submission/receipt-v1.json",
+      "sha256": "f19edb0544ddc3ab355c11f11c3b8d03a19374f8053acdc90235b729cbae0527",
+      "size": 121
+    },
+    {
+      "kind": "external_receipt",
+      "path": "nj-style-pathway/submission/receipt-v2.json",
+      "sha256": "b734826fcdae2fd1bc7e8c3232703682bef9d34dcd6963574cfe8dbaac78d62f",
+      "size": 121
+    },
+    {
+      "kind": "external_outcome",
+      "path": "nj-style-pathway/submission/outcome-ela.json",
+      "sha256": "9ab7299c942071b37a4a8265943b07082feed582014da84af1486301033d1dae",
+      "size": 177
+    }
+  ],
+  "fixture_contract": "pds-vitrine.representative-portfolio",
+  "fixture_version": "1",
+  "portfolio_id": "portfolio-njstyle-syn-001",
+  "purpose_kind": "regulated",
+  "records": [
+    {
+      "id": "portfolio-njstyle-syn-001",
+      "kind": "Portfolio",
+      "refs": [
+        "portfolio-subject-syn-001"
+      ]
+    },
+    {
+      "id": "profile-family-njstyle-syn",
+      "kind": "PortfolioProfileFamily",
+      "operational": false,
+      "purpose_kind": "regulated",
+      "refs": []
+    },
+    {
+      "cohort": "Class of 2026 synthetic reference",
+      "id": "profile-njstyle-rev-001",
+      "kind": "PortfolioProfileRevision",
+      "operational": false,
+      "refs": [
+        "profile-family-njstyle-syn"
+      ]
+    },
+    {
+      "id": "profile-binding-njstyle-001",
+      "kind": "PortfolioProfileBinding",
+      "refs": [
+        "profile-njstyle-rev-001",
+        "portfolio-njstyle-syn-001"
+      ]
+    },
+    {
+      "id": "authority-source-set-njstyle-001",
+      "kind": "AuthoritySourceSet",
+      "local_sources": "synthetic_overlay",
+      "public_sources": "verified_synthetic_references",
+      "refs": [
+        "profile-njstyle-rev-001"
+      ],
+      "restricted_sources": "reference_only_unavailable"
+    },
+    {
+      "id": "regulated-case-njstyle-001",
+      "kind": "RegulatedPortfolioCase",
+      "refs": [
+        "profile-binding-njstyle-001",
+        "portfolio-subject-syn-001",
+        "institution-syn-001"
+      ]
+    },
+    {
+      "component_kind": "english_language_arts",
+      "id": "component-njstyle-ela",
+      "kind": "CaseComponent",
+      "refs": [
+        "regulated-case-njstyle-001"
+      ]
+    },
+    {
+      "component_kind": "mathematics",
+      "id": "component-njstyle-math",
+      "kind": "CaseComponent",
+      "refs": [
+        "regulated-case-njstyle-001"
+      ]
+    },
+    {
+      "id": "pathway-njstyle-ela",
+      "kind": "PathwaySelection",
+      "pathway": "standard_portfolio_reference",
+      "refs": [
+        "component-njstyle-ela"
+      ]
+    },
+    {
+      "id": "pathway-njstyle-math",
+      "kind": "PathwaySelection",
+      "pathway": "satisfied_elsewhere",
+      "refs": [
+        "component-njstyle-math"
+      ]
+    },
+    {
+      "id": "eligibility-njstyle-ela",
+      "kind": "EligibilityFinding",
+      "outcome": "eligible_for_synthetic_reference",
+      "refs": [
+        "pathway-njstyle-ela",
+        "source-regulated-transcript"
+      ]
+    },
+    {
+      "id": "eligibility-njstyle-math",
+      "kind": "EligibilityFinding",
+      "outcome": "not_applicable_to_portfolio_component",
+      "refs": [
+        "pathway-njstyle-math"
+      ]
+    },
+    {
+      "id": "supporting-record-njstyle-transcript",
+      "kind": "SupportingRecordInstance",
+      "refs": [
+        "regulated-case-njstyle-001"
+      ],
+      "source_id": "source-regulated-transcript"
+    },
+    {
+      "id": "supporting-record-njstyle-ela",
+      "kind": "SupportingRecordInstance",
+      "refs": [
+        "component-njstyle-ela"
+      ],
+      "source_id": "source-regulated-ela"
+    },
+    {
+      "id": "checklist-njstyle-ela-evidence",
+      "kind": "ChecklistItemFinding",
+      "outcome": "satisfied",
+      "refs": [
+        "supporting-record-njstyle-ela"
+      ]
+    },
+    {
+      "blocking_operational_activation": true,
+      "id": "checklist-njstyle-restricted-template",
+      "kind": "ChecklistItemFinding",
+      "outcome": "unknown",
+      "refs": [
+        "authority-source-set-njstyle-001"
+      ]
+    },
+    {
+      "id": "attestation-njstyle-teacher",
+      "kind": "AttestationRecord",
+      "refs": [
+        "component-njstyle-ela",
+        "actor-teacher-syn-001"
+      ],
+      "statement": "synthetic local review completed"
+    },
+    {
+      "id": "attestation-verification-njstyle",
+      "kind": "AttestationVerificationDecision",
+      "outcome": "verified_for_fixture",
+      "refs": [
+        "attestation-njstyle-teacher"
+      ]
+    },
+    {
+      "id": "deadline-njstyle-internal",
+      "kind": "DeadlineInstance",
+      "refs": [
+        "regulated-case-njstyle-001"
+      ],
+      "status": "completed_on_time",
+      "timestamp": "2026-04-01T15:00:00-04:00"
+    },
+    {
+      "id": "approval-njstyle-content",
+      "kind": "RegulatedApprovalDecision",
+      "outcome": "approved_for_synthetic_local_review",
+      "refs": [
+        "component-njstyle-ela",
+        "attestation-verification-njstyle"
+      ]
+    },
+    {
+      "condition": "research_only_profile_and_restricted_source_unverified",
+      "id": "readiness-njstyle-local",
+      "kind": "SubmissionReadinessFinding",
+      "outcome": "conditionally_ready",
+      "refs": [
+        "regulated-case-njstyle-001",
+        "approval-njstyle-content"
+      ]
+    },
+    {
+      "id": "composition-njstyle-local-rev-001",
+      "kind": "WorkingPortfolioCompositionRevision",
+      "refs": [
+        "supporting-record-njstyle-transcript",
+        "supporting-record-njstyle-ela",
+        "checklist-njstyle-ela-evidence",
+        "approval-njstyle-content"
+      ]
+    },
+    {
+      "audience_class": "regulated_submission",
+      "id": "audience-njstyle-regulated",
+      "kind": "AudienceContext",
+      "refs": [
+        "profile-binding-njstyle-001"
+      ]
+    },
+    {
+      "id": "recipient-njstyle-authority",
+      "kind": "RecipientScope",
+      "recipient_type": "synthetic_regulated_authority",
+      "refs": [
+        "actor-coordinator-syn-001"
+      ]
+    },
+    {
+      "id": "authorization-njstyle-001",
+      "kind": "AuthorizationDecision",
+      "outcome": "allowed_for_fixture_only",
+      "refs": [
+        "audience-njstyle-regulated",
+        "recipient-njstyle-authority"
+      ]
+    },
+    {
+      "id": "snapshot-edition-njstyle-001",
+      "kind": "SnapshotEdition",
+      "refs": [
+        "composition-njstyle-local-rev-001",
+        "audience-njstyle-regulated",
+        "snapshot-seal-njstyle-001"
+      ]
+    },
+    {
+      "id": "submission-batch-njstyle-001",
+      "kind": "SubmissionBatch",
+      "refs": [
+        "profile-njstyle-rev-001",
+        "institution-syn-001"
+      ]
+    },
+    {
+      "id": "batch-membership-njstyle-001",
+      "kind": "CaseToBatchMembership",
+      "refs": [
+        "regulated-case-njstyle-001",
+        "component-njstyle-ela",
+        "submission-batch-njstyle-001"
+      ]
+    },
+    {
+      "id": "submission-njstyle-001",
+      "kind": "Submission",
+      "refs": [
+        "submission-batch-njstyle-001",
+        "snapshot-edition-njstyle-001",
+        "export-artifact-njstyle-001"
+      ],
+      "revision": 1
+    },
+    {
+      "id": "receipt-njstyle-001",
+      "kind": "ExternalReceiptReference",
+      "refs": [
+        "submission-njstyle-001"
+      ],
+      "status": "received_synthetic"
+    },
+    {
+      "id": "submission-njstyle-002",
+      "kind": "Submission",
+      "refs": [
+        "submission-batch-njstyle-001",
+        "snapshot-edition-njstyle-001",
+        "submission-njstyle-001",
+        "export-artifact-njstyle-001"
+      ],
+      "relationship": "correction",
+      "revision": 2
+    },
+    {
+      "id": "receipt-njstyle-002",
+      "kind": "ExternalReceiptReference",
+      "refs": [
+        "submission-njstyle-002"
+      ],
+      "status": "received_synthetic"
+    },
+    {
+      "id": "outcome-njstyle-ela",
+      "kind": "ExternalOutcomeReference",
+      "raw_outcome": "approved_synthetic",
+      "refs": [
+        "submission-njstyle-002",
+        "component-njstyle-ela"
+      ]
+    },
+    {
+      "id": "snapshot-build-request-njstyle-001",
+      "kind": "SnapshotBuildRequest",
+      "refs": [
+        "composition-njstyle-local-rev-001",
+        "audience-njstyle-regulated"
+      ]
+    },
+    {
+      "id": "snapshot-build-plan-njstyle-001",
+      "kind": "SnapshotBuildPlan",
+      "plan_state": "immutable",
+      "refs": [
+        "snapshot-build-request-njstyle-001",
+        "source-regulated-transcript",
+        "source-regulated-ela"
+      ]
+    },
+    {
+      "id": "snapshot-build-attempt-njstyle-001",
+      "kind": "SnapshotBuildAttempt",
+      "outcome": "sealed",
+      "refs": [
+        "snapshot-build-plan-njstyle-001"
+      ]
+    },
+    {
+      "id": "snapshot-manifest-record-njstyle-001",
+      "kind": "SnapshotManifest",
+      "manifest_path": "nj-style-pathway/snapshot/manifest.json",
+      "manifest_sha256": "6ac214aa72aa6019b93f491968baca78476bacabafeefc181dd41606d509d7c2",
+      "refs": [
+        "snapshot-build-attempt-njstyle-001"
+      ]
+    },
+    {
+      "id": "snapshot-seal-njstyle-001",
+      "kind": "SnapshotSeal",
+      "logical_inventory_sha256": "41732f7ae3954de27a47ab853e0660059ce79d8e67800da78cb3920ace235f9f",
+      "refs": [
+        "snapshot-manifest-record-njstyle-001"
+      ]
+    },
+    {
+      "format": "directory_package",
+      "id": "export-artifact-njstyle-001",
+      "kind": "ExportArtifact",
+      "refs": [
+        "snapshot-edition-njstyle-001",
+        "snapshot-seal-njstyle-001"
+      ]
+    },
+    {
+      "audience_visible": false,
+      "id": "omission-njstyle-restricted-template",
+      "kind": "SnapshotOmission",
+      "reason_code": "restricted_source_unverified",
+      "refs": [
+        "checklist-njstyle-restricted-template"
+      ]
+    }
+  ],
+  "research_only": true,
+  "shared_record_files": [
+    "shared/identities.json",
+    "shared/core/publications.json",
+    "shared/producers/quillan.json",
+    "shared/producers/scoreform.json",
+    "shared/producers/concord.json",
+    "shared/producers/portia-restricted.json"
+  ],
+  "snapshot": {
+    "audience_context_id": "audience-njstyle-regulated",
+    "composition_revision_id": "composition-njstyle-local-rev-001",
+    "edition_id": "snapshot-edition-njstyle-001",
+    "entry_ids": [
+      "entry-njstyle-cover",
+      "entry-njstyle-transcript",
+      "entry-njstyle-ela",
+      "entry-njstyle-checklist"
+    ],
+    "export_root": "nj-style-pathway/snapshot/export",
+    "issued": true,
+    "logical_inventory_sha256": "41732f7ae3954de27a47ab853e0660059ce79d8e67800da78cb3920ace235f9f",
+    "manifest_path": "nj-style-pathway/snapshot/manifest.json",
+    "manifest_sha256": "6ac214aa72aa6019b93f491968baca78476bacabafeefc181dd41606d509d7c2"
+  },
+  "source_artifacts": [
+    "source-regulated-transcript",
+    "source-regulated-ela"
+  ]
+}

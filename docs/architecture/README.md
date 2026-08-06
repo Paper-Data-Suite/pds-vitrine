@@ -24,6 +24,7 @@ This directory contains system-level Vitrine architecture documents. Architectur
 - [Representative privacy, redaction, and audience examples](../examples/privacy-redaction-audience-examples.md) — exercises student, family, teacher, reviewer, regulated, public, producer, collaborator, transformation, consent, logging, and historical-access cases.
 - [Regulated Portfolio and compliance profiles](../design/regulated-portfolio-compliance-profiles.md) — specializes immutable Profiles for authority sources, cases, independent components, pathways, checklists, records, attestations, deadlines, approvals, batches, submissions, receipts, outcomes, migration, and a researched New Jersey reference family.
 - [Representative regulated Portfolio and compliance examples](../examples/regulated-portfolio-compliance-examples.md) — exercises source activation, components, pathways, missing and defective evidence, signer authority, deadlines, approvals, rolling submissions, external outcomes, producer boundaries, and replay.
+- [Representative synthetic Portfolio corpus](../examples/representative-synthetic-portfolios.md) — composes the identity, Profile, source, exposure, curation, Snapshot, privacy, and regulated-workflow contracts into validated improvement, showcase, conference, and NJ-style fixtures.
 
 ## Reading order
 
@@ -38,7 +39,8 @@ This directory contains system-level Vitrine architecture documents. Architectur
 9. Read the [snapshot, export, checksum, and immutability design](../design/snapshot-export-immutability-contracts.md).
 10. Read the [privacy, redaction, and audience-control design](../design/privacy-redaction-audience-controls.md).
 11. Read the [regulated Portfolio and compliance-profile design](../design/regulated-portfolio-compliance-profiles.md).
-12. Use later contract documents for exact serialized structures once they are added.
+12. Review and validate the [representative synthetic Portfolio corpus](../examples/representative-synthetic-portfolios.md).
+13. Use later contract documents for exact serialized structures once they are added.
 
 ## Document authority
 
