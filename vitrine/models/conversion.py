@@ -28,7 +28,14 @@ from .curation import (
     WorkingPortfolioCompositionRevision,
 )
 from .errors import VitrineSerializationError
-from .identity import Portfolio, PortfolioSubject, PortfolioSubjectClassLink
+from .identity import (
+    Portfolio,
+    PortfolioSubject,
+    PortfolioSubjectClassLink,
+    PortfolioSubjectDisplaySnapshot,
+    PortfolioSubjectIdentityDecision,
+    PortfolioSubjectIdentityTransition,
+)
 from .profiles import (
     PortfolioProfileBinding,
     PortfolioProfileFamily,
@@ -50,6 +57,9 @@ VitrineRecord: TypeAlias = (
     Portfolio
     | PortfolioSubject
     | PortfolioSubjectClassLink
+    | PortfolioSubjectDisplaySnapshot
+    | PortfolioSubjectIdentityDecision
+    | PortfolioSubjectIdentityTransition
     | PortfolioProfileFamily
     | PortfolioProfileRevision
     | PortfolioProfileBinding

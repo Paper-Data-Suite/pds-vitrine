@@ -108,3 +108,14 @@ configured user workspace.
 Keep persistence out of the pure `vitrine.models` package. Canonical persistence
 lives under `vitrine.storage`; producer imports, authorization, Snapshot byte
 construction, export rendering, and teacher workflows remain later v0.2.0 work.
+
+## Portfolio Subject identity history
+
+Issue #30 adds canonical identity-history records that use the same strict record
+conversion APIs but are intentionally not required `VitrineRecordGraph`
+collections. This preserves the foundational graph wire shape while allowing
+append-only display snapshots, identity decisions, and merge/split transitions.
+
+Use `vitrine.identity_state` to project and validate this history. Do not add
+mutable status fields to the foundational Subject/link records merely for UI
+convenience.

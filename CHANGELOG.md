@@ -21,7 +21,11 @@ All notable changes to this project will be documented in this file.
   explicit current selection, expected-revision protection, and strict loading.
 - Deterministic storage diagnostics, conservative lock/partial-success handling,
   and a rebuildable nonauthoritative SQLite catalog.
+- Portfolio Subject identity-history records, exact Core roster resolution, guarded
+  cross-class linking, correction, merge, and split application services.
+- Direct `vitrine subject` commands plus standardized low-density teacher menu
+  workflows with H/B/M/Q navigation.
 
-Vitrine now persists foundational metadata but does not yet discover live
-producer sources, perform curation workflows, build Snapshot bytes, authorize
-disclosure, or export and deliver portfolios.
+Vitrine now persists foundational metadata and provides Portfolio Subject identity
+workflows, but does not yet discover live producer sources, curate artifacts, build
+Snapshot bytes, authorize disclosure, or export and deliver portfolios.

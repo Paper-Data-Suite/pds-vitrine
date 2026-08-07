@@ -95,6 +95,7 @@ class VitrineRecordGraph:
 GRAPH_COLLECTION_TYPES: dict[str, type[object]] = {
     descriptor.graph_collection: descriptor.model_type
     for descriptor in RECORD_DESCRIPTORS
+    if descriptor.graph_collection is not None
 }
 
 
@@ -313,7 +314,6 @@ def collect_record_graph_issues(
                 )
             )
 
-    student_links: dict[object, str] = {}
     for link in graph.subject_links:
         if link.portfolio_subject_id not in subjects:
             issues.append(
@@ -325,19 +325,6 @@ def collect_record_graph_issues(
                     ("portfolio_subject_id",),
                 )
             )
-        prior_subject = student_links.get(link.student_reference)
-        if prior_subject is not None and prior_subject != link.portfolio_subject_id:
-            issues.append(
-                _issue(
-                    "subject_link.class_reference_conflict",
-                    "One class-qualified student reference is linked to multiple Subjects.",
-                    link.record_type,
-                    link.subject_link_id,
-                    ("student_reference",),
-                )
-            )
-        else:
-            student_links[link.student_reference] = link.portfolio_subject_id
     issues.extend(
         _detect_chain_issues(
             graph.subject_links,

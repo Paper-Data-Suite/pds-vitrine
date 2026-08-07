@@ -118,3 +118,18 @@ Complete repository validation remains:
 
 All persistence tests and validation scripts use disposable workspaces and must
 leave the configured user workspace untouched.
+
+## Identity-history records
+
+Canonical storage may contain registered records that do not belong to a required
+`VitrineRecordGraph` collection. Portfolio Subject identity-history records are
+validated through the identity-state projection in addition to ordinary graph
+validation.
+
+A duplicate active exact roster reference is preserved as a diagnosable identity
+conflict so explicit merge/split/invalidation can resolve it. Other malformed
+identity history remains a fatal guarded-write/storage-integrity error.
+
+Use `load_current_records()` when a caller requires both graph records and
+identity-history records. `load_current_record_graph()` remains the exact
+foundational graph view.

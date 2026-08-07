@@ -18,6 +18,8 @@ audited v0.1.0 architecture and fixture foundation. The package remains at
 - workspace-scoped canonical JSON persistence with guarded state revisions;
 - strict historical/current loading and deterministic storage diagnostics;
 - a rebuildable nonauthoritative SQLite catalog;
+- Portfolio Subject creation, exact cross-class linking, correction, merge, and split workflows;
+- direct `vitrine subject` CLI commands and low-density teacher menus;
 - strict testing, typing, packaging, and cross-platform CI gates.
 
 The runtime models cover Portfolio and Subject identity, class-qualified Subject
@@ -27,10 +29,10 @@ Audience Contexts, and foundational Snapshot metadata.
 
 The model layer remains side-effect free. Vitrine now persists its own metadata
 beneath `<workspace>/vitrine/` with immutable record/state history, an explicit
-current pointer, optimistic concurrency, and a disposable derived catalog. It
-still cannot parse live producer manifests, discover Candidates, run curation
-workflows, copy source bytes, build Snapshot packages, authorize recipients, or
-export and deliver portfolios.
+current pointer, optimistic concurrency, and a disposable derived catalog. It now supports Portfolio Subject identity workflows, but still cannot parse live
+producer manifests, discover Candidates, run artifact curation workflows, copy
+source bytes, build Snapshot packages, authorize recipients, or export and
+deliver portfolios.
 
 ## Requirements and installation
 
@@ -56,6 +58,8 @@ vitrine
 vitrine menu
 vitrine --help
 vitrine --version
+vitrine subject --help
+vitrine subject list [--workspace-root PATH]
 vitrine workspace show [--workspace-root PATH]
 vitrine workspace set PATH
 vitrine workspace validate [--workspace-root PATH]
@@ -63,8 +67,8 @@ vitrine workspace reset
 python -m vitrine ...
 ```
 
-No Portfolio editing command is added by the foundational model issue. Bare
-`vitrine` still launches the minimal teacher-facing menu.
+Bare `vitrine` launches the low-density teacher-facing menu; power users may use
+the direct `vitrine subject` command family.
 
 Vitrine declares no `paper_data_suite.modules` routing entry point and no
 `paper_data_suite.publication_producers` entry point.
@@ -83,7 +87,8 @@ from vitrine.models import (
 
 See the [foundational runtime contract](docs/contracts/foundational-runtime-models-v1.md),
 [canonical storage contract](docs/contracts/canonical-storage-v1.md), and
-[canonical storage development guide](docs/development/canonical-storage.md).
+[canonical storage development guide](docs/development/canonical-storage.md), and
+[Portfolio Subject workflow contract](docs/contracts/portfolio-subject-workflows-v1.md).
 
 ## Validation
 
@@ -110,8 +115,10 @@ Key entry points:
 
 - [Foundational runtime models](docs/contracts/foundational-runtime-models-v1.md)
 - [Canonical storage](docs/contracts/canonical-storage-v1.md)
+- [Portfolio Subject workflows](docs/contracts/portfolio-subject-workflows-v1.md)
 - [Runtime-model development](docs/development/runtime-models.md)
 - [Canonical-storage development](docs/development/canonical-storage.md)
+- [Portfolio Subject workflow development](docs/development/portfolio-subject-workflows.md)
 - [Package foundation](docs/development/package-foundation.md)
 - [Synthetic data policy](docs/development/synthetic-data.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)

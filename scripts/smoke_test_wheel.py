@@ -153,6 +153,104 @@ assert load_current_record_graph(workspace).state_revision == 2
 """
 
 
+
+def _subject_smoke_code() -> str:
+    return r"""
+from datetime import datetime, timezone
+from pathlib import Path
+import sys
+
+from pds_core.class_metadata import ClassMetadata, class_metadata_path, write_class_metadata
+from pds_core.classes import write_class_roster
+from pds_core.rosters import Roster, StudentRecord
+from vitrine.models import ActorAttribution, ClassQualifiedStudentRef
+from vitrine.subject_services import (
+    IdentityDecisionContext,
+    correct_subject_link,
+    create_portfolio_subject,
+    link_portfolio_subject,
+    show_subject,
+)
+
+workspace = Path(sys.argv[1])
+now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+actor = ActorAttribution(
+    actor_kind='authorized_adult',
+    actor_id='teacher_1',
+    owning_system='local',
+    role_snapshot='teacher',
+)
+context = IdentityDecisionContext(
+    actor=actor,
+    authority_source='local_teacher_workflow',
+    basis_type='direct_teacher_knowledge',
+    basis_summary='Synthetic installed-wheel confirmation.',
+)
+
+def write_class(class_id, student_id, first, last, period):
+    metadata = ClassMetadata(
+        class_id=class_id,
+        school_year='2026-2027',
+        created_at=now,
+        updated_at=now,
+        module_details={},
+    )
+    write_class_metadata(class_metadata_path(workspace, class_id), metadata)
+    write_class_roster(
+        workspace,
+        Roster(
+            class_id=class_id,
+            students=(StudentRecord(
+                class_id=class_id,
+                student_id=student_id,
+                last_name=last,
+                first_name=first,
+                period=period,
+                extra_fields={},
+            ),),
+            columns=('class_id','student_id','last_name','first_name','period'),
+        ),
+    )
+
+write_class('english10_p2', '00107', 'Jane', 'Doe', '2')
+write_class('csp_p1', '00107', 'Jane', 'Doe', '1')
+write_class('history_p4', '00777', 'Jane', 'Doe', '4')
+
+first = create_portfolio_subject(
+    workspace,
+    ClassQualifiedStudentRef(
+        school_year='2026-2027', class_id='english10_p2', student_id='00107'
+    ),
+    context=context,
+    expected_state_revision=2,
+)
+linked = link_portfolio_subject(
+    workspace,
+    first.subject_ids[0],
+    ClassQualifiedStudentRef(
+        school_year='2026-2027', class_id='csp_p1', student_id='00107'
+    ),
+    context=context,
+    expected_state_revision=first.commit.state_revision,
+)
+detail = show_subject(workspace, first.subject_ids[0])
+assert {item.reference.class_id for item in detail.current_links} == {'english10_p2','csp_p1'}
+csp_link = next(item for item in detail.current_links if item.reference.class_id == 'csp_p1')
+corrected = correct_subject_link(
+    workspace,
+    csp_link.subject_link_id,
+    ClassQualifiedStudentRef(
+        school_year='2026-2027', class_id='history_p4', student_id='00777'
+    ),
+    context=context,
+    expected_state_revision=linked.commit.state_revision,
+)
+assert corrected.commit.state_revision == linked.commit.state_revision + 1
+final = show_subject(workspace, first.subject_ids[0])
+assert any(item.reference.class_id == 'csp_p1' for item in final.historical_links)
+assert any(item.reference.class_id == 'history_p4' for item in final.current_links)
+"""
+
 def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
     repository = Path(__file__).resolve().parents[1]
     source_before = {
@@ -210,6 +308,7 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         console = _console_path(python)
         _run([str(console), "--version"], cwd=work, env=env)
         _run([str(console), "--help"], cwd=work, env=env)
+        _run([str(console), "subject", "--help"], cwd=work, env=env)
         _run([str(python), "-m", "vitrine", "--version"], cwd=work, env=env)
         _run([str(python), "-m", "vitrine", "--help"], cwd=work, env=env)
         _run([str(python), "-c", _model_smoke_code()], cwd=work, env=env)
@@ -253,6 +352,22 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         )
         _run(
             [str(python), "-c", _storage_smoke_code(), str(workspace)],
+            cwd=work,
+            env=env,
+        )
+        _run(
+            [str(python), "-c", _subject_smoke_code(), str(workspace)],
+            cwd=work,
+            env=env,
+        )
+        _run(
+            [
+                str(console),
+                "subject",
+                "list",
+                "--workspace-root",
+                str(workspace),
+            ],
             cwd=work,
             env=env,
         )
