@@ -35,3 +35,13 @@ class VitrineRecordGraphError(VitrineModelError):
     def __init__(self, issues: tuple[ValidationIssue, ...]) -> None:
         self.issues = tuple(issues)
         super().__init__(f"Vitrine record graph contains {len(self.issues)} issue(s).")
+
+
+class VitrineIdentityStateError(VitrineModelError):
+    """Raised when Portfolio Subject identity history is inconsistent."""
+
+    def __init__(self, issues: tuple[ValidationIssue, ...]) -> None:
+        self.issues = tuple(issues)
+        super().__init__(
+            f"Vitrine identity state contains {len(self.issues)} issue(s)."
+        )

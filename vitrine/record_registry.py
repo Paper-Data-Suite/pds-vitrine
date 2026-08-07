@@ -17,6 +17,9 @@ from vitrine.models.identity import (
     Portfolio,
     PortfolioSubject,
     PortfolioSubjectClassLink,
+    PortfolioSubjectDisplaySnapshot,
+    PortfolioSubjectIdentityDecision,
+    PortfolioSubjectIdentityTransition,
 )
 from vitrine.models.profiles import (
     PortfolioProfileBinding,
@@ -39,7 +42,7 @@ class RecordDescriptor:
 
     record_type: str
     model_type: type[Any]
-    graph_collection: str
+    graph_collection: str | None
     identity_fields: tuple[str, ...]
     integer_identity_fields: tuple[str, ...] = ()
 
@@ -57,6 +60,24 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
         PortfolioSubjectClassLink,
         "subject_links",
         ("subject_link_id",),
+    ),
+    RecordDescriptor(
+        "portfolio_subject_display_snapshot",
+        PortfolioSubjectDisplaySnapshot,
+        None,
+        ("display_snapshot_id",),
+    ),
+    RecordDescriptor(
+        "portfolio_subject_identity_decision",
+        PortfolioSubjectIdentityDecision,
+        None,
+        ("identity_decision_id",),
+    ),
+    RecordDescriptor(
+        "portfolio_subject_identity_transition",
+        PortfolioSubjectIdentityTransition,
+        None,
+        ("subject_identity_transition_id",),
     ),
     RecordDescriptor(
         "portfolio_profile_family",
@@ -161,8 +182,10 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
 
 DESCRIPTOR_BY_RECORD_TYPE = {item.record_type: item for item in RECORD_DESCRIPTORS}
 DESCRIPTOR_BY_MODEL_TYPE = {item.model_type: item for item in RECORD_DESCRIPTORS}
-DESCRIPTOR_BY_GRAPH_COLLECTION = {
-    item.graph_collection: item for item in RECORD_DESCRIPTORS
+DESCRIPTOR_BY_GRAPH_COLLECTION: dict[str, RecordDescriptor] = {
+    item.graph_collection: item
+    for item in RECORD_DESCRIPTORS
+    if item.graph_collection is not None
 }
 
 

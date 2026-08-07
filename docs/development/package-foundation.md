@@ -90,3 +90,11 @@ through its own explicit pointer. It does not query the Core catalog, parse
 producer manifests, discover Candidates, execute Selection or Placement
 workflows, copy source bytes, build Snapshot packages, authorize disclosure,
 export, or deliver portfolios.
+
+## Portfolio Subject interface surface
+
+Issue #30 extends the package shell with a direct `vitrine subject` CLI family and
+an equivalent Portfolio Subjects teacher menu. Both consume the same
+presentation-independent services. Core `menu_navigation` supplies standard B/M/Q
+behavior; teacher screens clear after choices by default and retain only context
+needed for the next action.

@@ -13,13 +13,16 @@ from typing import Any, cast
 
 from pds_core.workspace import inspect_workspace_root, resolve_workspace_root
 
+from vitrine.identity_state import (
+    collect_identity_state_issues,
+    project_identity_state,
+)
 from vitrine.models import (
     VitrineRecord,
     VitrineRecordGraph,
-    VitrineRecordGraphError,
+    collect_record_graph_issues,
     record_from_dict,
     record_to_dict,
-    validate_record_graph,
 )
 from vitrine.record_registry import (
     RECORD_DESCRIPTORS,
@@ -305,31 +308,74 @@ def list_record_keys(root: str | Path) -> tuple[VitrineStorageRecordKey, ...]:
     return tuple(sorted(result))
 
 
+def _graph_descriptors() -> tuple[Any, ...]:
+    return tuple(
+        descriptor
+        for descriptor in RECORD_DESCRIPTORS
+        if descriptor.graph_collection is not None
+    )
+
+
 def _records_to_graph(records: Iterable[VitrineRecord]) -> VitrineRecordGraph:
+    descriptors = _graph_descriptors()
     collections: dict[str, list[VitrineRecord]] = {
-        descriptor.graph_collection: [] for descriptor in RECORD_DESCRIPTORS
+        cast(str, descriptor.graph_collection): [] for descriptor in descriptors
     }
     for record in records:
         descriptor = descriptor_for_record(record)
+        if descriptor.graph_collection is None:
+            continue
         collections[descriptor.graph_collection].append(record)
     kwargs = {
-        descriptor.graph_collection: tuple(
+        cast(str, descriptor.graph_collection): tuple(
             sorted(
-                collections[descriptor.graph_collection],
+                collections[cast(str, descriptor.graph_collection)],
                 key=lambda item: identity_segments_for_record(item),
             )
         )
-        for descriptor in RECORD_DESCRIPTORS
+        for descriptor in descriptors
     }
     return VitrineRecordGraph(**cast(Any, kwargs))
 
 
-def _records_by_key(graph: VitrineRecordGraph) -> dict[VitrineStorageRecordKey, VitrineRecord]:
+def _records_by_key(
+    graph: VitrineRecordGraph,
+) -> dict[VitrineStorageRecordKey, VitrineRecord]:
     return {
         key_for_record(record): record
-        for descriptor in RECORD_DESCRIPTORS
-        for record in getattr(graph, descriptor.graph_collection)
+        for descriptor in _graph_descriptors()
+        for record in getattr(graph, cast(str, descriptor.graph_collection))
     }
+
+
+def _records_by_key_from_records(
+    records: Iterable[VitrineRecord],
+) -> dict[VitrineStorageRecordKey, VitrineRecord]:
+    return {key_for_record(record): record for record in records}
+
+
+def _validate_state_records(
+    records: Iterable[VitrineRecord],
+    *,
+    message: str,
+) -> VitrineRecordGraph:
+    values = tuple(records)
+    graph = _records_to_graph(values)
+    graph_issues = collect_record_graph_issues(graph)
+    if graph_issues:
+        raise VitrineStorageGraphIntegrityError(message, issues=graph_issues)
+    identity_state = project_identity_state(values)
+    identity_issues = tuple(
+        issue
+        for issue in collect_identity_state_issues(identity_state)
+        if issue.code != "identity.duplicate_active_association"
+    )
+    if identity_issues:
+        raise VitrineStorageGraphIntegrityError(
+            "persisted Portfolio Subject identity state is invalid.",
+            issues=identity_issues,
+        )
+    return graph
 
 
 def _load_state_envelope(
@@ -376,31 +422,49 @@ def _load_state_chain(
     return target, target_bytes
 
 
-def load_state_revision(
-    root: str | Path, state_revision: int
-) -> tuple[VitrineStateRevision, str, VitrineRecordGraph]:
-    value, data = _load_state_chain(root, state_revision)
+def _load_state_records(
+    root: str | Path, state: VitrineStateRevision
+) -> tuple[VitrineRecord, ...]:
     records: list[VitrineRecord] = []
-    for reference in value.records:
+    for reference in state.records:
         path = record_revision_path(
             root, reference.key, reference.storage_revision
         )
         if _sha(read_canonical_bytes(root, path, missing=True)) != reference.sha256:
             raise VitrineStorageIntegrityError(
                 "record revision digest mismatch for "
-                f"{reference.key.record_type}:{'/'.join(reference.key.identity_segments)}."
+                f"{reference.key.record_type}:"
+                f"{'/'.join(reference.key.identity_segments)}."
             )
         record, _ = load_record_revision(
             root, reference.key, reference.storage_revision
         )
         records.append(record)
-    graph = _records_to_graph(records)
-    try:
-        validate_record_graph(graph)
-    except VitrineRecordGraphError as error:
-        raise VitrineStorageGraphIntegrityError(
-            "persisted state graph is invalid.", issues=error.issues
-        ) from error
+    return tuple(records)
+
+
+def load_state_records(
+    root: str | Path, state_revision: int
+) -> tuple[VitrineRecord, ...]:
+    """Load every canonical record selected by one exact state revision."""
+    state, _ = _load_state_chain(root, state_revision)
+    records = _load_state_records(root, state)
+    _validate_state_records(
+        records,
+        message="persisted state graph is invalid.",
+    )
+    return records
+
+
+def load_state_revision(
+    root: str | Path, state_revision: int
+) -> tuple[VitrineStateRevision, str, VitrineRecordGraph]:
+    value, data = _load_state_chain(root, state_revision)
+    records = _load_state_records(root, value)
+    graph = _validate_state_records(
+        records,
+        message="persisted state graph is invalid.",
+    )
     return value, _sha(data), graph
 
 
@@ -439,6 +503,13 @@ def load_current_record_graph(root: str | Path) -> VitrineLoadedRecordGraph:
     if digest != current.state_sha256:
         raise VitrineStorageIntegrityError("current-state digest mismatch.")
     return VitrineLoadedRecordGraph(graph, current.state_revision, digest)
+
+
+def load_current_records(root: str | Path) -> tuple[VitrineRecord, ...]:
+    """Load every canonical record selected by current.json."""
+    load_store_marker(root)
+    current = load_current_state(root)
+    return load_state_records(root, current.state_revision)
 
 
 def load_current_record(
@@ -679,13 +750,13 @@ def clear_write_lock(root: str | Path, *, expected_sha256: str) -> None:
         raise VitrineStorageWriteError("could not clear write lock.") from error
 
 
-def _validate_candidate_graph(graph: VitrineRecordGraph) -> None:
-    try:
-        validate_record_graph(graph)
-    except VitrineRecordGraphError as error:
-        raise VitrineStorageGraphIntegrityError(
-            "candidate graph is invalid.", issues=error.issues
-        ) from error
+def _validate_candidate_records(
+    records: Iterable[VitrineRecord],
+) -> VitrineRecordGraph:
+    return _validate_state_records(
+        records,
+        message="candidate graph is invalid.",
+    )
 
 
 def commit_record_batch(
@@ -773,8 +844,8 @@ def commit_record_batch(
                 )
             current_state, _, _ = load_state_revision(workspace, current_revision)
             _validate_canonical_write_history(workspace, current_state)
-            current_graph = loaded.graph
-            all_records = _records_by_key(current_graph)
+            current_records = load_state_records(workspace, current_revision)
+            all_records = _records_by_key_from_records(current_records)
             selected = {item.key: item for item in current_state.records}
         else:
             if expected_state_revision is not None:
@@ -799,8 +870,7 @@ def commit_record_batch(
             new_records.append((key, record))
             all_records[key] = record
 
-        graph = _records_to_graph(all_records.values())
-        _validate_candidate_graph(graph)
+        _validate_candidate_records(all_records.values())
 
         if not new_records and current_revision:
             current = load_current_state(workspace)
@@ -878,13 +948,15 @@ def commit_record_batch(
         state_data = serialize_storage(state)
         _write_exclusive(workspace, state_path, state_data)
         durable.append(_relative(workspace, state_path))
-        verified_state, verified_digest, verified_graph = load_state_revision(
+        verified_state, verified_digest, _ = load_state_revision(
             workspace, next_revision
         )
+        verified_records = load_state_records(workspace, next_revision)
         if (
             verified_state != state
             or verified_digest != _sha(state_data)
-            or _records_by_key(verified_graph) != _records_by_key(graph)
+            or _records_by_key_from_records(verified_records)
+            != _records_by_key_from_records(all_records.values())
         ):
             raise VitrineStorageIntegrityError(
                 "newly written state revision failed exact verification."
@@ -899,10 +971,13 @@ def commit_record_batch(
         durable.append(_relative(workspace, current_path))
         _fsync_directory_if_supported(current_path.parent)
 
-        verified = load_current_record_graph(workspace)
-        if _records_by_key(verified.graph) != _records_by_key(graph):
+        load_current_record_graph(workspace)
+        verified_records = load_current_records(workspace)
+        if _records_by_key_from_records(verified_records) != (
+            _records_by_key_from_records(all_records.values())
+        ):
             raise VitrineStorageIntegrityError(
-                "published graph differs from validated candidate graph."
+                "published state differs from validated candidate state."
             )
         result = VitrineStorageCommitResult(
             next_revision,

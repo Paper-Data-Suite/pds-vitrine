@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import sys
-from collections.abc import Callable
 from pathlib import Path
 from typing import TextIO
 
@@ -16,15 +15,14 @@ from pds_core.menu_navigation import (
 )
 from pds_core.workspace import WorkspaceRootError
 
+from vitrine.menu_types import ClearFunction, InputFunction
+from vitrine.subject_menu import run_subject_menu
 from vitrine.workspace import (
     reset_workspace,
     set_workspace,
     show_workspace,
     validate_workspace,
 )
-
-InputFunction = Callable[[str], str]
-ClearFunction = Callable[[], None]
 
 
 def clear_screen() -> None:
@@ -49,10 +47,11 @@ def _read(input_fn: InputFunction, prompt: str) -> str:
 def _show_main_help(*, output: TextIO, input_fn: InputFunction) -> None:
     _write_lines(
         output,
-        "Vitrine package baseline",
+        "Vitrine Help",
         "",
-        "This release manages the shared Paper Data Suite workspace only.",
-        "Portfolio creation, curation, and Snapshot building are not available yet.",
+        "Vitrine manages Portfolio identity and curation in the shared PDS workspace.",
+        "Portfolio Subject links use exact Core class, school-year, and student IDs.",
+        "Cross-class identity confirmation does not grant source or disclosure access.",
     )
     _pause(input_fn)
 
@@ -192,7 +191,8 @@ def run_menu(
                 stream,
                 "Vitrine",
                 "",
-                "1. Workspace Settings",
+                "1. Portfolio Subjects",
+                "2. Workspace Settings",
                 "H. Help",
                 "Q. Quit",
             )
@@ -205,6 +205,15 @@ def run_menu(
                 return 0
             if choice == "1":
                 try:
+                    run_subject_menu(
+                        input_fn=input_fn,
+                        output=stream,
+                        clear_fn=clear_fn,
+                    )
+                except ReturnToMainMenu:
+                    continue
+            elif choice == "2":
+                try:
                     _workspace_menu(
                         input_fn=input_fn,
                         output=stream,
@@ -213,7 +222,7 @@ def run_menu(
                 except ReturnToMainMenu:
                     continue
             else:
-                _write_lines(stream, "Please choose 1, H, or Q.")
+                _write_lines(stream, "Please choose 1, 2, H, or Q.")
                 _pause(input_fn)
     except (EOFError, KeyboardInterrupt, QuitPDS):
         return 0

@@ -22,6 +22,7 @@ from .curation import (
 )
 from .errors import (
     ValidationIssue,
+    VitrineIdentityStateError,
     VitrineModelError,
     VitrineModelValidationError,
     VitrineRecordGraphError,
@@ -40,8 +41,12 @@ from .identity import (
     Portfolio,
     PortfolioSubject,
     PortfolioSubjectClassLink,
+    PortfolioSubjectDisplaySnapshot,
+    PortfolioSubjectIdentityDecision,
+    PortfolioSubjectIdentityTransition,
     ProfileRevisionRef,
     SnapshotEditionRef,
+    SubjectAssociationAllocation,
     VitrineRecordRef,
 )
 from .profiles import (
@@ -99,6 +104,9 @@ __all__ = [
     "PortfolioSelection",
     "PortfolioSubject",
     "PortfolioSubjectClassLink",
+    "PortfolioSubjectDisplaySnapshot",
+    "PortfolioSubjectIdentityDecision",
+    "PortfolioSubjectIdentityTransition",
     "PortfolioSubjectRelationshipAssertion",
     "ProducerSourceReference",
     "ProfileApplicability",
@@ -116,7 +124,9 @@ __all__ = [
     "SnapshotSeal",
     "SourceArtifactReference",
     "SourcePrivacyMetadata",
+    "SubjectAssociationAllocation",
     "ValidationIssue",
+    "VitrineIdentityStateError",
     "VitrineModelError",
     "VitrineModelValidationError",
     "VitrineRecord",

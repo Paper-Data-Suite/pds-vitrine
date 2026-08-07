@@ -113,6 +113,11 @@ def validate(core_wheel: Path, *, allow_dirty: bool) -> None:
             cwd=root,
             env=env,
         )
+        _run(
+            [sys.executable, "scripts/validate_subject_workflows.py"],
+            cwd=root,
+            env=env,
+        )
         _run([sys.executable, "scripts/check_documentation.py"], cwd=root, env=env)
         _run(
             [sys.executable, "scripts/validate_representative_portfolios.py"],

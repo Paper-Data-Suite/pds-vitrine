@@ -9,15 +9,17 @@ exact runtime contracts, validated fixtures, and deferred workflows.
 
 - [Foundational runtime models v1](contracts/foundational-runtime-models-v1.md) — exact immutable record and value-object contract, conversion, canonical JSON, and graph validation implemented by issue #28.
 - [Canonical storage v1](contracts/canonical-storage-v1.md) — workspace-scoped canonical paths, immutable record/state history, current-pointer publication, concurrency, strict loading, recovery boundaries, and catalog nonauthority implemented by issue #29.
+- [Portfolio Subject workflows v1](contracts/portfolio-subject-workflows-v1.md) — exact Core roster linking, attributable identity decisions, correction, merge/split history, CLI, and low-density teacher workflows implemented by issue #30.
 - [Runtime-model development](development/runtime-models.md) — public imports, construction, conversion, fixtures, and validation commands.
 - [Canonical-storage development](development/canonical-storage.md) — persistence, historical reads, audits, catalogs, locks, and focused validation.
+- [Portfolio Subject workflow development](development/portfolio-subject-workflows.md) — application services, direct CLI, teacher menu, and workflow validation.
 - [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, packaging, and CI.
 - [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
 
-The runtime model layer remains side-effect free. The storage layer now persists
-Vitrine-owned metadata but does not provide producer discovery, source-byte
-access, curation services, Snapshot construction, authorization, export, or
-delivery.
+The runtime model layer remains side-effect free. Vitrine now persists and manages
+Portfolio Subject identity, but producer discovery, source-byte access, artifact
+curation, Snapshot construction, authorization, export, and delivery remain
+deferred.
 
 ## Foundation research
 
