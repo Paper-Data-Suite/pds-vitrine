@@ -1,4 +1,4 @@
-"""Install Core and Vitrine wheels in isolation and smoke the baseline."""
+"""Install Core and Vitrine wheels in isolation and smoke the current baseline."""
 
 from __future__ import annotations
 
@@ -12,7 +12,13 @@ import venv
 from pathlib import Path
 
 
-def _run(command: list[str], *, cwd: Path, env: dict[str, str], input_text: str | None = None) -> subprocess.CompletedProcess[str]:
+def _run(
+    command: list[str],
+    *,
+    cwd: Path,
+    env: dict[str, str],
+    input_text: str | None = None,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         command,
         cwd=cwd,
@@ -40,9 +46,53 @@ def _console_path(python: Path) -> Path:
     return scripts / ("vitrine.exe" if os.name == "nt" else "vitrine")
 
 
+def _model_smoke_code() -> str:
+    return """
+from datetime import datetime, timezone
+from vitrine.models import (
+    ActorAttribution,
+    Portfolio,
+    PortfolioSubject,
+    VitrineRecordGraph,
+    graph_from_json_bytes,
+    graph_to_canonical_json_bytes,
+    validate_record_graph,
+)
+actor = ActorAttribution(
+    actor_kind='authorized_adult',
+    actor_id='teacher_1',
+    owning_system='vitrine',
+)
+subject = PortfolioSubject(
+    portfolio_subject_id='subject_1',
+    created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+    created_by=actor,
+)
+portfolio = Portfolio(
+    portfolio_id='portfolio_1',
+    portfolio_subject_id=subject.portfolio_subject_id,
+    created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+    created_by=actor,
+)
+graph = VitrineRecordGraph(
+    portfolios=(portfolio,),
+    portfolio_subjects=(subject,),
+)
+validate_record_graph(graph)
+content = graph_to_canonical_json_bytes(graph)
+loaded = graph_from_json_bytes(content)
+validate_record_graph(loaded)
+assert graph_to_canonical_json_bytes(loaded) == content
+"""
+
+
 def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
     repository = Path(__file__).resolve().parents[1]
-    source_before = {path: path.stat().st_mtime_ns for path in repository.rglob("*") if path.is_file() and ".git" not in path.parts}
+    source_before = {
+        path: path.stat().st_mtime_ns
+        for path in repository.rglob("*")
+        if path.is_file() and ".git" not in path.parts
+    }
     with tempfile.TemporaryDirectory(prefix="vitrine-wheel-smoke-") as temporary:
         root = Path(temporary)
         environment = root / "venv"
@@ -55,8 +105,23 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         env.pop("PYTHONPATH", None)
         env["PYTHONDONTWRITEBYTECODE"] = "1"
         env["PDS_WORKSPACE_ROOT"] = str(root / "environment-workspace")
-        _run([str(python), "-m", "pip", "install", str(core_wheel.resolve())], cwd=work, env=env)
-        _run([str(python), "-m", "pip", "install", "--no-deps", str(vitrine_wheel.resolve())], cwd=work, env=env)
+        _run(
+            [str(python), "-m", "pip", "install", str(core_wheel.resolve())],
+            cwd=work,
+            env=env,
+        )
+        _run(
+            [
+                str(python),
+                "-m",
+                "pip",
+                "install",
+                "--no-deps",
+                str(vitrine_wheel.resolve()),
+            ],
+            cwd=work,
+            env=env,
+        )
         _run([str(python), "-m", "pip", "check"], cwd=work, env=env)
         package_path = _run(
             [
@@ -80,15 +145,42 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         _run([str(console), "--help"], cwd=work, env=env)
         _run([str(python), "-m", "vitrine", "--version"], cwd=work, env=env)
         _run([str(python), "-m", "vitrine", "--help"], cwd=work, env=env)
+        _run([str(python), "-c", _model_smoke_code()], cwd=work, env=env)
         _run([str(console), "menu"], cwd=work, env=env, input_text="Q\n")
-        _run([str(console), "workspace", "show", "--workspace-root", str(workspace)], cwd=work, env=env)
+        _run(
+            [
+                str(console),
+                "workspace",
+                "show",
+                "--workspace-root",
+                str(workspace),
+            ],
+            cwd=work,
+            env=env,
+        )
         if workspace.exists():
             raise RuntimeError("workspace show created the workspace")
-        _run([str(console), "workspace", "validate", "--workspace-root", str(workspace)], cwd=work, env=env)
+        _run(
+            [
+                str(console),
+                "workspace",
+                "validate",
+                "--workspace-root",
+                str(workspace),
+            ],
+            cwd=work,
+            env=env,
+        )
         if not (workspace / ".pds" / "workspace.json").is_file():
             raise RuntimeError("workspace validate did not create Core metadata")
         _run(
-            [str(console), "workspace", "show", "--workspace-root", str(workspace)],
+            [
+                str(console),
+                "workspace",
+                "show",
+                "--workspace-root",
+                str(workspace),
+            ],
             cwd=work,
             env=env,
         )
@@ -102,7 +194,11 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         residue = [path for path in work.iterdir()]
         if residue:
             raise RuntimeError(f"smoke current directory contains residue: {residue}")
-    source_after = {path: path.stat().st_mtime_ns for path in repository.rglob("*") if path.is_file() and ".git" not in path.parts}
+    source_after = {
+        path: path.stat().st_mtime_ns
+        for path in repository.rglob("*")
+        if path.is_file() and ".git" not in path.parts
+    }
     if source_before != source_after:
         raise RuntimeError("installed-wheel smoke test modified the source checkout")
 

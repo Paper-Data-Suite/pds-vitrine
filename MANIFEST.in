@@ -5,5 +5,5 @@ include pyproject.toml
 include run_tests.ps1
 recursive-include docs *.md *.json
 recursive-include scripts *.py
-recursive-include tests *.py
+recursive-include tests *.py *.json
 recursive-include fixtures *.json *.md *.txt

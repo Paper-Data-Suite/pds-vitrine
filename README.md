@@ -5,24 +5,27 @@ provenance, and producing purpose-specific, immutable portfolio snapshots.
 
 ## Current status
 
-Vitrine has entered v0.2.0 implementation after completing its audited v0.1.0
-foundation with a `ready_for_implementation` verdict. The repository now provides
-an installable, strictly typed package baseline at development version
-`0.2.0.dev0`, a minimal teacher-facing menu, thin Core-owned workspace wrappers,
-tests, packaging, CI, and release-validation tooling.
+Vitrine is implementing its v0.2.0 runtime foundation after completing an
+audited v0.1.0 architecture and fixture foundation. The package remains at
+`0.2.0.dev0` and now provides:
 
-The package can currently:
+- the installable `pds-vitrine` distribution and `vitrine` command;
+- released Core 0.6 workspace integration;
+- immutable foundational runtime models;
+- exact mapping and canonical JSON conversion;
+- deterministic cross-record validation;
+- canonical synthetic improvement and showcase record graphs;
+- strict testing, typing, packaging, and cross-platform CI gates.
 
-- install as `pds-vitrine`;
-- import as `vitrine`;
-- report help and version through `vitrine` and `python -m vitrine`;
-- launch a minimal teacher-facing menu; and
-- show, set, validate/create, and reset the shared Core workspace.
+The runtime models cover Portfolio and Subject identity, class-qualified Subject
+links, Profile revisions and Bindings, source provenance, Candidate Evaluations,
+Candidates, Selections, Placements, Arrangements, Composition Revisions,
+Audience Contexts, and foundational Snapshot metadata.
 
-It cannot yet create a Portfolio, identify or link a Portfolio Subject, bind a
-Profile, discover Candidates, read producer artifacts, select or arrange work,
-persist Vitrine records, build a Snapshot, issue or export a Portfolio, authorize
-recipients, or perform regulated workflows.
+These models are side-effect free. Vitrine still cannot persist records, query
+the Core catalog, parse live producer manifests, run curation workflows, copy
+source bytes, build Snapshot packages, authorize recipients, or export and
+deliver portfolios.
 
 ## Requirements and installation
 
@@ -55,12 +58,26 @@ vitrine workspace reset
 python -m vitrine ...
 ```
 
-Bare `vitrine` launches the teacher-facing menu. Help, version, imports, parser
-construction, `workspace show`, and immediate menu exit are side-effect-free.
+No Portfolio editing command is added by the foundational model issue. Bare
+`vitrine` still launches the minimal teacher-facing menu.
 
 Vitrine declares no `paper_data_suite.modules` routing entry point and no
-`paper_data_suite.publication_producers` entry point. It is neither a PDS2 page
-handler nor an academic-result producer in this milestone.
+`paper_data_suite.publication_producers` entry point.
+
+## Runtime model example
+
+```python
+from vitrine.models import (
+    Portfolio,
+    PortfolioSubject,
+    VitrineRecordGraph,
+    graph_to_canonical_json_bytes,
+    validate_record_graph,
+)
+```
+
+See the [foundational runtime contract](docs/contracts/foundational-runtime-models-v1.md)
+and [runtime-model development guide](docs/development/runtime-models.md).
 
 ## Validation
 
@@ -74,8 +91,10 @@ Cross-platform form:
 python scripts/validate_repository.py --core-wheel <wheel>
 ```
 
-See [Package Foundation](docs/development/package-foundation.md) and the
-[Synthetic Data Policy](docs/development/synthetic-data.md).
+The complete gate authenticates Core, runs pytest, Ruff, strict Mypy,
+documentation and fixture validators, builds distributions, checks Twine and
+package contents, runs an isolated installed-wheel smoke test, and verifies
+repository cleanliness.
 
 ## Documentation
 
@@ -83,19 +102,16 @@ Documentation is indexed in [`docs/README.md`](docs/README.md).
 
 Key entry points:
 
+- [Foundational runtime models](docs/contracts/foundational-runtime-models-v1.md)
+- [Runtime-model development](docs/development/runtime-models.md)
 - [Package foundation](docs/development/package-foundation.md)
 - [Synthetic data policy](docs/development/synthetic-data.md)
-- [Portfolio-purpose research](docs/research/portfolio-purpose-workflows.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)
-- [Portfolio Subject identity and cross-class linking](docs/design/portfolio-subject-identity.md)
+- [Portfolio Subject identity](docs/design/portfolio-subject-identity.md)
 - [Versioned Portfolio Profiles](docs/design/portfolio-profile-contract.md)
-- [Candidate and source-reference contract](docs/design/candidate-source-reference-contract.md)
-- [Producer artifact exposure boundaries](docs/design/producer-artifact-exposure-boundaries.md)
-- [Selection, ordering, annotation, and reflection records](docs/design/selection-curation-records.md)
-- [Snapshot, export, checksum, and immutability contracts](docs/design/snapshot-export-immutability-contracts.md)
-- [Privacy, redaction, and audience controls](docs/design/privacy-redaction-audience-controls.md)
-- [Regulated Portfolio and compliance profiles](docs/design/regulated-portfolio-compliance-profiles.md)
+- [Candidate and source references](docs/design/candidate-source-reference-contract.md)
+- [Selection and curation](docs/design/selection-curation-records.md)
+- [Snapshot and immutability contracts](docs/design/snapshot-export-immutability-contracts.md)
+- [Privacy and audience controls](docs/design/privacy-redaction-audience-controls.md)
 - [Representative synthetic Portfolio corpus](docs/examples/representative-synthetic-portfolios.md)
-- [Portfolio foundation audit](docs/audits/portfolio-foundation-audit.md)
-- [Portfolio foundation traceability](docs/audits/portfolio-foundation-traceability.md)
 - [Architecture Decision Records](docs/decisions/README.md)

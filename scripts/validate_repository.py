@@ -103,9 +103,22 @@ def validate(core_wheel: Path, *, allow_dirty: bool) -> None:
             cwd=root,
             env=env,
         )
+        _run(
+            [sys.executable, "scripts/validate_runtime_models.py"],
+            cwd=root,
+            env=env,
+        )
         _run([sys.executable, "scripts/check_documentation.py"], cwd=root, env=env)
-        _run([sys.executable, "scripts/validate_representative_portfolios.py"], cwd=root, env=env)
-        _run([sys.executable, "scripts/validate_portfolio_foundation.py"], cwd=root, env=env)
+        _run(
+            [sys.executable, "scripts/validate_representative_portfolios.py"],
+            cwd=root,
+            env=env,
+        )
+        _run(
+            [sys.executable, "scripts/validate_portfolio_foundation.py"],
+            cwd=root,
+            env=env,
+        )
         build_source = _copy_build_source(root, temp / "source")
         dist = temp / "dist"
         _run(
