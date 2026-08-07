@@ -1,73 +1,96 @@
 # Vitrine Documentation
 
-Vitrine has completed its v0.1.0 foundation audit with a `ready_for_implementation` verdict. The documents in this repository distinguish accepted architecture, conceptual designs, validated fixtures, later data contracts, and eventual implementation behavior.
+Vitrine completed its audited v0.1.0 foundation with a
+`ready_for_implementation` verdict and is implementing the v0.2.0 runtime
+foundation. Documents distinguish accepted architecture, conceptual designs,
+exact runtime contracts, validated fixtures, and deferred workflows.
+
+## Runtime implementation
+
+- [Foundational runtime models v1](contracts/foundational-runtime-models-v1.md) — exact immutable record and value-object contract, conversion, canonical JSON, and graph validation implemented by issue #28.
+- [Runtime-model development](development/runtime-models.md) — public imports, construction, conversion, fixtures, and validation commands.
+- [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, packaging, and CI.
+- [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
+
+The runtime model layer does not provide persistence, producer discovery,
+source-byte access, curation services, Snapshot construction, authorization,
+export, or delivery.
 
 ## Foundation research
 
-- [Portfolio purposes and workflows](research/portfolio-purpose-workflows.md) — compares improvement, showcase, parent/guardian conference, and regulated alternate-graduation-pathway portfolios.
-- [New Jersey Graduation Portfolio Appeal](research/new-jersey-graduation-portfolio-appeal.md) — revalidated 2025-2026/Class of 2026 regulated-workflow case study and non-operational reference Profile family.
-- [Compliance and policy constraints](research/compliance-constraints.md) — privacy, retention, accessibility, accommodations, intellectual property, and local-policy boundaries.
-- [Source register](research/source-register.md) — reviewable inventory of authorities, temporal scope, source status, and known gaps.
+- [Portfolio purposes and workflows](research/portfolio-purpose-workflows.md)
+- [New Jersey Graduation Portfolio Appeal](research/new-jersey-graduation-portfolio-appeal.md)
+- [Compliance and policy constraints](research/compliance-constraints.md)
+- [Source register](research/source-register.md)
 
-## Foundation architecture
+## Architecture and conceptual design
 
 - [Architecture index](architecture/README.md)
-- [Module boundaries and authority](architecture/module-boundaries.md) — Vitrine ownership, source authority, dependency directions, sibling-module boundaries, external-system limits, and edge-case behavior.
+- [Module boundaries and authority](architecture/module-boundaries.md)
+- [Portfolio Subject identity and cross-class linking](design/portfolio-subject-identity.md)
+- [Versioned Portfolio Profiles](design/portfolio-profile-contract.md)
+- [Candidate and source-reference contract](design/candidate-source-reference-contract.md)
+- [Producer Artifact exposure boundaries](design/producer-artifact-exposure-boundaries.md)
+- [Selection, ordering, annotation, and reflection](design/selection-curation-records.md)
+- [Snapshot, export, checksum, and immutability](design/snapshot-export-immutability-contracts.md)
+- [Privacy, redaction, and audience controls](design/privacy-redaction-audience-controls.md)
+- [Regulated Portfolio and compliance Profiles](design/regulated-portfolio-compliance-profiles.md)
 
-## Conceptual design
+## Representative examples and fixtures
 
-- [Portfolio Subject identity and cross-class linking](design/portfolio-subject-identity.md) — Portfolio and subject identity, exact roster references, teacher-confirmed associations, historical resolution, correction, merge, and split.
-- [Representative identity examples](examples/portfolio-subject-identity-examples.md) — privacy-safe scenarios exercising cross-class, cross-year, correction, merge, split, Concord, and Portia boundaries.
-- [Versioned Portfolio Profiles](design/portfolio-profile-contract.md) — Profile families, immutable revisions, requirements, audience rules, approvals, retention references, composition, and migration.
-- [Representative Portfolio Profile examples](examples/portfolio-profile-examples.md) — synthetic improvement, showcase, conference, regulated, migration, composition, and failure scenarios.
-- [Candidate and source-reference contract](design/candidate-source-reference-contract.md) — staged Core discovery, canonical verification, producer-reader projection, exact source references, subject relationships, privacy, availability, and Candidate evaluation.
-- [Representative Candidate and source-reference examples](examples/candidate-source-reference-examples.md) — synthetic discovery, integrity, adapter, producer, privacy, lifecycle, and correction scenarios.
-- [Producer artifact exposure boundaries](design/producer-artifact-exposure-boundaries.md) — producer-owned projection kinds, exposure and readiness states, field allowlists, retained-scan policy, and ScoreForm, Quillan, Concord, and Portia matrices.
-- [Representative producer artifact exposure examples](examples/producer-artifact-exposure-examples.md) — synthetic source-only, eligible, conditional, prohibited, suppressed, group, privacy, revision, and digest scenarios.
-- [Selection, ordering, annotation, and reflection records](design/selection-curation-records.md) — proposals, decisions, Selections, Placements, immutable ordering, presentation, rationale, annotation, reflection, approval, composition revisions, and replacement history.
-- [Representative selection and curation examples](examples/selection-curation-examples.md) — synthetic proposal, ordering, reflection, approval, producer-boundary, migration, correction, and composition scenarios.
-- [Snapshot, export, checksum, and immutability contracts](design/snapshot-export-immutability-contracts.md) — exact Composition input, source acquisition, copied and generated Entries, omissions, manifests, checksums, immutable Editions, exports, issuance, submission, and lifecycle.
-- [Representative snapshot and export examples](examples/snapshot-export-examples.md) — synthetic copy, render, digest, omission, export, concurrency, partial-success, issuance, submission, lifecycle, and exceptional-removal scenarios.
-- [Privacy, redaction, and audience controls](design/privacy-redaction-audience-controls.md) — separate authorization gates, audience and recipient scope, authority evidence, no-leakage discovery, redaction, de-identification, collaborator treatment, disclosure authorization, events, and revocation.
-- [Representative privacy, redaction, and audience examples](examples/privacy-redaction-audience-examples.md) — synthetic student, family, teacher, reviewer, regulated, public, producer, redaction, de-identification, delivery, and historical-authorization scenarios.
-- [Regulated Portfolio and compliance profiles](design/regulated-portfolio-compliance-profiles.md) — authority sources, regulated cases and components, pathways, checklists, supporting records, attestations, deadlines, approvals, batches, submissions, receipts, outcomes, migration, and the New Jersey reference family.
-- [Representative regulated Portfolio and compliance examples](examples/regulated-portfolio-compliance-examples.md) — synthetic Profile activation, component, pathway, evidence, checklist, attestation, deadline, batch, resubmission, external-outcome, privacy, producer, and historical-replay scenarios.
-- [Representative synthetic Portfolio corpus](examples/representative-synthetic-portfolios.md) — executable cross-contract fixtures for improvement, showcase, parent/guardian conference, and research-only NJ-style regulated Portfolios, with actual bytes, checksums, producer boundaries, expected outcomes, and negative cases.
+- [Portfolio Subject examples](examples/portfolio-subject-identity-examples.md)
+- [Portfolio Profile examples](examples/portfolio-profile-examples.md)
+- [Candidate and source-reference examples](examples/candidate-source-reference-examples.md)
+- [Producer Artifact exposure examples](examples/producer-artifact-exposure-examples.md)
+- [Selection and curation examples](examples/selection-curation-examples.md)
+- [Snapshot and export examples](examples/snapshot-export-examples.md)
+- [Privacy and audience examples](examples/privacy-redaction-audience-examples.md)
+- [Regulated Portfolio examples](examples/regulated-portfolio-compliance-examples.md)
+- [Representative synthetic Portfolio corpus](examples/representative-synthetic-portfolios.md)
+
+Canonical runtime-model fixtures are stored under:
+
+```text
+tests/fixtures/runtime-models/
+```
+
+The earlier representative corpus remains under:
+
+```text
+fixtures/representative-portfolios/
+```
 
 ## Foundation audit
 
 - [Audit index](audits/README.md)
-- [Portfolio foundation audit](audits/portfolio-foundation-audit.md) — skeptical closure review and final `ready_for_implementation` verdict.
-- [Portfolio foundation traceability](audits/portfolio-foundation-traceability.md) — maps every foundation issue and exit condition to direct evidence.
-- [Portfolio foundation findings](audits/portfolio-foundation-findings.md) — preserved finding register and dispositions.
-- [Issue #13 validation](validation/issue-13-portfolio-foundation-validation.md) — offline validation commands and results.
+- [Portfolio foundation audit](audits/portfolio-foundation-audit.md)
+- [Portfolio foundation traceability](audits/portfolio-foundation-traceability.md)
+- [Portfolio foundation findings](audits/portfolio-foundation-findings.md)
+- [Issue #13 validation](validation/issue-13-portfolio-foundation-validation.md)
 
 ## Architecture decisions
 
 - [ADR index](decisions/README.md)
-- [ADR 0001: Vitrine Module Boundaries and Authority](decisions/0001-vitrine-module-boundaries-and-authority.md) — accepted by the issue #13 portfolio foundation audit.
-- [ADR 0002: Portfolio Subject Identity and Roster Linking](decisions/0002-portfolio-subject-identity-and-roster-linking.md) — accepted by the issue #13 portfolio foundation audit.
-- [ADR 0003: Versioned Portfolio Profiles](decisions/0003-versioned-portfolio-profiles.md) — accepted by the issue #13 portfolio foundation audit.
-- [ADR 0004: Candidate Discovery and Source References](decisions/0004-candidate-discovery-and-source-references.md) — accepted by the issue #13 portfolio foundation audit.
-- [ADR 0005: Producer Artifact Exposure Boundaries](decisions/0005-producer-artifact-exposure-boundaries.md) — accepted by the issue #13 portfolio foundation audit.
-- [ADR 0006: Selection, Ordering, Annotation, and Reflection](decisions/0006-selection-ordering-annotation-and-reflection.md) — accepted by the issue #13 portfolio foundation audit.
-- [ADR 0007: Snapshot, Export, Checksum, and Immutability](decisions/0007-snapshot-export-checksum-and-immutability.md) — accepted by the issue #13 portfolio foundation audit.
-- [ADR 0008: Privacy, Redaction, and Audience Controls](decisions/0008-privacy-redaction-and-audience-controls.md) — accepted by the issue #13 portfolio foundation audit.
-- [ADR 0009: Regulated Portfolio and Compliance Profiles](decisions/0009-regulated-portfolio-and-compliance-profiles.md) — accepted by the issue #13 portfolio foundation audit.
+- [ADR 0001: Module Boundaries and Authority](decisions/0001-vitrine-module-boundaries-and-authority.md)
+- [ADR 0002: Portfolio Subject Identity](decisions/0002-portfolio-subject-identity-and-roster-linking.md)
+- [ADR 0003: Versioned Portfolio Profiles](decisions/0003-versioned-portfolio-profiles.md)
+- [ADR 0004: Candidate Discovery and Source References](decisions/0004-candidate-discovery-and-source-references.md)
+- [ADR 0005: Producer Artifact Exposure](decisions/0005-producer-artifact-exposure-boundaries.md)
+- [ADR 0006: Selection and Curation](decisions/0006-selection-ordering-annotation-and-reflection.md)
+- [ADR 0007: Snapshot and Immutability](decisions/0007-snapshot-export-checksum-and-immutability.md)
+- [ADR 0008: Privacy and Audience Controls](decisions/0008-privacy-redaction-and-audience-controls.md)
+- [ADR 0009: Regulated Portfolio Profiles](decisions/0009-regulated-portfolio-and-compliance-profiles.md)
 
-## Document status and authority
+## Authority
 
-- Research documents provide evidence and design inputs. They do not define final schemas or certify compliance.
-- Architecture documents consolidate system context and constraints.
-- Conceptual design documents translate architecture into record responsibilities and invariants without finalizing serialization or runtime behavior.
-- A Proposed ADR records a recommendation under review.
-- An Accepted ADR governs later contracts and implementation unless superseded.
-- Future accepted contracts will define exact record shapes and validation while remaining subordinate to accepted ADRs.
-- Implementation documentation will describe behavior that actually exists.
+When documents disagree:
 
-No document in this repository provides legal advice, activates an operational New Jersey profile, or makes Vitrine an external compliance authority.
+1. an Accepted ADR governs the architectural decision;
+2. an exact accepted runtime contract governs detailed shape and validation;
+3. implementation documentation describes current behavior;
+4. architecture documents consolidate context and constraints;
+5. conceptual designs provide reviewed recommendations;
+6. research provides evidence but does not establish executable contracts.
 
-## Runtime implementation
-
-- [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, validation, packaging, and CI.
-- [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
+No document in this repository provides legal advice, activates an operational
+regulated Profile, or makes Vitrine an external compliance authority.

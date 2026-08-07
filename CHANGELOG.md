@@ -13,6 +13,11 @@ All notable changes to this project will be documented in this file.
 - Strict typing, linting, tests, cross-platform CI, distribution checks, and
   isolated installed-wheel smoke testing.
 - Exact authentication tooling for the official Core v0.6.0 wheel.
+- Immutable foundational Portfolio, Subject, Profile, source, Candidate,
+  curation, audience, and Snapshot metadata models.
+- Exact mapping conversion, strict canonical JSON, deterministic graph
+  diagnostics, and canonical improvement and showcase runtime fixtures.
 
-The package baseline does not yet implement Portfolio records, producer adapters,
-Candidate discovery, Vitrine persistence, curation, or Snapshot construction.
+Vitrine does not yet persist these records, discover live producer sources,
+perform curation workflows, build Snapshot bytes, authorize disclosure, or
+export and deliver portfolios.

@@ -1,0 +1,2032 @@
+{
+  "arrangements": [
+    {
+      "arrangement_id": "arrangement_featured",
+      "arrangement_revision": 1,
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "placement_ids": [
+        "placement_polished"
+      ],
+      "portfolio_id": "portfolio_showcase",
+      "predecessor_arrangement_id": null,
+      "profile_binding_id": "binding_showcase",
+      "record_type": "section_arrangement_revision",
+      "schema_version": "1",
+      "section_id": "featured_work"
+    },
+    {
+      "arrangement_id": "arrangement_collaboration",
+      "arrangement_revision": 1,
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "placement_ids": [
+        "placement_group_safe"
+      ],
+      "portfolio_id": "portfolio_showcase",
+      "predecessor_arrangement_id": null,
+      "profile_binding_id": "binding_showcase",
+      "record_type": "section_arrangement_revision",
+      "schema_version": "1",
+      "section_id": "collaboration"
+    }
+  ],
+  "audience_contexts": [
+    {
+      "allowed_content_classes": [
+        "student_work",
+        "audience_safe_attribution"
+      ],
+      "audience_class": "public",
+      "audience_context_id": "audience_showcase",
+      "audience_rule_id": "public_showcase",
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "presentation_class": "public_showcase",
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "prohibited_content_classes": [
+        "private_teacher_note",
+        "raw_collaborator_data"
+      ],
+      "purpose": "Public showcase of reviewed work.",
+      "record_type": "audience_context",
+      "required_review_classes": [
+        "rights_review",
+        "privacy_review"
+      ],
+      "retention_policy_reference": null,
+      "schema_version": "1",
+      "subject_scope": "portfolio_subject_and_reviewed_collaborators"
+    }
+  ],
+  "candidate_evaluations": [
+    {
+      "availability_observations": [
+        {
+          "checked_at": "2026-08-06T20:00:00.000000+00:00",
+          "dimension": "canonical_publication",
+          "outcome": "available",
+          "reason_codes": []
+        },
+        {
+          "checked_at": "2026-08-06T20:00:00.000000+00:00",
+          "dimension": "subject_relationship",
+          "outcome": "confirmed",
+          "reason_codes": []
+        },
+        {
+          "checked_at": "2026-08-06T20:00:00.000000+00:00",
+          "dimension": "profile_eligibility",
+          "outcome": "eligible",
+          "reason_codes": []
+        }
+      ],
+      "candidate_evaluation_id": "evaluation_polished",
+      "eligible_section_ids": [
+        "featured_work"
+      ],
+      "evaluated_at": "2026-08-06T20:00:00.000000+00:00",
+      "evaluator_contract_version": "candidate_evaluator_v1",
+      "matched_profile_rule_ids": [
+        "rule_featured_work"
+      ],
+      "outcome": "eligible",
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_evaluation_id": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "purpose": "Evaluate showcase source.",
+      "reason_codes": [],
+      "record_type": "candidate_evaluation",
+      "requesting_actor": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "schema_version": "1",
+      "source_endpoint": {
+        "core_publication": {
+          "academic_work_registration_revision": 1,
+          "capabilities": [
+            "artifact_references"
+          ],
+          "core_publication_schema_version": "1",
+          "manifest_contract_version": "quillan_academic_result_manifest_v1",
+          "manifest_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+          "manifest_digest_algorithm": "sha256",
+          "manifest_path": "classes/science10_p4/modules/quillan/work/polished_analysis/exports/manifests/academic_results/1.json",
+          "observed_series_state": "current_selectable",
+          "observed_withdrawal_state": "not_withdrawn",
+          "publication_id": "publication_polished",
+          "publication_kind": "academic_result_set",
+          "published_at": "2026-08-06T20:00:00.000000+00:00",
+          "record_set_id": "academic_results",
+          "record_set_revision": 1,
+          "registration_snapshot": {
+            "academic_intent": "formative",
+            "lifecycle": "closed",
+            "producer_contract_version": "quillan_academic_work_v1",
+            "registration_revision": 1,
+            "source_records": [
+              {
+                "contract_version": null,
+                "module_id": "quillan",
+                "record_id": "polished_analysis",
+                "record_kind": "assignment"
+              }
+            ],
+            "title_snapshot": "Synthetic source",
+            "work_kind": "assignment"
+          },
+          "source_record": null,
+          "supersedes_publication_id": null,
+          "verified_at": "2026-08-06T20:00:00.000000+00:00",
+          "work": {
+            "class_id": "science10_p4",
+            "module_id": "quillan",
+            "work_id": "polished_analysis"
+          }
+        },
+        "producer_source": {
+          "lineage_reference": null,
+          "native_disposition": null,
+          "native_lifecycle": "complete",
+          "native_revision": 1,
+          "producer_contract_version": "quillan_academic_work_v1",
+          "producer_module_id": "quillan",
+          "projection_contract_version": "vitrine_projection_v1",
+          "reader_contract_version": "1",
+          "source_record_contract_version": "1",
+          "source_record_id": "submission_polished",
+          "source_record_kind": "submission"
+        },
+        "source_artifact": {
+          "accessibility_relationship": null,
+          "artifact_id": "artifact_polished",
+          "artifact_kind": "original_student_work",
+          "byte_size": 128,
+          "language": "en",
+          "media_type": "text/plain",
+          "native_revision": 1,
+          "representation_kind": "student_submission",
+          "source_digest": {
+            "algorithm": "sha256",
+            "value": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          "source_locator": "artifacts/polished-analysis.txt"
+        },
+        "source_privacy": {
+          "classification": "student_record",
+          "collaborator_information_present": false,
+          "metadata_visibility": "authorized_vitrine",
+          "minimum_necessary_projection_required": true,
+          "multi_subject_review_required": false,
+          "policy_reference": "synthetic_policy_v1",
+          "redaction_review_required": false,
+          "rights_review_required": false,
+          "subject_scope": "single_subject",
+          "third_party_information_present": false
+        },
+        "subject_relationship_assertions": [
+          {
+            "assertion_id": "assert_artifact_polished_1",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "submission_subject",
+            "source_subject_id": "source_subject_1",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "submission_polished",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "availability_observations": [
+        {
+          "checked_at": "2026-08-06T20:00:00.000000+00:00",
+          "dimension": "canonical_publication",
+          "outcome": "available",
+          "reason_codes": []
+        },
+        {
+          "checked_at": "2026-08-06T20:00:00.000000+00:00",
+          "dimension": "subject_relationship",
+          "outcome": "confirmed",
+          "reason_codes": []
+        },
+        {
+          "checked_at": "2026-08-06T20:00:00.000000+00:00",
+          "dimension": "profile_eligibility",
+          "outcome": "eligible",
+          "reason_codes": []
+        }
+      ],
+      "candidate_evaluation_id": "evaluation_group_raw",
+      "eligible_section_ids": [
+        "collaboration"
+      ],
+      "evaluated_at": "2026-08-06T20:00:00.000000+00:00",
+      "evaluator_contract_version": "candidate_evaluator_v1",
+      "matched_profile_rule_ids": [
+        "rule_collaboration"
+      ],
+      "outcome": "conditionally_eligible",
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_evaluation_id": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "purpose": "Evaluate showcase source.",
+      "reason_codes": [
+        "rights_review_required"
+      ],
+      "record_type": "candidate_evaluation",
+      "requesting_actor": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "schema_version": "1",
+      "source_endpoint": {
+        "core_publication": {
+          "academic_work_registration_revision": 1,
+          "capabilities": [
+            "artifact_references"
+          ],
+          "core_publication_schema_version": "1",
+          "manifest_contract_version": "concord_academic_result_manifest_v1",
+          "manifest_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+          "manifest_digest_algorithm": "sha256",
+          "manifest_path": "classes/science10_p4/modules/concord/work/water_quality_activity/exports/manifests/academic_results/1.json",
+          "observed_series_state": "current_selectable",
+          "observed_withdrawal_state": "not_withdrawn",
+          "publication_id": "publication_collaboration",
+          "publication_kind": "academic_result_set",
+          "published_at": "2026-08-06T20:00:00.000000+00:00",
+          "record_set_id": "academic_results",
+          "record_set_revision": 1,
+          "registration_snapshot": {
+            "academic_intent": "formative",
+            "lifecycle": "closed",
+            "producer_contract_version": "concord_academic_work_v1",
+            "registration_revision": 1,
+            "source_records": [
+              {
+                "contract_version": null,
+                "module_id": "concord",
+                "record_id": "water_quality_activity",
+                "record_kind": "activity"
+              }
+            ],
+            "title_snapshot": "Synthetic source",
+            "work_kind": "activity"
+          },
+          "source_record": null,
+          "supersedes_publication_id": null,
+          "verified_at": "2026-08-06T20:00:00.000000+00:00",
+          "work": {
+            "class_id": "science10_p4",
+            "module_id": "concord",
+            "work_id": "water_quality_activity"
+          }
+        },
+        "producer_source": {
+          "lineage_reference": null,
+          "native_disposition": null,
+          "native_lifecycle": "complete",
+          "native_revision": 1,
+          "producer_contract_version": "concord_academic_work_v1",
+          "producer_module_id": "concord",
+          "projection_contract_version": "vitrine_projection_v1",
+          "reader_contract_version": "1",
+          "source_record_contract_version": "1",
+          "source_record_id": "artifact_group_raw",
+          "source_record_kind": "artifact_instance"
+        },
+        "source_artifact": {
+          "accessibility_relationship": null,
+          "artifact_id": "artifact_group_raw",
+          "artifact_kind": "collaborative_artifact",
+          "byte_size": 128,
+          "language": "en",
+          "media_type": "text/plain",
+          "native_revision": 1,
+          "representation_kind": "original_group_artifact",
+          "source_digest": {
+            "algorithm": "sha256",
+            "value": "2222222222222222222222222222222222222222222222222222222222222222"
+          },
+          "source_locator": "artifacts/group-artifact.txt"
+        },
+        "source_privacy": {
+          "classification": "student_record",
+          "collaborator_information_present": true,
+          "metadata_visibility": "authorized_vitrine",
+          "minimum_necessary_projection_required": true,
+          "multi_subject_review_required": true,
+          "policy_reference": "synthetic_policy_v1",
+          "redaction_review_required": false,
+          "rights_review_required": true,
+          "subject_scope": "single_subject",
+          "third_party_information_present": true
+        },
+        "subject_relationship_assertions": [
+          {
+            "assertion_id": "assert_artifact_group_raw_1",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "group_member",
+            "source_subject_id": "source_subject_1",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_2",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "artifact_author",
+            "source_subject_id": "source_subject_2",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_3",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "artifact_subject",
+            "source_subject_id": "source_subject_3",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_4",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "documented_contributor",
+            "source_subject_id": "source_subject_4",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_5",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "recorder",
+            "source_subject_id": "source_subject_5",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_6",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "represented_group",
+            "source_subject_id": "source_subject_6",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_7",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "individual_score_target",
+            "source_subject_id": "source_subject_7",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_8",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "group_score_target",
+            "source_subject_id": "source_subject_8",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "availability_observations": [
+        {
+          "checked_at": "2026-08-06T20:00:00.000000+00:00",
+          "dimension": "canonical_publication",
+          "outcome": "available",
+          "reason_codes": []
+        },
+        {
+          "checked_at": "2026-08-06T20:00:00.000000+00:00",
+          "dimension": "subject_relationship",
+          "outcome": "confirmed",
+          "reason_codes": []
+        },
+        {
+          "checked_at": "2026-08-06T20:00:00.000000+00:00",
+          "dimension": "profile_eligibility",
+          "outcome": "eligible",
+          "reason_codes": []
+        }
+      ],
+      "candidate_evaluation_id": "evaluation_group_safe",
+      "eligible_section_ids": [
+        "collaboration"
+      ],
+      "evaluated_at": "2026-08-06T20:00:00.000000+00:00",
+      "evaluator_contract_version": "candidate_evaluator_v1",
+      "matched_profile_rule_ids": [
+        "rule_collaboration"
+      ],
+      "outcome": "eligible",
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_evaluation_id": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "purpose": "Evaluate showcase source.",
+      "reason_codes": [],
+      "record_type": "candidate_evaluation",
+      "requesting_actor": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "schema_version": "1",
+      "source_endpoint": {
+        "core_publication": {
+          "academic_work_registration_revision": 1,
+          "capabilities": [
+            "artifact_references"
+          ],
+          "core_publication_schema_version": "1",
+          "manifest_contract_version": "concord_academic_result_manifest_v1",
+          "manifest_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+          "manifest_digest_algorithm": "sha256",
+          "manifest_path": "classes/science10_p4/modules/concord/work/water_quality_activity/exports/manifests/academic_results/1.json",
+          "observed_series_state": "current_selectable",
+          "observed_withdrawal_state": "not_withdrawn",
+          "publication_id": "publication_collaboration_safe",
+          "publication_kind": "academic_result_set",
+          "published_at": "2026-08-06T20:00:00.000000+00:00",
+          "record_set_id": "academic_results",
+          "record_set_revision": 1,
+          "registration_snapshot": {
+            "academic_intent": "formative",
+            "lifecycle": "closed",
+            "producer_contract_version": "concord_academic_work_v1",
+            "registration_revision": 1,
+            "source_records": [
+              {
+                "contract_version": null,
+                "module_id": "concord",
+                "record_id": "water_quality_activity",
+                "record_kind": "activity"
+              }
+            ],
+            "title_snapshot": "Synthetic source",
+            "work_kind": "activity"
+          },
+          "source_record": null,
+          "supersedes_publication_id": null,
+          "verified_at": "2026-08-06T20:00:00.000000+00:00",
+          "work": {
+            "class_id": "science10_p4",
+            "module_id": "concord",
+            "work_id": "water_quality_activity"
+          }
+        },
+        "producer_source": {
+          "lineage_reference": null,
+          "native_disposition": null,
+          "native_lifecycle": "complete",
+          "native_revision": 1,
+          "producer_contract_version": "concord_academic_work_v1",
+          "producer_module_id": "concord",
+          "projection_contract_version": "vitrine_projection_v1",
+          "reader_contract_version": "1",
+          "source_record_contract_version": "1",
+          "source_record_id": "artifact_group_safe",
+          "source_record_kind": "artifact_instance"
+        },
+        "source_artifact": {
+          "accessibility_relationship": null,
+          "artifact_id": "artifact_group_safe",
+          "artifact_kind": "audience_safe_attribution",
+          "byte_size": 128,
+          "language": "en",
+          "media_type": "text/plain",
+          "native_revision": 1,
+          "representation_kind": "audience_safe_projection",
+          "source_digest": {
+            "algorithm": "sha256",
+            "value": "3333333333333333333333333333333333333333333333333333333333333333"
+          },
+          "source_locator": "artifacts/audience-safe-attribution.txt"
+        },
+        "source_privacy": {
+          "classification": "student_record",
+          "collaborator_information_present": true,
+          "metadata_visibility": "authorized_vitrine",
+          "minimum_necessary_projection_required": true,
+          "multi_subject_review_required": true,
+          "policy_reference": "synthetic_policy_v1",
+          "redaction_review_required": false,
+          "rights_review_required": false,
+          "subject_scope": "single_subject",
+          "third_party_information_present": true
+        },
+        "subject_relationship_assertions": [
+          {
+            "assertion_id": "assert_artifact_group_safe_1",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "group_member",
+            "source_subject_id": "source_subject_1",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_2",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "artifact_author",
+            "source_subject_id": "source_subject_2",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_3",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "artifact_subject",
+            "source_subject_id": "source_subject_3",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_4",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "documented_contributor",
+            "source_subject_id": "source_subject_4",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_5",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "recorder",
+            "source_subject_id": "source_subject_5",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_6",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "represented_group",
+            "source_subject_id": "source_subject_6",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_7",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "individual_score_target",
+            "source_subject_id": "source_subject_7",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_8",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "group_score_target",
+            "source_subject_id": "source_subject_8",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_evaluation_id": "evaluation_polished",
+      "candidate_id": "candidate_polished",
+      "condition_state": "ready_for_consideration",
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "display_snapshot": "Candidate Polished",
+      "eligible_profile_rule_ids": [
+        "rule_featured_work"
+      ],
+      "eligible_section_ids": [
+        "featured_work"
+      ],
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_candidate_id": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "record_type": "portfolio_candidate",
+      "schema_version": "1",
+      "source_endpoint": {
+        "core_publication": {
+          "academic_work_registration_revision": 1,
+          "capabilities": [
+            "artifact_references"
+          ],
+          "core_publication_schema_version": "1",
+          "manifest_contract_version": "quillan_academic_result_manifest_v1",
+          "manifest_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+          "manifest_digest_algorithm": "sha256",
+          "manifest_path": "classes/science10_p4/modules/quillan/work/polished_analysis/exports/manifests/academic_results/1.json",
+          "observed_series_state": "current_selectable",
+          "observed_withdrawal_state": "not_withdrawn",
+          "publication_id": "publication_polished",
+          "publication_kind": "academic_result_set",
+          "published_at": "2026-08-06T20:00:00.000000+00:00",
+          "record_set_id": "academic_results",
+          "record_set_revision": 1,
+          "registration_snapshot": {
+            "academic_intent": "formative",
+            "lifecycle": "closed",
+            "producer_contract_version": "quillan_academic_work_v1",
+            "registration_revision": 1,
+            "source_records": [
+              {
+                "contract_version": null,
+                "module_id": "quillan",
+                "record_id": "polished_analysis",
+                "record_kind": "assignment"
+              }
+            ],
+            "title_snapshot": "Synthetic source",
+            "work_kind": "assignment"
+          },
+          "source_record": null,
+          "supersedes_publication_id": null,
+          "verified_at": "2026-08-06T20:00:00.000000+00:00",
+          "work": {
+            "class_id": "science10_p4",
+            "module_id": "quillan",
+            "work_id": "polished_analysis"
+          }
+        },
+        "producer_source": {
+          "lineage_reference": null,
+          "native_disposition": null,
+          "native_lifecycle": "complete",
+          "native_revision": 1,
+          "producer_contract_version": "quillan_academic_work_v1",
+          "producer_module_id": "quillan",
+          "projection_contract_version": "vitrine_projection_v1",
+          "reader_contract_version": "1",
+          "source_record_contract_version": "1",
+          "source_record_id": "submission_polished",
+          "source_record_kind": "submission"
+        },
+        "source_artifact": {
+          "accessibility_relationship": null,
+          "artifact_id": "artifact_polished",
+          "artifact_kind": "original_student_work",
+          "byte_size": 128,
+          "language": "en",
+          "media_type": "text/plain",
+          "native_revision": 1,
+          "representation_kind": "student_submission",
+          "source_digest": {
+            "algorithm": "sha256",
+            "value": "1111111111111111111111111111111111111111111111111111111111111111"
+          },
+          "source_locator": "artifacts/polished-analysis.txt"
+        },
+        "source_privacy": {
+          "classification": "student_record",
+          "collaborator_information_present": false,
+          "metadata_visibility": "authorized_vitrine",
+          "minimum_necessary_projection_required": true,
+          "multi_subject_review_required": false,
+          "policy_reference": "synthetic_policy_v1",
+          "redaction_review_required": false,
+          "rights_review_required": false,
+          "subject_scope": "single_subject",
+          "third_party_information_present": false
+        },
+        "subject_relationship_assertions": [
+          {
+            "assertion_id": "assert_artifact_polished_1",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "submission_subject",
+            "source_subject_id": "source_subject_1",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "submission_polished",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidate_evaluation_id": "evaluation_group_raw",
+      "candidate_id": "candidate_group_raw",
+      "condition_state": "rights_review_required",
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "display_snapshot": "Candidate Group Raw",
+      "eligible_profile_rule_ids": [
+        "rule_collaboration"
+      ],
+      "eligible_section_ids": [
+        "collaboration"
+      ],
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_candidate_id": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "record_type": "portfolio_candidate",
+      "schema_version": "1",
+      "source_endpoint": {
+        "core_publication": {
+          "academic_work_registration_revision": 1,
+          "capabilities": [
+            "artifact_references"
+          ],
+          "core_publication_schema_version": "1",
+          "manifest_contract_version": "concord_academic_result_manifest_v1",
+          "manifest_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+          "manifest_digest_algorithm": "sha256",
+          "manifest_path": "classes/science10_p4/modules/concord/work/water_quality_activity/exports/manifests/academic_results/1.json",
+          "observed_series_state": "current_selectable",
+          "observed_withdrawal_state": "not_withdrawn",
+          "publication_id": "publication_collaboration",
+          "publication_kind": "academic_result_set",
+          "published_at": "2026-08-06T20:00:00.000000+00:00",
+          "record_set_id": "academic_results",
+          "record_set_revision": 1,
+          "registration_snapshot": {
+            "academic_intent": "formative",
+            "lifecycle": "closed",
+            "producer_contract_version": "concord_academic_work_v1",
+            "registration_revision": 1,
+            "source_records": [
+              {
+                "contract_version": null,
+                "module_id": "concord",
+                "record_id": "water_quality_activity",
+                "record_kind": "activity"
+              }
+            ],
+            "title_snapshot": "Synthetic source",
+            "work_kind": "activity"
+          },
+          "source_record": null,
+          "supersedes_publication_id": null,
+          "verified_at": "2026-08-06T20:00:00.000000+00:00",
+          "work": {
+            "class_id": "science10_p4",
+            "module_id": "concord",
+            "work_id": "water_quality_activity"
+          }
+        },
+        "producer_source": {
+          "lineage_reference": null,
+          "native_disposition": null,
+          "native_lifecycle": "complete",
+          "native_revision": 1,
+          "producer_contract_version": "concord_academic_work_v1",
+          "producer_module_id": "concord",
+          "projection_contract_version": "vitrine_projection_v1",
+          "reader_contract_version": "1",
+          "source_record_contract_version": "1",
+          "source_record_id": "artifact_group_raw",
+          "source_record_kind": "artifact_instance"
+        },
+        "source_artifact": {
+          "accessibility_relationship": null,
+          "artifact_id": "artifact_group_raw",
+          "artifact_kind": "collaborative_artifact",
+          "byte_size": 128,
+          "language": "en",
+          "media_type": "text/plain",
+          "native_revision": 1,
+          "representation_kind": "original_group_artifact",
+          "source_digest": {
+            "algorithm": "sha256",
+            "value": "2222222222222222222222222222222222222222222222222222222222222222"
+          },
+          "source_locator": "artifacts/group-artifact.txt"
+        },
+        "source_privacy": {
+          "classification": "student_record",
+          "collaborator_information_present": true,
+          "metadata_visibility": "authorized_vitrine",
+          "minimum_necessary_projection_required": true,
+          "multi_subject_review_required": true,
+          "policy_reference": "synthetic_policy_v1",
+          "redaction_review_required": false,
+          "rights_review_required": true,
+          "subject_scope": "single_subject",
+          "third_party_information_present": true
+        },
+        "subject_relationship_assertions": [
+          {
+            "assertion_id": "assert_artifact_group_raw_1",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "group_member",
+            "source_subject_id": "source_subject_1",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_2",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "artifact_author",
+            "source_subject_id": "source_subject_2",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_3",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "artifact_subject",
+            "source_subject_id": "source_subject_3",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_4",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "documented_contributor",
+            "source_subject_id": "source_subject_4",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_5",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "recorder",
+            "source_subject_id": "source_subject_5",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_6",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "represented_group",
+            "source_subject_id": "source_subject_6",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_7",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "individual_score_target",
+            "source_subject_id": "source_subject_7",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_raw_8",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "group_score_target",
+            "source_subject_id": "source_subject_8",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_raw",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "candidate_evaluation_id": "evaluation_group_safe",
+      "candidate_id": "candidate_group_safe",
+      "condition_state": "ready_for_consideration",
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "display_snapshot": "Candidate Group Safe",
+      "eligible_profile_rule_ids": [
+        "rule_collaboration"
+      ],
+      "eligible_section_ids": [
+        "collaboration"
+      ],
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_candidate_id": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "record_type": "portfolio_candidate",
+      "schema_version": "1",
+      "source_endpoint": {
+        "core_publication": {
+          "academic_work_registration_revision": 1,
+          "capabilities": [
+            "artifact_references"
+          ],
+          "core_publication_schema_version": "1",
+          "manifest_contract_version": "concord_academic_result_manifest_v1",
+          "manifest_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+          "manifest_digest_algorithm": "sha256",
+          "manifest_path": "classes/science10_p4/modules/concord/work/water_quality_activity/exports/manifests/academic_results/1.json",
+          "observed_series_state": "current_selectable",
+          "observed_withdrawal_state": "not_withdrawn",
+          "publication_id": "publication_collaboration_safe",
+          "publication_kind": "academic_result_set",
+          "published_at": "2026-08-06T20:00:00.000000+00:00",
+          "record_set_id": "academic_results",
+          "record_set_revision": 1,
+          "registration_snapshot": {
+            "academic_intent": "formative",
+            "lifecycle": "closed",
+            "producer_contract_version": "concord_academic_work_v1",
+            "registration_revision": 1,
+            "source_records": [
+              {
+                "contract_version": null,
+                "module_id": "concord",
+                "record_id": "water_quality_activity",
+                "record_kind": "activity"
+              }
+            ],
+            "title_snapshot": "Synthetic source",
+            "work_kind": "activity"
+          },
+          "source_record": null,
+          "supersedes_publication_id": null,
+          "verified_at": "2026-08-06T20:00:00.000000+00:00",
+          "work": {
+            "class_id": "science10_p4",
+            "module_id": "concord",
+            "work_id": "water_quality_activity"
+          }
+        },
+        "producer_source": {
+          "lineage_reference": null,
+          "native_disposition": null,
+          "native_lifecycle": "complete",
+          "native_revision": 1,
+          "producer_contract_version": "concord_academic_work_v1",
+          "producer_module_id": "concord",
+          "projection_contract_version": "vitrine_projection_v1",
+          "reader_contract_version": "1",
+          "source_record_contract_version": "1",
+          "source_record_id": "artifact_group_safe",
+          "source_record_kind": "artifact_instance"
+        },
+        "source_artifact": {
+          "accessibility_relationship": null,
+          "artifact_id": "artifact_group_safe",
+          "artifact_kind": "audience_safe_attribution",
+          "byte_size": 128,
+          "language": "en",
+          "media_type": "text/plain",
+          "native_revision": 1,
+          "representation_kind": "audience_safe_projection",
+          "source_digest": {
+            "algorithm": "sha256",
+            "value": "3333333333333333333333333333333333333333333333333333333333333333"
+          },
+          "source_locator": "artifacts/audience-safe-attribution.txt"
+        },
+        "source_privacy": {
+          "classification": "student_record",
+          "collaborator_information_present": true,
+          "metadata_visibility": "authorized_vitrine",
+          "minimum_necessary_projection_required": true,
+          "multi_subject_review_required": true,
+          "policy_reference": "synthetic_policy_v1",
+          "redaction_review_required": false,
+          "rights_review_required": false,
+          "subject_scope": "single_subject",
+          "third_party_information_present": true
+        },
+        "subject_relationship_assertions": [
+          {
+            "assertion_id": "assert_artifact_group_safe_1",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "group_member",
+            "source_subject_id": "source_subject_1",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_2",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "artifact_author",
+            "source_subject_id": "source_subject_2",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_3",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "artifact_subject",
+            "source_subject_id": "source_subject_3",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_4",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "documented_contributor",
+            "source_subject_id": "source_subject_4",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_5",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "recorder",
+            "source_subject_id": "source_subject_5",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_6",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "represented_group",
+            "source_subject_id": "source_subject_6",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_7",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "individual_score_target",
+            "source_subject_id": "source_subject_7",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          },
+          {
+            "assertion_id": "assert_artifact_group_safe_8",
+            "portfolio_subject_id": "subject_showcase",
+            "relationship_authority": "producer_contract",
+            "relationship_kind": "group_score_target",
+            "source_subject_id": "source_subject_8",
+            "source_subject_kind": "producer_subject",
+            "subject_link_id": "link_showcase",
+            "supporting_source_reference": "artifact_group_safe",
+            "verified_at": "2026-08-06T20:00:00.000000+00:00",
+            "verified_by": {
+              "actor_id": "teacher_001",
+              "actor_kind": "authorized_adult",
+              "display_label_snapshot": "Synthetic Teacher",
+              "owning_system": "vitrine",
+              "role_snapshot": "teacher"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "compositions": [
+    {
+      "arrangement_ids": [
+        "arrangement_featured",
+        "arrangement_collaboration"
+      ],
+      "composition_note": null,
+      "composition_revision": 1,
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "placement_ids": [
+        "placement_polished",
+        "placement_group_safe"
+      ],
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_composition_revision": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "record_type": "working_portfolio_composition_revision",
+      "schema_version": "1",
+      "selection_ids": [
+        "selection_polished",
+        "selection_group_safe"
+      ]
+    }
+  ],
+  "materializations": [
+    {
+      "byte_size": 128,
+      "candidate_id": "candidate_polished",
+      "materialization_id": "materialization_polished",
+      "materialization_kind": "copied_source",
+      "materialized_at": "2026-08-06T20:00:00.000000+00:00",
+      "materialized_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "output_digest": {
+        "algorithm": "sha256",
+        "value": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "placement_id": "placement_polished",
+      "record_type": "snapshot_materialization",
+      "schema_version": "1",
+      "selection_id": "selection_polished",
+      "snapshot_edition": {
+        "edition_number": 1,
+        "snapshot_series_id": "snapshot_showcase"
+      },
+      "source_artifact": {
+        "accessibility_relationship": null,
+        "artifact_id": "artifact_polished",
+        "artifact_kind": "original_student_work",
+        "byte_size": 128,
+        "language": "en",
+        "media_type": "text/plain",
+        "native_revision": 1,
+        "representation_kind": "student_submission",
+        "source_digest": {
+          "algorithm": "sha256",
+          "value": "1111111111111111111111111111111111111111111111111111111111111111"
+        },
+        "source_locator": "artifacts/polished-analysis.txt"
+      },
+      "source_digest": {
+        "algorithm": "sha256",
+        "value": "1111111111111111111111111111111111111111111111111111111111111111"
+      }
+    },
+    {
+      "byte_size": 128,
+      "candidate_id": "candidate_group_safe",
+      "materialization_id": "materialization_group_safe",
+      "materialization_kind": "copied_source",
+      "materialized_at": "2026-08-06T20:00:00.000000+00:00",
+      "materialized_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "output_digest": {
+        "algorithm": "sha256",
+        "value": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "placement_id": "placement_group_safe",
+      "record_type": "snapshot_materialization",
+      "schema_version": "1",
+      "selection_id": "selection_group_safe",
+      "snapshot_edition": {
+        "edition_number": 1,
+        "snapshot_series_id": "snapshot_showcase"
+      },
+      "source_artifact": {
+        "accessibility_relationship": null,
+        "artifact_id": "artifact_group_safe",
+        "artifact_kind": "audience_safe_attribution",
+        "byte_size": 128,
+        "language": "en",
+        "media_type": "text/plain",
+        "native_revision": 1,
+        "representation_kind": "audience_safe_projection",
+        "source_digest": {
+          "algorithm": "sha256",
+          "value": "3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        "source_locator": "artifacts/audience-safe-attribution.txt"
+      },
+      "source_digest": {
+        "algorithm": "sha256",
+        "value": "3333333333333333333333333333333333333333333333333333333333333333"
+      }
+    }
+  ],
+  "placements": [
+    {
+      "placed_at": "2026-08-06T20:00:00.000000+00:00",
+      "placed_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "placement_id": "placement_polished",
+      "portfolio_id": "portfolio_showcase",
+      "presentation": {
+        "display_caption": null,
+        "display_title": "Polished Analysis",
+        "presentation_note": null,
+        "source_credit": null
+      },
+      "profile_binding_id": "binding_showcase",
+      "record_type": "portfolio_placement",
+      "schema_version": "1",
+      "section_id": "featured_work",
+      "selection_id": "selection_polished"
+    },
+    {
+      "placed_at": "2026-08-06T20:00:00.000000+00:00",
+      "placed_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "placement_id": "placement_group_safe",
+      "portfolio_id": "portfolio_showcase",
+      "presentation": {
+        "display_caption": null,
+        "display_title": "Collaborative Recommendation",
+        "presentation_note": null,
+        "source_credit": null
+      },
+      "profile_binding_id": "binding_showcase",
+      "record_type": "portfolio_placement",
+      "schema_version": "1",
+      "section_id": "collaboration",
+      "selection_id": "selection_group_safe"
+    }
+  ],
+  "portfolio_subjects": [
+    {
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "display_name_snapshot": "Synthetic Student B",
+      "portfolio_subject_id": "subject_showcase",
+      "record_type": "portfolio_subject",
+      "schema_version": "1"
+    }
+  ],
+  "portfolios": [
+    {
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "description_snapshot": null,
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "record_type": "portfolio",
+      "schema_version": "1",
+      "title_snapshot": "Student Showcase"
+    }
+  ],
+  "profile_bindings": [
+    {
+      "binding_reason": null,
+      "bound_at": "2026-08-06T20:00:00.000000+00:00",
+      "bound_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "portfolio_id": "portfolio_showcase",
+      "predecessor_binding_id": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "record_type": "portfolio_profile_binding",
+      "schema_version": "1"
+    }
+  ],
+  "profile_families": [
+    {
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "description": null,
+      "label": "Showcase Portfolio",
+      "profile_family_id": "family_showcase",
+      "purpose_kind": "showcase",
+      "record_type": "portfolio_profile_family",
+      "schema_version": "1"
+    }
+  ],
+  "profile_revisions": [
+    {
+      "applicability": {
+        "authority_reference": null,
+        "cohorts": [],
+        "content_areas": [],
+        "effective_from": null,
+        "effective_through": null,
+        "grade_bands": [],
+        "institution_id": null,
+        "jurisdiction": null,
+        "pathway": null,
+        "program_id": null,
+        "school_years": [
+          "2026-2027"
+        ]
+      },
+      "audience_rules": [
+        {
+          "allowed_content_classes": [
+            "student_work",
+            "audience_safe_attribution"
+          ],
+          "audience_class": "public",
+          "audience_rule_id": "public_showcase",
+          "presentation_class": "public_showcase",
+          "prohibited_content_classes": [
+            "private_teacher_note",
+            "raw_collaborator_data"
+          ],
+          "purpose": "Public showcase of reviewed work.",
+          "required_review_classes": [
+            "rights_review",
+            "privacy_review"
+          ],
+          "retention_policy_reference": null
+        }
+      ],
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "known_limitations": [],
+      "label": "Showcase Profile v1",
+      "portfolio_profile_id": "profile_showcase",
+      "predecessor_revision": null,
+      "profile_family_id": "family_showcase",
+      "profile_revision": 1,
+      "purpose_kind": "showcase",
+      "record_type": "portfolio_profile_revision",
+      "schema_version": "1",
+      "sections": [
+        {
+          "allowed_candidate_kinds": [
+            "original_student_work"
+          ],
+          "label": "Featured Work",
+          "maximum_placements": 3,
+          "minimum_placements": 1,
+          "obligation": "required",
+          "order": 1,
+          "purpose": "Present polished individual work.",
+          "reflection_requirement": "optional",
+          "required_relationship_kinds": [
+            "submission_subject"
+          ],
+          "section_id": "featured_work"
+        },
+        {
+          "allowed_candidate_kinds": [
+            "audience_safe_attribution"
+          ],
+          "label": "Collaboration",
+          "maximum_placements": 2,
+          "minimum_placements": 0,
+          "obligation": "optional",
+          "order": 2,
+          "purpose": "Present audience-safe collaborative evidence.",
+          "reflection_requirement": "optional",
+          "required_relationship_kinds": [
+            "documented_contributor"
+          ],
+          "section_id": "collaboration"
+        }
+      ],
+      "source_authority_references": []
+    }
+  ],
+  "selections": [
+    {
+      "candidate_evaluation_id": "evaluation_polished",
+      "candidate_id": "candidate_polished",
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_selection_id": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "record_type": "portfolio_selection",
+      "schema_version": "1",
+      "selected_at": "2026-08-06T20:00:00.000000+00:00",
+      "selected_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "selection_id": "selection_polished",
+      "selection_reason": null
+    },
+    {
+      "candidate_evaluation_id": "evaluation_group_safe",
+      "candidate_id": "candidate_group_safe",
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_selection_id": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "record_type": "portfolio_selection",
+      "schema_version": "1",
+      "selected_at": "2026-08-06T20:00:00.000000+00:00",
+      "selected_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "selection_id": "selection_group_safe",
+      "selection_reason": null
+    }
+  ],
+  "snapshot_editions": [
+    {
+      "audience_context_id": "audience_showcase",
+      "composition_revision": 1,
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "edition_number": 1,
+      "manifest_id": "manifest_showcase",
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_edition": null,
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "record_type": "snapshot_edition",
+      "schema_version": "1",
+      "seal_id": "seal_showcase",
+      "snapshot_series_id": "snapshot_showcase"
+    }
+  ],
+  "snapshot_entries": [
+    {
+      "content_class": "student_work",
+      "display_title": "Polished Analysis",
+      "materialization_id": "materialization_polished",
+      "media_type": "text/plain",
+      "ordinal": 1,
+      "record_type": "snapshot_entry",
+      "relative_path": "export/01-polished-analysis.txt",
+      "schema_version": "1",
+      "section_id": "featured_work",
+      "snapshot_edition": {
+        "edition_number": 1,
+        "snapshot_series_id": "snapshot_showcase"
+      },
+      "snapshot_entry_id": "entry_polished",
+      "source_placement_id": "placement_polished"
+    },
+    {
+      "content_class": "audience_safe_attribution",
+      "display_title": "Collaborative Recommendation",
+      "materialization_id": "materialization_group_safe",
+      "media_type": "text/plain",
+      "ordinal": 1,
+      "record_type": "snapshot_entry",
+      "relative_path": "export/02-audience-safe-attribution.txt",
+      "schema_version": "1",
+      "section_id": "collaboration",
+      "snapshot_edition": {
+        "edition_number": 1,
+        "snapshot_series_id": "snapshot_showcase"
+      },
+      "snapshot_entry_id": "entry_group_safe",
+      "source_placement_id": "placement_group_safe"
+    }
+  ],
+  "snapshot_manifests": [
+    {
+      "audience_context_id": "audience_showcase",
+      "composition_revision": 1,
+      "created_at": "2026-08-06T20:00:00.000000+00:00",
+      "created_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "entry_ids": [
+        "entry_polished",
+        "entry_group_safe"
+      ],
+      "manifest_contract_version": "vitrine_snapshot_manifest_v1",
+      "manifest_id": "manifest_showcase",
+      "omission_ids": [
+        "omission_group_raw"
+      ],
+      "portfolio_id": "portfolio_showcase",
+      "portfolio_subject_id": "subject_showcase",
+      "profile_binding_id": "binding_showcase",
+      "profile_revision": {
+        "portfolio_profile_id": "profile_showcase",
+        "profile_revision": 1
+      },
+      "record_type": "snapshot_manifest",
+      "schema_version": "1",
+      "snapshot_edition": {
+        "edition_number": 1,
+        "snapshot_series_id": "snapshot_showcase"
+      }
+    }
+  ],
+  "snapshot_omissions": [
+    {
+      "audience_context_id": "audience_showcase",
+      "candidate_id": "candidate_group_raw",
+      "note": "Original collaborative representation omitted from public edition.",
+      "placement_id": null,
+      "reason_code": "rights_review_unresolved",
+      "record_type": "snapshot_omission",
+      "recorded_at": "2026-08-06T20:00:00.000000+00:00",
+      "recorded_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "schema_version": "1",
+      "selection_id": null,
+      "snapshot_edition": {
+        "edition_number": 1,
+        "snapshot_series_id": "snapshot_showcase"
+      },
+      "snapshot_omission_id": "omission_group_raw"
+    }
+  ],
+  "snapshot_seals": [
+    {
+      "logical_inventory_digest": {
+        "algorithm": "sha256",
+        "value": "6666666666666666666666666666666666666666666666666666666666666666"
+      },
+      "manifest_digest": {
+        "algorithm": "sha256",
+        "value": "4444444444444444444444444444444444444444444444444444444444444444"
+      },
+      "manifest_id": "manifest_showcase",
+      "record_type": "snapshot_seal",
+      "schema_version": "1",
+      "seal_id": "seal_showcase",
+      "sealed_at": "2026-08-06T20:00:00.000000+00:00",
+      "sealed_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "snapshot_edition": {
+        "edition_number": 1,
+        "snapshot_series_id": "snapshot_showcase"
+      }
+    }
+  ],
+  "subject_links": [
+    {
+      "authority_reference": null,
+      "confirmation_basis": "teacher_confirmed",
+      "confirmed_at": "2026-08-06T20:00:00.000000+00:00",
+      "confirmed_by": {
+        "actor_id": "teacher_001",
+        "actor_kind": "authorized_adult",
+        "display_label_snapshot": "Synthetic Teacher",
+        "owning_system": "vitrine",
+        "role_snapshot": "teacher"
+      },
+      "portfolio_subject_id": "subject_showcase",
+      "predecessor_link_id": null,
+      "record_type": "portfolio_subject_class_link",
+      "schema_version": "1",
+      "student_reference": {
+        "class_id": "science10_p4",
+        "school_year": "2026-2027",
+        "student_id": "student_0042"
+      },
+      "subject_link_id": "link_showcase"
+    }
+  ]
+}
