@@ -97,12 +97,14 @@ The built wheel includes `vitrine.models` and `py.typed`. Test fixtures,
 development scripts, and documentation remain source-distribution assets. Core
 remains the only runtime dependency.
 
-The installed-wheel smoke test constructs a minimal Portfolio graph, validates
-it, serializes it, reloads it, and confirms exact canonical bytes without
-creating workspace state or modifying the installed package.
+The installed-wheel smoke test constructs and serializes a minimal Portfolio
+graph, then exercises canonical Vitrine persistence in a disposable Core
+workspace, including a guarded state advance, catalog rebuild/removal, and a
+canonical reload without SQLite. It does not modify the installed package or
+configured user workspace.
 
 ## Deferred implementation
 
-Do not add persistence, Core catalog access, producer imports, authorization,
-Snapshot byte construction, export rendering, or teacher workflows to this
-model package. Those responsibilities belong to later v0.2.0 issues.
+Keep persistence out of the pure `vitrine.models` package. Canonical persistence
+lives under `vitrine.storage`; producer imports, authorization, Snapshot byte
+construction, export rendering, and teacher workflows remain later v0.2.0 work.

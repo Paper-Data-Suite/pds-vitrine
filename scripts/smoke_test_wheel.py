@@ -86,6 +86,73 @@ assert graph_to_canonical_json_bytes(loaded) == content
 """
 
 
+def _storage_smoke_code() -> str:
+    return r"""
+from datetime import datetime, timezone
+from pathlib import Path
+import sys
+
+from vitrine.models import (
+    ActorAttribution,
+    Portfolio,
+    PortfolioProfileFamily,
+    PortfolioSubject,
+)
+from vitrine.storage import (
+    catalog_path,
+    commit_record_batch,
+    load_current_record_graph,
+    query_catalog_records,
+    rebuild_catalog,
+)
+
+workspace = Path(sys.argv[1])
+actor = ActorAttribution(
+    actor_kind='authorized_adult',
+    actor_id='teacher_1',
+    owning_system='vitrine',
+)
+now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+subject = PortfolioSubject(
+    portfolio_subject_id='subject_1',
+    created_at=now,
+    created_by=actor,
+)
+portfolio = Portfolio(
+    portfolio_id='portfolio_1',
+    portfolio_subject_id=subject.portfolio_subject_id,
+    created_at=now,
+    created_by=actor,
+)
+first = commit_record_batch(
+    workspace,
+    (subject, portfolio),
+    expected_state_revision=None,
+)
+assert first.state_revision == 1
+family = PortfolioProfileFamily(
+    profile_family_id='family_1',
+    label='Synthetic Family',
+    purpose_kind='improvement',
+    created_at=now,
+    created_by=actor,
+)
+second = commit_record_batch(
+    workspace,
+    (family,),
+    expected_state_revision=1,
+)
+assert second.state_revision == 2
+loaded = load_current_record_graph(workspace)
+assert loaded.state_revision == 2
+rebuilt = rebuild_catalog(workspace)
+assert rebuilt.is_file()
+assert len(query_catalog_records(workspace, state='current')) == 3
+catalog_path(workspace).unlink()
+assert load_current_record_graph(workspace).state_revision == 2
+"""
+
+
 def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
     repository = Path(__file__).resolve().parents[1]
     source_before = {
@@ -181,6 +248,11 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
                 "--workspace-root",
                 str(workspace),
             ],
+            cwd=work,
+            env=env,
+        )
+        _run(
+            [str(python), "-c", _storage_smoke_code(), str(workspace)],
             cwd=work,
             env=env,
         )

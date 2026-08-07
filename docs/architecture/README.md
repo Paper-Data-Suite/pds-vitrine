@@ -9,11 +9,13 @@ The [package foundation](../development/package-foundation.md) establishes the
 installable Core 0.6 baseline. The
 [foundational runtime-model contract](../contracts/foundational-runtime-models-v1.md)
 implements the first exact in-memory Portfolio contract with immutable models,
-canonical JSON, and deterministic graph validation.
+canonical JSON, and deterministic graph validation. The
+[canonical storage contract](../contracts/canonical-storage-v1.md) adds
+workspace-scoped immutable persistence, explicit current-state selection, guarded
+commits, strict historical loading, and rebuildable derived indexes.
 
-Persistence, current pointers, producer adapters, Candidate discovery services,
-curation workflows, Snapshot construction, authorization, and exports remain
-deferred.
+Producer adapters, Candidate discovery services, curation workflows, Snapshot
+construction, authorization, and exports remain deferred.
 
 ## Current architecture
 
@@ -36,7 +38,8 @@ deferred.
 3. Review the conceptual designs in the order listed above.
 4. Review the representative corpus and foundation audit.
 5. Use the [foundational runtime contract](../contracts/foundational-runtime-models-v1.md) for exact implemented record shapes.
-6. Use the [runtime-model guide](../development/runtime-models.md) for public APIs and validation.
+6. Use the [canonical storage contract](../contracts/canonical-storage-v1.md) for persisted-state authority and recovery boundaries.
+7. Use the runtime-model and canonical-storage development guides for public APIs and validation.
 
 ## Authority order
 

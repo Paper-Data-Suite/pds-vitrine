@@ -17,6 +17,8 @@ from pds_core.routing_models import (
     module_work_ref_to_dict,
 )
 
+from vitrine.record_registry import RECORD_DESCRIPTORS
+
 from .audiences import AudienceContext
 from .candidates import CandidateEvaluation, PortfolioCandidate
 from .curation import (
@@ -67,27 +69,7 @@ VitrineRecord: TypeAlias = (
 )
 
 RECORD_TYPE_REGISTRY: dict[str, type[Any]] = {
-    "portfolio": Portfolio,
-    "portfolio_subject": PortfolioSubject,
-    "portfolio_subject_class_link": PortfolioSubjectClassLink,
-    "portfolio_profile_family": PortfolioProfileFamily,
-    "portfolio_profile_revision": PortfolioProfileRevision,
-    "portfolio_profile_binding": PortfolioProfileBinding,
-    "candidate_evaluation": CandidateEvaluation,
-    "portfolio_candidate": PortfolioCandidate,
-    "portfolio_selection": PortfolioSelection,
-    "portfolio_placement": PortfolioPlacement,
-    "section_arrangement_revision": SectionArrangementRevision,
-    "working_portfolio_composition_revision": (
-        WorkingPortfolioCompositionRevision
-    ),
-    "audience_context": AudienceContext,
-    "snapshot_materialization": SnapshotMaterializationRecord,
-    "snapshot_entry": SnapshotEntry,
-    "snapshot_omission": SnapshotOmission,
-    "snapshot_manifest": SnapshotManifest,
-    "snapshot_seal": SnapshotSeal,
-    "snapshot_edition": SnapshotEdition,
+    descriptor.record_type: descriptor.model_type for descriptor in RECORD_DESCRIPTORS
 }
 RECORD_TYPES: tuple[type[Any], ...] = tuple(RECORD_TYPE_REGISTRY.values())
 

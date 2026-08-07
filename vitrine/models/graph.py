@@ -6,6 +6,8 @@ from collections.abc import Callable, Hashable, Iterable
 from dataclasses import dataclass, fields
 from typing import TypeVar
 
+from vitrine.record_registry import RECORD_DESCRIPTORS
+
 from .audiences import AudienceContext
 from .candidates import CandidateEvaluation, PortfolioCandidate
 from .curation import (
@@ -91,25 +93,8 @@ class VitrineRecordGraph:
 
 
 GRAPH_COLLECTION_TYPES: dict[str, type[object]] = {
-    "portfolios": Portfolio,
-    "portfolio_subjects": PortfolioSubject,
-    "subject_links": PortfolioSubjectClassLink,
-    "profile_families": PortfolioProfileFamily,
-    "profile_revisions": PortfolioProfileRevision,
-    "profile_bindings": PortfolioProfileBinding,
-    "candidate_evaluations": CandidateEvaluation,
-    "candidates": PortfolioCandidate,
-    "selections": PortfolioSelection,
-    "placements": PortfolioPlacement,
-    "arrangements": SectionArrangementRevision,
-    "compositions": WorkingPortfolioCompositionRevision,
-    "audience_contexts": AudienceContext,
-    "materializations": SnapshotMaterializationRecord,
-    "snapshot_entries": SnapshotEntry,
-    "snapshot_omissions": SnapshotOmission,
-    "snapshot_manifests": SnapshotManifest,
-    "snapshot_seals": SnapshotSeal,
-    "snapshot_editions": SnapshotEdition,
+    descriptor.graph_collection: descriptor.model_type
+    for descriptor in RECORD_DESCRIPTORS
 }
 
 
