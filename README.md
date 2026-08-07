@@ -15,6 +15,9 @@ audited v0.1.0 architecture and fixture foundation. The package remains at
 - exact mapping and canonical JSON conversion;
 - deterministic cross-record validation;
 - canonical synthetic improvement and showcase record graphs;
+- workspace-scoped canonical JSON persistence with guarded state revisions;
+- strict historical/current loading and deterministic storage diagnostics;
+- a rebuildable nonauthoritative SQLite catalog;
 - strict testing, typing, packaging, and cross-platform CI gates.
 
 The runtime models cover Portfolio and Subject identity, class-qualified Subject
@@ -22,10 +25,12 @@ links, Profile revisions and Bindings, source provenance, Candidate Evaluations,
 Candidates, Selections, Placements, Arrangements, Composition Revisions,
 Audience Contexts, and foundational Snapshot metadata.
 
-These models are side-effect free. Vitrine still cannot persist records, query
-the Core catalog, parse live producer manifests, run curation workflows, copy
-source bytes, build Snapshot packages, authorize recipients, or export and
-deliver portfolios.
+The model layer remains side-effect free. Vitrine now persists its own metadata
+beneath `<workspace>/vitrine/` with immutable record/state history, an explicit
+current pointer, optimistic concurrency, and a disposable derived catalog. It
+still cannot parse live producer manifests, discover Candidates, run curation
+workflows, copy source bytes, build Snapshot packages, authorize recipients, or
+export and deliver portfolios.
 
 ## Requirements and installation
 
@@ -76,8 +81,9 @@ from vitrine.models import (
 )
 ```
 
-See the [foundational runtime contract](docs/contracts/foundational-runtime-models-v1.md)
-and [runtime-model development guide](docs/development/runtime-models.md).
+See the [foundational runtime contract](docs/contracts/foundational-runtime-models-v1.md),
+[canonical storage contract](docs/contracts/canonical-storage-v1.md), and
+[canonical storage development guide](docs/development/canonical-storage.md).
 
 ## Validation
 
@@ -103,7 +109,9 @@ Documentation is indexed in [`docs/README.md`](docs/README.md).
 Key entry points:
 
 - [Foundational runtime models](docs/contracts/foundational-runtime-models-v1.md)
+- [Canonical storage](docs/contracts/canonical-storage-v1.md)
 - [Runtime-model development](docs/development/runtime-models.md)
+- [Canonical-storage development](docs/development/canonical-storage.md)
 - [Package foundation](docs/development/package-foundation.md)
 - [Synthetic data policy](docs/development/synthetic-data.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)

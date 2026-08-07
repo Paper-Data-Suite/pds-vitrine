@@ -28,10 +28,13 @@ The package provides:
 - exact mapping conversion and canonical JSON;
 - pure deterministic graph validation;
 - canonical improvement and showcase model fixtures;
+- workspace-scoped canonical storage, guarded commits, strict historical/current loading, and a rebuildable SQLite catalog;
 - package, typing, test, documentation, and installed-wheel validation.
 
 The model contract is documented in
 [Foundational Runtime Models v1](../contracts/foundational-runtime-models-v1.md).
+Persistence authority is documented in
+[Canonical Storage v1](../contracts/canonical-storage-v1.md).
 
 ## Command surface
 
@@ -76,13 +79,14 @@ python -m pip check
 ```
 
 The complete gate authenticates Core, runs pytest, Ruff, strict Mypy, canonical
-runtime fixtures, documentation and foundation validators, builds both
+runtime fixtures, canonical-storage validation, documentation and foundation validators, builds both
 distributions, runs Twine and content checks, performs isolated installed-wheel
 smoke testing, and confirms repository hygiene.
 
 ## Deferred behavior
 
-Vitrine does not yet persist runtime records, select current revisions, query the
-Core catalog, parse producer manifests, discover Candidates, execute Selection
-or Placement workflows, copy source bytes, build Snapshot packages, authorize
-disclosure, export, or deliver portfolios.
+Vitrine now persists Vitrine-owned runtime metadata and selects current state
+through its own explicit pointer. It does not query the Core catalog, parse
+producer manifests, discover Candidates, execute Selection or Placement
+workflows, copy source bytes, build Snapshot packages, authorize disclosure,
+export, or deliver portfolios.

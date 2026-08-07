@@ -17,7 +17,11 @@ All notable changes to this project will be documented in this file.
   curation, audience, and Snapshot metadata models.
 - Exact mapping conversion, strict canonical JSON, deterministic graph
   diagnostics, and canonical improvement and showcase runtime fixtures.
+- Workspace-scoped canonical JSON persistence with immutable state revisions,
+  explicit current selection, expected-revision protection, and strict loading.
+- Deterministic storage diagnostics, conservative lock/partial-success handling,
+  and a rebuildable nonauthoritative SQLite catalog.
 
-Vitrine does not yet persist these records, discover live producer sources,
-perform curation workflows, build Snapshot bytes, authorize disclosure, or
-export and deliver portfolios.
+Vitrine now persists foundational metadata but does not yet discover live
+producer sources, perform curation workflows, build Snapshot bytes, authorize
+disclosure, or export and deliver portfolios.
