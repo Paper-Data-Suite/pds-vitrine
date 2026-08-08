@@ -12,6 +12,7 @@ from pds_core.workspace import WorkspaceRootError
 
 from vitrine import __version__
 from vitrine import menu as menu_module
+from vitrine.profile_cli import configure_profile_parser, run_profile_command
 from vitrine.subject_cli import configure_subject_parser, run_subject_command
 from vitrine.workspace import (
     reset_workspace,
@@ -46,6 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("menu", help="Launch the teacher-facing menu.")
     configure_subject_parser(subparsers)
+    configure_profile_parser(subparsers)
 
     workspace_parser = subparsers.add_parser(
         "workspace",
@@ -148,6 +150,8 @@ def main(
             return _run_workspace_command(args, output=stdout)
         if args.command == "subject":
             return run_subject_command(args, output=stdout, error=stderr)
+        if args.command == "profile":
+            return run_profile_command(args, output=stdout, error=stderr)
     except WorkspaceRootError as exc:
         print(f"Workspace error: {exc}", file=stderr)
         return 1

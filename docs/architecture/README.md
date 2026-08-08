@@ -52,3 +52,7 @@ construction, authorization, and exports remain deferred.
 4. architecture;
 5. conceptual design;
 6. research.
+
+## Profile policy state
+
+Versioned Portfolio Profile lifecycle, Requirement identity, overlays, composition provenance, and migration history are Vitrine-owned canonical supplemental records. They are validated beside the foundational graph and remain independent of derived SQLite state.

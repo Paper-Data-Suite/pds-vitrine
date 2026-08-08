@@ -75,6 +75,7 @@ files = [
     "scripts/validate_runtime_models.py",
     "scripts/validate_canonical_storage.py",
     "scripts/validate_subject_workflows.py",
+    "scripts/validate_profile_workflows.py",
     "scripts/verify_core_wheel.py",
 ]
 

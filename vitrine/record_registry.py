@@ -23,7 +23,12 @@ from vitrine.models.identity import (
 )
 from vitrine.models.profiles import (
     PortfolioProfileBinding,
+    PortfolioProfileComposition,
     PortfolioProfileFamily,
+    PortfolioProfileLifecycleEvent,
+    PortfolioProfileMigration,
+    PortfolioProfileOverlayRevision,
+    PortfolioProfileRequirement,
     PortfolioProfileRevision,
 )
 from vitrine.models.snapshots import (
@@ -97,6 +102,38 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
         PortfolioProfileBinding,
         "profile_bindings",
         ("profile_binding_id",),
+    ),
+    RecordDescriptor(
+        "portfolio_profile_requirement",
+        PortfolioProfileRequirement,
+        None,
+        ("portfolio_profile_id", "profile_revision", "requirement_id"),
+        ("profile_revision",),
+    ),
+    RecordDescriptor(
+        "portfolio_profile_lifecycle_event",
+        PortfolioProfileLifecycleEvent,
+        None,
+        ("profile_lifecycle_event_id",),
+    ),
+    RecordDescriptor(
+        "portfolio_profile_overlay_revision",
+        PortfolioProfileOverlayRevision,
+        None,
+        ("overlay_id", "overlay_revision"),
+        ("overlay_revision",),
+    ),
+    RecordDescriptor(
+        "portfolio_profile_composition",
+        PortfolioProfileComposition,
+        None,
+        ("profile_composition_id",),
+    ),
+    RecordDescriptor(
+        "portfolio_profile_migration",
+        PortfolioProfileMigration,
+        None,
+        ("profile_migration_id",),
     ),
     RecordDescriptor(
         "candidate_evaluation",

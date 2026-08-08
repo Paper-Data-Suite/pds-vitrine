@@ -98,3 +98,5 @@ an equivalent Portfolio Subjects teacher menu. Both consume the same
 presentation-independent services. Core `menu_navigation` supplies standard B/M/Q
 behavior; teacher screens clear after choices by default and retain only context
 needed for the next action.
+
+Issue #31 adds `profile_state.py`, `profile_services.py`, `profile_cli.py`, and `profile_menu.py` to the installed runtime package plus Profile workflow validation and documentation in the source distribution.
