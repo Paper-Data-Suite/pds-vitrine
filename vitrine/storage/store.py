@@ -24,6 +24,10 @@ from vitrine.models import (
     record_from_dict,
     record_to_dict,
 )
+from vitrine.profile_state import (
+    collect_profile_state_issues,
+    project_profile_state,
+)
 from vitrine.record_registry import (
     RECORD_DESCRIPTORS,
     descriptor_for_record,
@@ -374,6 +378,13 @@ def _validate_state_records(
         raise VitrineStorageGraphIntegrityError(
             "persisted Portfolio Subject identity state is invalid.",
             issues=identity_issues,
+        )
+    profile_state = project_profile_state(values)
+    profile_issues = collect_profile_state_issues(profile_state)
+    if profile_issues:
+        raise VitrineStorageGraphIntegrityError(
+            "persisted Portfolio Profile state is invalid.",
+            issues=profile_issues,
         )
     return graph
 

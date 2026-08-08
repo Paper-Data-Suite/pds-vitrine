@@ -251,6 +251,142 @@ assert any(item.reference.class_id == 'csp_p1' for item in final.historical_link
 assert any(item.reference.class_id == 'history_p4' for item in final.current_links)
 """
 
+
+def _profile_smoke_code() -> str:
+    return r"""
+from datetime import datetime, timezone
+from pathlib import Path
+import sys
+
+from vitrine.models import (
+    ActorAttribution,
+    PortfolioProfileFamily,
+    PortfolioProfileRequirement,
+    PortfolioProfileRevision,
+    ProfileApplicability,
+    ProfileAudienceRule,
+    ProfileRevisionRef,
+    ProfileSectionDefinition,
+)
+from vitrine.profile_services import (
+    ProfileBindingContext,
+    activate_profile_revision,
+    bind_portfolio_profile,
+    create_profile_family,
+    create_profile_revision,
+    get_portfolio_profile_binding,
+    migrate_portfolio_profile,
+    observe_profile_state_revision,
+)
+
+workspace = Path(sys.argv[1])
+now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+actor = ActorAttribution(
+    actor_kind='authorized_adult', actor_id='teacher_profile', owning_system='local', role_snapshot='teacher'
+)
+family = PortfolioProfileFamily(
+    profile_family_id='family_smoke_growth',
+    label='Smoke Growth',
+    purpose_kind='improvement',
+    created_at=now,
+    created_by=actor,
+)
+expected = observe_profile_state_revision(workspace)
+created = create_profile_family(workspace, family, expected_state_revision=expected)
+expected = created.commit.state_revision if created.commit is not None else expected
+
+def revision(number, predecessor=None, feedback=False):
+    sections = [
+        ProfileSectionDefinition(
+            section_id='baseline', label='Baseline', purpose='Starting evidence.', order=1,
+            obligation='required', minimum_placements=1, maximum_placements=1,
+            allowed_candidate_kinds=('student_work',), required_relationship_kinds=('artifact_author',),
+            reflection_requirement='none',
+        ),
+        ProfileSectionDefinition(
+            section_id='current', label='Current', purpose='Later evidence.', order=2,
+            obligation='required', minimum_placements=1, maximum_placements=1,
+            allowed_candidate_kinds=('student_work',), required_relationship_kinds=('artifact_author',),
+            reflection_requirement='required',
+        ),
+    ]
+    if feedback:
+        sections.append(ProfileSectionDefinition(
+            section_id='feedback_context', label='Feedback Context', purpose='Feedback context.', order=3,
+            obligation='required', minimum_placements=1, maximum_placements=1,
+            allowed_candidate_kinds=('feedback',), required_relationship_kinds=(), reflection_requirement='none',
+        ))
+    return PortfolioProfileRevision(
+        portfolio_profile_id='profile_smoke_growth', profile_revision=number,
+        profile_family_id=family.profile_family_id, predecessor_revision=predecessor,
+        label=f'Smoke Growth r{number}', purpose_kind='improvement',
+        applicability=ProfileApplicability(), sections=tuple(sections),
+        audience_rules=(ProfileAudienceRule(
+            audience_rule_id='student_view', audience_class='student', purpose='Student view.',
+            allowed_content_classes=('student_work','feedback','reflection'),
+            prohibited_content_classes=('private_teacher_note',), required_review_classes=('privacy_review',),
+            presentation_class='student_portfolio',
+        ),),
+        created_at=now, created_by=actor,
+    )
+
+def requirements(number, feedback=False):
+    values = [
+        PortfolioProfileRequirement(
+            portfolio_profile_id='profile_smoke_growth', profile_revision=number,
+            requirement_id='baseline_required', requirement_kind='section', obligation='required',
+            title='Baseline', statement='Include one baseline item.', scope_kind='section',
+            scope_reference='baseline', satisfaction_class='section_cardinality',
+        ),
+        PortfolioProfileRequirement(
+            portfolio_profile_id='profile_smoke_growth', profile_revision=number,
+            requirement_id='current_required', requirement_kind='section', obligation='required',
+            title='Current', statement='Include one current item.', scope_kind='section',
+            scope_reference='current', satisfaction_class='section_cardinality',
+        ),
+    ]
+    if feedback:
+        values.append(PortfolioProfileRequirement(
+            portfolio_profile_id='profile_smoke_growth', profile_revision=number,
+            requirement_id='feedback_required', requirement_kind='section', obligation='required',
+            title='Feedback', statement='Include feedback context.', scope_kind='section',
+            scope_reference='feedback_context', satisfaction_class='section_cardinality',
+        ))
+    return tuple(values)
+
+first = create_profile_revision(workspace, revision(1), requirements(1), expected_state_revision=expected)
+expected = first.commit.state_revision
+active = activate_profile_revision(
+    workspace, ProfileRevisionRef(portfolio_profile_id='profile_smoke_growth', profile_revision=1),
+    actor=actor, reason='Smoke activate.', authority_reference='smoke_policy', expected_state_revision=expected,
+)
+expected = active.commit.state_revision
+bound = bind_portfolio_profile(
+    workspace, 'portfolio_1', ProfileRevisionRef(portfolio_profile_id='profile_smoke_growth', profile_revision=1),
+    actor=actor, binding_reason='Smoke bind.', context=ProfileBindingContext(), expected_state_revision=expected,
+)
+expected = bound.commit.state_revision
+second = create_profile_revision(workspace, revision(2, predecessor=1, feedback=True), requirements(2, feedback=True), expected_state_revision=expected)
+expected = second.commit.state_revision
+binding = get_portfolio_profile_binding(workspace, 'portfolio_1')
+assert binding is not None and binding.profile_revision.profile_revision == 1
+active2 = activate_profile_revision(
+    workspace, ProfileRevisionRef(portfolio_profile_id='profile_smoke_growth', profile_revision=2),
+    actor=actor, reason='Smoke activate successor.', authority_reference='smoke_policy', expected_state_revision=expected,
+)
+expected = active2.commit.state_revision
+analysis, migrated = migrate_portfolio_profile(
+    workspace, 'portfolio_1', ProfileRevisionRef(portfolio_profile_id='profile_smoke_growth', profile_revision=2),
+    actor=actor, migration_reason='Smoke migration.', authority_reference='smoke_policy',
+    context=ProfileBindingContext(), expected_state_revision=expected,
+)
+assert not analysis.blocked
+assert migrated.commit is not None
+binding = get_portfolio_profile_binding(workspace, 'portfolio_1')
+assert binding is not None and binding.profile_revision.profile_revision == 2
+assert binding.predecessor_binding_id is not None
+"""
+
 def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
     repository = Path(__file__).resolve().parents[1]
     source_before = {
@@ -309,6 +445,7 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         _run([str(console), "--version"], cwd=work, env=env)
         _run([str(console), "--help"], cwd=work, env=env)
         _run([str(console), "subject", "--help"], cwd=work, env=env)
+        _run([str(console), "profile", "--help"], cwd=work, env=env)
         _run([str(python), "-m", "vitrine", "--version"], cwd=work, env=env)
         _run([str(python), "-m", "vitrine", "--help"], cwd=work, env=env)
         _run([str(python), "-c", _model_smoke_code()], cwd=work, env=env)
@@ -357,6 +494,11 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         )
         _run(
             [str(python), "-c", _subject_smoke_code(), str(workspace)],
+            cwd=work,
+            env=env,
+        )
+        _run(
+            [str(python), "-c", _profile_smoke_code(), str(workspace)],
             cwd=work,
             env=env,
         )

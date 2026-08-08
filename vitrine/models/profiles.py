@@ -431,3 +431,345 @@ class PortfolioProfileBinding:
                     "predecessor_binding_id must differ from profile_binding_id."
                 )
             object.__setattr__(self, "predecessor_binding_id", predecessor)
+
+PROFILE_REQUIREMENT_RECORD_TYPE: Final[str] = "portfolio_profile_requirement"
+PROFILE_LIFECYCLE_EVENT_RECORD_TYPE: Final[str] = "portfolio_profile_lifecycle_event"
+PROFILE_OVERLAY_RECORD_TYPE: Final[str] = "portfolio_profile_overlay_revision"
+PROFILE_COMPOSITION_RECORD_TYPE: Final[str] = "portfolio_profile_composition"
+PROFILE_MIGRATION_RECORD_TYPE: Final[str] = "portfolio_profile_migration"
+
+PROFILE_REQUIREMENT_KINDS: Final[frozenset[str]] = frozenset(
+    {"section", "selection", "reflection", "audience", "approval", "output"}
+)
+PROFILE_REQUIREMENT_OBLIGATIONS: Final[frozenset[str]] = frozenset(
+    {"required", "optional", "conditional", "prohibited"}
+)
+PROFILE_LIFECYCLE_EVENT_KINDS: Final[frozenset[str]] = frozenset(
+    {"activated", "deprecated", "superseded", "withdrawn", "retired"}
+)
+PROFILE_OVERLAY_ACTIONS: Final[frozenset[str]] = frozenset({"add", "replace"})
+PROFILE_MIGRATION_CATEGORIES: Final[frozenset[str]] = frozenset(
+    {"unchanged", "added", "removed", "replaced", "materially_changed", "unresolved_mapping"}
+)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PortfolioProfileRequirement:
+    portfolio_profile_id: str
+    profile_revision: int
+    requirement_id: str
+    requirement_kind: str
+    obligation: str
+    title: str
+    statement: str
+    scope_kind: str
+    satisfaction_class: str
+    authority_references: tuple[str, ...] = ()
+    scope_reference: str | None = None
+    replaces_requirement_id: str | None = None
+    schema_version: str = field(default=SCHEMA_VERSION)
+    record_type: str = field(default=PROFILE_REQUIREMENT_RECORD_TYPE)
+
+    def __post_init__(self) -> None:
+        require_record_envelope(
+            self.schema_version, self.record_type, PROFILE_REQUIREMENT_RECORD_TYPE
+        )
+        object.__setattr__(self, "portfolio_profile_id", require_identifier(self.portfolio_profile_id, "portfolio_profile_id"))
+        object.__setattr__(self, "profile_revision", require_positive_int(self.profile_revision, "profile_revision"))
+        object.__setattr__(self, "requirement_id", require_identifier(self.requirement_id, "requirement_id"))
+        object.__setattr__(self, "requirement_kind", require_enum(self.requirement_kind, "requirement_kind", PROFILE_REQUIREMENT_KINDS, allow_extension=True))
+        object.__setattr__(self, "obligation", require_enum(self.obligation, "obligation", PROFILE_REQUIREMENT_OBLIGATIONS))
+        object.__setattr__(self, "title", require_text(self.title, "title", maximum=200))
+        object.__setattr__(self, "statement", require_text(self.statement, "statement", maximum=2000))
+        object.__setattr__(self, "scope_kind", require_text(self.scope_kind, "scope_kind", maximum=128))
+        object.__setattr__(self, "satisfaction_class", require_text(self.satisfaction_class, "satisfaction_class", maximum=128))
+        object.__setattr__(self, "authority_references", text_tuple(self.authority_references, "authority_references"))
+        object.__setattr__(self, "scope_reference", require_optional_text(self.scope_reference, "scope_reference", maximum=500))
+        if self.replaces_requirement_id is not None:
+            replacement = require_identifier(self.replaces_requirement_id, "replaces_requirement_id")
+            if replacement == self.requirement_id:
+                raise VitrineModelValidationError("replaces_requirement_id must differ from requirement_id.")
+            object.__setattr__(self, "replaces_requirement_id", replacement)
+
+    @property
+    def profile_reference(self) -> ProfileRevisionRef:
+        return ProfileRevisionRef(
+            portfolio_profile_id=self.portfolio_profile_id,
+            profile_revision=self.profile_revision,
+        )
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PortfolioProfileLifecycleEvent:
+    profile_lifecycle_event_id: str
+    profile_revision: ProfileRevisionRef
+    event_kind: str
+    event_at: datetime
+    effective_at: datetime
+    actor: ActorAttribution
+    reason: str
+    predecessor_event_id: str | None = None
+    successor_revision: ProfileRevisionRef | None = None
+    authority_reference: str | None = None
+    schema_version: str = field(default=SCHEMA_VERSION)
+    record_type: str = field(default=PROFILE_LIFECYCLE_EVENT_RECORD_TYPE)
+
+    def __post_init__(self) -> None:
+        require_record_envelope(
+            self.schema_version, self.record_type, PROFILE_LIFECYCLE_EVENT_RECORD_TYPE
+        )
+        object.__setattr__(self, "profile_lifecycle_event_id", require_identifier(self.profile_lifecycle_event_id, "profile_lifecycle_event_id"))
+        if not isinstance(self.profile_revision, ProfileRevisionRef):
+            raise VitrineModelValidationError("profile_revision must be a ProfileRevisionRef.")
+        object.__setattr__(self, "event_kind", require_enum(self.event_kind, "event_kind", PROFILE_LIFECYCLE_EVENT_KINDS))
+        object.__setattr__(self, "event_at", require_aware_datetime(self.event_at, "event_at"))
+        object.__setattr__(self, "effective_at", require_aware_datetime(self.effective_at, "effective_at"))
+        if not isinstance(self.actor, ActorAttribution):
+            raise VitrineModelValidationError("actor must be an ActorAttribution.")
+        object.__setattr__(self, "reason", require_text(self.reason, "reason", maximum=1000))
+        if self.predecessor_event_id is not None:
+            predecessor = require_identifier(self.predecessor_event_id, "predecessor_event_id")
+            if predecessor == self.profile_lifecycle_event_id:
+                raise VitrineModelValidationError("predecessor_event_id must differ from profile_lifecycle_event_id.")
+            object.__setattr__(self, "predecessor_event_id", predecessor)
+        if self.successor_revision is not None:
+            if not isinstance(self.successor_revision, ProfileRevisionRef):
+                raise VitrineModelValidationError("successor_revision must be a ProfileRevisionRef or null.")
+            if self.successor_revision.portfolio_profile_id != self.profile_revision.portfolio_profile_id:
+                raise VitrineModelValidationError("successor_revision must belong to the same Profile series.")
+            if self.successor_revision == self.profile_revision:
+                raise VitrineModelValidationError("successor_revision must differ from profile_revision.")
+        object.__setattr__(self, "authority_reference", require_optional_text(self.authority_reference, "authority_reference", maximum=500))
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ProfileOverlayRequirement:
+    requirement_id: str
+    requirement_kind: str
+    obligation: str
+    title: str
+    statement: str
+    scope_kind: str
+    satisfaction_class: str
+    authority_references: tuple[str, ...] = ()
+    scope_reference: str | None = None
+    replaces_requirement_id: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "requirement_id", require_identifier(self.requirement_id, "requirement_id"))
+        object.__setattr__(self, "requirement_kind", require_enum(self.requirement_kind, "requirement_kind", PROFILE_REQUIREMENT_KINDS, allow_extension=True))
+        object.__setattr__(self, "obligation", require_enum(self.obligation, "obligation", PROFILE_REQUIREMENT_OBLIGATIONS))
+        object.__setattr__(self, "title", require_text(self.title, "title", maximum=200))
+        object.__setattr__(self, "statement", require_text(self.statement, "statement", maximum=2000))
+        object.__setattr__(self, "scope_kind", require_text(self.scope_kind, "scope_kind", maximum=128))
+        object.__setattr__(self, "satisfaction_class", require_text(self.satisfaction_class, "satisfaction_class", maximum=128))
+        object.__setattr__(self, "authority_references", text_tuple(self.authority_references, "authority_references"))
+        object.__setattr__(self, "scope_reference", require_optional_text(self.scope_reference, "scope_reference", maximum=500))
+        if self.replaces_requirement_id is not None:
+            replacement = require_identifier(self.replaces_requirement_id, "replaces_requirement_id")
+            if replacement == self.requirement_id:
+                raise VitrineModelValidationError("replaces_requirement_id must differ from requirement_id.")
+            object.__setattr__(self, "replaces_requirement_id", replacement)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ProfileOverlayRequirementChange:
+    action: str
+    requirement: ProfileOverlayRequirement
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "action",
+            require_enum(self.action, "action", PROFILE_OVERLAY_ACTIONS),
+        )
+        if not isinstance(self.requirement, ProfileOverlayRequirement):
+            raise VitrineModelValidationError(
+                "requirement must be a ProfileOverlayRequirement."
+            )
+        if self.action == "add" and self.requirement.replaces_requirement_id is not None:
+            raise VitrineModelValidationError(
+                "add changes must not set replaces_requirement_id."
+            )
+        if self.action == "replace" and self.requirement.replaces_requirement_id is None:
+            raise VitrineModelValidationError(
+                "replace changes require replaces_requirement_id."
+            )
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ProfileOverlayRevisionRef:
+    overlay_id: str
+    overlay_revision: int
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "overlay_id", require_identifier(self.overlay_id, "overlay_id"))
+        object.__setattr__(self, "overlay_revision", require_positive_int(self.overlay_revision, "overlay_revision"))
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PortfolioProfileOverlayRevision:
+    overlay_id: str
+    overlay_revision: int
+    predecessor_overlay_revision: int | None
+    label: str
+    purpose_kind: str
+    created_at: datetime
+    created_by: ActorAttribution
+    authority_reference: str
+    component_revisions: tuple[ProfileRevisionRef, ...]
+    requirement_changes: tuple[ProfileOverlayRequirementChange, ...] = ()
+    section_additions: tuple[ProfileSectionDefinition, ...] = ()
+    audience_rule_additions: tuple[ProfileAudienceRule, ...] = ()
+    known_limitations: tuple[str, ...] = ()
+    schema_version: str = field(default=SCHEMA_VERSION)
+    record_type: str = field(default=PROFILE_OVERLAY_RECORD_TYPE)
+
+    def __post_init__(self) -> None:
+        require_record_envelope(self.schema_version, self.record_type, PROFILE_OVERLAY_RECORD_TYPE)
+        object.__setattr__(self, "overlay_id", require_identifier(self.overlay_id, "overlay_id"))
+        object.__setattr__(self, "overlay_revision", require_positive_int(self.overlay_revision, "overlay_revision"))
+        if self.predecessor_overlay_revision is not None:
+            predecessor = require_positive_int(self.predecessor_overlay_revision, "predecessor_overlay_revision")
+            if predecessor >= self.overlay_revision:
+                raise VitrineModelValidationError("predecessor_overlay_revision must be lower than overlay_revision.")
+            object.__setattr__(self, "predecessor_overlay_revision", predecessor)
+        object.__setattr__(self, "label", require_text(self.label, "label", maximum=200))
+        object.__setattr__(self, "purpose_kind", require_enum(self.purpose_kind, "purpose_kind", PROFILE_PURPOSE_KINDS))
+        object.__setattr__(self, "created_at", require_aware_datetime(self.created_at, "created_at"))
+        if not isinstance(self.created_by, ActorAttribution):
+            raise VitrineModelValidationError("created_by must be an ActorAttribution.")
+        object.__setattr__(self, "authority_reference", require_text(self.authority_reference, "authority_reference", maximum=500))
+        object.__setattr__(self, "component_revisions", tuple(self.component_revisions))
+        if not self.component_revisions or any(not isinstance(item, ProfileRevisionRef) for item in self.component_revisions):
+            raise VitrineModelValidationError("component_revisions must contain at least one ProfileRevisionRef.")
+        if len(set(self.component_revisions)) != len(self.component_revisions):
+            raise VitrineModelValidationError("component_revisions must not contain duplicates.")
+        object.__setattr__(self, "requirement_changes", tuple(self.requirement_changes))
+        if any(not isinstance(item, ProfileOverlayRequirementChange) for item in self.requirement_changes):
+            raise VitrineModelValidationError("requirement_changes must contain ProfileOverlayRequirementChange values.")
+        ids = [item.requirement.requirement_id for item in self.requirement_changes]
+        if len(set(ids)) != len(ids):
+            raise VitrineModelValidationError("requirement_changes must not repeat a requirement ID.")
+        object.__setattr__(self, "section_additions", tuple(self.section_additions))
+        object.__setattr__(self, "audience_rule_additions", tuple(self.audience_rule_additions))
+        if any(not isinstance(item, ProfileSectionDefinition) for item in self.section_additions):
+            raise VitrineModelValidationError("section_additions must contain ProfileSectionDefinition values.")
+        if len({item.section_id for item in self.section_additions}) != len(self.section_additions):
+            raise VitrineModelValidationError("section_additions must not repeat a section ID.")
+        if len({item.order for item in self.section_additions}) != len(self.section_additions):
+            raise VitrineModelValidationError("section_additions must not repeat an order value.")
+        if any(not isinstance(item, ProfileAudienceRule) for item in self.audience_rule_additions):
+            raise VitrineModelValidationError("audience_rule_additions must contain ProfileAudienceRule values.")
+        if len({item.audience_rule_id for item in self.audience_rule_additions}) != len(self.audience_rule_additions):
+            raise VitrineModelValidationError("audience_rule_additions must not repeat an audience rule ID.")
+        object.__setattr__(self, "known_limitations", text_tuple(self.known_limitations, "known_limitations"))
+
+    @property
+    def reference(self) -> ProfileOverlayRevisionRef:
+        return ProfileOverlayRevisionRef(overlay_id=self.overlay_id, overlay_revision=self.overlay_revision)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PortfolioProfileComposition:
+    profile_composition_id: str
+    effective_profile_revision: ProfileRevisionRef
+    component_profile_revisions: tuple[ProfileRevisionRef, ...]
+    overlay_revisions: tuple[ProfileOverlayRevisionRef, ...]
+    composed_at: datetime
+    composed_by: ActorAttribution
+    authority_reference: str
+    conflict_dispositions: tuple[str, ...] = ()
+    schema_version: str = field(default=SCHEMA_VERSION)
+    record_type: str = field(default=PROFILE_COMPOSITION_RECORD_TYPE)
+
+    def __post_init__(self) -> None:
+        require_record_envelope(self.schema_version, self.record_type, PROFILE_COMPOSITION_RECORD_TYPE)
+        object.__setattr__(self, "profile_composition_id", require_identifier(self.profile_composition_id, "profile_composition_id"))
+        if not isinstance(self.effective_profile_revision, ProfileRevisionRef):
+            raise VitrineModelValidationError("effective_profile_revision must be a ProfileRevisionRef.")
+        object.__setattr__(self, "component_profile_revisions", tuple(self.component_profile_revisions))
+        object.__setattr__(self, "overlay_revisions", tuple(self.overlay_revisions))
+        if not self.component_profile_revisions or any(not isinstance(item, ProfileRevisionRef) for item in self.component_profile_revisions):
+            raise VitrineModelValidationError("component_profile_revisions must contain at least one ProfileRevisionRef.")
+        if any(not isinstance(item, ProfileOverlayRevisionRef) for item in self.overlay_revisions):
+            raise VitrineModelValidationError("overlay_revisions must contain ProfileOverlayRevisionRef values.")
+        if len(set(self.component_profile_revisions)) != len(self.component_profile_revisions):
+            raise VitrineModelValidationError("component_profile_revisions must not contain duplicates.")
+        if self.effective_profile_revision in self.component_profile_revisions:
+            raise VitrineModelValidationError(
+                "effective_profile_revision must not also be a component Revision."
+            )
+        if len(set(self.overlay_revisions)) != len(self.overlay_revisions):
+            raise VitrineModelValidationError("overlay_revisions must not contain duplicates.")
+        object.__setattr__(self, "composed_at", require_aware_datetime(self.composed_at, "composed_at"))
+        if not isinstance(self.composed_by, ActorAttribution):
+            raise VitrineModelValidationError("composed_by must be an ActorAttribution.")
+        object.__setattr__(self, "authority_reference", require_text(self.authority_reference, "authority_reference", maximum=500))
+        object.__setattr__(self, "conflict_dispositions", text_tuple(self.conflict_dispositions, "conflict_dispositions"))
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ProfileRequirementImpact:
+    unchanged: tuple[str, ...] = ()
+    added: tuple[str, ...] = ()
+    removed: tuple[str, ...] = ()
+    replaced: tuple[str, ...] = ()
+    materially_changed: tuple[str, ...] = ()
+    unresolved_mapping: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "unchanged", "added", "removed", "replaced", "materially_changed", "unresolved_mapping"
+        ):
+            object.__setattr__(self, field_name, identifier_tuple(getattr(self, field_name), field_name))
+        all_ids = [
+            requirement_id
+            for field_name in (
+                "unchanged", "added", "removed", "replaced", "materially_changed", "unresolved_mapping"
+            )
+            for requirement_id in getattr(self, field_name)
+        ]
+        if len(set(all_ids)) != len(all_ids):
+            raise VitrineModelValidationError("requirement impact categories must not overlap.")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PortfolioProfileMigration:
+    profile_migration_id: str
+    portfolio_id: str
+    predecessor_binding_id: str
+    successor_binding_id: str
+    source_profile_revision: ProfileRevisionRef
+    target_profile_revision: ProfileRevisionRef
+    requirement_impact: ProfileRequirementImpact
+    unresolved_requirement_ids: tuple[str, ...]
+    reapproval_requirement_ids: tuple[str, ...]
+    migrated_at: datetime
+    migrated_by: ActorAttribution
+    migration_reason: str
+    authority_reference: str
+    schema_version: str = field(default=SCHEMA_VERSION)
+    record_type: str = field(default=PROFILE_MIGRATION_RECORD_TYPE)
+
+    def __post_init__(self) -> None:
+        require_record_envelope(self.schema_version, self.record_type, PROFILE_MIGRATION_RECORD_TYPE)
+        object.__setattr__(self, "profile_migration_id", require_identifier(self.profile_migration_id, "profile_migration_id"))
+        object.__setattr__(self, "portfolio_id", require_identifier(self.portfolio_id, "portfolio_id"))
+        object.__setattr__(self, "predecessor_binding_id", require_identifier(self.predecessor_binding_id, "predecessor_binding_id"))
+        object.__setattr__(self, "successor_binding_id", require_identifier(self.successor_binding_id, "successor_binding_id"))
+        if self.predecessor_binding_id == self.successor_binding_id:
+            raise VitrineModelValidationError("predecessor_binding_id and successor_binding_id must differ.")
+        if not isinstance(self.source_profile_revision, ProfileRevisionRef) or not isinstance(self.target_profile_revision, ProfileRevisionRef):
+            raise VitrineModelValidationError("source_profile_revision and target_profile_revision must be ProfileRevisionRef values.")
+        if self.source_profile_revision == self.target_profile_revision:
+            raise VitrineModelValidationError("target_profile_revision must differ from source_profile_revision.")
+        if not isinstance(self.requirement_impact, ProfileRequirementImpact):
+            raise VitrineModelValidationError("requirement_impact must be a ProfileRequirementImpact.")
+        object.__setattr__(self, "unresolved_requirement_ids", identifier_tuple(self.unresolved_requirement_ids, "unresolved_requirement_ids"))
+        object.__setattr__(self, "reapproval_requirement_ids", identifier_tuple(self.reapproval_requirement_ids, "reapproval_requirement_ids"))
+        object.__setattr__(self, "migrated_at", require_aware_datetime(self.migrated_at, "migrated_at"))
+        if not isinstance(self.migrated_by, ActorAttribution):
+            raise VitrineModelValidationError("migrated_by must be an ActorAttribution.")
+        object.__setattr__(self, "migration_reason", require_text(self.migration_reason, "migration_reason", maximum=1000))
+        object.__setattr__(self, "authority_reference", require_text(self.authority_reference, "authority_reference", maximum=500))

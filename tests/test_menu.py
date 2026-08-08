@@ -46,7 +46,7 @@ def test_help_returns_to_main_menu() -> None:
 def test_workspace_submenu_back_and_main_navigation() -> None:
     output = io.StringIO()
     result = run_menu(
-        input_fn=scripted_input(["2", "b", "2", "m", "q"]),
+        input_fn=scripted_input(["3", "b", "3", "m", "q"]),
         output=output,
         clear_fn=lambda: None,
     )
@@ -73,7 +73,7 @@ def test_cancelled_workspace_set_writes_nothing(
     workspace = tmp_path / "workspace"
     output = io.StringIO()
     result = run_menu(
-        input_fn=scripted_input(["2", "2", str(workspace), "", "b", "q"]),
+        input_fn=scripted_input(["3", "2", str(workspace), "", "b", "q"]),
         output=output,
         clear_fn=lambda: None,
     )
@@ -91,7 +91,7 @@ def test_confirmed_validate_creates_workspace_without_saving(
     monkeypatch.setenv("XDG_CONFIG_HOME", str(config))
     output = io.StringIO()
     result = run_menu(
-        input_fn=scripted_input(["2", "3", "CREATE", "", "b", "q"]),
+        input_fn=scripted_input(["3", "3", "CREATE", "", "b", "q"]),
         output=output,
         clear_fn=lambda: None,
     )

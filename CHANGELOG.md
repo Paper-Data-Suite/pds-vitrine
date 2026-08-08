@@ -29,3 +29,4 @@ All notable changes to this project will be documented in this file.
 Vitrine now persists foundational metadata and provides Portfolio Subject identity
 workflows, but does not yet discover live producer sources, curate artifacts, build
 Snapshot bytes, authorize disclosure, or export and deliver portfolios.
+- Implement versioned Portfolio Profile services with explicit activation, exact Binding, stable Requirement identity, local overlays, and explicit migration; add CLI/menu workflows and validation.

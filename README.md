@@ -130,3 +130,7 @@ Key entry points:
 - [Privacy and audience controls](docs/design/privacy-redaction-audience-controls.md)
 - [Representative synthetic Portfolio corpus](docs/examples/representative-synthetic-portfolios.md)
 - [Architecture Decision Records](docs/decisions/README.md)
+
+## Versioned Portfolio Profile services
+
+Vitrine now supports explicit immutable improvement/showcase Profile Revisions, append-preserving activation/lifecycle history, exact Portfolio Binding, local overlays, and explicit migration. Operational Profile selection never uses the largest revision number or newest timestamp. See `docs/contracts/portfolio-profile-workflows-v1.md`.

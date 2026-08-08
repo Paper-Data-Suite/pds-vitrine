@@ -99,3 +99,6 @@ When documents disagree:
 
 No document in this repository provides legal advice, activates an operational
 regulated Profile, or makes Vitrine an external compliance authority.
+
+- [Portfolio Profile workflows v1](contracts/portfolio-profile-workflows-v1.md) — operational immutable Profile lifecycle, Binding, overlay, and migration contract.
+- [Developing Portfolio Profile workflows](development/portfolio-profile-workflows.md) — service, CLI, menu, and validation guidance.

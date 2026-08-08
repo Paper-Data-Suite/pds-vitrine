@@ -133,3 +133,7 @@ identity history remains a fatal guarded-write/storage-integrity error.
 Use `load_current_records()` when a caller requires both graph records and
 identity-history records. `load_current_record_graph()` remains the exact
 foundational graph view.
+
+## Portfolio Profile policy state
+
+Canonical storage validates the supplemental Profile policy projection in addition to the foundational graph and Portfolio Subject identity state. Profile lifecycle, Binding, overlay, and migration decisions therefore receive the same expected-state and append-preserving guarantees as other Vitrine canonical records.

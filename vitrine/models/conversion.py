@@ -38,7 +38,12 @@ from .identity import (
 )
 from .profiles import (
     PortfolioProfileBinding,
+    PortfolioProfileComposition,
     PortfolioProfileFamily,
+    PortfolioProfileLifecycleEvent,
+    PortfolioProfileMigration,
+    PortfolioProfileOverlayRevision,
+    PortfolioProfileRequirement,
     PortfolioProfileRevision,
 )
 from .snapshots import (
@@ -63,6 +68,11 @@ VitrineRecord: TypeAlias = (
     | PortfolioProfileFamily
     | PortfolioProfileRevision
     | PortfolioProfileBinding
+    | PortfolioProfileRequirement
+    | PortfolioProfileLifecycleEvent
+    | PortfolioProfileOverlayRevision
+    | PortfolioProfileComposition
+    | PortfolioProfileMigration
     | CandidateEvaluation
     | PortfolioCandidate
     | PortfolioSelection

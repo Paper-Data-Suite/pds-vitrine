@@ -119,3 +119,7 @@ append-only display snapshots, identity decisions, and merge/split transitions.
 Use `vitrine.identity_state` to project and validate this history. Do not add
 mutable status fields to the foundational Subject/link records merely for UI
 convenience.
+
+## Profile supplemental records
+
+Issue #31 adds canonical `PortfolioProfileRequirement`, `PortfolioProfileLifecycleEvent`, `PortfolioProfileOverlayRevision`, `PortfolioProfileComposition`, and `PortfolioProfileMigration` records without changing the required `VitrineRecordGraph` JSON shape or existing fixture bytes.
