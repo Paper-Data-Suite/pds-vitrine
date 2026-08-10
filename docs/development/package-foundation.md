@@ -1,6 +1,6 @@
 # Vitrine Package Foundation
 
-- **Issue:** #27
+- **Issue:** #27 baseline, extended through issue #32
 - **Milestone:** v0.2.0 — Runtime Foundations and Fixture-Backed Portfolio Slice
 - **Package version:** `0.2.0.dev0`
 
@@ -20,21 +20,22 @@ one authoritative package version.
 
 ## Current implementation
 
-The package provides:
+The installed package provides:
 
-- help, version, and a minimal teacher menu;
+- help, version, and the low-density teacher menu;
 - Core-owned workspace show, set, validate, and reset operations;
 - immutable foundational Portfolio runtime models;
 - exact mapping conversion and canonical JSON;
 - pure deterministic graph validation;
-- canonical improvement and showcase model fixtures;
 - workspace-scoped canonical storage, guarded commits, strict historical/current loading, and a rebuildable SQLite catalog;
-- package, typing, test, documentation, and installed-wheel validation.
+- Portfolio Subject and versioned Profile application services;
+- exact producer-adapter support/declaration/projection interfaces;
+- explicit development-only ScoreForm-, Quillan-, and Concord-shaped adapter implementations;
+- non-mutating adapter CLI diagnostics;
+- package, typing, test, documentation, distribution, and installed-wheel validation.
 
-The model contract is documented in
-[Foundational Runtime Models v1](../contracts/foundational-runtime-models-v1.md).
-Persistence authority is documented in
-[Canonical Storage v1](../contracts/canonical-storage-v1.md).
+The exact contracts are documented under `docs/contracts/`, including
+[Producer Projection Adapter Boundary v1](../contracts/producer-projection-adapters-v1.md).
 
 ## Command surface
 
@@ -43,6 +44,11 @@ vitrine
 vitrine menu
 vitrine --help
 vitrine --version
+vitrine subject --help
+vitrine profile --help
+vitrine adapters list
+vitrine adapters list --include-development-fixtures
+vitrine adapters show <adapter_id> --include-development-fixtures
 vitrine workspace show [--workspace-root PATH]
 vitrine workspace set PATH
 vitrine workspace validate [--workspace-root PATH]
@@ -50,7 +56,8 @@ vitrine workspace reset
 python -m vitrine ...
 ```
 
-No model editing workflow is exposed through the CLI in issue #28.
+Adapter diagnostics are deliberately direct/power-user commands. No ordinary
+teacher-facing adapter-management menu is added by issue #32.
 
 ## Core ownership
 
@@ -60,6 +67,23 @@ creates no parallel Core configuration or shared identity model.
 
 Vitrine declares neither `paper_data_suite.modules` nor
 `paper_data_suite.publication_producers`.
+
+## Producer dependency boundary
+
+Core remains Vitrine's only runtime dependency. Issue #32 does not add ScoreForm,
+Quillan, or Concord to `Requires-Dist`, and ordinary adapter-registry construction
+does not discover or import installed producer packages.
+
+The wheel contains the adapter interfaces and explicit fixture adapter code so
+that diagnostics can describe those development contracts. Synthetic fixture
+JSON stays outside the wheel under `fixtures/producer-adapters/` in the repository
+and source distribution.
+
+```text
+development fixture adapter
+!= installed producer integration
+!= producer publication support
+```
 
 ## Development installation
 
@@ -78,25 +102,19 @@ python -m pip check
 .\run_tests.ps1 -CoreWheel C:\path\to\pds_core-0.6.0-py3-none-any.whl
 ```
 
-The complete gate authenticates Core, runs pytest, Ruff, strict Mypy, canonical
-runtime fixtures, canonical-storage validation, documentation and foundation validators, builds both
-distributions, runs Twine and content checks, performs isolated installed-wheel
-smoke testing, and confirms repository hygiene.
+The complete gate authenticates Core, runs pytest, Ruff, strict Mypy, runtime,
+storage, Subject, Profile, and producer-adapter validators, validates
+documentation and representative fixtures, builds both distributions, runs Twine
+and content checks, performs general and adapter-specific isolated installed-wheel
+smoke tests, and confirms repository hygiene.
+
+The adapter-specific smoke installs only Core and Vitrine, proves the default
+registry is empty, proves fixture listing requires explicit opt-in, and verifies
+that importing Vitrine does not require ScoreForm, Quillan, or Concord.
 
 ## Deferred behavior
 
-Vitrine now persists Vitrine-owned runtime metadata and selects current state
-through its own explicit pointer. It does not query the Core catalog, parse
-producer manifests, discover Candidates, execute Selection or Placement
-workflows, copy source bytes, build Snapshot packages, authorize disclosure,
-export, or deliver portfolios.
-
-## Portfolio Subject interface surface
-
-Issue #30 extends the package shell with a direct `vitrine subject` CLI family and
-an equivalent Portfolio Subjects teacher menu. Both consume the same
-presentation-independent services. Core `menu_navigation` supplies standard B/M/Q
-behavior; teacher screens clear after choices by default and retain only context
-needed for the next action.
-
-Issue #31 adds `profile_state.py`, `profile_services.py`, `profile_cli.py`, and `profile_menu.py` to the installed runtime package plus Profile workflow validation and documentation in the source distribution.
+Vitrine does not yet perform Core-backed Candidate discovery/evaluation, live
+producer-reader integration, Selection/Placement workflows, source-byte copying,
+Snapshot construction, disclosure authorization, export, or delivery. Issue #33
+owns the first Core-backed orchestration that will consume the issue #32 pure API.

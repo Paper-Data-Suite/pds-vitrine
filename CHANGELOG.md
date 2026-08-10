@@ -21,12 +21,26 @@ All notable changes to this project will be documented in this file.
   explicit current selection, expected-revision protection, and strict loading.
 - Deterministic storage diagnostics, conservative lock/partial-success handling,
   and a rebuildable nonauthoritative SQLite catalog.
-- Portfolio Subject identity-history records, exact Core roster resolution, guarded
-  cross-class linking, correction, merge, and split application services.
+- Portfolio Subject identity-history records, exact Core roster resolution,
+  guarded cross-class linking, correction, merge, and split application services.
 - Direct `vitrine subject` commands plus standardized low-density teacher menu
   workflows with H/B/M/Q navigation.
+- Versioned Portfolio Profile services with explicit activation, exact Binding,
+  stable Requirement identity, local overlays, explicit migration, direct CLI,
+  teacher workflows, and validation.
+- Exact immutable producer adapter support requests/keys, reader descriptors,
+  declarations, transient source projections, structured failures, and a
+  deterministic conflict-detecting registry.
+- Explicit ScoreForm-, Quillan-, and Concord-shaped development fixture readers
+  and adapters using Vitrine-owned fixture identities rather than live producer
+  contracts.
+- Non-mutating `vitrine adapters` diagnostics that exclude development fixtures
+  unless explicitly requested.
+- Producer-adapter fixture validation and isolated installed-wheel adapter smoke
+  proving no ScoreForm, Quillan, or Concord runtime dependency is required.
 
-Vitrine now persists foundational metadata and provides Portfolio Subject identity
-workflows, but does not yet discover live producer sources, curate artifacts, build
-Snapshot bytes, authorize disclosure, or export and deliver portfolios.
-- Implement versioned Portfolio Profile services with explicit activation, exact Binding, stable Requirement identity, local overlays, and explicit migration; add CLI/menu workflows and validation.
+Vitrine now persists foundational metadata, provides Portfolio Subject and
+Profile workflows, and implements the pure producer projection adapter boundary.
+Core-backed Candidate discovery/evaluation, live producer integrations, curation,
+Snapshot construction, recipient authorization, export, and delivery remain
+future work.
