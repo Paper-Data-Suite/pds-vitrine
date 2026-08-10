@@ -23,6 +23,7 @@ audited v0.1.0 architecture and fixture foundation. The package remains at
 - an exact producer projection adapter boundary with deterministic conflict detection;
 - explicit ScoreForm-, Quillan-, and Concord-shaped development fixture adapters;
 - non-mutating `vitrine adapters` diagnostics that hide fixtures by default;
+- fixture-backed Core catalog discovery, canonical verification, authorization-gated producer reading, and guarded Candidate Evaluation/Candidate persistence;
 - direct `vitrine subject` and `vitrine profile` command families plus low-density teacher menus;
 - strict testing, typing, packaging, and cross-platform CI gates.
 
@@ -48,6 +49,13 @@ development fixture adapter
 ```
 
 Vitrine still does not provide live ScoreForm, Quillan, or Concord ingestion.
+
+Issue #33 adds the first fixture-backed Core-to-Vitrine Candidate pipeline. It
+uses the Core catalog only for bounded discovery, reloads canonical Publication
+and registration state, requires explicit source-read authorization before
+manifest access, verifies the exact manifest bytes, invokes the #32 reader and
+adapter, resolves exact Portfolio Subject relationships, evaluates the bound
+Profile, and persists immutable Evaluations/Candidates. It creates no Selection.
 
 ## Requirements and installation
 
@@ -91,7 +99,7 @@ adapter choices.
 
 Vitrine declares no `paper_data_suite.modules` routing entry point and no
 `paper_data_suite.publication_producers` entry point. It adds no runtime
-dependency on ScoreForm, Quillan, or Concord.
+dependency on ScoreForm, Quillan, Concord, or Meridian.
 
 ## Runtime model example
 
@@ -130,7 +138,7 @@ python scripts/validate_repository.py --core-wheel <wheel>
 ```
 
 The complete gate authenticates Core, runs pytest, Ruff, strict Mypy, runtime and
-workflow validators including the producer-adapter validator, validates
+workflow validators including the producer-adapter and Candidate-discovery validators, validates
 documentation and representative fixtures, builds distributions, checks Twine
 and package contents, runs isolated installed-wheel smoke tests, and verifies
 repository cleanliness.
@@ -146,8 +154,10 @@ Key entry points:
 - [Portfolio Subject workflows](docs/contracts/portfolio-subject-workflows-v1.md)
 - [Portfolio Profile workflows](docs/contracts/portfolio-profile-workflows-v1.md)
 - [Producer projection adapter boundary](docs/contracts/producer-projection-adapters-v1.md)
+- [Candidate discovery and evaluation](docs/contracts/candidate-discovery-evaluation-v1.md)
 - [Runtime-model development](docs/development/runtime-models.md)
 - [Producer-adapter development](docs/development/producer-adapters.md)
+- [Candidate-discovery development](docs/development/candidate-discovery.md)
 - [Package foundation](docs/development/package-foundation.md)
 - [Synthetic data policy](docs/development/synthetic-data.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)

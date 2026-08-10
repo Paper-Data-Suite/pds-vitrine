@@ -38,9 +38,16 @@ All notable changes to this project will be documented in this file.
   unless explicitly requested.
 - Producer-adapter fixture validation and isolated installed-wheel adapter smoke
   proving no ScoreForm, Quillan, or Concord runtime dependency is required.
+- Core-backed fixture Candidate discovery/evaluation with bounded catalog use,
+  canonical Publication/registration reload, explicit source-read authorization,
+  exact manifest-byte verification, Subject/Profile evaluation, and guarded
+  Evaluation/Candidate persistence.
+- Explicit Vitrine-owned Core compatibility Profiles for ScoreForm-, Quillan-,
+  and Concord-shaped development fixtures, plus Candidate discovery validation
+  and isolated Candidate-service wheel smoke.
 
 Vitrine now persists foundational metadata, provides Portfolio Subject and
-Profile workflows, and implements the pure producer projection adapter boundary.
-Core-backed Candidate discovery/evaluation, live producer integrations, curation,
-Snapshot construction, recipient authorization, export, and delivery remain
-future work.
+Profile workflows, implements the producer projection adapter boundary, and
+executes the first fixture-backed Core-to-Vitrine Candidate discovery/evaluation
+slice. Live producer integrations, curation, Snapshot construction, recipient
+authorization, export, and delivery remain future work.

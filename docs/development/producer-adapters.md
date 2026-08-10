@@ -112,3 +112,12 @@ A future live adapter may bind an installed producer-owned public reader, but it
 must define explicit package trust/discovery and exact support declarations in a
 separate integration issue. Do not turn issue #32 fixture infrastructure into an
 automatic plugin loader.
+
+## Candidate consumer
+
+Issue #33 now consumes this boundary through
+[`candidate-discovery.md`](candidate-discovery.md). The Candidate service builds
+support requests only from canonical Core Publication/registration state,
+requires explicit source-read authorization, verifies the exact manifest bytes,
+and only then invokes the selected reader/adapter. This does not change the #32
+fixture isolation or establish a live producer integration.

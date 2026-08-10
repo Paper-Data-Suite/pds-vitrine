@@ -32,10 +32,13 @@ The installed package provides:
 - exact producer-adapter support/declaration/projection interfaces;
 - explicit development-only ScoreForm-, Quillan-, and Concord-shaped adapter implementations;
 - non-mutating adapter CLI diagnostics;
+- Core-backed fixture Candidate discovery/evaluation application services;
+- explicit development Core producer compatibility Profiles for the #32 fixture identities;
 - package, typing, test, documentation, distribution, and installed-wheel validation.
 
 The exact contracts are documented under `docs/contracts/`, including
-[Producer Projection Adapter Boundary v1](../contracts/producer-projection-adapters-v1.md).
+[Producer Projection Adapter Boundary v1](../contracts/producer-projection-adapters-v1.md) and
+[Candidate Discovery and Evaluation v1](../contracts/candidate-discovery-evaluation-v1.md).
 
 ## Command surface
 
@@ -70,9 +73,10 @@ Vitrine declares neither `paper_data_suite.modules` nor
 
 ## Producer dependency boundary
 
-Core remains Vitrine's only runtime dependency. Issue #32 does not add ScoreForm,
-Quillan, or Concord to `Requires-Dist`, and ordinary adapter-registry construction
-does not discover or import installed producer packages.
+Core remains Vitrine's only runtime dependency. Issues #32-#33 do not add
+ScoreForm, Quillan, Concord, or Meridian to `Requires-Dist`, and ordinary
+adapter/Candidate service construction does not discover or import installed
+producer packages.
 
 The wheel contains the adapter interfaces and explicit fixture adapter code so
 that diagnostics can describe those development contracts. Synthetic fixture
@@ -103,18 +107,25 @@ python -m pip check
 ```
 
 The complete gate authenticates Core, runs pytest, Ruff, strict Mypy, runtime,
-storage, Subject, Profile, and producer-adapter validators, validates
+storage, Subject, Profile, producer-adapter, and Candidate-discovery validators, validates
 documentation and representative fixtures, builds both distributions, runs Twine
-and content checks, performs general and adapter-specific isolated installed-wheel
+and content checks, performs general, adapter-specific, and Candidate-service isolated installed-wheel
 smoke tests, and confirms repository hygiene.
 
 The adapter-specific smoke installs only Core and Vitrine, proves the default
 registry is empty, proves fixture listing requires explicit opt-in, and verifies
 that importing Vitrine does not require ScoreForm, Quillan, or Concord.
 
+## Candidate discovery boundary
+
+Issue #33 implements the fixture-backed Core-to-Vitrine Candidate orchestration.
+The service is import-side-effect-free, requires explicit producer/adapter
+registries and authorization, and writes only Candidate Evaluation/Candidate
+records through guarded Vitrine persistence. Development fixture Core Profiles
+remain explicit and do not establish live sibling support.
+
 ## Deferred behavior
 
-Vitrine does not yet perform Core-backed Candidate discovery/evaluation, live
-producer-reader integration, Selection/Placement workflows, source-byte copying,
-Snapshot construction, disclosure authorization, export, or delivery. Issue #33
-owns the first Core-backed orchestration that will consume the issue #32 pure API.
+Vitrine does not yet provide live producer-reader integration, Selection/Placement
+workflows, source-byte copying, Snapshot construction, disclosure authorization,
+export, or delivery.

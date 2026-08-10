@@ -68,6 +68,7 @@ Do not use `dataclasses.asdict()` as a persistence contract.
 ```powershell
 python scripts\validate_runtime_models.py
 python scripts\validate_producer_adapters.py
+python scripts\validate_candidate_discovery.py
 ```
 
 The runtime-model validator checks exact improvement/showcase foundational
@@ -107,9 +108,10 @@ explicit development-adapter implementations, CLI diagnostics, and `py.typed`.
 Synthetic producer JSON fixtures, development scripts, tests, and documentation
 remain source-distribution assets. Core remains the only runtime dependency.
 
-Issue #32 adds a separate isolated installed-wheel adapter smoke proving that the
-default registry contains no fixtures and that ScoreForm, Quillan, and Concord
-need not be installed merely to import or inspect Vitrine's adapter boundary.
+Issue #32 adds a separate isolated installed-wheel adapter smoke. Issue #33 adds
+a Candidate-service smoke proving Candidate imports remain side-effect-free,
+ordinary registries remain fixture-free, and ScoreForm, Quillan, Concord, and
+Meridian need not be installed.
 
 ## Persistence boundary
 
@@ -140,3 +142,11 @@ Issue #32 adds transient exact support requests/keys, adapter declarations,
 reader descriptors, deterministic registry selection, projection batches, and
 producer-native transient relationships. See
 [`producer-adapters.md`](producer-adapters.md) for implementation guidance.
+
+## Candidate discovery boundary
+
+Issue #33 persists the existing `CandidateEvaluation` and `PortfolioCandidate`
+models without changing foundational wire shapes. Producer projection fields
+remain transient in `CandidateEvaluationResult`; canonical Candidate endpoints
+preserve exact source identity, Artifact/representation, relationship, privacy,
+and Core provenance. See [`candidate-discovery.md`](candidate-discovery.md).

@@ -12,18 +12,21 @@ exact runtime contracts, validated fixtures, and deferred workflows.
 - [Portfolio Subject workflows v1](contracts/portfolio-subject-workflows-v1.md) — exact Core roster linking, attributable identity decisions, correction, merge/split history, CLI, and low-density teacher workflows implemented by issue #30.
 - [Portfolio Profile workflows v1](contracts/portfolio-profile-workflows-v1.md) — explicit Profile lifecycle, Requirement identity, exact Binding, overlays, composition, and migration implemented by issue #31.
 - [Producer projection adapter boundary v1](contracts/producer-projection-adapters-v1.md) — exact support requests/keys, immutable reader/adapter declarations, deterministic conflict-detecting registry, strict development fixtures, transient projections, and structured failures implemented by issue #32.
+- [Candidate discovery and evaluation v1](contracts/candidate-discovery-evaluation-v1.md) — bounded Core catalog discovery, canonical reload, explicit authorization, verified reader bytes, Subject/Profile evaluation, and guarded Candidate persistence implemented by issue #33.
 - [Runtime-model development](development/runtime-models.md) — public imports, construction, conversion, fixtures, and validation commands.
 - [Canonical-storage development](development/canonical-storage.md) — persistence, historical reads, audits, catalogs, locks, and focused validation.
 - [Portfolio Subject workflow development](development/portfolio-subject-workflows.md) — application services, direct CLI, teacher menu, and workflow validation.
 - [Portfolio Profile workflow development](development/portfolio-profile-workflows.md) — Profile service, CLI/menu, and migration guidance.
 - [Producer-adapter development](development/producer-adapters.md) — exact selection, fixture isolation, reader purity, and adapter validation.
+- [Candidate-discovery development](development/candidate-discovery.md) — runtime construction, authorization gate, exact Subject/Profile evaluation, and focused validation.
 - [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, packaging, and CI.
 - [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
 
-Producer-adapter configuration and projections are transient. Development fixture
-adapters are not installed producer integrations, source authorization, or
-Candidate eligibility. Core-backed discovery and Candidate evaluation remain
-assigned to issue #33.
+Producer-adapter configuration and projections remain transient. Issue #33 now
+consumes them through a fixture-backed Core discovery/Evaluation service.
+Development fixture adapters and Core Profiles are not installed producer
+integrations, and Candidate creation remains distinct from Selection and
+disclosure authorization.
 
 ## Foundation research
 
