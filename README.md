@@ -19,7 +19,11 @@ audited v0.1.0 architecture and fixture foundation. The package remains at
 - strict historical/current loading and deterministic storage diagnostics;
 - a rebuildable nonauthoritative SQLite catalog;
 - Portfolio Subject creation, exact cross-class linking, correction, merge, and split workflows;
-- direct `vitrine subject` CLI commands and low-density teacher menus;
+- versioned improvement/showcase Profile services with explicit activation, Binding, overlays, and migration;
+- an exact producer projection adapter boundary with deterministic conflict detection;
+- explicit ScoreForm-, Quillan-, and Concord-shaped development fixture adapters;
+- non-mutating `vitrine adapters` diagnostics that hide fixtures by default;
+- direct `vitrine subject` and `vitrine profile` command families plus low-density teacher menus;
 - strict testing, typing, packaging, and cross-platform CI gates.
 
 The runtime models cover Portfolio and Subject identity, class-qualified Subject
@@ -27,12 +31,23 @@ links, Profile revisions and Bindings, source provenance, Candidate Evaluations,
 Candidates, Selections, Placements, Arrangements, Composition Revisions,
 Audience Contexts, and foundational Snapshot metadata.
 
-The model layer remains side-effect free. Vitrine now persists its own metadata
-beneath `<workspace>/vitrine/` with immutable record/state history, an explicit
-current pointer, optimistic concurrency, and a disposable derived catalog. It now supports Portfolio Subject identity workflows, but still cannot parse live
-producer manifests, discover Candidates, run artifact curation workflows, copy
-source bytes, build Snapshot packages, authorize recipients, or export and
-deliver portfolios.
+Vitrine persists its own canonical metadata beneath `<workspace>/vitrine/`. The
+producer-adapter layer is transient and side-effect free: it does not perform Core
+catalog discovery, authorization, manifest path/digest verification, Portfolio
+Subject resolution, Candidate evaluation, curation, Snapshot construction, or
+recipient disclosure.
+
+Issue #32's producer adapters are development fixtures only:
+
+```text
+development fixture adapter
+!= installed producer integration
+!= producer publication support
+!= source authorization
+!= Candidate eligibility
+```
+
+Vitrine still does not provide live ScoreForm, Quillan, or Concord ingestion.
 
 ## Requirements and installation
 
@@ -59,7 +74,10 @@ vitrine menu
 vitrine --help
 vitrine --version
 vitrine subject --help
-vitrine subject list [--workspace-root PATH]
+vitrine profile --help
+vitrine adapters list
+vitrine adapters list --include-development-fixtures
+vitrine adapters show <adapter_id> --include-development-fixtures
 vitrine workspace show [--workspace-root PATH]
 vitrine workspace set PATH
 vitrine workspace validate [--workspace-root PATH]
@@ -67,11 +85,13 @@ vitrine workspace reset
 python -m vitrine ...
 ```
 
-Bare `vitrine` launches the low-density teacher-facing menu; power users may use
-the direct `vitrine subject` command family.
+Bare `vitrine` launches the low-density teacher-facing menu. Adapter diagnostics
+are intentionally direct CLI infrastructure and are not exposed as teacher-facing
+adapter choices.
 
 Vitrine declares no `paper_data_suite.modules` routing entry point and no
-`paper_data_suite.publication_producers` entry point.
+`paper_data_suite.publication_producers` entry point. It adds no runtime
+dependency on ScoreForm, Quillan, or Concord.
 
 ## Runtime model example
 
@@ -85,10 +105,17 @@ from vitrine.models import (
 )
 ```
 
-See the [foundational runtime contract](docs/contracts/foundational-runtime-models-v1.md),
-[canonical storage contract](docs/contracts/canonical-storage-v1.md), and
-[canonical storage development guide](docs/development/canonical-storage.md), and
-[Portfolio Subject workflow contract](docs/contracts/portfolio-subject-workflows-v1.md).
+Producer-adapter selection is separate:
+
+```python
+from vitrine.producer_adapters import build_adapter_registry
+
+registry = build_adapter_registry()
+assert registry.adapters == ()
+```
+
+Development fixtures require explicit opt-in through
+`vitrine.development_adapters`.
 
 ## Validation
 
@@ -102,9 +129,10 @@ Cross-platform form:
 python scripts/validate_repository.py --core-wheel <wheel>
 ```
 
-The complete gate authenticates Core, runs pytest, Ruff, strict Mypy,
-documentation and fixture validators, builds distributions, checks Twine and
-package contents, runs an isolated installed-wheel smoke test, and verifies
+The complete gate authenticates Core, runs pytest, Ruff, strict Mypy, runtime and
+workflow validators including the producer-adapter validator, validates
+documentation and representative fixtures, builds distributions, checks Twine
+and package contents, runs isolated installed-wheel smoke tests, and verifies
 repository cleanliness.
 
 ## Documentation
@@ -116,21 +144,17 @@ Key entry points:
 - [Foundational runtime models](docs/contracts/foundational-runtime-models-v1.md)
 - [Canonical storage](docs/contracts/canonical-storage-v1.md)
 - [Portfolio Subject workflows](docs/contracts/portfolio-subject-workflows-v1.md)
+- [Portfolio Profile workflows](docs/contracts/portfolio-profile-workflows-v1.md)
+- [Producer projection adapter boundary](docs/contracts/producer-projection-adapters-v1.md)
 - [Runtime-model development](docs/development/runtime-models.md)
-- [Canonical-storage development](docs/development/canonical-storage.md)
-- [Portfolio Subject workflow development](docs/development/portfolio-subject-workflows.md)
+- [Producer-adapter development](docs/development/producer-adapters.md)
 - [Package foundation](docs/development/package-foundation.md)
 - [Synthetic data policy](docs/development/synthetic-data.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)
-- [Portfolio Subject identity](docs/design/portfolio-subject-identity.md)
-- [Versioned Portfolio Profiles](docs/design/portfolio-profile-contract.md)
 - [Candidate and source references](docs/design/candidate-source-reference-contract.md)
+- [Producer Artifact exposure](docs/design/producer-artifact-exposure-boundaries.md)
 - [Selection and curation](docs/design/selection-curation-records.md)
 - [Snapshot and immutability contracts](docs/design/snapshot-export-immutability-contracts.md)
 - [Privacy and audience controls](docs/design/privacy-redaction-audience-controls.md)
 - [Representative synthetic Portfolio corpus](docs/examples/representative-synthetic-portfolios.md)
 - [Architecture Decision Records](docs/decisions/README.md)
-
-## Versioned Portfolio Profile services
-
-Vitrine now supports explicit immutable improvement/showcase Profile Revisions, append-preserving activation/lifecycle history, exact Portfolio Binding, local overlays, and explicit migration. Operational Profile selection never uses the largest revision number or newest timestamp. See `docs/contracts/portfolio-profile-workflows-v1.md`.

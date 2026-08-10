@@ -13,8 +13,10 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/__init__.py",
     "vitrine/__main__.py",
     "vitrine/_version.py",
+    "vitrine/adapter_cli.py",
     "vitrine/cli.py",
     "vitrine/constants.py",
+    "vitrine/development_adapters.py",
     "vitrine/menu.py",
     "vitrine/identity_state.py",
     "vitrine/profile_state.py",
@@ -22,6 +24,7 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/profile_cli.py",
     "vitrine/profile_menu.py",
     "vitrine/menu_types.py",
+    "vitrine/producer_adapters.py",
     "vitrine/subject_cli.py",
     "vitrine/subject_menu.py",
     "vitrine/subject_services.py",
@@ -59,15 +62,22 @@ REQUIRED_SDIST_FILES = {
     "docs/contracts/canonical-storage-v1.md",
     "docs/contracts/portfolio-subject-workflows-v1.md",
     "docs/contracts/portfolio-profile-workflows-v1.md",
+    "docs/contracts/producer-projection-adapters-v1.md",
     "docs/development/runtime-models.md",
     "docs/development/canonical-storage.md",
     "docs/development/portfolio-subject-workflows.md",
     "docs/development/portfolio-profile-workflows.md",
+    "docs/development/producer-adapters.md",
+    "fixtures/producer-adapters/README.md",
+    "fixtures/producer-adapters/scoreform/manifest.json",
+    "fixtures/producer-adapters/quillan/manifest.json",
+    "fixtures/producer-adapters/concord/manifest.json",
     "pyproject.toml",
     "run_tests.ps1",
     "scripts/check_documentation.py",
     "scripts/check_package.py",
     "scripts/smoke_test_wheel.py",
+    "scripts/smoke_test_adapter_wheel.py",
     "scripts/validate_portfolio_foundation.py",
     "scripts/validate_repository.py",
     "scripts/validate_representative_portfolios.py",
@@ -75,11 +85,13 @@ REQUIRED_SDIST_FILES = {
     "scripts/validate_canonical_storage.py",
     "scripts/validate_subject_workflows.py",
     "scripts/validate_profile_workflows.py",
+    "scripts/validate_producer_adapters.py",
     "scripts/verify_core_wheel.py",
     "tests/fixtures/runtime-models/improvement-foundational-records-v1.json",
     "tests/fixtures/runtime-models/showcase-foundational-records-v1.json",
     "tests/runtime_fixture_factory.py",
     "tests/test_cli.py",
+    "tests/test_adapter_cli.py",
     "tests/test_runtime_graph.py",
     "tests/test_runtime_models.py",
     "tests/test_runtime_serialization.py",
@@ -104,6 +116,8 @@ REQUIRED_SDIST_FILES = {
     "tests/test_profile_cli.py",
     "tests/test_profile_menu.py",
     "tests/test_validate_profile_workflows.py",
+    "tests/test_producer_adapters.py",
+    "tests/test_validate_producer_adapters.py",
     "vitrine/py.typed",
 }
 
@@ -123,6 +137,9 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
     normalized = [item.replace(" ", "") for item in requirements]
     if not any("pds-core<0.7,>=0.6" in item for item in normalized):
         findings.append(f"missing Core dependency range: {requirements}")
+    sibling_names = ("pds-scoreform", "pds-quillan", "pds-concord")
+    if any(any(name in item.lower() for name in sibling_names) for item in requirements):
+        findings.append(f"forbidden producer runtime dependency: {requirements}")
     return findings
 
 
@@ -258,7 +275,7 @@ def main(argv: list[str] | None = None) -> int:
     if findings:
         print("\n".join(findings), file=sys.stderr)
         return 1
-    print(f"PASS distribution content: {len(args.artifacts)} artifact(s)")
+    print("PASS distribution content validation")
     return 0
 
 

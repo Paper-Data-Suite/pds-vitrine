@@ -7,19 +7,23 @@ exact runtime contracts, validated fixtures, and deferred workflows.
 
 ## Runtime implementation
 
-- [Foundational runtime models v1](contracts/foundational-runtime-models-v1.md) — exact immutable record and value-object contract, conversion, canonical JSON, and graph validation implemented by issue #28.
+- [Foundational runtime models v1](contracts/foundational-runtime-models-v1.md) — exact immutable record/value-object contract, conversion, canonical JSON, and graph validation implemented by issue #28.
 - [Canonical storage v1](contracts/canonical-storage-v1.md) — workspace-scoped canonical paths, immutable record/state history, current-pointer publication, concurrency, strict loading, recovery boundaries, and catalog nonauthority implemented by issue #29.
 - [Portfolio Subject workflows v1](contracts/portfolio-subject-workflows-v1.md) — exact Core roster linking, attributable identity decisions, correction, merge/split history, CLI, and low-density teacher workflows implemented by issue #30.
+- [Portfolio Profile workflows v1](contracts/portfolio-profile-workflows-v1.md) — explicit Profile lifecycle, Requirement identity, exact Binding, overlays, composition, and migration implemented by issue #31.
+- [Producer projection adapter boundary v1](contracts/producer-projection-adapters-v1.md) — exact support requests/keys, immutable reader/adapter declarations, deterministic conflict-detecting registry, strict development fixtures, transient projections, and structured failures implemented by issue #32.
 - [Runtime-model development](development/runtime-models.md) — public imports, construction, conversion, fixtures, and validation commands.
 - [Canonical-storage development](development/canonical-storage.md) — persistence, historical reads, audits, catalogs, locks, and focused validation.
 - [Portfolio Subject workflow development](development/portfolio-subject-workflows.md) — application services, direct CLI, teacher menu, and workflow validation.
+- [Portfolio Profile workflow development](development/portfolio-profile-workflows.md) — Profile service, CLI/menu, and migration guidance.
+- [Producer-adapter development](development/producer-adapters.md) — exact selection, fixture isolation, reader purity, and adapter validation.
 - [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, packaging, and CI.
 - [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
 
-The runtime model layer remains side-effect free. Vitrine now persists and manages
-Portfolio Subject identity, but producer discovery, source-byte access, artifact
-curation, Snapshot construction, authorization, export, and delivery remain
-deferred.
+Producer-adapter configuration and projections are transient. Development fixture
+adapters are not installed producer integrations, source authorization, or
+Candidate eligibility. Core-backed discovery and Candidate evaluation remain
+assigned to issue #33.
 
 ## Foundation research
 
@@ -57,6 +61,12 @@ Canonical runtime-model fixtures are stored under:
 
 ```text
 tests/fixtures/runtime-models/
+```
+
+Issue #32 producer-shaped fixtures are stored under:
+
+```text
+fixtures/producer-adapters/
 ```
 
 The earlier representative corpus remains under:
@@ -99,6 +109,3 @@ When documents disagree:
 
 No document in this repository provides legal advice, activates an operational
 regulated Profile, or makes Vitrine an external compliance authority.
-
-- [Portfolio Profile workflows v1](contracts/portfolio-profile-workflows-v1.md) — operational immutable Profile lifecycle, Binding, overlay, and migration contract.
-- [Developing Portfolio Profile workflows](development/portfolio-profile-workflows.md) — service, CLI, menu, and validation guidance.

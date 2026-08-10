@@ -31,7 +31,11 @@ Each frozen, slotted model validates local invariants during construction:
 - safe relative paths;
 - and lowercase SHA-256 values.
 
-Use `VitrineModelValidationError` for structurally invalid values.
+Use `VitrineModelValidationError` for structurally invalid foundational values.
+
+Issue #32 transient adapter values live in `vitrine.producer_adapters` rather than
+becoming required `VitrineRecordGraph` collections. This preserves the exact
+foundational graph wire shape and fixture bytes.
 
 ## Cross-record validation
 
@@ -63,11 +67,13 @@ Do not use `dataclasses.asdict()` as a persistence contract.
 
 ```powershell
 python scripts\validate_runtime_models.py
+python scripts\validate_producer_adapters.py
 ```
 
-The validator checks the exact improvement and showcase fixture set, complete
-graph validity, expected record counts, canonical byte equality, and fixture
-SHA-256 output. It writes nothing.
+The runtime-model validator checks exact improvement/showcase foundational
+fixtures. The producer-adapter validator separately exercises strict synthetic
+ScoreForm-, Quillan-, and Concord-shaped bytes without changing the foundational
+fixture hashes.
 
 ## Focused tests
 
@@ -77,6 +83,9 @@ python -m pytest `
   tests\test_runtime_serialization.py `
   tests\test_runtime_graph.py `
   tests\test_validate_runtime_models.py `
+  tests\test_producer_adapters.py `
+  tests\test_adapter_cli.py `
+  tests\test_validate_producer_adapters.py `
   -q
 ```
 
@@ -88,38 +97,46 @@ Install the authenticated Core wheel and run:
 .\run_tests.ps1 -CoreWheel C:\path\to\pds_core-0.6.0-py3-none-any.whl
 ```
 
-The repository gate runs runtime-model fixture validation before documentation,
-foundation, build, distribution, and installed-wheel checks.
+The repository gate runs runtime/workflow fixture validation before
+documentation, foundation, build, distribution, and installed-wheel checks.
 
 ## Package boundary
 
-The built wheel includes `vitrine.models` and `py.typed`. Test fixtures,
-development scripts, and documentation remain source-distribution assets. Core
-remains the only runtime dependency.
+The built wheel includes `vitrine.models`, the producer-adapter interfaces,
+explicit development-adapter implementations, CLI diagnostics, and `py.typed`.
+Synthetic producer JSON fixtures, development scripts, tests, and documentation
+remain source-distribution assets. Core remains the only runtime dependency.
 
-The installed-wheel smoke test constructs and serializes a minimal Portfolio
-graph, then exercises canonical Vitrine persistence in a disposable Core
-workspace, including a guarded state advance, catalog rebuild/removal, and a
-canonical reload without SQLite. It does not modify the installed package or
-configured user workspace.
+Issue #32 adds a separate isolated installed-wheel adapter smoke proving that the
+default registry contains no fixtures and that ScoreForm, Quillan, and Concord
+need not be installed merely to import or inspect Vitrine's adapter boundary.
 
-## Deferred implementation
+## Persistence boundary
 
-Keep persistence out of the pure `vitrine.models` package. Canonical persistence
-lives under `vitrine.storage`; producer imports, authorization, Snapshot byte
-construction, export rendering, and teacher workflows remain later v0.2.0 work.
+Canonical persistence lives under `vitrine.storage`. Producer adapter
+declarations, registries, reader models, and projection batches are transient
+integration configuration/observations and are not persisted merely by
+construction or selection.
 
 ## Portfolio Subject identity history
 
 Issue #30 adds canonical identity-history records that use the same strict record
 conversion APIs but are intentionally not required `VitrineRecordGraph`
-collections. This preserves the foundational graph wire shape while allowing
-append-only display snapshots, identity decisions, and merge/split transitions.
+collections.
 
 Use `vitrine.identity_state` to project and validate this history. Do not add
-mutable status fields to the foundational Subject/link records merely for UI
-convenience.
+mutable status fields to foundational Subject/link records for UI convenience.
 
 ## Profile supplemental records
 
-Issue #31 adds canonical `PortfolioProfileRequirement`, `PortfolioProfileLifecycleEvent`, `PortfolioProfileOverlayRevision`, `PortfolioProfileComposition`, and `PortfolioProfileMigration` records without changing the required `VitrineRecordGraph` JSON shape or existing fixture bytes.
+Issue #31 adds canonical `PortfolioProfileRequirement`,
+`PortfolioProfileLifecycleEvent`, `PortfolioProfileOverlayRevision`,
+`PortfolioProfileComposition`, and `PortfolioProfileMigration` records without
+changing the required `VitrineRecordGraph` JSON shape or existing fixture bytes.
+
+## Producer adapter boundary
+
+Issue #32 adds transient exact support requests/keys, adapter declarations,
+reader descriptors, deterministic registry selection, projection batches, and
+producer-native transient relationships. See
+[`producer-adapters.md`](producer-adapters.md) for implementation guidance.

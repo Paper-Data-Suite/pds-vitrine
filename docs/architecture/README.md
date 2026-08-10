@@ -8,15 +8,18 @@ They do not replace Accepted ADRs or exact runtime contracts.
 The [package foundation](../development/package-foundation.md) establishes the
 installable Core 0.6 baseline. The
 [foundational runtime-model contract](../contracts/foundational-runtime-models-v1.md)
-implements the first exact in-memory Portfolio contract with immutable models,
-canonical JSON, and deterministic graph validation. The
-[canonical storage contract](../contracts/canonical-storage-v1.md) adds
-workspace-scoped immutable persistence, explicit current-state selection, guarded
-commits, strict historical loading, and rebuildable derived indexes. The
+implements the first exact in-memory Portfolio contract. The
+[canonical storage contract](../contracts/canonical-storage-v1.md) adds immutable
+persistence and explicit current-state selection. The
 [Portfolio Subject workflow contract](../contracts/portfolio-subject-workflows-v1.md)
-adds exact Core roster linking and successor-based identity correction.
+adds exact Core roster linking and successor-based identity correction. The
+[Portfolio Profile workflow contract](../contracts/portfolio-profile-workflows-v1.md)
+adds explicit versioned policy, lifecycle, Binding, overlay, and migration. The
+[producer projection adapter contract](../contracts/producer-projection-adapters-v1.md)
+implements exact reader/adapter selection and strict development fixture
+projections without live producer integration.
 
-Producer adapters, Candidate discovery services, curation workflows, Snapshot
+Core-backed Candidate discovery/evaluation, curation workflows, Snapshot
 construction, authorization, and exports remain deferred.
 
 ## Current architecture
@@ -39,10 +42,8 @@ construction, authorization, and exports remain deferred.
 2. Read the [Accepted ADRs](../decisions/README.md).
 3. Review the conceptual designs in the order listed above.
 4. Review the representative corpus and foundation audit.
-5. Use the [foundational runtime contract](../contracts/foundational-runtime-models-v1.md) for exact implemented record shapes.
-6. Use the [canonical storage contract](../contracts/canonical-storage-v1.md) for persisted-state authority and recovery boundaries.
-7. Use the Portfolio Subject workflow contract for implemented identity services.
-8. Use the development guides for public APIs and validation.
+5. Use the foundational runtime, storage, Subject, Profile, and producer-adapter contracts for exact implemented behavior.
+6. Use the development guides for public APIs and validation.
 
 ## Authority order
 
@@ -53,6 +54,12 @@ construction, authorization, and exports remain deferred.
 5. conceptual design;
 6. research.
 
-## Profile policy state
+## Producer adapter authority
 
-Versioned Portfolio Profile lifecycle, Requirement identity, overlays, composition provenance, and migration history are Vitrine-owned canonical supplemental records. They are validated beside the foundational graph and remain independent of derived SQLite state.
+Core metadata selects only an exact Vitrine adapter claim. The producer reader
+owns producer validation and semantics; the Vitrine adapter performs a pure,
+bounded translation. Adapter selection is not authorization, Subject resolution,
+Profile eligibility, Candidate creation, Selection, or disclosure.
+
+Development fixture adapters are explicit Vitrine test infrastructure. They do
+not establish ScoreForm, Quillan, or Concord readiness.
