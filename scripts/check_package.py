@@ -15,8 +15,10 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/_version.py",
     "vitrine/adapter_cli.py",
     "vitrine/cli.py",
+    "vitrine/candidate_services.py",
     "vitrine/constants.py",
     "vitrine/development_adapters.py",
+    "vitrine/development_candidate_fixtures.py",
     "vitrine/menu.py",
     "vitrine/identity_state.py",
     "vitrine/profile_state.py",
@@ -63,11 +65,13 @@ REQUIRED_SDIST_FILES = {
     "docs/contracts/portfolio-subject-workflows-v1.md",
     "docs/contracts/portfolio-profile-workflows-v1.md",
     "docs/contracts/producer-projection-adapters-v1.md",
+    "docs/contracts/candidate-discovery-evaluation-v1.md",
     "docs/development/runtime-models.md",
     "docs/development/canonical-storage.md",
     "docs/development/portfolio-subject-workflows.md",
     "docs/development/portfolio-profile-workflows.md",
     "docs/development/producer-adapters.md",
+    "docs/development/candidate-discovery.md",
     "fixtures/producer-adapters/README.md",
     "fixtures/producer-adapters/scoreform/manifest.json",
     "fixtures/producer-adapters/quillan/manifest.json",
@@ -78,6 +82,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/check_package.py",
     "scripts/smoke_test_wheel.py",
     "scripts/smoke_test_adapter_wheel.py",
+    "scripts/smoke_test_candidate_wheel.py",
     "scripts/validate_portfolio_foundation.py",
     "scripts/validate_repository.py",
     "scripts/validate_representative_portfolios.py",
@@ -86,6 +91,8 @@ REQUIRED_SDIST_FILES = {
     "scripts/validate_subject_workflows.py",
     "scripts/validate_profile_workflows.py",
     "scripts/validate_producer_adapters.py",
+    "scripts/validate_candidate_discovery.py",
+    "scripts/candidate_fixture_support.py",
     "scripts/verify_core_wheel.py",
     "tests/fixtures/runtime-models/improvement-foundational-records-v1.json",
     "tests/fixtures/runtime-models/showcase-foundational-records-v1.json",
@@ -118,6 +125,9 @@ REQUIRED_SDIST_FILES = {
     "tests/test_validate_profile_workflows.py",
     "tests/test_producer_adapters.py",
     "tests/test_validate_producer_adapters.py",
+    "tests/test_candidate_services.py",
+    "tests/test_candidate_discovery.py",
+    "tests/test_validate_candidate_discovery.py",
     "vitrine/py.typed",
 }
 
@@ -137,7 +147,7 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
     normalized = [item.replace(" ", "") for item in requirements]
     if not any("pds-core<0.7,>=0.6" in item for item in normalized):
         findings.append(f"missing Core dependency range: {requirements}")
-    sibling_names = ("pds-scoreform", "pds-quillan", "pds-concord")
+    sibling_names = ("pds-scoreform", "pds-quillan", "pds-concord", "pds-meridian")
     if any(any(name in item.lower() for name in sibling_names) for item in requirements):
         findings.append(f"forbidden producer runtime dependency: {requirements}")
     return findings

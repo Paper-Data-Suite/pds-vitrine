@@ -378,3 +378,12 @@ verified immutable manifest bytes
 
 Only then may #33 resolve exact Portfolio Subject relationships, evaluate exact
 Profile policy, construct Candidate Evaluations, and persist positive Candidates.
+
+## Implemented Candidate consumer
+
+Issue #33 consumes this pure boundary through
+[Candidate Discovery and Evaluation v1](candidate-discovery-evaluation-v1.md).
+Adapter selection remains transient and exact; Candidate discovery adds Core
+canonical reload, explicit authorization, manifest-byte verification, Portfolio
+Subject resolution, Profile eligibility, and guarded Candidate persistence
+outside the adapter contract.

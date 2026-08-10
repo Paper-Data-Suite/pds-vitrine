@@ -63,3 +63,13 @@ Profile eligibility, Candidate creation, Selection, or disclosure.
 
 Development fixture adapters are explicit Vitrine test infrastructure. They do
 not establish ScoreForm, Quillan, or Concord readiness.
+
+## Candidate discovery runtime boundary
+
+Issue #33 implements the accepted ADR 0004 trust sequence through explicit Core
+and Vitrine application boundaries. The Core catalog proposes only publication
+IDs; canonical Core reload, authorization, manifest verification, producer
+reading, Subject resolution, and Profile eligibility remain separate stages.
+Positive Candidate persistence does not create Selection or disclosure approval.
+
+See [Candidate Discovery and Evaluation v1](../contracts/candidate-discovery-evaluation-v1.md).
