@@ -45,9 +45,21 @@ All notable changes to this project will be documented in this file.
 - Explicit Vitrine-owned Core compatibility Profiles for ScoreForm-, Quillan-,
   and Concord-shaped development fixtures, plus Candidate discovery validation
   and isolated Candidate-service wheel smoke.
+- Explicit Proposal/Decision/Selection curation workflows with injected
+  curation-authority decisions and append-preserving Selection lifecycle.
+- Guarded Placement, complete section Arrangement revisions, immutable
+  Arrangement pointer history, curator Presentation replacement, revisioned
+  Annotation and student Reflection, exact Curation Review Decisions, and
+  nondestructive withdrawal/replacement behavior.
+- Immutable Working Portfolio Composition creation plus one-to-one curation
+  inventory and explicit Composition pointer revisions, preserving unresolved
+  obligations without implying disclosure or Snapshot authority.
+- Dedicated curation-state validation, fixture-backed curation workflow
+  acceptance, and isolated installed-wheel curation smoke testing.
 
 Vitrine now persists foundational metadata, provides Portfolio Subject and
-Profile workflows, implements the producer projection adapter boundary, and
-executes the first fixture-backed Core-to-Vitrine Candidate discovery/evaluation
-slice. Live producer integrations, curation, Snapshot construction, recipient
+Profile workflows, implements the producer projection adapter boundary, executes
+fixture-backed Core-to-Vitrine Candidate discovery/evaluation, and supports
+explicit byte-free working-Portfolio curation through immutable Composition
+revisions. Live producer integrations, Snapshot construction, recipient
 authorization, export, and delivery remain future work.

@@ -24,19 +24,22 @@ audited v0.1.0 architecture and fixture foundation. The package remains at
 - explicit ScoreForm-, Quillan-, and Concord-shaped development fixture adapters;
 - non-mutating `vitrine adapters` diagnostics that hide fixtures by default;
 - fixture-backed Core catalog discovery, canonical verification, authorization-gated producer reading, and guarded Candidate Evaluation/Candidate persistence;
+- explicit Proposal/Decision/Selection provenance, append-preserving Selection and Placement lifecycle, complete section Arrangements, and conflict-aware current pointers;
+- revisioned curator Annotation, student Reflection, exact Curation Review Decisions, Selection replacement/withdrawal history, and immutable byte-free Working Portfolio Composition revisions;
 - direct `vitrine subject` and `vitrine profile` command families plus low-density teacher menus;
 - strict testing, typing, packaging, and cross-platform CI gates.
 
-The runtime models cover Portfolio and Subject identity, class-qualified Subject
-links, Profile revisions and Bindings, source provenance, Candidate Evaluations,
-Candidates, Selections, Placements, Arrangements, Composition Revisions,
-Audience Contexts, and foundational Snapshot metadata.
+The foundational runtime models cover Portfolio and Subject identity,
+class-qualified Subject links, Profile revisions and Bindings, source provenance,
+Candidate Evaluations, Candidates, Selections, Placements, Arrangements,
+Composition Revisions, Audience Contexts, and foundational Snapshot metadata.
+Issue #34 adds richer curation workflow/history records without changing the
+frozen #28 Selection, Placement, Arrangement, Composition, or graph wire shapes.
 
-Vitrine persists its own canonical metadata beneath `<workspace>/vitrine/`. The
-producer-adapter layer is transient and side-effect free: it does not perform Core
-catalog discovery, authorization, manifest path/digest verification, Portfolio
-Subject resolution, Candidate evaluation, curation, Snapshot construction, or
-recipient disclosure.
+Vitrine persists its own canonical metadata beneath `<workspace>/vitrine/`.
+Producer adapters remain transient and side-effect free. Candidate discovery and
+working-Portfolio curation use explicit application services and guarded
+persistence.
 
 Issue #32's producer adapters are development fixtures only:
 
@@ -50,12 +53,29 @@ development fixture adapter
 
 Vitrine still does not provide live ScoreForm, Quillan, or Concord ingestion.
 
-Issue #33 adds the first fixture-backed Core-to-Vitrine Candidate pipeline. It
-uses the Core catalog only for bounded discovery, reloads canonical Publication
-and registration state, requires explicit source-read authorization before
-manifest access, verifies the exact manifest bytes, invokes the #32 reader and
-adapter, resolves exact Portfolio Subject relationships, evaluates the bound
-Profile, and persists immutable Evaluations/Candidates. It creates no Selection.
+Issue #33 provides the first fixture-backed Core-to-Vitrine Candidate pipeline.
+It uses the Core catalog only for bounded discovery, reloads canonical
+Publication and registration state, requires explicit source-read authorization,
+verifies exact manifest bytes, resolves exact Portfolio Subject relationships,
+and persists immutable Evaluations/Candidates.
+
+Issue #34 consumes those positive Candidates through explicit byte-free
+curation:
+
+```text
+Candidate
+  -> Proposal
+  -> Decision
+  -> Selection
+  -> Placement
+  -> Arrangement
+  -> Annotation / Reflection / Review
+  -> Working Portfolio Composition Revision
+```
+
+Candidate eligibility does not imply Selection. Selection does not imply grading
+policy or disclosure permission. Reflection does not establish proficiency or
+prove improvement. Composition contains no producer bytes and is not a Snapshot.
 
 ## Requirements and installation
 
@@ -93,13 +113,13 @@ vitrine workspace reset
 python -m vitrine ...
 ```
 
-Bare `vitrine` launches the low-density teacher-facing menu. Adapter diagnostics
-are intentionally direct CLI infrastructure and are not exposed as teacher-facing
-adapter choices.
+Bare `vitrine` launches the low-density teacher-facing menu. Issue #34 does not
+add curation commands or teacher-menu choices; issue #38 will surface the shared
+curation application services.
 
 Vitrine declares no `paper_data_suite.modules` routing entry point and no
 `paper_data_suite.publication_producers` entry point. It adds no runtime
-dependency on ScoreForm, Quillan, Concord, or Meridian.
+dependency on ScoreForm, Quillan, Concord, Portia, or Meridian.
 
 ## Runtime model example
 
@@ -137,11 +157,11 @@ Cross-platform form:
 python scripts/validate_repository.py --core-wheel <wheel>
 ```
 
-The complete gate authenticates Core, runs pytest, Ruff, strict Mypy, runtime and
-workflow validators including the producer-adapter and Candidate-discovery validators, validates
-documentation and representative fixtures, builds distributions, checks Twine
-and package contents, runs isolated installed-wheel smoke tests, and verifies
-repository cleanliness.
+The complete gate authenticates Core; runs pytest, Ruff, strict Mypy, runtime and
+workflow validators including producer-adapter, Candidate-discovery, and curation
+workflow validation; validates documentation and representative fixtures; builds
+distributions; checks Twine/package contents; runs isolated installed-wheel smoke
+tests; and verifies repository cleanliness.
 
 ## Documentation
 
@@ -155,9 +175,11 @@ Key entry points:
 - [Portfolio Profile workflows](docs/contracts/portfolio-profile-workflows-v1.md)
 - [Producer projection adapter boundary](docs/contracts/producer-projection-adapters-v1.md)
 - [Candidate discovery and evaluation](docs/contracts/candidate-discovery-evaluation-v1.md)
+- [Curation workflows](docs/contracts/curation-workflows-v1.md)
 - [Runtime-model development](docs/development/runtime-models.md)
 - [Producer-adapter development](docs/development/producer-adapters.md)
 - [Candidate-discovery development](docs/development/candidate-discovery.md)
+- [Curation-workflow development](docs/development/curation-workflows.md)
 - [Package foundation](docs/development/package-foundation.md)
 - [Synthetic data policy](docs/development/synthetic-data.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)

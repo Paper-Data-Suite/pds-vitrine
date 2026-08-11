@@ -17,10 +17,15 @@ adds exact Core roster linking and successor-based identity correction. The
 adds explicit versioned policy, lifecycle, Binding, overlay, and migration. The
 [producer projection adapter contract](../contracts/producer-projection-adapters-v1.md)
 implements exact reader/adapter selection and strict development fixture
-projections without live producer integration.
+projections without live producer integration. The
+[Candidate discovery contract](../contracts/candidate-discovery-evaluation-v1.md)
+implements canonical Core-backed Candidate evaluation. The
+[curation workflow contract](../contracts/curation-workflows-v1.md) implements
+explicit Proposal/Decision/Selection provenance, Placement and Arrangement,
+Annotation, Reflection, Review, and immutable byte-free Composition state.
 
-Core-backed Candidate discovery/evaluation, curation workflows, Snapshot
-construction, authorization, and exports remain deferred.
+Snapshot construction, recipient/disclosure authorization, and exports remain
+deferred.
 
 ## Current architecture
 
@@ -42,7 +47,7 @@ construction, authorization, and exports remain deferred.
 2. Read the [Accepted ADRs](../decisions/README.md).
 3. Review the conceptual designs in the order listed above.
 4. Review the representative corpus and foundation audit.
-5. Use the foundational runtime, storage, Subject, Profile, and producer-adapter contracts for exact implemented behavior.
+5. Use the exact runtime contracts for implemented behavior.
 6. Use the development guides for public APIs and validation.
 
 ## Authority order
@@ -73,3 +78,28 @@ reading, Subject resolution, and Profile eligibility remain separate stages.
 Positive Candidate persistence does not create Selection or disclosure approval.
 
 See [Candidate Discovery and Evaluation v1](../contracts/candidate-discovery-evaluation-v1.md).
+
+## Curation runtime boundary
+
+Issue #34 implements accepted ADR 0006 without changing the frozen #28
+Selection, Placement, Arrangement, Composition, or graph wire shapes. Richer
+workflow history is additive and projected through `vitrine.curation_state`.
+
+The curation sequence remains explicit:
+
+```text
+Candidate
+  -> Proposal
+  -> Decision
+  -> Selection
+  -> Placement
+  -> Arrangement
+  -> Annotation / Reflection / Review
+  -> Composition
+```
+
+Selection does not authorize disclosure, and Composition contains no producer
+bytes. Explicit append-preserving Arrangement and Composition pointer revisions
+provide current working state without timestamp or largest-revision inference.
+
+See [Curation Workflows v1](../contracts/curation-workflows-v1.md).

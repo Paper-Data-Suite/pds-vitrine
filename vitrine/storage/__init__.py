@@ -1,5 +1,12 @@
 """Canonical Vitrine storage and nonauthoritative derived catalog APIs."""
 
+from collections.abc import Iterable
+from pathlib import Path
+from typing import cast
+
+from vitrine.curation_state import collect_curation_state_issues, project_curation_state
+from vitrine.models import VitrineRecord
+
 from .catalog import (
     CATALOG_APPLICATION_ID,
     CatalogRecordRow,
@@ -61,9 +68,14 @@ from .paths import (
     vitrine_root,
     write_lock_path,
 )
+from .serialization import current_state_from_dict
 from .store import (
+    _load_state_chain,
+    _load_state_records,
+    _parse,
+    _sha,
+    _validate_state_records,
     clear_write_lock,
-    commit_record_batch,
     inspect_write_lock,
     key_for_record,
     list_record_keys,
@@ -78,6 +90,75 @@ from .store import (
     load_state_revision,
     load_store_marker,
 )
+from .store import commit_record_batch as _commit_record_batch
+
+
+def load_current_records_with_state(
+    root: str | Path,
+) -> tuple[VitrineCurrentState, tuple[VitrineRecord, ...]]:
+    """Load the exact current pointer and records with one validated state pass."""
+
+    load_store_marker(root)
+    raw, _ = _parse(
+        root,
+        current_state_path(root),
+        current_state_from_dict,
+        missing=True,
+    )
+    current = cast(VitrineCurrentState, raw)
+    state, state_bytes = _load_state_chain(root, current.state_revision)
+    if _sha(state_bytes) != current.state_sha256:
+        raise VitrineStorageIntegrityError("current-state digest mismatch.")
+    records = _load_state_records(root, state)
+    _validate_state_records(
+        records,
+        message="persisted state graph is invalid.",
+    )
+    return current, records
+
+
+def _commit_prevalidated_curation_batch(
+    root: str | Path,
+    records: Iterable[VitrineRecord],
+    *,
+    expected_state_revision: int,
+) -> VitrineStorageCommitResult:
+    """Commit an already curation-validated transition through canonical storage."""
+
+    return _commit_record_batch(
+        root,
+        tuple(records),
+        expected_state_revision=expected_state_revision,
+    )
+
+
+def commit_record_batch(
+    root: str | Path,
+    records: Iterable[VitrineRecord],
+    *,
+    expected_state_revision: int | None,
+) -> VitrineStorageCommitResult:
+    """Guard the public canonical commit boundary with curation-state validation."""
+
+    candidates = tuple(records)
+    if expected_state_revision is None:
+        combined = candidates
+    else:
+        try:
+            combined = (*load_state_records(root, expected_state_revision), *candidates)
+        except VitrineStorageNotFoundError:
+            combined = candidates
+    issues = collect_curation_state_issues(project_curation_state(combined))
+    if issues:
+        raise VitrineStorageValidationError(
+            f"curation state is invalid ({issues[0].code})."
+        )
+    return _commit_record_batch(
+        root,
+        candidates,
+        expected_state_revision=expected_state_revision,
+    )
+
 
 __all__ = [
     "CATALOG_APPLICATION_ID",
@@ -128,6 +209,7 @@ __all__ = [
     "load_current_record",
     "load_current_record_graph",
     "load_current_records",
+    "load_current_records_with_state",
     "load_current_state",
     "load_record_revision",
     "load_state_records",

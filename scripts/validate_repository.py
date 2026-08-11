@@ -103,36 +103,16 @@ def validate(core_wheel: Path, *, allow_dirty: bool) -> None:
             cwd=root,
             env=env,
         )
-        _run(
-            [sys.executable, "scripts/validate_runtime_models.py"],
-            cwd=root,
-            env=env,
-        )
-        _run(
-            [sys.executable, "scripts/validate_canonical_storage.py"],
-            cwd=root,
-            env=env,
-        )
-        _run(
-            [sys.executable, "scripts/validate_subject_workflows.py"],
-            cwd=root,
-            env=env,
-        )
-        _run(
-            [sys.executable, "scripts/validate_profile_workflows.py"],
-            cwd=root,
-            env=env,
-        )
-        _run(
-            [sys.executable, "scripts/validate_producer_adapters.py"],
-            cwd=root,
-            env=env,
-        )
-        _run(
-            [sys.executable, "scripts/validate_candidate_discovery.py"],
-            cwd=root,
-            env=env,
-        )
+        for script in (
+            "scripts/validate_runtime_models.py",
+            "scripts/validate_canonical_storage.py",
+            "scripts/validate_subject_workflows.py",
+            "scripts/validate_profile_workflows.py",
+            "scripts/validate_producer_adapters.py",
+            "scripts/validate_candidate_discovery.py",
+            "scripts/validate_curation_workflows.py",
+        ):
+            _run([sys.executable, script], cwd=root, env=env)
         _run([sys.executable, "scripts/check_documentation.py"], cwd=root, env=env)
         _run(
             [sys.executable, "scripts/validate_representative_portfolios.py"],
@@ -173,36 +153,17 @@ def validate(core_wheel: Path, *, allow_dirty: bool) -> None:
             cwd=root,
             env=env,
         )
-        _run(
-            [
-                sys.executable,
-                "scripts/smoke_test_wheel.py",
-                str(wheels[0]),
-                str(core_wheel),
-            ],
-            cwd=root,
-            env=env,
-        )
-        _run(
-            [
-                sys.executable,
-                "scripts/smoke_test_adapter_wheel.py",
-                str(wheels[0]),
-                str(core_wheel),
-            ],
-            cwd=root,
-            env=env,
-        )
-        _run(
-            [
-                sys.executable,
-                "scripts/smoke_test_candidate_wheel.py",
-                str(wheels[0]),
-                str(core_wheel),
-            ],
-            cwd=root,
-            env=env,
-        )
+        for script in (
+            "scripts/smoke_test_wheel.py",
+            "scripts/smoke_test_adapter_wheel.py",
+            "scripts/smoke_test_candidate_wheel.py",
+            "scripts/smoke_test_curation_wheel.py",
+        ):
+            _run(
+                [sys.executable, script, str(wheels[0]), str(core_wheel)],
+                cwd=root,
+                env=env,
+            )
         _run(["git", "diff", "--check"], cwd=root, env=env)
     final_status = _git_status(root)
     if allow_dirty:
