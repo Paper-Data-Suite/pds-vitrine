@@ -13,20 +13,23 @@ exact runtime contracts, validated fixtures, and deferred workflows.
 - [Portfolio Profile workflows v1](contracts/portfolio-profile-workflows-v1.md) — explicit Profile lifecycle, Requirement identity, exact Binding, overlays, composition, and migration implemented by issue #31.
 - [Producer projection adapter boundary v1](contracts/producer-projection-adapters-v1.md) — exact support requests/keys, immutable reader/adapter declarations, deterministic conflict-detecting registry, strict development fixtures, transient projections, and structured failures implemented by issue #32.
 - [Candidate discovery and evaluation v1](contracts/candidate-discovery-evaluation-v1.md) — bounded Core catalog discovery, canonical reload, explicit authorization, verified reader bytes, Subject/Profile evaluation, and guarded Candidate persistence implemented by issue #33.
+- [Curation workflows v1](contracts/curation-workflows-v1.md) — explicit Proposal/Decision/Selection provenance, lifecycle, Placement/Arrangement pointers, Annotation, Reflection, Review, and immutable Composition state implemented by issue #34.
 - [Runtime-model development](development/runtime-models.md) — public imports, construction, conversion, fixtures, and validation commands.
 - [Canonical-storage development](development/canonical-storage.md) — persistence, historical reads, audits, catalogs, locks, and focused validation.
 - [Portfolio Subject workflow development](development/portfolio-subject-workflows.md) — application services, direct CLI, teacher menu, and workflow validation.
 - [Portfolio Profile workflow development](development/portfolio-profile-workflows.md) — Profile service, CLI/menu, and migration guidance.
 - [Producer-adapter development](development/producer-adapters.md) — exact selection, fixture isolation, reader purity, and adapter validation.
 - [Candidate-discovery development](development/candidate-discovery.md) — runtime construction, authorization gate, exact Subject/Profile evaluation, and focused validation.
+- [Curation workflow development](development/curation-workflows.md) — guarded curation services, authority gate, pointer concurrency, revisioning, and Composition guidance.
 - [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, packaging, and CI.
 - [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
 
-Producer-adapter configuration and projections remain transient. Issue #33 now
-consumes them through a fixture-backed Core discovery/Evaluation service.
+Producer-adapter configuration and projections remain transient. Issue #33
+consumes them through a fixture-backed Core discovery/Evaluation service, and
+issue #34 consumes positive Candidates through explicit byte-free curation.
 Development fixture adapters and Core Profiles are not installed producer
-integrations, and Candidate creation remains distinct from Selection and
-disclosure authorization.
+integrations. Candidate, Selection, curation approval, disclosure authorization,
+and Snapshot issuance remain distinct.
 
 ## Foundation research
 

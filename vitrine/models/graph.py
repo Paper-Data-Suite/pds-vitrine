@@ -700,7 +700,9 @@ def collect_record_graph_issues(
                 )
             )
 
-    placement_arrangements: dict[str, str] = {}
+    # A Placement may legitimately appear in several historical Arrangement
+    # revisions for the same section.  Each Arrangement is a complete immutable
+    # ordering revision; reordering must not require replacement Placements.
     for arrangement in graph.arrangements:
         for placement_id in arrangement.placement_ids:
             arranged_placement = placements.get(placement_id)
@@ -727,17 +729,6 @@ def collect_record_graph_issues(
                         arrangement.arrangement_id,
                     )
                 )
-            prior = placement_arrangements.get(placement_id)
-            if prior is not None and prior != arrangement.arrangement_id:
-                issues.append(
-                    _issue(
-                        "arrangement.placement_duplicate",
-                        "Placement appears in more than one Arrangement.",
-                        arrangement.record_type,
-                        arrangement.arrangement_id,
-                    )
-                )
-            placement_arrangements[placement_id] = arrangement.arrangement_id
     issues.extend(
         _detect_chain_issues(
             graph.arrangements,

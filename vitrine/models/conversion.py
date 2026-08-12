@@ -27,6 +27,19 @@ from .curation import (
     SectionArrangementRevision,
     WorkingPortfolioCompositionRevision,
 )
+from .curation_workflow import (
+    CurationAnnotation,
+    CurationRationale,
+    CurationReviewDecision,
+    PlacementLifecycleEvent,
+    PortfolioReflection,
+    SectionArrangementPointerRevision,
+    SelectionDecision,
+    SelectionLifecycleEvent,
+    SelectionProposal,
+    WorkingPortfolioCompositionInventory,
+    WorkingPortfolioCompositionPointerRevision,
+)
 from .errors import VitrineSerializationError
 from .identity import (
     Portfolio,
@@ -79,6 +92,17 @@ VitrineRecord: TypeAlias = (
     | PortfolioPlacement
     | SectionArrangementRevision
     | WorkingPortfolioCompositionRevision
+    | SelectionProposal
+    | SelectionDecision
+    | SelectionLifecycleEvent
+    | PlacementLifecycleEvent
+    | SectionArrangementPointerRevision
+    | CurationRationale
+    | CurationAnnotation
+    | PortfolioReflection
+    | CurationReviewDecision
+    | WorkingPortfolioCompositionInventory
+    | WorkingPortfolioCompositionPointerRevision
     | AudienceContext
     | SnapshotMaterializationRecord
     | SnapshotEntry
@@ -92,7 +116,6 @@ RECORD_TYPE_REGISTRY: dict[str, type[Any]] = {
     descriptor.record_type: descriptor.model_type for descriptor in RECORD_DESCRIPTORS
 }
 RECORD_TYPES: tuple[type[Any], ...] = tuple(RECORD_TYPE_REGISTRY.values())
-
 
 
 def _datetime_to_text(value: datetime) -> str:
