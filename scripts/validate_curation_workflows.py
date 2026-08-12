@@ -35,6 +35,7 @@ def validate() -> None:
             "tests/test_curation_state.py",
             "tests/test_curation_services.py",
             "tests/test_curation_workflows.py",
+            "tests/test_curation_acceptance_matrix.py",
             "-q",
         ],
         cwd=ROOT,
