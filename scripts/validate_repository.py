@@ -111,6 +111,7 @@ def validate(core_wheel: Path, *, allow_dirty: bool) -> None:
             "scripts/validate_producer_adapters.py",
             "scripts/validate_candidate_discovery.py",
             "scripts/validate_curation_workflows.py",
+            "scripts/validate_snapshot_workflows.py",
         ):
             _run([sys.executable, script], cwd=root, env=env)
         _run([sys.executable, "scripts/check_documentation.py"], cwd=root, env=env)
@@ -158,6 +159,7 @@ def validate(core_wheel: Path, *, allow_dirty: bool) -> None:
             "scripts/smoke_test_adapter_wheel.py",
             "scripts/smoke_test_candidate_wheel.py",
             "scripts/smoke_test_curation_wheel.py",
+            "scripts/smoke_test_snapshot_wheel.py",
         ):
             _run(
                 [sys.executable, script, str(wheels[0]), str(core_wheel)],
