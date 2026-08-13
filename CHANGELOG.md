@@ -56,10 +56,47 @@ All notable changes to this project will be documented in this file.
   obligations without implying disclosure or Snapshot authority.
 - Dedicated curation-state validation, fixture-backed curation workflow
   acceptance, and isolated installed-wheel curation smoke testing.
+- Additive immutable Snapshot Series, Build Request, Plan, Attempt/Result,
+  materialization provenance, Edition build provenance, directory Export, and
+  current-pointer workflow records without changing frozen issue #28 Snapshot
+  serialization.
+- Dedicated Snapshot state projection and validation integrated with canonical
+  guarded persistence.
+- Safe Snapshot custody with portable relative-path policy, Unicode/case-fold
+  collision rejection, exclusive staging, immutable Edition/Export roots, and
+  privacy-minimal Series build locks that are never cleared by age.
+- Explicit local Snapshot build authority, exact producer-source provider
+  selection, deterministic renderer selection, exact-byte acquisition, staged
+  output re-verification, independent SHA-256 layers, and source-stability
+  checks.
+- Immutable Build Plans that freeze exact Composition, curation, producer source,
+  renderer, output-path, Review, obligation, and Export decisions with
+  deterministic SHA-256 Plan fingerprints.
+- Complete Attempt execution with explicit per-item dispositions, permitted
+  source-backed Omissions, fail-closed blocking history, and explicit
+  interrupted-Attempt recovery.
+- Deterministic internal Snapshot Manifest bytes, independent logical-inventory
+  hashing, final pre-seal verification, immutable Snapshot Seal/Edition
+  publication, and partial-success/uncertain-durability preservation.
+- Producer-independent historical Edition verification and independently
+  verified `directory_package` Export Artifacts with deterministic directory
+  inventory hashes and exact immutable replay.
+- Explicit conflict-aware Snapshot current-Edition pointer revisions separate
+  from sealing and Export creation.
+- Development-only Snapshot acceptance fixtures covering copied Quillan-shaped
+  student work and student-facing feedback, rendered structured ScoreForm-shaped
+  attempt data, generated exact student Reflection, permitted Omission, blocking
+  failure, sealed Edition, and verified directory Export.
+- Dedicated Snapshot workflow validator, locked issue #28 fixture-hash checks,
+  Snapshot runtime/development contracts, and isolated installed-wheel Snapshot
+  smoke testing without sibling producer packages.
 
 Vitrine now persists foundational metadata, provides Portfolio Subject and
 Profile workflows, implements the producer projection adapter boundary, executes
-fixture-backed Core-to-Vitrine Candidate discovery/evaluation, and supports
-explicit byte-free working-Portfolio curation through immutable Composition
-revisions. Live producer integrations, Snapshot construction, recipient
-authorization, export, and delivery remain future work.
+fixture-backed Core-to-Vitrine Candidate discovery/evaluation, supports explicit
+byte-free working-Portfolio curation through immutable Composition revisions,
+and can execute one exact Composition through verified immutable Snapshot
+Edition and directory Export custody.
+
+Live producer integrations, recipient/disclosure authorization, Issuance,
+Submission, delivery, grading policy, and public hosting remain future work.

@@ -22,10 +22,14 @@ projections without live producer integration. The
 implements canonical Core-backed Candidate evaluation. The
 [curation workflow contract](../contracts/curation-workflows-v1.md) implements
 explicit Proposal/Decision/Selection provenance, Placement and Arrangement,
-Annotation, Reflection, Review, and immutable byte-free Composition state.
+Annotation, Reflection, Review, and immutable byte-free Composition state. The
+[Snapshot build workflow contract](../contracts/snapshot-build-workflows-v1.md)
+implements exact Composition-bound planning, guarded byte custody, exact
+copy/render boundaries, deterministic Manifest/Seal creation, immutable Edition
+publication, independently verified directory Export, and explicit recovery.
 
-Snapshot construction, recipient/disclosure authorization, and exports remain
-deferred.
+Recipient/disclosure authorization, Issuance, Submission, delivery, and public
+hosting remain deferred.
 
 ## Current architecture
 
@@ -103,3 +107,45 @@ bytes. Explicit append-preserving Arrangement and Composition pointer revisions
 provide current working state without timestamp or largest-revision inference.
 
 See [Curation Workflows v1](../contracts/curation-workflows-v1.md).
+
+## Snapshot runtime boundary
+
+Issue #35 implements accepted ADR 0007 while preserving the frozen #28
+Materialization, Entry, Omission, Manifest, Seal, and Edition wire shapes.
+
+The executable sequence is:
+
+```text
+exact Composition + Inventory + Audience Context
+  -> Series
+  -> Request
+  -> immutable Plan
+  -> persisted Attempt
+  -> exact source acquisition / deterministic render
+  -> complete pre-seal verification
+  -> Materializations / Entries / Omissions
+  -> deterministic internal Manifest
+  -> Seal
+  -> immutable Edition
+  -> verified directory Export
+```
+
+Build Request, Plan, Attempt, Edition, Export, and Current Pointer are separate
+authorities and histories.
+
+Long source reads/rendering use a Snapshot Series build lock distinct from the
+short canonical-state lock. The lock is exclusive, exact-Attempt-owned, and never
+cleared because of age.
+
+Source providers and renderers are injected exact-contract boundaries. There is
+no generic producer-private path fallback and no sibling producer runtime
+dependency.
+
+Historical Edition/Export verification uses only Vitrine canonical state and
+sealed Vitrine custody; original producer availability is not required.
+
+Snapshot build authority is local custody authority only. It does not create
+recipient authentication, disclosure authorization, consent, Issuance,
+Submission, Grade, proficiency, or mastery.
+
+See [Snapshot Build Workflows v1](../contracts/snapshot-build-workflows-v1.md).

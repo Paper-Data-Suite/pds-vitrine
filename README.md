@@ -26,6 +26,9 @@ audited v0.1.0 architecture and fixture foundation. The package remains at
 - fixture-backed Core catalog discovery, canonical verification, authorization-gated producer reading, and guarded Candidate Evaluation/Candidate persistence;
 - explicit Proposal/Decision/Selection provenance, append-preserving Selection and Placement lifecycle, complete section Arrangements, and conflict-aware current pointers;
 - revisioned curator Annotation, student Reflection, exact Curation Review Decisions, Selection replacement/withdrawal history, and immutable byte-free Working Portfolio Composition revisions;
+- immutable Snapshot Series/Request/Plan/Attempt workflows with exact source-provider and deterministic renderer boundaries;
+- guarded Snapshot staging, Series build locks, independent source/output hashing, explicit Omissions, deterministic Manifests, Seals, and immutable Editions;
+- producer-independent Edition verification, independently verified directory Export Artifacts, explicit current-Edition pointers, and explicit recovery inspection;
 - direct `vitrine subject` and `vitrine profile` command families plus low-density teacher menus;
 - strict testing, typing, packaging, and cross-platform CI gates.
 
@@ -35,11 +38,15 @@ Candidate Evaluations, Candidates, Selections, Placements, Arrangements,
 Composition Revisions, Audience Contexts, and foundational Snapshot metadata.
 Issue #34 adds richer curation workflow/history records without changing the
 frozen #28 Selection, Placement, Arrangement, Composition, or graph wire shapes.
+Issue #35 likewise reuses the frozen #28 Snapshot Materialization, Entry,
+Omission, Manifest, Seal, and Edition wire shapes while adding immutable build
+history and executable byte custody.
 
 Vitrine persists its own canonical metadata beneath `<workspace>/vitrine/`.
-Producer adapters remain transient and side-effect free. Candidate discovery and
-working-Portfolio curation use explicit application services and guarded
-persistence.
+Snapshot bytes are separately guarded beneath `<workspace>/vitrine/snapshots/`.
+Producer adapters remain transient and side-effect free. Candidate discovery,
+working-Portfolio curation, and Snapshot construction use explicit application
+services and guarded persistence.
 
 Issue #32's producer adapters are development fixtures only:
 
@@ -77,6 +84,28 @@ Candidate eligibility does not imply Selection. Selection does not imply grading
 policy or disclosure permission. Reflection does not establish proficiency or
 prove improvement. Composition contains no producer bytes and is not a Snapshot.
 
+Issue #35 consumes exactly one immutable Composition plus its exact Inventory and
+Audience Context:
+
+```text
+exact Composition
+  -> Snapshot Build Request
+  -> immutable Plan
+  -> Attempt
+  -> exact source copy / deterministic render
+  -> Entries / explicit Omissions
+  -> deterministic internal Manifest
+  -> Seal
+  -> immutable Edition
+  -> verified directory Export Artifact
+```
+
+The Plan never silently follows a successor Candidate, Publication, producer
+revision, Placement, Reflection, or Composition. Snapshot build authority permits
+local custody only and is not recipient/disclosure authorization. Historical
+Edition and Export verification require only Vitrine canonical state and
+Vitrine-owned sealed bytes, not the original producer.
+
 ## Requirements and installation
 
 ```text
@@ -113,9 +142,9 @@ vitrine workspace reset
 python -m vitrine ...
 ```
 
-Bare `vitrine` launches the low-density teacher-facing menu. Issue #34 does not
-add curation commands or teacher-menu choices; issue #38 will surface the shared
-curation application services.
+Bare `vitrine` launches the low-density teacher-facing menu. Issues #34 and #35
+do not add curation or Snapshot commands/menu choices; issue #38 will surface
+shared application services.
 
 Vitrine declares no `paper_data_suite.modules` routing entry point and no
 `paper_data_suite.publication_producers` entry point. It adds no runtime
@@ -145,6 +174,25 @@ assert registry.adapters == ()
 Development fixtures require explicit opt-in through
 `vitrine.development_adapters`.
 
+Snapshot application services are separate from curation:
+
+```python
+from vitrine.snapshot_services import (
+    create_snapshot_series,
+    request_snapshot_build,
+    plan_snapshot_build,
+    start_snapshot_build_attempt,
+    execute_snapshot_build_attempt,
+    seal_snapshot_build_attempt,
+)
+from vitrine.snapshot_distribution import (
+    create_snapshot_directory_export,
+    inspect_snapshot_custody,
+    verify_snapshot_edition,
+    verify_snapshot_export,
+)
+```
+
 ## Validation
 
 ```powershell
@@ -158,10 +206,17 @@ python scripts/validate_repository.py --core-wheel <wheel>
 ```
 
 The complete gate authenticates Core; runs pytest, Ruff, strict Mypy, runtime and
-workflow validators including producer-adapter, Candidate-discovery, and curation
-workflow validation; validates documentation and representative fixtures; builds
-distributions; checks Twine/package contents; runs isolated installed-wheel smoke
-tests; and verifies repository cleanliness.
+workflow validators including producer-adapter, Candidate-discovery, curation,
+and immutable Snapshot workflow validation; validates documentation and
+representative fixtures; builds distributions; checks Twine/package contents;
+runs isolated installed-wheel smoke tests including Snapshot imports; and
+verifies repository cleanliness.
+
+The dedicated Snapshot acceptance validator can also be run directly:
+
+```text
+python scripts/validate_snapshot_workflows.py
+```
 
 ## Documentation
 
@@ -176,10 +231,12 @@ Key entry points:
 - [Producer projection adapter boundary](docs/contracts/producer-projection-adapters-v1.md)
 - [Candidate discovery and evaluation](docs/contracts/candidate-discovery-evaluation-v1.md)
 - [Curation workflows](docs/contracts/curation-workflows-v1.md)
+- [Snapshot build workflows](docs/contracts/snapshot-build-workflows-v1.md)
 - [Runtime-model development](docs/development/runtime-models.md)
 - [Producer-adapter development](docs/development/producer-adapters.md)
 - [Candidate-discovery development](docs/development/candidate-discovery.md)
 - [Curation-workflow development](docs/development/curation-workflows.md)
+- [Snapshot-build development](docs/development/snapshot-build-workflows.md)
 - [Package foundation](docs/development/package-foundation.md)
 - [Synthetic data policy](docs/development/synthetic-data.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)

@@ -59,6 +59,17 @@ from .profiles import (
     PortfolioProfileRequirement,
     PortfolioProfileRevision,
 )
+from .snapshot_workflow import (
+    SnapshotBuildAttempt,
+    SnapshotBuildAttemptResult,
+    SnapshotBuildPlan,
+    SnapshotBuildRequest,
+    SnapshotCurrentPointerRevision,
+    SnapshotEditionBuildProvenance,
+    SnapshotExportArtifact,
+    SnapshotMaterializationProvenance,
+    SnapshotSeries,
+)
 from .snapshots import (
     SnapshotEdition,
     SnapshotEntry,
@@ -110,6 +121,15 @@ VitrineRecord: TypeAlias = (
     | SnapshotManifest
     | SnapshotSeal
     | SnapshotEdition
+    | SnapshotSeries
+    | SnapshotBuildRequest
+    | SnapshotBuildPlan
+    | SnapshotBuildAttempt
+    | SnapshotBuildAttemptResult
+    | SnapshotMaterializationProvenance
+    | SnapshotEditionBuildProvenance
+    | SnapshotExportArtifact
+    | SnapshotCurrentPointerRevision
 )
 
 RECORD_TYPE_REGISTRY: dict[str, type[Any]] = {

@@ -44,6 +44,17 @@ from vitrine.models.profiles import (
     PortfolioProfileRequirement,
     PortfolioProfileRevision,
 )
+from vitrine.models.snapshot_workflow import (
+    SnapshotBuildAttempt,
+    SnapshotBuildAttemptResult,
+    SnapshotBuildPlan,
+    SnapshotBuildRequest,
+    SnapshotCurrentPointerRevision,
+    SnapshotEditionBuildProvenance,
+    SnapshotExportArtifact,
+    SnapshotMaterializationProvenance,
+    SnapshotSeries,
+)
 from vitrine.models.snapshots import (
     SnapshotEdition,
     SnapshotEntry,
@@ -298,6 +309,61 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
         "snapshot_editions",
         ("snapshot_series_id", "edition_number"),
         ("edition_number",),
+    ),
+    RecordDescriptor(
+        "snapshot_series",
+        SnapshotSeries,
+        None,
+        ("snapshot_series_id",),
+    ),
+    RecordDescriptor(
+        "snapshot_build_request",
+        SnapshotBuildRequest,
+        None,
+        ("snapshot_build_request_id",),
+    ),
+    RecordDescriptor(
+        "snapshot_build_plan",
+        SnapshotBuildPlan,
+        None,
+        ("snapshot_build_plan_id",),
+    ),
+    RecordDescriptor(
+        "snapshot_build_attempt",
+        SnapshotBuildAttempt,
+        None,
+        ("snapshot_build_attempt_id",),
+    ),
+    RecordDescriptor(
+        "snapshot_build_attempt_result",
+        SnapshotBuildAttemptResult,
+        None,
+        ("snapshot_build_attempt_result_id",),
+    ),
+    RecordDescriptor(
+        "snapshot_materialization_provenance",
+        SnapshotMaterializationProvenance,
+        None,
+        ("snapshot_materialization_provenance_id",),
+    ),
+    RecordDescriptor(
+        "snapshot_edition_build_provenance",
+        SnapshotEditionBuildProvenance,
+        None,
+        ("snapshot_edition_build_provenance_id",),
+    ),
+    RecordDescriptor(
+        "snapshot_export_artifact",
+        SnapshotExportArtifact,
+        None,
+        ("snapshot_export_artifact_id",),
+    ),
+    RecordDescriptor(
+        "snapshot_current_pointer_revision",
+        SnapshotCurrentPointerRevision,
+        None,
+        ("snapshot_current_pointer_id", "pointer_revision"),
+        ("pointer_revision",),
     ),
 )
 

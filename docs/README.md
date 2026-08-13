@@ -14,6 +14,7 @@ exact runtime contracts, validated fixtures, and deferred workflows.
 - [Producer projection adapter boundary v1](contracts/producer-projection-adapters-v1.md) — exact support requests/keys, immutable reader/adapter declarations, deterministic conflict-detecting registry, strict development fixtures, transient projections, and structured failures implemented by issue #32.
 - [Candidate discovery and evaluation v1](contracts/candidate-discovery-evaluation-v1.md) — bounded Core catalog discovery, canonical reload, explicit authorization, verified reader bytes, Subject/Profile evaluation, and guarded Candidate persistence implemented by issue #33.
 - [Curation workflows v1](contracts/curation-workflows-v1.md) — explicit Proposal/Decision/Selection provenance, lifecycle, Placement/Arrangement pointers, Annotation, Reflection, Review, and immutable Composition state implemented by issue #34.
+- [Snapshot build workflows v1](contracts/snapshot-build-workflows-v1.md) — exact Composition-bound Request/Plan/Attempt execution, guarded byte custody, Series locks, exact source/render boundaries, deterministic Manifest/Seal/Edition creation, directory Export, verification, current pointer, and recovery implemented by issue #35.
 - [Runtime-model development](development/runtime-models.md) — public imports, construction, conversion, fixtures, and validation commands.
 - [Canonical-storage development](development/canonical-storage.md) — persistence, historical reads, audits, catalogs, locks, and focused validation.
 - [Portfolio Subject workflow development](development/portfolio-subject-workflows.md) — application services, direct CLI, teacher menu, and workflow validation.
@@ -21,15 +22,20 @@ exact runtime contracts, validated fixtures, and deferred workflows.
 - [Producer-adapter development](development/producer-adapters.md) — exact selection, fixture isolation, reader purity, and adapter validation.
 - [Candidate-discovery development](development/candidate-discovery.md) — runtime construction, authorization gate, exact Subject/Profile evaluation, and focused validation.
 - [Curation workflow development](development/curation-workflows.md) — guarded curation services, authority gate, pointer concurrency, revisioning, and Composition guidance.
+- [Snapshot build workflow development](development/snapshot-build-workflows.md) — Plan construction, exact provider/renderer boundaries, Series locking, sealing, Export verification, recovery, and validation.
 - [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, packaging, and CI.
 - [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
 
 Producer-adapter configuration and projections remain transient. Issue #33
-consumes them through a fixture-backed Core discovery/Evaluation service, and
-issue #34 consumes positive Candidates through explicit byte-free curation.
-Development fixture adapters and Core Profiles are not installed producer
-integrations. Candidate, Selection, curation approval, disclosure authorization,
-and Snapshot issuance remain distinct.
+consumes them through a fixture-backed Core discovery/Evaluation service, issue
+#34 consumes positive Candidates through explicit byte-free curation, and issue
+#35 consumes one exact immutable Composition through explicit Snapshot
+construction.
+
+Development fixture adapters, Snapshot fixture providers, and fixture renderers
+are not installed producer integrations. Candidate, Selection, curation
+approval, Snapshot build authority, disclosure authorization, and external
+Issuance remain distinct.
 
 ## Foundation research
 
@@ -73,6 +79,12 @@ Issue #32 producer-shaped fixtures are stored under:
 
 ```text
 fixtures/producer-adapters/
+```
+
+Issue #35 deterministic Snapshot build fixtures are stored under:
+
+```text
+fixtures/snapshot-workflows/
 ```
 
 The earlier representative corpus remains under:

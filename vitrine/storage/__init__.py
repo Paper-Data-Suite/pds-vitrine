@@ -6,6 +6,7 @@ from typing import cast
 
 from vitrine.curation_state import collect_curation_state_issues, project_curation_state
 from vitrine.models import VitrineRecord
+from vitrine.snapshot_state import collect_snapshot_state_issues, project_snapshot_state
 
 from .catalog import (
     CATALOG_APPLICATION_ID,
@@ -132,13 +133,28 @@ def _commit_prevalidated_curation_batch(
     )
 
 
+def _commit_prevalidated_snapshot_batch(
+    root: str | Path,
+    records: Iterable[VitrineRecord],
+    *,
+    expected_state_revision: int,
+) -> VitrineStorageCommitResult:
+    """Commit a transition already validated by Snapshot workflow services."""
+
+    return _commit_record_batch(
+        root,
+        tuple(records),
+        expected_state_revision=expected_state_revision,
+    )
+
+
 def commit_record_batch(
     root: str | Path,
     records: Iterable[VitrineRecord],
     *,
     expected_state_revision: int | None,
 ) -> VitrineStorageCommitResult:
-    """Guard the public canonical commit boundary with curation-state validation."""
+    """Guard the public canonical commit boundary with workflow-state validation."""
 
     candidates = tuple(records)
     if expected_state_revision is None:
@@ -148,10 +164,15 @@ def commit_record_batch(
             combined = (*load_state_records(root, expected_state_revision), *candidates)
         except VitrineStorageNotFoundError:
             combined = candidates
-    issues = collect_curation_state_issues(project_curation_state(combined))
-    if issues:
+    curation_issues = collect_curation_state_issues(project_curation_state(combined))
+    if curation_issues:
         raise VitrineStorageValidationError(
-            f"curation state is invalid ({issues[0].code})."
+            f"curation state is invalid ({curation_issues[0].code})."
+        )
+    snapshot_issues = collect_snapshot_state_issues(project_snapshot_state(combined))
+    if snapshot_issues:
+        raise VitrineStorageValidationError(
+            f"snapshot state is invalid ({snapshot_issues[0].code})."
         )
     return _commit_record_batch(
         root,
