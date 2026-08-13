@@ -748,7 +748,7 @@ def validate_snapshot_fixture_index(root: Path = ROOT) -> None:
 def _copy_source_fixture(destination: Path) -> Path:
     source = SNAPSHOT_FIXTURE_ROOT / "source-root"
     shutil.copytree(source, destination)
-    return destination
+    return destination.resolve(strict=True)
 
 
 def _assert_success_inventory(
