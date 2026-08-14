@@ -4,6 +4,11 @@ This directory is the cross-contract fixture corpus for the Vitrine v0.1.0 found
 
 The JSON shape is a development fixture contract only. It is not the final Vitrine public schema and does not imply executable integration with Core, ScoreForm, Quillan, Concord, Portia, or Meridian.
 
+The improvement story's `improvement/runtime/*-manifest.json` files are minimal
+execution descriptors for its dedicated vertical-slice validator. They publish
+the existing representative bytes through the explicit
+`vitrine_quillan_fixture` boundary and do not claim live Quillan integration.
+
 ## Portfolios
 
 - `improvement/` — baseline and revised Quillan-shaped writing, separate feedback, student reflection, and immutable student-facing Edition.
@@ -18,6 +23,7 @@ From the repository root:
 ```powershell
 python scripts/validate_representative_portfolios.py
 python scripts/validate_portfolio_foundation.py
+python scripts/validate_improvement_portfolio.py
 ```
 
 The validator uses only the Python standard library, performs no network access, imports no sibling package, mutates no fixture, and exits nonzero for any mismatch.

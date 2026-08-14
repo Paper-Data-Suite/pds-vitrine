@@ -90,6 +90,11 @@ All notable changes to this project will be documented in this file.
 - Dedicated Snapshot workflow validator, locked issue #28 fixture-hash checks,
   Snapshot runtime/development contracts, and isolated installed-wheel Snapshot
   smoke testing without sibling producer packages.
+- Executable representative improvement Portfolio vertical slice spanning exact
+  cross-class Subject links, Profile-bound Quillan-shaped fixture discovery,
+  three explicit Selections, deterministic Arrangement, student comparison
+  Reflection, immutable Composition, four-entry Snapshot/Export verification,
+  and byte-for-byte source-drift immutability evidence.
 
 Vitrine now persists foundational metadata, provides Portfolio Subject and
 Profile workflows, implements the producer projection adapter boundary, executes

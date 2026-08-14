@@ -87,6 +87,9 @@ Issue #35 deterministic Snapshot build fixtures are stored under:
 fixtures/snapshot-workflows/
 ```
 
+The first executable cross-service Portfolio acceptance slice is documented in
+[Executable improvement Portfolio vertical slice](development/improvement-portfolio-vertical-slice.md).
+
 The earlier representative corpus remains under:
 
 ```text
