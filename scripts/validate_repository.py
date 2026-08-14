@@ -112,6 +112,7 @@ def validate(core_wheel: Path, *, allow_dirty: bool) -> None:
             "scripts/validate_candidate_discovery.py",
             "scripts/validate_curation_workflows.py",
             "scripts/validate_snapshot_workflows.py",
+            "scripts/validate_improvement_portfolio.py",
         ):
             _run([sys.executable, script], cwd=root, env=env)
         _run([sys.executable, "scripts/check_documentation.py"], cwd=root, env=env)

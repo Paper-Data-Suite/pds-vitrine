@@ -84,9 +84,11 @@ files = [
     "scripts/validate_candidate_discovery.py",
     "scripts/validate_curation_workflows.py",
     "scripts/validate_snapshot_workflows.py",
+    "scripts/validate_improvement_portfolio.py",
     "scripts/candidate_fixture_support.py",
     "scripts/curation_fixture_support.py",
     "scripts/snapshot_fixture_support.py",
+    "scripts/improvement_portfolio_fixture_support.py",
     "scripts/verify_core_wheel.py",
 ]
 

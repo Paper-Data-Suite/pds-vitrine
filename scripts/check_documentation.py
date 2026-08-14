@@ -7,15 +7,33 @@ import sys
 from pathlib import Path
 
 LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+IGNORED_DIRECTORY_NAMES = {
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "build",
+    "dist",
+    "htmlcov",
+    "venv",
+}
 
 
 def _iter_text_files(root: Path) -> list[Path]:
     suffixes = {".md", ".ps1", ".py", ".toml", ".yml", ".yaml", ".json"}
+
+    def is_ignored(path: Path) -> bool:
+        relative_parts = path.relative_to(root).parts
+        return bool(set(relative_parts) & IGNORED_DIRECTORY_NAMES) or any(
+            part.endswith(".egg-info") for part in relative_parts
+        )
+
     return sorted(
         path
         for path in root.rglob("*")
         if path.is_file()
-        and ".git" not in path.parts
+        and not is_ignored(path)
         and path.suffix.lower() in suffixes
     )
 

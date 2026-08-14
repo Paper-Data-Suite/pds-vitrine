@@ -29,6 +29,7 @@ audited v0.1.0 architecture and fixture foundation. The package remains at
 - immutable Snapshot Series/Request/Plan/Attempt workflows with exact source-provider and deterministic renderer boundaries;
 - guarded Snapshot staging, Series build locks, independent source/output hashing, explicit Omissions, deterministic Manifests, Seals, and immutable Editions;
 - producer-independent Edition verification, independently verified directory Export Artifacts, explicit current-Edition pointers, and explicit recovery inspection;
+- an executable representative improvement Portfolio slice spanning exact cross-class identity, Profile-governed Candidate discovery, explicit curation, student Reflection, immutable Composition, four-entry Snapshot/Export custody, and producer-source drift proof;
 - direct `vitrine subject` and `vitrine profile` command families plus low-density teacher menus;
 - strict testing, typing, packaging, and cross-platform CI gates.
 
@@ -218,6 +219,12 @@ The dedicated Snapshot acceptance validator can also be run directly:
 python scripts/validate_snapshot_workflows.py
 ```
 
+The complete representative improvement slice has its own validator:
+
+```text
+python scripts/validate_improvement_portfolio.py
+```
+
 ## Documentation
 
 Documentation is indexed in [`docs/README.md`](docs/README.md).
@@ -237,6 +244,7 @@ Key entry points:
 - [Candidate-discovery development](docs/development/candidate-discovery.md)
 - [Curation-workflow development](docs/development/curation-workflows.md)
 - [Snapshot-build development](docs/development/snapshot-build-workflows.md)
+- [Executable improvement Portfolio slice](docs/development/improvement-portfolio-vertical-slice.md)
 - [Package foundation](docs/development/package-foundation.md)
 - [Synthetic data policy](docs/development/synthetic-data.md)
 - [Module boundaries and authority](docs/architecture/module-boundaries.md)
