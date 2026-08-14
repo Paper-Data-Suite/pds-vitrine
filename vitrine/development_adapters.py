@@ -1572,7 +1572,11 @@ def _concord_project(public_model: object) -> ProducerProjectionBatch:
                 artifact_id=public_model.artifact_id,
                 artifact_kind="collaborative_artifact",
                 representation_kind="concord_fixture:artifact",
-                media_type="application/pdf",
+                media_type=(
+                    "text/plain"
+                    if public_model.artifact_locator.lower().endswith(".txt")
+                    else "application/pdf"
+                ),
                 source_locator=public_model.artifact_locator,
                 native_revision=public_model.artifact_revision,
                 source_digest=None,

@@ -8,6 +8,10 @@ The improvement story's `improvement/runtime/*-manifest.json` files are minimal
 execution descriptors for its dedicated vertical-slice validator. They publish
 the existing representative bytes through the explicit
 `vitrine_quillan_fixture` boundary and do not claim live Quillan integration.
+The showcase story's `showcase/runtime/*-manifest.json` files likewise expose
+the committed polished-work and collaborative text bytes through explicit
+development-only Quillan- and Concord-shaped fixture boundaries. They are not
+live producer readers or public interchange contracts.
 
 ## Portfolios
 
@@ -24,6 +28,7 @@ From the repository root:
 python scripts/validate_representative_portfolios.py
 python scripts/validate_portfolio_foundation.py
 python scripts/validate_improvement_portfolio.py
+python scripts/validate_showcase_portfolio.py
 ```
 
 The validator uses only the Python standard library, performs no network access, imports no sibling package, mutates no fixture, and exits nonzero for any mismatch.

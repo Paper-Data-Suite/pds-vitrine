@@ -89,6 +89,8 @@ fixtures/snapshot-workflows/
 
 The first executable cross-service Portfolio acceptance slice is documented in
 [Executable improvement Portfolio vertical slice](development/improvement-portfolio-vertical-slice.md).
+The collaborative audience-safe slice is documented in
+[Executable showcase Portfolio vertical slice](development/showcase-portfolio-vertical-slice.md).
 
 The earlier representative corpus remains under:
 

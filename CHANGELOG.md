@@ -95,6 +95,12 @@ All notable changes to this project will be documented in this file.
   three explicit Selections, deterministic Arrangement, student comparison
   Reflection, immutable Composition, four-entry Snapshot/Export verification,
   and byte-for-byte source-drift immutability evidence.
+- Executable representative showcase Portfolio vertical slice spanning exact
+  Subject/Profile services, Quillan- and Concord-shaped Candidate discovery,
+  distinct Group/Author/Subject/contribution/Score targets, explicit conditional
+  Selection and collaborator-treatment review, immutable Composition, five-entry
+  audience-safe Snapshot, reproducible directory Export, and producer-independent
+  historical verification.
 
 Vitrine now persists foundational metadata, provides Portfolio Subject and
 Profile workflows, implements the producer projection adapter boundary, executes
