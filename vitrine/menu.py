@@ -16,8 +16,13 @@ from pds_core.menu_navigation import (
 from pds_core.workspace import WorkspaceRootError
 
 from vitrine.menu_types import ClearFunction, InputFunction
+from vitrine.portfolio_menu import run_portfolio_menu
 from vitrine.profile_menu import run_profile_menu
 from vitrine.subject_menu import run_subject_menu
+from vitrine.workflow_context import (
+    VitrineWorkflowDependencies,
+    default_workflow_dependencies,
+)
 from vitrine.workspace import (
     reset_workspace,
     set_workspace,
@@ -182,9 +187,11 @@ def run_menu(
     input_fn: InputFunction = input,
     output: TextIO | None = None,
     clear_fn: ClearFunction = clear_screen,
+    dependencies: VitrineWorkflowDependencies | None = None,
 ) -> int:
     """Run the minimal teacher-facing menu without creating workspace state."""
     stream = sys.stdout if output is None else output
+    workflow_dependencies = dependencies or default_workflow_dependencies()
     try:
         while True:
             clear_fn()
@@ -192,9 +199,10 @@ def run_menu(
                 stream,
                 "Vitrine",
                 "",
-                "1. Portfolio Subjects",
-                "2. Portfolio Profiles",
+                "1. Portfolios",
+                "2. Portfolio Subjects",
                 "3. Workspace Settings",
+                "4. Portfolio Profiles",
                 "H. Help",
                 "Q. Quit",
             )
@@ -207,16 +215,17 @@ def run_menu(
                 return 0
             if choice == "1":
                 try:
-                    run_subject_menu(
+                    run_portfolio_menu(
                         input_fn=input_fn,
                         output=stream,
                         clear_fn=clear_fn,
+                        dependencies=workflow_dependencies,
                     )
                 except ReturnToMainMenu:
                     continue
             elif choice == "2":
                 try:
-                    run_profile_menu(
+                    run_subject_menu(
                         input_fn=input_fn,
                         output=stream,
                         clear_fn=clear_fn,
@@ -232,8 +241,17 @@ def run_menu(
                     )
                 except ReturnToMainMenu:
                     continue
+            elif choice == "4":
+                try:
+                    run_profile_menu(
+                        input_fn=input_fn,
+                        output=stream,
+                        clear_fn=clear_fn,
+                    )
+                except ReturnToMainMenu:
+                    continue
             else:
-                _write_lines(stream, "Please choose 1, 2, 3, H, or Q.")
+                _write_lines(stream, "Please choose 1, 2, 3, 4, H, or Q.")
                 _pause(input_fn)
     except (EOFError, KeyboardInterrupt, QuitPDS):
         return 0

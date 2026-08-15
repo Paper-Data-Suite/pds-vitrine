@@ -27,7 +27,7 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_curation_workflows.py", "--skip-focused-tests"),
     ),
     ("Snapshot workflows", ("scripts/validate_snapshot_workflows.py",)),
-    ("improvement Portfolio", ("scripts/validate_improvement_portfolio.py",)),
+    ("interface and improvement Portfolio", ("scripts/validate_interface_workflows.py",)),
     ("showcase Portfolio", ("scripts/validate_showcase_portfolio.py",)),
 )
 

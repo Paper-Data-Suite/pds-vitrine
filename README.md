@@ -31,7 +31,7 @@ audited v0.1.0 architecture and fixture foundation. The package remains at
 - producer-independent Edition verification, independently verified directory Export Artifacts, explicit current-Edition pointers, and explicit recovery inspection;
 - an executable representative improvement Portfolio slice spanning exact cross-class identity, Profile-governed Candidate discovery, explicit curation, student Reflection, immutable Composition, four-entry Snapshot/Export custody, and producer-source drift proof;
 - an executable representative showcase Portfolio slice preserving Concord-shaped Group, Author, Subject, contribution, Score-target, and collaborator-treatment semantics through a five-entry audience-safe Edition and reproducible directory Export;
-- direct `vitrine subject` and `vitrine profile` command families plus low-density teacher menus;
+- Portfolio-centered direct command families and a low-density teacher menu, all backed by shared application services;
 - strict testing, typing, packaging, and cross-platform CI gates.
 
 The foundational runtime models cover Portfolio and Subject identity,
@@ -134,6 +134,13 @@ vitrine --help
 vitrine --version
 vitrine subject --help
 vitrine profile --help
+vitrine portfolio --help
+vitrine candidate --help
+vitrine selection --help
+vitrine arrangement --help
+vitrine composition --help
+vitrine audience --help
+vitrine snapshot --help
 vitrine adapters list
 vitrine adapters list --include-development-fixtures
 vitrine adapters show <adapter_id> --include-development-fixtures
@@ -144,9 +151,10 @@ vitrine workspace reset
 python -m vitrine ...
 ```
 
-Bare `vitrine` launches the low-density teacher-facing menu. Issues #34 and #35
-do not add curation or Snapshot commands/menu choices; issue #38 will surface
-shared application services.
+Bare `vitrine` launches the low-density, Portfolio-centered teacher menu.
+Direct commands are noninteractive and preserve the same service, authority,
+and optimistic-concurrency boundaries. See
+[teacher-facing and direct workflows](docs/development/interface-workflows.md).
 
 Vitrine declares no `paper_data_suite.modules` routing entry point and no
 `paper_data_suite.publication_producers` entry point. It adds no runtime
