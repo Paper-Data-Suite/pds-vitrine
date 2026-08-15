@@ -1,18 +1,28 @@
 from __future__ import annotations
 
-import subprocess
-import sys
-from pathlib import Path
+import scripts.validate_candidate_discovery as validator
 
 
-def test_candidate_discovery_validator_passes() -> None:
-    root = Path(__file__).resolve().parents[1]
-    result = subprocess.run(
-        [sys.executable, "scripts/validate_candidate_discovery.py"],
-        cwd=root,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr or result.stdout
-    assert "PASS Candidate discovery validation" in result.stdout
+def test_candidate_discovery_skip_mode_does_not_launch_nested_pytest(
+    monkeypatch,
+) -> None:
+    def fail_run(*_args, **_kwargs):
+        raise AssertionError("skip mode must not launch a nested pytest process")
+
+    monkeypatch.setattr(validator.subprocess, "run", fail_run)
+    validator.validate(run_focused_tests=False)
+
+
+def test_candidate_discovery_entrypoint_maps_success_without_reexecuting_workflow(
+    monkeypatch, capsys
+) -> None:
+    calls: list[bool] = []
+
+    def fake_validate(*, run_focused_tests: bool = True) -> None:
+        calls.append(run_focused_tests)
+
+    monkeypatch.setattr(validator, "validate", fake_validate)
+
+    assert validator.main(["--skip-focused-tests"]) == 0
+    assert calls == [False]
+    assert "PASS Candidate discovery validation" in capsys.readouterr().out

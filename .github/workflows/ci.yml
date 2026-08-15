@@ -8,19 +8,94 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
 jobs:
-  validate:
+  compatibility:
+    name: Compatibility (${{ matrix.os }}, Python ${{ matrix.python }})
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         python: ["3.11", "3.12", "3.13", "3.14"]
+        exclude:
+          - os: ubuntu-latest
+            python: "3.11"
+          - os: windows-latest
+            python: "3.14"
 
     runs-on: ${{ matrix.os }}
 
-    env:
-      PYTHONDONTWRITEBYTECODE: "1"
-      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Configure runner-local paths
+        shell: pwsh
+        run: |
+          $coreDirectory = Join-Path $env:RUNNER_TEMP "core"
+          New-Item -ItemType Directory -Force -Path $coreDirectory | Out-Null
+          $coreWheel = Join-Path $coreDirectory "pds_core-0.6.0-py3-none-any.whl"
+          "PDS_CORE_WHEEL=$coreWheel" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Download official Core release wheel
+        shell: pwsh
+        run: |
+          Invoke-WebRequest `
+            -Uri "https://github.com/Paper-Data-Suite/pds-core/releases/download/v0.6.0/pds_core-0.6.0-py3-none-any.whl" `
+            -OutFile $env:PDS_CORE_WHEEL `
+            -ErrorAction Stop
+          if (-not (Test-Path -LiteralPath $env:PDS_CORE_WHEEL -PathType Leaf)) {
+            throw "Core wheel download did not create $env:PDS_CORE_WHEEL."
+          }
+
+      - name: Authenticate and install Core
+        shell: pwsh
+        run: |
+          python scripts/verify_core_wheel.py "$env:PDS_CORE_WHEEL"
+          python -m pip install "$env:PDS_CORE_WHEEL"
+
+      - name: Install Vitrine development dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Remove editable-install residue
+        shell: pwsh
+        run: |
+          @("build", "dist", "pds_vitrine.egg-info") | ForEach-Object {
+            if (Test-Path -LiteralPath $_) {
+              Remove-Item -Recurse -Force -LiteralPath $_
+            }
+          }
+
+      - name: Verify installed Core
+        run: python scripts/verify_core_wheel.py --installed
+
+      - name: Verify dependency consistency
+        run: python -m pip check
+
+      - name: Run runtime compatibility tests
+        run: python -m pytest
+
+      - name: Verify no whitespace errors
+        run: git diff --check
+
+  qualification:
+    name: Complete qualification (${{ matrix.os }}, Python ${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.11"
+          - os: windows-latest
+            python: "3.14"
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4

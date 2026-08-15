@@ -49,6 +49,28 @@ def test_state_digest_tampering_fails_closed(tmp_path: Path) -> None:
         load_current_record_graph(tmp_path)
 
 
+def test_predecessor_state_tampering_fails_closed(tmp_path: Path) -> None:
+    graph = make_improvement_graph()
+    base = improvement_base_graph(graph)
+    commit_record_batch(tmp_path, flatten_graph(base), expected_state_revision=None)
+    commit_record_batch(tmp_path, snapshot_records(graph), expected_state_revision=1)
+
+    path = state_revision_path(tmp_path, 1)
+    data = path.read_bytes()
+    marker = b'"sha256": "'
+    start = data.index(marker) + len(marker)
+    path.write_bytes(data[:start] + b"0" * 64 + data[start + 64 :])
+
+    with pytest.raises(VitrineStorageIntegrityError):
+        load_current_record_graph(tmp_path)
+    with pytest.raises(VitrineStorageIntegrityError):
+        commit_record_batch(
+            tmp_path,
+            (graph.portfolios[0],),
+            expected_state_revision=2,
+        )
+
+
 def test_orphan_state_revision_blocks_future_writes(tmp_path: Path) -> None:
     graph = improvement_base_graph(make_improvement_graph())
     commit_record_batch(tmp_path, flatten_graph(graph), expected_state_revision=None)

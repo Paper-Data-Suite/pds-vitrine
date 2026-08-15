@@ -187,14 +187,19 @@ def load_store_marker(root: str | Path) -> VitrineStoreMarker:
     return cast(VitrineStoreMarker, marker)
 
 
-def load_record_revision(
+def _decode_record_revision(
     root: str | Path,
+    path: Path,
     key: VitrineStorageRecordKey,
     storage_revision: int,
+    data: bytes,
 ) -> tuple[VitrineRecord, VitrineRecordRevision]:
-    path = record_revision_path(root, key, storage_revision)
-    envelope_raw, _ = _parse(root, path, record_revision_from_dict, missing=True)
-    envelope = cast(VitrineRecordRevision, envelope_raw)
+    try:
+        envelope = record_revision_from_dict(strict_json_loads(data))
+    except (VitrineStorageError, ValueError, TypeError) as error:
+        raise VitrineStorageReadError(
+            f"invalid canonical object at {_relative(root, path)}: {error}"
+        ) from error
     if envelope.key != key or envelope.storage_revision != storage_revision:
         raise VitrineStorageIntegrityError(
             "record envelope identity disagrees with its canonical path."
@@ -215,6 +220,16 @@ def load_record_revision(
             "record body schema version disagrees with its envelope."
         )
     return record, envelope
+
+
+def load_record_revision(
+    root: str | Path,
+    key: VitrineStorageRecordKey,
+    storage_revision: int,
+) -> tuple[VitrineRecord, VitrineRecordRevision]:
+    path = record_revision_path(root, key, storage_revision)
+    data = read_canonical_bytes(root, path, missing=True)
+    return _decode_record_revision(root, path, key, storage_revision, data)
 
 
 def _visible(root: str | Path, path: Path, description: str) -> tuple[Path, ...]:
@@ -406,31 +421,52 @@ def _load_state_envelope(
     return value, data
 
 
+def _load_state_history(
+    root: str | Path, state_revision: int
+) -> tuple[tuple[VitrineStateRevision, bytes], ...]:
+    history: list[tuple[VitrineStateRevision, bytes]] = []
+    predecessor: VitrineStateRevision | None = None
+    predecessor_bytes: bytes | None = None
+    predecessor_refs: dict[VitrineStorageRecordKey, VitrineRecordRevisionRef] = {}
+
+    for expected in range(1, state_revision + 1):
+        current, current_bytes = _load_state_envelope(root, expected)
+        current_refs = {item.key: item for item in current.records}
+        if predecessor is not None:
+            if current.previous_state_revision != predecessor.state_revision:
+                raise VitrineStorageIntegrityError(
+                    "state predecessor revision mismatch."
+                )
+            if predecessor_bytes is None:
+                raise VitrineStorageIntegrityError(
+                    "state predecessor bytes are unexpectedly absent."
+                )
+            if current.previous_state_sha256 != _sha(predecessor_bytes):
+                raise VitrineStorageIntegrityError(
+                    "state predecessor digest mismatch."
+                )
+            if not set(predecessor_refs).issubset(current_refs):
+                raise VitrineStorageIntegrityError(
+                    "accepted state history removed a previously selected record key."
+                )
+            for key, reference in predecessor_refs.items():
+                if current_refs[key] != reference:
+                    raise VitrineStorageIntegrityError(
+                        "accepted state history replaced a previously selected record revision."
+                    )
+        history.append((current, current_bytes))
+        predecessor = current
+        predecessor_bytes = current_bytes
+        predecessor_refs = current_refs
+
+    return tuple(history)
+
+
 def _load_state_chain(
     root: str | Path, state_revision: int
 ) -> tuple[VitrineStateRevision, bytes]:
-    target, target_bytes = _load_state_envelope(root, state_revision)
-    child = target
-    child_refs = {item.key: item for item in child.records}
-    for expected in range(state_revision - 1, 0, -1):
-        predecessor, predecessor_bytes = _load_state_envelope(root, expected)
-        if child.previous_state_revision != expected:
-            raise VitrineStorageIntegrityError("state predecessor revision mismatch.")
-        if child.previous_state_sha256 != _sha(predecessor_bytes):
-            raise VitrineStorageIntegrityError("state predecessor digest mismatch.")
-        predecessor_refs = {item.key: item for item in predecessor.records}
-        if not set(predecessor_refs).issubset(child_refs):
-            raise VitrineStorageIntegrityError(
-                "accepted state history removed a previously selected record key."
-            )
-        for key, reference in predecessor_refs.items():
-            if child_refs[key] != reference:
-                raise VitrineStorageIntegrityError(
-                    "accepted state history replaced a previously selected record revision."
-                )
-        child = predecessor
-        child_refs = predecessor_refs
-    return target, target_bytes
+    history = _load_state_history(root, state_revision)
+    return history[-1]
 
 
 def _load_state_records(
@@ -441,45 +477,59 @@ def _load_state_records(
         path = record_revision_path(
             root, reference.key, reference.storage_revision
         )
-        if _sha(read_canonical_bytes(root, path, missing=True)) != reference.sha256:
+        data = read_canonical_bytes(root, path, missing=True)
+        if _sha(data) != reference.sha256:
             raise VitrineStorageIntegrityError(
                 "record revision digest mismatch for "
                 f"{reference.key.record_type}:"
                 f"{'/'.join(reference.key.identity_segments)}."
             )
-        record, _ = load_record_revision(
-            root, reference.key, reference.storage_revision
+        record, _ = _decode_record_revision(
+            root,
+            path,
+            reference.key,
+            reference.storage_revision,
+            data,
         )
         records.append(record)
     return tuple(records)
+
+
+def _load_validated_state(
+    root: str | Path, state_revision: int
+) -> tuple[
+    VitrineStateRevision,
+    str,
+    tuple[VitrineRecord, ...],
+    VitrineRecordGraph,
+    tuple[tuple[VitrineStateRevision, bytes], ...],
+]:
+    history = _load_state_history(root, state_revision)
+    value, data = history[-1]
+    records = _load_state_records(root, value)
+    graph = _validate_state_records(
+        records,
+        message="persisted state graph is invalid.",
+    )
+    return value, _sha(data), records, graph, history
 
 
 def load_state_records(
     root: str | Path, state_revision: int
 ) -> tuple[VitrineRecord, ...]:
     """Load every canonical record selected by one exact state revision."""
-    state, _ = _load_state_chain(root, state_revision)
-    records = _load_state_records(root, state)
-    _validate_state_records(
-        records,
-        message="persisted state graph is invalid.",
-    )
+    _, _, records, _, _ = _load_validated_state(root, state_revision)
     return records
 
 
 def load_state_revision(
     root: str | Path, state_revision: int
 ) -> tuple[VitrineStateRevision, str, VitrineRecordGraph]:
-    value, data = _load_state_chain(root, state_revision)
-    records = _load_state_records(root, value)
-    graph = _validate_state_records(
-        records,
-        message="persisted state graph is invalid.",
-    )
-    return value, _sha(data), graph
+    value, digest, _, graph, _ = _load_validated_state(root, state_revision)
+    return value, digest, graph
 
 
-def list_state_revisions(root: str | Path) -> tuple[int, ...]:
+def _list_state_revision_numbers(root: str | Path) -> tuple[int, ...]:
     result: list[int] = []
     for path in _visible(root, state_revisions_path(root), "state revisions"):
         if (
@@ -492,16 +542,30 @@ def list_state_revisions(root: str | Path) -> tuple[int, ...]:
             raise VitrineStorageIntegrityError(
                 f"unexpected state revision entry: {_relative(root, path)}"
             )
-        revision = int(path.stem)
-        load_state_revision(root, revision)
-        result.append(revision)
+        result.append(int(path.stem))
     return tuple(sorted(result))
 
 
+def list_state_revisions(root: str | Path) -> tuple[int, ...]:
+    revisions = _list_state_revision_numbers(root)
+    for revision in revisions:
+        load_state_revision(root, revision)
+    return revisions
+
+
+def _load_current_pointer(root: str | Path) -> VitrineCurrentState:
+    raw, _ = _parse(
+        root,
+        current_state_path(root),
+        current_state_from_dict,
+        missing=True,
+    )
+    return cast(VitrineCurrentState, raw)
+
+
 def load_current_state(root: str | Path) -> VitrineCurrentState:
-    raw, _ = _parse(root, current_state_path(root), current_state_from_dict, missing=True)
-    current = cast(VitrineCurrentState, raw)
-    _, digest, _ = load_state_revision(root, current.state_revision)
+    current = _load_current_pointer(root)
+    _, digest, _, _, _ = _load_validated_state(root, current.state_revision)
     if digest != current.state_sha256:
         raise VitrineStorageIntegrityError("current-state digest mismatch.")
     return current
@@ -509,8 +573,8 @@ def load_current_state(root: str | Path) -> VitrineCurrentState:
 
 def load_current_record_graph(root: str | Path) -> VitrineLoadedRecordGraph:
     load_store_marker(root)
-    current = load_current_state(root)
-    _, digest, graph = load_state_revision(root, current.state_revision)
+    current = _load_current_pointer(root)
+    _, digest, _, graph, _ = _load_validated_state(root, current.state_revision)
     if digest != current.state_sha256:
         raise VitrineStorageIntegrityError("current-state digest mismatch.")
     return VitrineLoadedRecordGraph(graph, current.state_revision, digest)
@@ -519,15 +583,20 @@ def load_current_record_graph(root: str | Path) -> VitrineLoadedRecordGraph:
 def load_current_records(root: str | Path) -> tuple[VitrineRecord, ...]:
     """Load every canonical record selected by current.json."""
     load_store_marker(root)
-    current = load_current_state(root)
-    return load_state_records(root, current.state_revision)
+    current = _load_current_pointer(root)
+    _, digest, records, _, _ = _load_validated_state(root, current.state_revision)
+    if digest != current.state_sha256:
+        raise VitrineStorageIntegrityError("current-state digest mismatch.")
+    return records
 
 
 def load_current_record(
     root: str | Path, key: VitrineStorageRecordKey
 ) -> tuple[VitrineRecord, VitrineRecordRevision]:
-    current = load_current_state(root)
-    state, _, _ = load_state_revision(root, current.state_revision)
+    current = _load_current_pointer(root)
+    state, digest, _, _, _ = _load_validated_state(root, current.state_revision)
+    if digest != current.state_sha256:
+        raise VitrineStorageIntegrityError("current-state digest mismatch.")
     reference = next((item for item in state.records if item.key == key), None)
     if reference is None:
         raise VitrineStorageNotFoundError(
@@ -540,8 +609,11 @@ def load_current_record(
 def _validate_canonical_write_history(
     root: str | Path,
     current_state: VitrineStateRevision | None,
+    *,
+    state_history: tuple[tuple[VitrineStateRevision, bytes], ...] | None = None,
+    current_records: tuple[VitrineRecord, ...] | None = None,
 ) -> None:
-    state_revisions = list_state_revisions(root)
+    state_revisions = _list_state_revision_numbers(root)
     record_keys = list_record_keys(root)
     marker_exists = store_marker_path(root).exists()
     current_exists = current_state_path(root).exists()
@@ -558,11 +630,44 @@ def _validate_canonical_write_history(
             "store marker/current pointer presence is contradictory."
         )
     load_store_marker(root)
+
     expected_states = tuple(range(1, current_state.state_revision + 1))
     if state_revisions != expected_states:
         raise VitrineStorageIntegrityError(
             "state history is noncontiguous or contains orphan revisions."
         )
+
+    history = (
+        state_history
+        if state_history is not None
+        else _load_state_history(root, current_state.state_revision)
+    )
+    if not history or history[-1][0] != current_state:
+        raise VitrineStorageIntegrityError(
+            "validated state history does not end at the current state."
+        )
+
+    records = (
+        current_records
+        if current_records is not None
+        else _load_state_records(root, current_state)
+    )
+    records_by_key = _records_by_key_from_records(records)
+
+    for historical, _ in history[:-1]:
+        try:
+            historical_records = tuple(
+                records_by_key[reference.key] for reference in historical.records
+            )
+        except KeyError as error:
+            raise VitrineStorageIntegrityError(
+                "historical state references a record absent from current immutable state."
+            ) from error
+        _validate_state_records(
+            historical_records,
+            message="persisted historical state graph is invalid.",
+        )
+
     selected = {item.key: item for item in current_state.records}
     if record_keys != tuple(sorted(selected)):
         raise VitrineStorageIntegrityError(
@@ -842,20 +947,35 @@ def commit_record_batch(
                 "store marker/current pointer presence is contradictory."
             )
 
+        current_pointer: VitrineCurrentState | None = None
+        current_digest: str | None = None
         if current_exists:
             if expected_state_revision is None:
                 raise VitrineStorageConflictError(
                     "initial commit requested for an existing Vitrine store."
                 )
-            loaded = load_current_record_graph(workspace)
-            current_revision = loaded.state_revision
+            load_store_marker(workspace)
+            current_pointer = _load_current_pointer(workspace)
+            current_revision = current_pointer.state_revision
             if current_revision != expected_state_revision:
                 raise VitrineStorageConflictError(
                     f"expected state {expected_state_revision}, found {current_revision}."
                 )
-            current_state, _, _ = load_state_revision(workspace, current_revision)
-            _validate_canonical_write_history(workspace, current_state)
-            current_records = load_state_records(workspace, current_revision)
+            (
+                current_state,
+                current_digest,
+                current_records,
+                _,
+                current_history,
+            ) = _load_validated_state(workspace, current_revision)
+            if current_digest != current_pointer.state_sha256:
+                raise VitrineStorageIntegrityError("current-state digest mismatch.")
+            _validate_canonical_write_history(
+                workspace,
+                current_state,
+                state_history=current_history,
+                current_records=current_records,
+            )
             all_records = _records_by_key_from_records(current_records)
             selected = {item.key: item for item in current_state.records}
         else:
@@ -881,13 +1001,16 @@ def commit_record_batch(
             new_records.append((key, record))
             all_records[key] = record
 
-        _validate_candidate_records(all_records.values())
+        candidate_graph = _validate_candidate_records(all_records.values())
 
         if not new_records and current_revision:
-            current = load_current_state(workspace)
+            if current_pointer is None or current_digest is None:
+                raise VitrineStorageIntegrityError(
+                    "validated current state is absent during no-op commit."
+                )
             result = VitrineStorageCommitResult(
-                current.state_revision,
-                current.state_sha256,
+                current_pointer.state_revision,
+                current_digest,
                 (),
                 True,
             )
@@ -947,9 +1070,7 @@ def commit_record_batch(
             raise VitrineStorageIntegrityError(
                 "orphan/colliding state revision blocks commit."
             )
-        previous_digest: str | None = None
-        if current_revision:
-            _, previous_digest, _ = load_state_revision(workspace, current_revision)
+        previous_digest = current_digest if current_revision else None
         state = VitrineStateRevision(
             state_revision=next_revision,
             previous_state_revision=current_revision or None,
@@ -959,15 +1080,18 @@ def commit_record_batch(
         state_data = serialize_storage(state)
         _write_exclusive(workspace, state_path, state_data)
         durable.append(_relative(workspace, state_path))
-        verified_state, verified_digest, _ = load_state_revision(
-            workspace, next_revision
-        )
-        verified_records = load_state_records(workspace, next_revision)
+        (
+                verified_state,
+                verified_digest,
+                verified_records,
+                _,
+                _,
+            ) = _load_validated_state(workspace, next_revision)
         if (
             verified_state != state
             or verified_digest != _sha(state_data)
             or _records_by_key_from_records(verified_records)
-            != _records_by_key_from_records(all_records.values())
+                != _records_by_key_from_records(all_records.values())
         ):
             raise VitrineStorageIntegrityError(
                 "newly written state revision failed exact verification."
@@ -982,11 +1106,11 @@ def commit_record_batch(
         durable.append(_relative(workspace, current_path))
         _fsync_directory_if_supported(current_path.parent)
 
-        load_current_record_graph(workspace)
-        verified_records = load_current_records(workspace)
-        if _records_by_key_from_records(verified_records) != (
-            _records_by_key_from_records(all_records.values())
-        ):
+        published = load_current_record_graph(workspace)
+        if (
+                published.state_revision != next_revision
+                or _records_by_key(published.graph) != _records_by_key(candidate_graph)
+            ):
             raise VitrineStorageIntegrityError(
                 "published state differs from validated candidate state."
             )

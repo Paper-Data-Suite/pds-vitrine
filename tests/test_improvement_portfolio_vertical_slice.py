@@ -11,7 +11,6 @@ from scripts.improvement_portfolio_fixture_support import (
     ImprovementPortfolioFixture,
     build_improvement_portfolio_fixture,
 )
-from scripts.validate_improvement_portfolio import validate
 from vitrine.curation_state import project_curation_state
 from vitrine.models import (
     PortfolioProfileBinding,
@@ -142,18 +141,4 @@ def test_unlinked_same_looking_student_does_not_resolve_and_discovery_does_not_s
     assert not any(
         isinstance(item, PortfolioSelection) for item in load_current_records(workspace)
     )
-
-
-def test_complete_validator_proves_four_entries_and_source_drift_immutability() -> None:
-    report = validate()
-    assert len(report.candidate_ids) == len(report.selection_ids) == 3
-    assert tuple(item[0] for item in report.entry_inventory) == (
-        "baseline/argument.txt",
-        "later/argument.txt",
-        "later/student-feedback.txt",
-        "reflection/student-comparison.md",
-    )
-    assert report.edition_identity[1] == 1
-    assert len(report.manifest_sha256) == len(report.logical_inventory_sha256) == 64
-    assert len(report.export_inventory_sha256) == 64
 

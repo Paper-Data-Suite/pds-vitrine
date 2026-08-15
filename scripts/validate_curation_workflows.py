@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import subprocess
 import sys
@@ -22,30 +23,41 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate() -> None:
+def validate(*, run_focused_tests: bool = True) -> None:
     for path, expected in LOCKED_FIXTURES.items():
         if _sha256(path) != expected:
             raise RuntimeError(f"locked foundational fixture changed: {path.name}")
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            "tests/test_curation_models.py",
-            "tests/test_curation_state.py",
-            "tests/test_curation_services.py",
-            "tests/test_curation_workflows.py",
-            "tests/test_curation_acceptance_matrix.py",
-            "-q",
-        ],
-        cwd=ROOT,
-        check=True,
+    if run_focused_tests:
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/test_curation_models.py",
+                "tests/test_curation_state.py",
+                "tests/test_curation_services.py",
+                "tests/test_curation_workflows.py",
+                "tests/test_curation_acceptance_matrix.py",
+                "-q",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--skip-focused-tests",
+        action="store_true",
+        help=(
+            "Skip the focused pytest subset when an enclosing qualification gate "
+            "has already run the complete pytest suite."
+        ),
     )
-
-
-def main() -> int:
+    args = parser.parse_args(argv)
     try:
-        validate()
+        validate(run_focused_tests=not args.skip_focused_tests)
         print("PASS curation workflow validation")
         return 0
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
