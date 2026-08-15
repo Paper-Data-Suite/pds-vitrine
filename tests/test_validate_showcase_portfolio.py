@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+from types import SimpleNamespace
 
-from scripts.validate_showcase_portfolio import validate
+import scripts.validate_showcase_portfolio as validator
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -16,27 +17,17 @@ def test_showcase_runtime_manifests_are_explicit_development_fixtures() -> None:
         assert '"producer_module_id":"vitrine_' in body
 
 
-def test_complete_showcase_validator_proves_exact_reproducible_export() -> None:
-    report = validate()
-    assert report.subject_id == "portfolio-subject-syn-001"
-    assert report.candidate_ids == ("candidate-show-polished", "candidate-show-group")
-    assert len(report.selection_ids) == len(report.placement_ids) == 2
-    assert report.edition_identity[1] == 1
-    assert tuple(item[0] for item in report.entry_inventory) == (
-        "01-polished-literary-analysis.txt",
-        "02-group-water-quality-recommendation.txt",
-        "03-audience-safe-attribution.txt",
-        "04-curation-rationale.md",
-        "05-index.md",
+def test_showcase_validator_entrypoint_maps_success_without_reexecuting_slice(
+    monkeypatch, capsys
+) -> None:
+    monkeypatch.setattr(
+        validator,
+        "validate",
+        lambda: SimpleNamespace(edition_identity=("series-test", 1)),
     )
-    assert len(report.manifest_sha256) == len(report.logical_inventory_sha256) == 64
-    assert len(report.export_inventory_sha256) == 64
-    assert report.membership_only_outcome == "ineligible"
-    assert report.removed_producer_state == (
-        "vitrine_quillan_fixture/quillan-work-polished",
-        "vitrine_concord_fixture/concord-work-syn-001",
-        "core/academic-catalog",
-    )
+
+    assert validator.main() == 0
+    assert "PASS executable showcase Portfolio" in capsys.readouterr().out
 
 
 def test_frozen_foundational_fixture_hashes_are_unchanged() -> None:

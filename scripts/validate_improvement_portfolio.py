@@ -87,6 +87,14 @@ class ImprovementValidationError(RuntimeError):
     """Privacy-minimal deterministic vertical-slice failure."""
 
 
+EXPECTED_ENTRY_PATHS = (
+    "baseline/argument.txt",
+    "later/argument.txt",
+    "later/student-feedback.txt",
+    "reflection/student-comparison.md",
+)
+
+
 @dataclass(frozen=True, slots=True)
 class ImmutableByteInventory:
     edition_identity: tuple[str, int]
@@ -592,7 +600,7 @@ def validate() -> ImprovementValidationReport:
         if pointers != (pointer.pointer,):
             raise ImprovementValidationError("source drift advanced the current pointer")
         _assert_final_boundaries(setup, sealed.edition, export_result.export_artifact)
-        return ImprovementValidationReport(
+        report = ImprovementValidationReport(
             subject_id=sealed.edition.portfolio_subject_id,
             profile_binding_id=sealed.edition.profile_binding_id,
             candidate_ids=tuple(item.candidate_id for item in setup.candidates),
@@ -612,6 +620,32 @@ def validate() -> ImprovementValidationReport:
             export_artifact_id=before.export_artifact_id,
             export_inventory_sha256=before.export_inventory_sha256,
             entry_inventory=before.entry_inventory,
+        )
+        _assert_report_contract(report)
+        return report
+
+
+def _assert_report_contract(report: ImprovementValidationReport) -> None:
+    if len(report.candidate_ids) != 3 or len(report.selection_ids) != 3:
+        raise ImprovementValidationError(
+            "improvement report does not contain exactly three Candidates and Selections"
+        )
+    if tuple(item[0] for item in report.entry_inventory) != EXPECTED_ENTRY_PATHS:
+        raise ImprovementValidationError(
+            "improvement report Entry inventory paths are not exact"
+        )
+    if report.edition_identity[1] != 1:
+        raise ImprovementValidationError("improvement report did not seal Edition 1")
+    if any(
+        len(value) != 64
+        for value in (
+            report.manifest_sha256,
+            report.logical_inventory_sha256,
+            report.export_inventory_sha256,
+        )
+    ):
+        raise ImprovementValidationError(
+            "improvement report contains an invalid SHA-256 digest"
         )
 
 

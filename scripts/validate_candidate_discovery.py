@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import subprocess
 import sys
@@ -18,24 +19,27 @@ FOUNDATION_HASHES = {
 }
 
 
-def validate() -> None:
-    focused = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            "tests/test_candidate_services.py",
-            "tests/test_candidate_discovery.py",
-            "-q",
-        ],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    if focused.returncode != 0:
-        detail = focused.stderr.strip() or focused.stdout.strip()
-        raise RuntimeError(f"Candidate discovery focused validation failed: {detail}")
+def validate(*, run_focused_tests: bool = True) -> None:
+    if run_focused_tests:
+        focused = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/test_candidate_services.py",
+                "tests/test_candidate_discovery.py",
+                "-q",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if focused.returncode != 0:
+            detail = focused.stderr.strip() or focused.stdout.strip()
+            raise RuntimeError(
+                f"Candidate discovery focused validation failed: {detail}"
+            )
 
     for relative, expected in FOUNDATION_HASHES.items():
         actual = hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
@@ -43,9 +47,19 @@ def validate() -> None:
             raise RuntimeError(f"foundation fixture changed: {relative}")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--skip-focused-tests",
+        action="store_true",
+        help=(
+            "Skip the focused pytest subset when an enclosing qualification gate "
+            "has already run the complete pytest suite."
+        ),
+    )
+    args = parser.parse_args(argv)
     try:
-        validate()
+        validate(run_focused_tests=not args.skip_focused_tests)
         print("PASS Candidate discovery validation")
         return 0
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:
