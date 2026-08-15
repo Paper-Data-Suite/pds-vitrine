@@ -31,6 +31,12 @@ def test_complete_showcase_validator_proves_exact_reproducible_export() -> None:
     )
     assert len(report.manifest_sha256) == len(report.logical_inventory_sha256) == 64
     assert len(report.export_inventory_sha256) == 64
+    assert report.membership_only_outcome == "ineligible"
+    assert report.removed_producer_state == (
+        "vitrine_quillan_fixture/quillan-work-polished",
+        "vitrine_concord_fixture/concord-work-syn-001",
+        "core/academic-catalog",
+    )
 
 
 def test_frozen_foundational_fixture_hashes_are_unchanged() -> None:

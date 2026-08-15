@@ -59,6 +59,14 @@ not individual Scores, Grades, or proficiency evidence. Both Score projections
 produce explicit unresolved Evaluations and no Candidates; deferred remains a
 non-score without a zero value.
 
+The validator also derives a temporary membership-only manifest from the exact
+positive fixture by removing only the Portfolio Subject's contribution row. It
+publishes that manifest through Core and repeats canonical discovery, reader,
+adapter, Subject resolution, and Profile evaluation. The Subject remains a Group
+member and Artifact Subject but is neither documented contributor nor Artifact
+Author; the Artifact Evaluation is `ineligible`, has no eligible collaboration
+section, and creates no Candidate.
+
 ## Explicit curation and privacy treatment
 
 Discovery creates no Selection. Student Proposals and teacher Decisions create
@@ -121,9 +129,16 @@ inventory are re-derived before one Edition seals.
 The `directory_package` Export contains exactly those five visible files. It
 does not distribute the internal Manifest. Every path, size, digest, and the
 directory inventory digest verifies; replay reconciles to the same immutable
-artifact. After the disposable producer source root is removed,
-`verify_snapshot_edition` and `verify_snapshot_export` still succeed using only
-sealed Vitrine custody.
+artifact. The validator then removes the disposable source root, both exact Core
+module work roots (including producer manifests), and the derived academic
+catalog. `verify_snapshot_edition` and `verify_snapshot_export` still succeed
+using only sealed Vitrine custody, with unchanged Edition and Export byte
+inventories.
+
+The final custody audit requires exactly one Edition, one Export, five Entries,
+and five corresponding Materializations. The completed Series must report the
+established `snapshot.build_lock_missing` condition, have no custody errors, and
+leave no staging children.
 
 ## Privacy and execution
 

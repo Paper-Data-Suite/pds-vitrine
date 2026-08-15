@@ -12,6 +12,11 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from pds_core.academic_catalog import remove_academic_catalog
+from pds_core.registry_paths import academic_catalog_path
+from pds_core.routes import module_work_dir
+from pds_core.routing_models import ModuleWorkRef
+
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -26,6 +31,7 @@ from scripts.showcase_portfolio_fixture_support import (
     SUBJECT_ID,
     TEACHER,
     ShowcasePortfolioFixture,
+    build_membership_only_showcase_candidate_fixture,
     build_showcase_portfolio_fixture,
     fixed_clock,
 )
@@ -39,18 +45,23 @@ from vitrine.curation_state import project_curation_state
 from vitrine.models import (
     CandidateEvaluation,
     CurationAnnotation,
+    Portfolio,
     PortfolioCandidate,
     PortfolioProfileBinding,
+    PortfolioProfileFamily,
     PortfolioProfileLifecycleEvent,
     PortfolioProfileRevision,
     PortfolioSelection,
+    PortfolioSubject,
     PortfolioSubjectClassLink,
     PortfolioSubjectDisplaySnapshot,
     PortfolioSubjectIdentityDecision,
     SnapshotBuildPlan,
     SnapshotBuildRequest,
+    SnapshotEdition,
     SnapshotEntry,
     SnapshotEntryPlan,
+    SnapshotExportArtifact,
     SnapshotExportPlan,
     SnapshotInputReference,
     SnapshotMaterializationRecord,
@@ -58,8 +69,14 @@ from vitrine.models import (
     SnapshotSeries,
     VitrineRecord,
 )
+from vitrine.snapshot_custody import (
+    SnapshotCustodyError,
+    inspect_snapshot_series_lock,
+    snapshot_staging_root,
+)
 from vitrine.snapshot_distribution import (
     create_snapshot_directory_export,
+    inspect_snapshot_custody,
     verify_snapshot_edition,
     verify_snapshot_export,
 )
@@ -126,6 +143,8 @@ class ShowcaseValidationReport:
     export_artifact_id: str
     export_inventory_sha256: str
     entry_inventory: tuple[tuple[str, int, str], ...]
+    membership_only_outcome: str
+    removed_producer_state: tuple[str, ...]
 
 
 @dataclass
@@ -240,11 +259,20 @@ def _entry_plans(setup: ShowcasePortfolioFixture) -> tuple[SnapshotEntryPlan, ..
 
 def _assert_projection_and_curation(setup: ShowcasePortfolioFixture) -> tuple[str, str]:
     records = _records(setup)
+    portfolios = tuple(item for item in records if isinstance(item, Portfolio))
+    subjects = tuple(item for item in records if isinstance(item, PortfolioSubject))
+    families = tuple(item for item in records if isinstance(item, PortfolioProfileFamily))
     links = tuple(item for item in records if isinstance(item, PortfolioSubjectClassLink))
     displays = tuple(item for item in records if isinstance(item, PortfolioSubjectDisplaySnapshot))
     decisions = tuple(item for item in records if isinstance(item, PortfolioSubjectIdentityDecision))
     lifecycle = tuple(item for item in records if isinstance(item, PortfolioProfileLifecycleEvent))
     bindings = tuple(item for item in records if isinstance(item, PortfolioProfileBinding))
+    if len(portfolios) != 1 or portfolios[0].portfolio_id != PORTFOLIO_ID:
+        raise ShowcaseValidationError("exact showcase Portfolio does not resolve")
+    if len(subjects) != 1 or subjects[0].portfolio_subject_id != SUBJECT_ID:
+        raise ShowcaseValidationError("exact showcase Portfolio Subject does not resolve")
+    if len(families) != 1 or families[0].profile_family_id != "profile-family-show-001":
+        raise ShowcaseValidationError("exact showcase Profile Family does not resolve")
     if len(links) != 1 or links[0].student_reference.student_id != "student-syn-001":
         raise ShowcaseValidationError("Subject class-qualified identity is not exact")
     if len(displays) != 1 or len(decisions) != 2:
@@ -308,9 +336,128 @@ def _inventory(root: Path) -> tuple[tuple[str, int, str], ...]:
     return tuple((path.relative_to(root).as_posix(), path.stat().st_size, hashlib.sha256(path.read_bytes()).hexdigest()) for path in sorted(item for item in root.rglob("*") if item.is_file()))
 
 
+def _assert_membership_only_negative(base: Path) -> str:
+    workspace, results = build_membership_only_showcase_candidate_fixture(base)
+    artifact = next(
+        item
+        for item in results
+        if item.projected_source.projection_kind == "concord_fixture:artifact"
+    )
+    subject_relationships = {
+        item.relationship_kind
+        for item in artifact.projected_source.source_relationships
+        if item.source_subject_kind == "core_student"
+        and item.source_subject_id == "student-syn-001"
+    }
+    if not {"group_member", "artifact_subject"} <= subject_relationships:
+        raise ShowcaseValidationError(
+            "membership-only projection lost declared Subject relationships"
+        )
+    if {"documented_contributor", "artifact_author"} & subject_relationships:
+        raise ShowcaseValidationError(
+            "membership-only projection inferred contribution or authorship"
+        )
+    if artifact.evaluation.outcome != "ineligible":
+        raise ShowcaseValidationError(
+            "membership-only Artifact was not evaluated as ineligible"
+        )
+    if artifact.candidate is not None or "collaboration" in artifact.evaluation.eligible_section_ids:
+        raise ShowcaseValidationError(
+            "membership-only Artifact satisfied the collaboration rule"
+        )
+    persisted = tuple(
+        item
+        for item in load_current_records(workspace)
+        if isinstance(item, PortfolioCandidate)
+        and item.source_endpoint.producer_source.source_record_id
+        == "concord-artifact-syn-001"
+    )
+    if persisted:
+        raise ShowcaseValidationError(
+            "membership-only discovery persisted a collaborative Candidate"
+        )
+    return artifact.evaluation.outcome
+
+
+def _assert_final_boundaries(
+    setup: ShowcasePortfolioFixture,
+    edition: SnapshotEdition,
+    export: SnapshotExportArtifact,
+) -> None:
+    records = _records(setup)
+    editions = tuple(item for item in records if isinstance(item, SnapshotEdition))
+    exports = tuple(item for item in records if isinstance(item, SnapshotExportArtifact))
+    entries = tuple(
+        item
+        for item in records
+        if isinstance(item, SnapshotEntry) and item.snapshot_edition == edition.reference
+    )
+    materializations = tuple(
+        item
+        for item in records
+        if isinstance(item, SnapshotMaterializationRecord)
+        and item.snapshot_edition == edition.reference
+    )
+    if editions != (edition,) or exports != (export,):
+        raise ShowcaseValidationError("Edition/Export identity inventory is not exact")
+    if len(entries) != 5 or len(materializations) != 5:
+        raise ShowcaseValidationError("five exact Entries/Materializations are required")
+    try:
+        inspect_snapshot_series_lock(
+            setup.workspace, snapshot_series_id=edition.snapshot_series_id
+        )
+    except SnapshotCustodyError as error:
+        if error.code != "snapshot.build_lock_missing":
+            raise
+    else:
+        raise ShowcaseValidationError("successful showcase build left a Series lock")
+    errors = tuple(
+        item
+        for item in inspect_snapshot_custody(setup.workspace).findings
+        if item.severity == "error"
+    )
+    if errors:
+        raise ShowcaseValidationError("Snapshot custody audit contains unresolved errors")
+    staging = snapshot_staging_root(setup.workspace)
+    if staging.exists() and any(staging.iterdir()):
+        raise ShowcaseValidationError("successful showcase build left staging residue")
+
+
+def _remove_producer_state(setup: ShowcasePortfolioFixture) -> tuple[str, ...]:
+    workspace = setup.workspace.resolve(strict=True)
+    work_refs = (
+        ModuleWorkRef("vitrine_quillan_fixture", "class-ela12-syn", "quillan-work-polished"),
+        ModuleWorkRef("vitrine_concord_fixture", "class-ela12-syn", "concord-work-syn-001"),
+    )
+    roots: list[Path] = []
+    for work in work_refs:
+        root = module_work_dir(workspace, work).resolve(strict=True)
+        try:
+            root.relative_to(workspace)
+        except ValueError as error:
+            raise ShowcaseValidationError("producer work root escaped workspace") from error
+        roots.append(root)
+    for root in roots:
+        shutil.rmtree(root)
+    if any(root.exists() for root in roots):
+        raise ShowcaseValidationError("producer work root remained after removal")
+    catalog = academic_catalog_path(workspace)
+    if not catalog.is_file() or not remove_academic_catalog(workspace) or catalog.exists():
+        raise ShowcaseValidationError("derived Core academic catalog was not removed")
+    return (
+        "vitrine_quillan_fixture/quillan-work-polished",
+        "vitrine_concord_fixture/concord-work-syn-001",
+        "core/academic-catalog",
+    )
+
+
 def validate() -> ShowcaseValidationReport:
     with tempfile.TemporaryDirectory(prefix="vitrine-showcase-portfolio-") as raw:
-        built = build_showcase_portfolio_fixture(Path(raw))
+        root = Path(raw)
+        membership_only_outcome = _assert_membership_only_negative(
+            root / "membership-only"
+        )
+        built = build_showcase_portfolio_fixture(root / "successful")
         if not isinstance(built, ShowcasePortfolioFixture):
             raise ShowcaseValidationError("complete showcase fixture did not return runtime state")
         setup = built
@@ -440,9 +587,22 @@ def validate() -> ShowcaseValidationReport:
                 )
             )
         entry_inventory = tuple(sorted(entry_rows))
+        _assert_final_boundaries(setup, sealed.edition, exported.export_artifact)
+        edition_files_before = _inventory(sealed.edition_path)
+        export_files_before = _inventory(exported.export_path)
         shutil.rmtree(setup.source_root)
+        if setup.source_root.exists():
+            raise ShowcaseValidationError("producer source root remained after removal")
+        removed_producer_state = _remove_producer_state(setup)
         verify_snapshot_edition(setup.workspace, snapshot_series_id=series.snapshot_series_id, edition_number=sealed.edition.edition_number, verified_at=fixed_clock())
         verify_snapshot_export(setup.workspace, snapshot_export_artifact_id=exported.export_artifact.snapshot_export_artifact_id, verified_at=fixed_clock())
+        if (
+            _inventory(sealed.edition_path) != edition_files_before
+            or _inventory(exported.export_path) != export_files_before
+        ):
+            raise ShowcaseValidationError(
+                "sealed/exported inventory changed after producer-state removal"
+            )
         return ShowcaseValidationReport(
             subject_id=SUBJECT_ID, profile_binding_id=PROFILE_BINDING_ID,
             publication_ids=setup.publications,
@@ -466,13 +626,15 @@ def validate() -> ShowcaseValidationReport:
             export_artifact_id=exported.export_artifact.snapshot_export_artifact_id,
             export_inventory_sha256=exported.export_artifact.directory_inventory_digest.value,
             entry_inventory=entry_inventory,
+            membership_only_outcome=membership_only_outcome,
+            removed_producer_state=removed_producer_state,
         )
 
 
 def main() -> int:
     try:
         report = validate()
-    except (OSError, RuntimeError) as error:
+    except (OSError, RuntimeError, SnapshotCustodyError) as error:
         print(f"Showcase Portfolio validation failed: {error}", file=sys.stderr)
         return 1
     print(

@@ -28,8 +28,10 @@ generated rationale, and generated audience-safe index. The immutable Edition
 and `directory_package` Export are digest-verified and replayable. The internal
 Manifest, collaborator names/member list, private Quillan data, ScoreForm secure
 material, and Portia restricted material are absent. Historical Edition and
-Export verification uses sealed Vitrine custody after producer sources are
-removed.
+Export verification uses sealed Vitrine custody after producer sources, both
+fixture-producer work roots/manifests, and the derived Core catalog are removed.
+The final audit also proves that no Snapshot build lock, staging residue, or
+error-severity custody finding remains.
 
 This fixture demonstrates curation and audience-presentation boundaries only.
 It does not convert a Group Score into an individual Score, infer ownership from

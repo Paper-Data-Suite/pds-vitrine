@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -428,7 +429,12 @@ def _prepare_sources(base: Path) -> Path:
     return root.resolve(strict=True)
 
 
-def build_showcase_portfolio_fixture(base: Path, *, complete_curation: bool = True) -> ShowcasePortfolioFixture | tuple[Path, tuple[CandidateEvaluationResult, ...]]:
+def build_showcase_portfolio_fixture(
+    base: Path,
+    *,
+    complete_curation: bool = True,
+    concord_manifest: Path | None = None,
+) -> ShowcasePortfolioFixture | tuple[Path, tuple[CandidateEvaluationResult, ...]]:
     """Compose generic runtime services; this is fixture support, not a production API."""
     workspace = ensure_workspace_root(base / "workspace", create=True)
     ids = ShowcaseIds()
@@ -443,7 +449,11 @@ def build_showcase_portfolio_fixture(base: Path, *, complete_curation: bool = Tr
     concord_publication = _publish(
         workspace, module_id="vitrine_concord_fixture", work_id="concord-work-syn-001",
         source_record=ModuleRecordRef("vitrine_concord_fixture", "artifact_instance", "concord-artifact-syn-001", "vitrine_fixture_concord_artifact_v1"),
-        manifest=SHOWCASE_ROOT / "runtime" / "concord-manifest.json",
+        manifest=(
+            SHOWCASE_ROOT / "runtime" / "concord-manifest.json"
+            if concord_manifest is None
+            else concord_manifest
+        ),
         record_set="showcase_concord", capabilities=("criterion_scores",),
     )
     rebuild_academic_catalog(workspace)
@@ -537,9 +547,42 @@ def build_showcase_portfolio_fixture(base: Path, *, complete_curation: bool = Tr
     )
 
 
+def build_membership_only_showcase_candidate_fixture(
+    base: Path,
+) -> tuple[Path, tuple[CandidateEvaluationResult, ...]]:
+    """Run real discovery with membership/Subject but no documented contribution."""
+
+    source = SHOWCASE_ROOT / "runtime" / "concord-manifest.json"
+    value = json.loads(source.read_text(encoding="utf-8"))
+    if not isinstance(value, dict) or not isinstance(value.get("contributions"), list):
+        raise RuntimeError("showcase Concord fixture shape is invalid")
+    value["contributions"] = [
+        item
+        for item in value["contributions"]
+        if not isinstance(item, dict) or item.get("contributor_id") != STUDENT_ID
+    ]
+    manifest = base / "membership-only-concord-manifest.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(
+        json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+        + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    result = build_showcase_portfolio_fixture(
+        base,
+        complete_curation=False,
+        concord_manifest=manifest,
+    )
+    if isinstance(result, ShowcasePortfolioFixture):
+        raise RuntimeError("membership-only fixture unexpectedly completed curation")
+    return result
+
+
 __all__ = [
     "APPROVAL_REQUIREMENT_ID", "ATTRIBUTION_TEXT", "AUDIENCE_ID", "CLASS_ID",
     "PORTFOLIO_ID", "PROFILE_BINDING_ID", "PROFILE_ID", "RATIONALE_TEXT",
     "SCHOOL_YEAR", "STUDENT", "STUDENT_ID", "SUBJECT_ID", "TEACHER",
-    "ShowcasePortfolioFixture", "build_showcase_portfolio_fixture", "fixed_clock",
+    "ShowcasePortfolioFixture", "build_membership_only_showcase_candidate_fixture",
+    "build_showcase_portfolio_fixture", "fixed_clock",
 ]

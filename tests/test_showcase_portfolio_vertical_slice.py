@@ -11,6 +11,7 @@ from scripts.showcase_portfolio_fixture_support import (
     PROFILE_BINDING_ID,
     RATIONALE_TEXT,
     ShowcasePortfolioFixture,
+    build_membership_only_showcase_candidate_fixture,
     build_showcase_portfolio_fixture,
 )
 from vitrine.curation_services import create_working_composition, revise_annotation
@@ -96,11 +97,26 @@ def test_concord_projection_keeps_relationships_and_score_targets_separate(
 def test_candidates_do_not_auto_select_and_condition_acknowledgement_is_distinct(
     tmp_path, showcase_setup: ShowcasePortfolioFixture
 ) -> None:
-    partial = build_showcase_portfolio_fixture(tmp_path, complete_curation=False)
-    assert not isinstance(partial, ShowcasePortfolioFixture)
-    workspace, results = partial
+    workspace, results = build_membership_only_showcase_candidate_fixture(tmp_path)
     assert not any(isinstance(item, PortfolioSelection) for item in load_current_records(workspace))
-    assert sum(item.candidate is not None for item in results) == 2
+    artifact = next(
+        item
+        for item in results
+        if item.projected_source.projection_kind == "concord_fixture:artifact"
+    )
+    subject_relationships = {
+        item.relationship_kind
+        for item in artifact.projected_source.source_relationships
+        if item.source_subject_kind == "core_student"
+        and item.source_subject_id == "student-syn-001"
+    }
+    assert {"group_member", "artifact_subject"} <= subject_relationships
+    assert "documented_contributor" not in subject_relationships
+    assert "artifact_author" not in subject_relationships
+    assert artifact.evaluation.outcome == "ineligible"
+    assert artifact.evaluation.eligible_section_ids == ()
+    assert artifact.candidate is None
+    assert sum(item.candidate is not None for item in results) == 1
 
     group = showcase_setup.candidate("concord-artifact-syn-001")
     assert group.condition_state == "collaborator_review_required"
