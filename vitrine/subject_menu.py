@@ -520,16 +520,19 @@ def _view_subject_workflow(
     input_fn: InputFunction,
     output: TextIO,
     clear_fn: ClearFunction,
+    portfolio_subject_id: str | None = None,
 ) -> None:
-    subject = _choose_subject(
-        workspace_root,
-        input_fn=input_fn,
-        output=output,
-        clear_fn=clear_fn,
-    )
-    if subject is None:
-        return
-    detail = show_subject(workspace_root, subject.portfolio_subject_id)
+    if portfolio_subject_id is None:
+        subject = _choose_subject(
+            workspace_root,
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+        )
+        if subject is None:
+            return
+        portfolio_subject_id = subject.portfolio_subject_id
+    detail = show_subject(workspace_root, portfolio_subject_id)
     while True:
         clear_fn()
         _write(
@@ -868,9 +871,20 @@ def run_subject_menu(
     input_fn: InputFunction,
     output: TextIO,
     clear_fn: ClearFunction,
+    portfolio_subject_id: str | None = None,
+    workspace_root: Path | None = None,
 ) -> None:
     """Run Portfolio Subject workflows with low-density screen transitions."""
-    workspace_root = resolve_workspace_root()
+    workspace_root = resolve_workspace_root(workspace_root)
+    if portfolio_subject_id is not None:
+        _view_subject_workflow(
+            workspace_root,
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            portfolio_subject_id=portfolio_subject_id,
+        )
+        return
     session = SubjectMenuSession()
     while True:
         clear_fn()

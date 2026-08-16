@@ -28,6 +28,7 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ),
     ("Snapshot workflows", ("scripts/validate_snapshot_workflows.py",)),
     ("improvement Portfolio", ("scripts/validate_improvement_portfolio.py",)),
+    ("interface workflows", ("scripts/validate_interface_workflows.py",)),
     ("showcase Portfolio", ("scripts/validate_showcase_portfolio.py",)),
 )
 

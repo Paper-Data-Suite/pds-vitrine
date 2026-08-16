@@ -15,6 +15,11 @@ from vitrine import menu as menu_module
 from vitrine.adapter_cli import configure_adapter_parser, run_adapter_command
 from vitrine.profile_cli import configure_profile_parser, run_profile_command
 from vitrine.subject_cli import configure_subject_parser, run_subject_command
+from vitrine.workflow_cli import configure_workflow_parsers, run_workflow_command
+from vitrine.workflow_context import (
+    VitrineWorkflowDependencies,
+    default_workflow_dependencies,
+)
 from vitrine.workspace import (
     reset_workspace,
     set_workspace,
@@ -50,6 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
     configure_subject_parser(subparsers)
     configure_profile_parser(subparsers)
     configure_adapter_parser(subparsers)
+    configure_workflow_parsers(subparsers)
 
     workspace_parser = subparsers.add_parser(
         "workspace",
@@ -134,20 +140,24 @@ def main(
     *,
     output: TextIO | None = None,
     error: TextIO | None = None,
+    dependencies: VitrineWorkflowDependencies | None = None,
 ) -> int:
     """Run Vitrine and return a stable process exit status."""
     stdout = sys.stdout if output is None else output
     stderr = sys.stderr if error is None else error
     effective_argv = tuple(sys.argv[1:] if argv is None else argv)
     parser = build_parser()
+    workflow_dependencies = dependencies or default_workflow_dependencies()
 
     if not effective_argv:
-        return menu_module.run_menu(output=stdout)
+        return menu_module.run_menu(output=stdout, dependencies=workflow_dependencies)
 
     args = parser.parse_args(effective_argv)
     try:
         if args.command == "menu":
-            return menu_module.run_menu(output=stdout)
+            return menu_module.run_menu(
+                output=stdout, dependencies=workflow_dependencies
+            )
         if args.command == "workspace":
             return _run_workspace_command(args, output=stdout)
         if args.command == "subject":
@@ -156,8 +166,24 @@ def main(
             return run_profile_command(args, output=stdout, error=stderr)
         if args.command == "adapters":
             return run_adapter_command(args, output=stdout, error=stderr)
+        if args.command in {
+            "portfolio",
+            "candidate",
+            "selection",
+            "arrangement",
+            "composition",
+            "audience",
+            "snapshot",
+        }:
+            return run_workflow_command(
+                args, dependencies=workflow_dependencies, output=stdout
+            )
     except WorkspaceRootError as exc:
         print(f"Workspace error: {exc}", file=stderr)
+        return 1
+    except (ValueError, RuntimeError) as exc:
+        code = getattr(exc, "code", exc.__class__.__name__)
+        print(f"{code}: {exc}", file=stderr)
         return 1
 
     parser.print_help(file=stdout)

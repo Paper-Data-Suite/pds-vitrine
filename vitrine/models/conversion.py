@@ -6,7 +6,16 @@ import types
 from collections.abc import Mapping
 from dataclasses import fields, is_dataclass
 from datetime import date, datetime
-from typing import Any, TypeAlias, Union, cast, get_args, get_origin, get_type_hints
+from typing import (
+    Any,
+    TypeAlias,
+    TypeVar,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from pds_core.routing_models import (
     ModuleRecordRef,
@@ -78,6 +87,8 @@ from .snapshots import (
     SnapshotOmission,
     SnapshotSeal,
 )
+
+T = TypeVar("T")
 
 JsonScalar: TypeAlias = None | bool | int | float | str
 JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
@@ -259,9 +270,7 @@ def _from_typed_value(value: object, expected: object, field_name: str) -> objec
             ) from error
     if expected is date:
         if not isinstance(value, str):
-            raise VitrineSerializationError(
-                f"{field_name} must be an ISO date string."
-            )
+            raise VitrineSerializationError(f"{field_name} must be an ISO date string.")
         try:
             return date.fromisoformat(value)
         except ValueError as error:
@@ -322,12 +331,20 @@ def record_from_dict(data: Mapping[str, object]) -> VitrineRecord:
     return cast(VitrineRecord, _dataclass_from_mapping(cls, mapping, record_type))
 
 
+def dataclass_from_dict(cls: type[T], data: Mapping[str, object], *, label: str) -> T:
+    """Decode one exact typed value without pretending it is a canonical record."""
+    if not is_dataclass(cls):
+        raise VitrineSerializationError("cls must identify a dataclass type.")
+    return cast(T, _dataclass_from_mapping(cls, _require_mapping(data, label), label))
+
+
 __all__ = [
     "JsonScalar",
     "JsonValue",
     "RECORD_TYPE_REGISTRY",
     "RECORD_TYPES",
     "VitrineRecord",
+    "dataclass_from_dict",
     "record_from_dict",
     "record_to_dict",
     "value_to_json",
