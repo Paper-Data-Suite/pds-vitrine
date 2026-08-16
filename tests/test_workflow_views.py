@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from dataclasses import replace
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from vitrine import workflow_views
+from vitrine.models import CandidateEvaluation, PortfolioCandidate
+from vitrine.storage import load_current_records
 
 
 def test_candidate_summaries_default_to_active_profile_binding(
@@ -84,3 +88,42 @@ def test_exact_historical_composition_uses_its_own_binding_pointer(
     assert view.composition is historical
     assert view.pointer_revision == 4
     assert calls == ["binding_old"]
+
+
+def test_candidate_condition_and_evaluation_reasons_are_separate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from scripts.improvement_portfolio_fixture_support import (
+        build_improvement_portfolio_fixture,
+    )
+
+    workspace, _evaluations, candidates = build_improvement_portfolio_fixture(
+        tmp_path, complete_curation=False
+    )
+    candidate = candidates[0]
+    records = load_current_records(workspace)
+    evaluation = next(
+        item
+        for item in records
+        if isinstance(item, CandidateEvaluation)
+        and item.candidate_evaluation_id == candidate.candidate_evaluation_id
+    )
+    revised = tuple(
+        replace(item, condition_state="review_required")
+        if isinstance(item, PortfolioCandidate)
+        and item.candidate_id == candidate.candidate_id
+        else replace(item, reason_codes=("candidate:eligible", "policy:informational"))
+        if item is evaluation
+        else item
+        for item in records
+    )
+    monkeypatch.setattr(workflow_views, "_records", lambda _root: revised)
+
+    detail = workflow_views.show_candidate_detail(workspace, candidate.candidate_id)
+
+    assert detail.condition_state == "review_required"
+    assert detail.unresolved_condition_codes == ("review_required",)
+    assert detail.evaluation_reason_codes == (
+        "candidate:eligible",
+        "policy:informational",
+    )

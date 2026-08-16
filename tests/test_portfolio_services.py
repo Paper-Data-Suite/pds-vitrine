@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from subject_helpers import (
@@ -10,6 +11,7 @@ from subject_helpers import (
     teacher_context,
 )
 
+from vitrine import portfolio_services
 from vitrine.models import ClassQualifiedStudentRef
 from vitrine.portfolio_services import (
     PortfolioWorkflowError,
@@ -87,3 +89,59 @@ def test_create_portfolio_rejects_unknown_subject_and_stale_state(
             expected_state_revision=current,
         )
     assert stale.value.code == "state_conflict"
+
+
+def test_candidate_count_is_scoped_to_active_binding(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    portfolio = SimpleNamespace(
+        portfolio_id="portfolio",
+        portfolio_subject_id="subject",
+        title_snapshot="Title",
+    )
+    subject = SimpleNamespace(
+        portfolio_subject_id="subject", display_name_snapshot="Learner"
+    )
+    binding = SimpleNamespace(
+        profile_binding_id="binding_current",
+        profile_revision=SimpleNamespace(profile_revision=2),
+    )
+    monkeypatch.setattr(
+        portfolio_services,
+        "project_identity_state",
+        lambda _records: SimpleNamespace(portfolios=(portfolio,), subjects=(subject,)),
+    )
+    monkeypatch.setattr(
+        portfolio_services,
+        "project_profile_state",
+        lambda _records: SimpleNamespace(active_binding=lambda _id: binding),
+    )
+    monkeypatch.setattr(portfolio_services, "collect_profile_state_issues", lambda _: ())
+    monkeypatch.setattr(
+        portfolio_services,
+        "project_curation_state",
+        lambda _records: SimpleNamespace(
+            candidates=(
+                SimpleNamespace(portfolio_id="portfolio", profile_binding_id="binding_old"),
+                SimpleNamespace(
+                    portfolio_id="portfolio", profile_binding_id="binding_current"
+                ),
+            ),
+            active_selections=lambda **_kwargs: (),
+            current_composition=lambda *_args: None,
+        ),
+    )
+    monkeypatch.setattr(
+        portfolio_services,
+        "project_snapshot_state",
+        lambda _records: SimpleNamespace(series=(), current_edition=lambda _id: None),
+    )
+    monkeypatch.setattr(portfolio_services, "collect_snapshot_state_issues", lambda _: ())
+
+    assert portfolio_services._summaries(())[0].candidate_count == 1
+    monkeypatch.setattr(
+        portfolio_services,
+        "project_profile_state",
+        lambda _records: SimpleNamespace(active_binding=lambda _id: None),
+    )
+    assert portfolio_services._summaries(())[0].candidate_count == 0

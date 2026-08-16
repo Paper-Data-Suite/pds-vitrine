@@ -5,8 +5,9 @@ Vitrine exposes one application layer through two terminal interfaces. Bare
 commands are noninteractive and never prompt for omitted values.
 
 The teacher path selects a current Subject by label and exact ID, then progresses
-through Portfolio creation, exact Profile Binding, configured Candidate discovery
-and provenance review, explicit Selection, Placement and Arrangement, Working
+through Portfolio creation, exact Profile Binding or explicit migration after an
+impact preview, configured Candidate discovery and provenance review, Selection
+Proposal/Decision or Direct Selection, lifecycle changes, Placement and Arrangement, Working
 Composition, exact Audience Context, Snapshot Request and Plan preparation, Build
 Attempt, sealed Edition, and exact verification. Screens are intentionally compact.
 `B`, `M`, `Q`, and `H` retain the shared PDS navigation meanings.
@@ -69,7 +70,9 @@ sealed Edition != current-Edition pointer
 
 Candidate review shows decision-relevant provenance, relationship assertions,
 availability, conditions, exact IDs, and eligible sections without displaying
-raw producer bodies. Condition acknowledgement is explicit and is not described
+raw producer bodies. Candidate condition state and evaluation reason codes are
+reported separately; evaluation diagnostics are never relabeled as unresolved
+conditions. Condition acknowledgement is explicit and is not described
 as satisfying an independent Profile review requirement. Historical Edition
 verification uses canonical Vitrine state and sealed Vitrine-owned bytes; it
 does not reread the producer source.

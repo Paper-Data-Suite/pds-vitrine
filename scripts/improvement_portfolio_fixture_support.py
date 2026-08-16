@@ -162,6 +162,16 @@ class ImprovementPortfolioFixture:
         return next(item for item in self.placements if item.selection_id == selection.selection_id)
 
 
+@dataclass(frozen=True, slots=True)
+class InterfaceWorkflowPrerequisites:
+    """Small source-only setup; interface validation creates all Portfolio state."""
+
+    workspace: Path
+    source_root: Path
+    publications: tuple[str, str]
+    profile_revision: PortfolioProfileRevision
+
+
 class _ExactFixtureIds:
     """Return deterministic identities required by the #30/#31 service slice."""
 
@@ -731,10 +741,97 @@ def build_improvement_portfolio_fixture(
     )
 
 
+def build_interface_workflow_prerequisites(
+    base: Path,
+) -> InterfaceWorkflowPrerequisites:
+    """Create only Core/source, Subject, and bindable Profile prerequisites."""
+    workspace = ensure_workspace_root(base / "workspace", create=True)
+    _write_class_context(workspace, BASELINE_CLASS_ID, BASELINE_SCHOOL_YEAR, "2")
+    _write_class_context(workspace, LATER_CLASS_ID, LATER_SCHOOL_YEAR, "4")
+    ids = _ExactFixtureIds()
+    context = IdentityDecisionContext(
+        actor=TEACHER,
+        authority_source="interface-synthetic-roster",
+        basis_type="direct_teacher_knowledge",
+        basis_summary="Synthetic interface fixture confirms exact roster identity.",
+    )
+    created = create_portfolio_subject(
+        workspace,
+        ClassQualifiedStudentRef(
+            class_id=BASELINE_CLASS_ID,
+            student_id=STUDENT_ID,
+            school_year=BASELINE_SCHOOL_YEAR,
+        ),
+        context=context,
+        expected_state_revision=None,
+        clock=fixed_clock,
+        id_factory=ids,
+    )
+    if created.subject_ids != (SUBJECT_ID,):
+        raise RuntimeError("interface prerequisite Subject identity drifted")
+    link_portfolio_subject(
+        workspace,
+        SUBJECT_ID,
+        ClassQualifiedStudentRef(
+            class_id=LATER_CLASS_ID,
+            student_id=STUDENT_ID,
+            school_year=LATER_SCHOOL_YEAR,
+        ),
+        context=context,
+        expected_state_revision=load_current_state(workspace).state_revision,
+        clock=fixed_clock,
+        id_factory=ids,
+    )
+    family, revision, requirements = _profile_definitions()
+    create_profile_family(
+        workspace,
+        family,
+        expected_state_revision=load_current_state(workspace).state_revision,
+    )
+    create_profile_revision(
+        workspace,
+        revision,
+        requirements,
+        expected_state_revision=load_current_state(workspace).state_revision,
+    )
+    activate_profile_revision(
+        workspace,
+        revision.reference,
+        actor=TEACHER,
+        reason="Activate the synthetic interface Profile.",
+        authority_reference="interface-synthetic-policy",
+        expected_state_revision=load_current_state(workspace).state_revision,
+        clock=fixed_clock,
+        id_factory=ids,
+    )
+    baseline_publication, _ = _publish(
+        workspace,
+        class_id=BASELINE_CLASS_ID,
+        work_id="baseline_argument",
+        source_id="submission_baseline_syn_001",
+        manifest_fixture=IMPROVEMENT_ROOT / "runtime" / "baseline-manifest.json",
+    )
+    later_publication, _ = _publish(
+        workspace,
+        class_id=LATER_CLASS_ID,
+        work_id="revised_argument",
+        source_id="submission_revised_syn_001",
+        manifest_fixture=IMPROVEMENT_ROOT / "runtime" / "later-manifest.json",
+    )
+    rebuild_academic_catalog(workspace)
+    return InterfaceWorkflowPrerequisites(
+        workspace=workspace,
+        source_root=_prepare_sources(base / "source-root"),
+        publications=(baseline_publication, later_publication),
+        profile_revision=revision,
+    )
+
+
 __all__ = [
     "BASELINE_CLASS_ID",
     "BASELINE_SCHOOL_YEAR",
     "IMPROVEMENT_ROOT",
+    "InterfaceWorkflowPrerequisites",
     "ImprovementPortfolioFixture",
     "LATER_CLASS_ID",
     "LATER_SCHOOL_YEAR",
@@ -748,5 +845,6 @@ __all__ = [
     "SUBJECT_ID",
     "TEACHER",
     "build_improvement_portfolio_fixture",
+    "build_interface_workflow_prerequisites",
     "fixed_clock",
 ]

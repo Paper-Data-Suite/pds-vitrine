@@ -162,8 +162,15 @@ def _summaries(records: tuple[VitrineRecord, ...]) -> tuple[PortfolioSummary, ..
     result: list[PortfolioSummary] = []
     for portfolio in sorted(identity.portfolios, key=lambda item: item.portfolio_id):
         binding = profile.active_binding(portfolio.portfolio_id)
-        candidates = tuple(
-            x for x in curation.candidates if x.portfolio_id == portfolio.portfolio_id
+        candidates = (
+            ()
+            if binding is None
+            else tuple(
+                x
+                for x in curation.candidates
+                if x.portfolio_id == portfolio.portfolio_id
+                and x.profile_binding_id == binding.profile_binding_id
+            )
         )
         active = (
             ()

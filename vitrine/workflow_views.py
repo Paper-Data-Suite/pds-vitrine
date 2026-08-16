@@ -55,6 +55,7 @@ class CandidateDetail:
     source_endpoint: CandidateSourceEndpoint
     eligible_section_ids: tuple[str, ...]
     condition_state: str
+    evaluation_reason_codes: tuple[str, ...]
     unresolved_condition_codes: tuple[str, ...]
     availability_observations: tuple[CandidateAvailabilityObservation, ...]
 
@@ -166,12 +167,10 @@ def show_candidate_detail(root: str | Path, candidate_id: str) -> CandidateDetai
         raise WorkflowViewError(
             "candidate_evaluation_not_found", "Candidate Evaluation not found."
         )
-    unresolved = tuple(
-        sorted(
-            set(evaluation.reason_codes)
-            if candidate.condition_state != "ready_for_consideration"
-            else set()
-        )
+    unresolved = (
+        ()
+        if candidate.condition_state == "ready_for_consideration"
+        else (candidate.condition_state,)
     )
     return CandidateDetail(
         candidate_id=candidate.candidate_id,
@@ -182,6 +181,7 @@ def show_candidate_detail(root: str | Path, candidate_id: str) -> CandidateDetai
         source_endpoint=candidate.source_endpoint,
         eligible_section_ids=candidate.eligible_section_ids,
         condition_state=candidate.condition_state,
+        evaluation_reason_codes=evaluation.reason_codes,
         unresolved_condition_codes=unresolved,
         availability_observations=evaluation.availability_observations,
     )
