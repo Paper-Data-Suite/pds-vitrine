@@ -4,10 +4,12 @@ Vitrine exposes one application layer through two terminal interfaces. Bare
 `vitrine` (or `vitrine menu`) starts the low-density teacher menu. Complete
 commands are noninteractive and never prompt for omitted values.
 
-The teacher path starts with a Portfolio, then progressively exposes its exact
-Subject, Profile Binding, Candidates, Selections, Arrangement, Working
-Composition, Audience Context, and Snapshot history. Screens are intentionally
-compact. `B`, `M`, `Q`, and `H` retain the shared PDS navigation meanings.
+The teacher path selects a current Subject by label and exact ID, then progresses
+through Portfolio creation, exact Profile Binding, configured Candidate discovery
+and provenance review, explicit Selection, Placement and Arrangement, Working
+Composition, exact Audience Context, Snapshot Request and Plan preparation, Build
+Attempt, sealed Edition, and exact verification. Screens are intentionally compact.
+`B`, `M`, `Q`, and `H` retain the shared PDS navigation meanings.
 
 Representative direct reads use synthetic identifiers:
 
@@ -19,6 +21,7 @@ vitrine arrangement show portfolio-syn-001 --section-id baseline --workspace-roo
 vitrine composition show portfolio-syn-001 --workspace-root C:\PDS
 vitrine audience list portfolio-syn-001 --workspace-root C:\PDS
 vitrine snapshot series list portfolio-syn-001 --workspace-root C:\PDS
+vitrine snapshot plan-show snapshot-plan-syn-001 --workspace-root C:\PDS
 vitrine snapshot verify snapshot-series-syn-001 --edition 1 --workspace-root C:\PDS
 ```
 
@@ -46,6 +49,13 @@ explicitly injected `VitrineWorkflowDependencies` test or development context.
 They are Vitrine-owned ScoreForm-, Quillan-, and Concord-shaped fixtures, not
 live readers. Merely running from a source checkout never enables them.
 
+Snapshot preparation uses an injected planning provider or an explicit direct
+CLI plan-specification JSON object containing `entry_plans`, `export_plans`, and
+optional policy and acknowledgement fields. It does not require a fabricated
+complete canonical `SnapshotBuildPlan` record. The ordinary planning provider
+is unconfigured and fails closed. Preparation persists Request and Plan as
+separate records; building later executes one exact immutable Plan.
+
 The semantic boundaries remain visible:
 
 ```text
@@ -57,7 +67,9 @@ Edition verification != Export verification
 sealed Edition != current-Edition pointer
 ```
 
-Candidate review shows decision-relevant summaries, conditions, exact IDs, and
-eligible sections without displaying raw producer bodies. Historical Edition
+Candidate review shows decision-relevant provenance, relationship assertions,
+availability, conditions, exact IDs, and eligible sections without displaying
+raw producer bodies. Condition acknowledgement is explicit and is not described
+as satisfying an independent Profile review requirement. Historical Edition
 verification uses canonical Vitrine state and sealed Vitrine-owned bytes; it
 does not reread the producer source.

@@ -24,6 +24,10 @@ from vitrine.snapshot_materialization import (
     SnapshotRendererRegistry,
     SnapshotSourceProviderRegistry,
 )
+from vitrine.snapshot_planning import (
+    SnapshotPlanningProvider,
+    UnconfiguredSnapshotPlanningProvider,
+)
 
 
 class _UnresolvedSourceGate:
@@ -62,6 +66,9 @@ class VitrineWorkflowDependencies:
     snapshot_build_authority_gate: SnapshotBuildAuthorityGate
     snapshot_source_providers: SnapshotSourceProviderRegistry
     snapshot_renderers: SnapshotRendererRegistry
+    snapshot_planning_provider: SnapshotPlanningProvider = (
+        UnconfiguredSnapshotPlanningProvider()
+    )
     development_fixture_mode: bool = False
 
 
@@ -75,6 +82,7 @@ def default_workflow_dependencies() -> VitrineWorkflowDependencies:
         snapshot_build_authority_gate=_UnresolvedSnapshotGate(),
         snapshot_source_providers=SnapshotSourceProviderRegistry(),
         snapshot_renderers=SnapshotRendererRegistry(),
+        snapshot_planning_provider=UnconfiguredSnapshotPlanningProvider(),
     )
 
 

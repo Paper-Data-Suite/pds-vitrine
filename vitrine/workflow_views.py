@@ -7,6 +7,9 @@ from pathlib import Path
 
 from vitrine.curation_state import project_curation_state
 from vitrine.models import (
+    CandidateAvailabilityObservation,
+    CandidateEvaluation,
+    CandidateSourceEndpoint,
     PortfolioCandidate,
     PortfolioPlacement,
     PortfolioSelection,
@@ -35,10 +38,25 @@ class WorkflowViewError(ValueError):
 @dataclass(frozen=True, slots=True)
 class CandidateSummary:
     candidate_id: str
+    profile_binding_id: str
     display_snapshot: str
     condition_state: str
     eligible_section_ids: tuple[str, ...]
     active_selection_id: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class CandidateDetail:
+    candidate_id: str
+    candidate_evaluation_id: str
+    portfolio_id: str
+    profile_binding_id: str
+    display_snapshot: str
+    source_endpoint: CandidateSourceEndpoint
+    eligible_section_ids: tuple[str, ...]
+    condition_state: str
+    unresolved_condition_codes: tuple[str, ...]
+    availability_observations: tuple[CandidateAvailabilityObservation, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,13 +110,20 @@ def list_candidate_summaries(
     return tuple(
         CandidateSummary(
             item.candidate_id,
+            item.profile_binding_id,
             item.display_snapshot,
             item.condition_state,
             item.eligible_section_ids,
             selected.get(item.candidate_id),
         )
         for item in sorted(
-            (x for x in state.candidates if x.portfolio_id == portfolio_id),
+            (
+                x
+                for x in state.candidates
+                if x.portfolio_id == portfolio_id
+                and binding is not None
+                and x.profile_binding_id == binding.profile_binding_id
+            ),
             key=lambda x: x.candidate_id,
         )
     )
@@ -113,6 +138,53 @@ def show_candidate(root: str | Path, candidate_id: str) -> PortfolioCandidate:
     if len(matches) != 1:
         raise WorkflowViewError("candidate_not_found", "Candidate not found.")
     return matches[0]
+
+
+def show_candidate_detail(root: str | Path, candidate_id: str) -> CandidateDetail:
+    records = _records(root)
+    candidate = next(
+        (
+            item
+            for item in records
+            if isinstance(item, PortfolioCandidate)
+            and item.candidate_id == candidate_id
+        ),
+        None,
+    )
+    if candidate is None:
+        raise WorkflowViewError("candidate_not_found", "Candidate not found.")
+    evaluation = next(
+        (
+            item
+            for item in records
+            if isinstance(item, CandidateEvaluation)
+            and item.candidate_evaluation_id == candidate.candidate_evaluation_id
+        ),
+        None,
+    )
+    if evaluation is None:
+        raise WorkflowViewError(
+            "candidate_evaluation_not_found", "Candidate Evaluation not found."
+        )
+    unresolved = tuple(
+        sorted(
+            set(evaluation.reason_codes)
+            if candidate.condition_state != "ready_for_consideration"
+            else set()
+        )
+    )
+    return CandidateDetail(
+        candidate_id=candidate.candidate_id,
+        candidate_evaluation_id=candidate.candidate_evaluation_id,
+        portfolio_id=candidate.portfolio_id,
+        profile_binding_id=candidate.profile_binding_id,
+        display_snapshot=candidate.display_snapshot,
+        source_endpoint=candidate.source_endpoint,
+        eligible_section_ids=candidate.eligible_section_ids,
+        condition_state=candidate.condition_state,
+        unresolved_condition_codes=unresolved,
+        availability_observations=evaluation.availability_observations,
+    )
 
 
 def list_active_selections(
@@ -171,29 +243,42 @@ def show_composition(
     root: str | Path, portfolio_id: str, revision: int | None = None
 ) -> CompositionView:
     records = _records(root)
-    binding = project_profile_state(records).active_binding(portfolio_id)
-    if binding is None:
-        raise WorkflowViewError(
-            "profile_binding_missing", "Portfolio has no active Profile Binding."
-        )
     state = project_curation_state(records)
-    pointers = state.composition_pointer_heads(portfolio_id, binding.profile_binding_id)
+    if revision is None:
+        binding = project_profile_state(records).active_binding(portfolio_id)
+        if binding is None:
+            raise WorkflowViewError(
+                "profile_binding_missing", "Portfolio has no active Profile Binding."
+            )
+        composition = state.current_composition(
+            portfolio_id, binding.profile_binding_id
+        )
+        pointer_binding_id: str | None = binding.profile_binding_id
+    else:
+        matches = tuple(
+            item
+            for item in state.compositions
+            if item.portfolio_id == portfolio_id
+            and item.composition_revision == revision
+        )
+        if len(matches) > 1:
+            raise WorkflowViewError(
+                "composition_revision_ambiguous",
+                "Composition revision exists under more than one Profile Binding.",
+            )
+        composition = matches[0] if matches else None
+        pointer_binding_id = (
+            None if composition is None else composition.profile_binding_id
+        )
+    pointers = (
+        ()
+        if pointer_binding_id is None
+        else state.composition_pointer_heads(portfolio_id, pointer_binding_id)
+    )
     if len(pointers) > 1:
         raise WorkflowViewError(
             "composition_pointer_conflict", "Composition pointer is conflicted."
         )
-    composition = (
-        state.current_composition(portfolio_id, binding.profile_binding_id)
-        if revision is None
-        else next(
-            (
-                x
-                for x in state.compositions
-                if x.portfolio_id == portfolio_id and x.composition_revision == revision
-            ),
-            None,
-        )
-    )
     inventory = (
         None
         if composition is None
@@ -270,9 +355,26 @@ def show_snapshot_series(
     )
 
 
+def show_snapshot_plan(
+    root: str | Path, snapshot_build_plan_id: str
+) -> SnapshotBuildPlan:
+    matches = tuple(
+        item
+        for item in _records(root)
+        if isinstance(item, SnapshotBuildPlan)
+        and item.snapshot_build_plan_id == snapshot_build_plan_id
+    )
+    if len(matches) != 1:
+        raise WorkflowViewError(
+            "snapshot_plan_not_found", "Snapshot Build Plan not found."
+        )
+    return matches[0]
+
+
 __all__ = [
     "ArrangementView",
     "CandidateSummary",
+    "CandidateDetail",
     "CompositionView",
     "SnapshotSeriesView",
     "WorkflowViewError",
@@ -281,6 +383,8 @@ __all__ = [
     "list_snapshot_series",
     "show_arrangement",
     "show_candidate",
+    "show_candidate_detail",
     "show_composition",
     "show_snapshot_series",
+    "show_snapshot_plan",
 ]

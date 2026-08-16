@@ -33,7 +33,6 @@ from vitrine.models import (
     SnapshotBuildPlan,
     SnapshotBuildRequest,
     SnapshotSeries,
-    record_from_dict,
     strict_json_loads,
 )
 from vitrine.portfolio_services import (
@@ -47,10 +46,16 @@ from vitrine.snapshot_distribution import (
     verify_snapshot_edition,
     verify_snapshot_export,
 )
+from vitrine.snapshot_planning import (
+    SnapshotPlanningError,
+    SnapshotPlanningRequest,
+    SnapshotPlanSpecification,
+    prepare_snapshot_build,
+    snapshot_plan_specification_from_dict,
+)
 from vitrine.snapshot_services import (
     create_snapshot_series,
     execute_snapshot_build_attempt,
-    plan_snapshot_build,
     request_snapshot_build,
     seal_snapshot_build_attempt,
     start_snapshot_build_attempt,
@@ -60,8 +65,9 @@ from vitrine.workflow_views import (
     list_candidate_summaries,
     list_snapshot_series,
     show_arrangement,
-    show_candidate,
+    show_candidate_detail,
     show_composition,
+    show_snapshot_plan,
     show_snapshot_series,
 )
 
@@ -147,7 +153,9 @@ def configure_workflow_parsers(
     decide.add_argument("portfolio_id")
     decide.add_argument("proposal_id")
     decide.add_argument(
-        "--decision", required=True, choices=("accepted", "declined", "deferred")
+        "--decision",
+        required=True,
+        choices=("accepted", "rejected", "changes_requested", "withdrawn", "expired"),
     )
     decide.add_argument("--reason")
     _actor(decide)
@@ -249,6 +257,9 @@ def configure_workflow_parsers(
     plan.add_argument("snapshot_build_request_id")
     plan.add_argument("--from-plan-json", type=Path, required=True)
     _actor(plan)
+    plan_show = snapshot.add_parser("plan-show")
+    plan_show.add_argument("snapshot_build_plan_id")
+    _workspace(plan_show)
     build = snapshot.add_parser("build")
     build.add_argument("snapshot_build_plan_id")
     _actor(build)
@@ -315,16 +326,27 @@ def _mapping(values: list[str], *, integer_values: bool) -> dict[str, int | str 
     return result
 
 
-def _plan_template(path: Path) -> SnapshotBuildPlan:
-    value = strict_json_loads(path.read_bytes())
+def _plan_specification(path: Path) -> SnapshotPlanSpecification:
+    try:
+        data = path.read_bytes()
+    except OSError as exc:
+        raise SnapshotPlanningError(
+            "snapshot_plan_file_unreadable",
+            "Snapshot Plan specification file could not be read.",
+        ) from exc
+    try:
+        value = strict_json_loads(data)
+    except ValueError as exc:
+        raise SnapshotPlanningError(
+            "snapshot_plan_file_invalid",
+            "Snapshot Plan specification is not valid JSON.",
+        ) from exc
     if not isinstance(value, dict):
-        raise ValueError("Snapshot Plan JSON must contain one object.")
-    record = record_from_dict(value)
-    if not isinstance(record, SnapshotBuildPlan):
-        raise ValueError(
-            "Snapshot Plan JSON must contain a snapshot_build_plan record."
+        raise SnapshotPlanningError(
+            "snapshot_plan_specification_invalid",
+            "Snapshot Plan specification must contain one object.",
         )
-    return record
+    return snapshot_plan_specification_from_dict(value)
 
 
 def run_workflow_command(
@@ -371,9 +393,13 @@ def run_workflow_command(
                     file=output,
                 )
         elif subcommand == "show":
-            candidate = show_candidate(root, args.candidate_id)
+            candidate = show_candidate_detail(root, args.candidate_id)
+            endpoint = candidate.source_endpoint
+            publication = endpoint.core_publication
+            producer = endpoint.producer_source
+            artifact = endpoint.source_artifact
             print(
-                f"Candidate: {candidate.candidate_id}\nSummary: {candidate.display_snapshot}\nCondition: {candidate.condition_state}\nEligible sections: {', '.join(candidate.eligible_section_ids)}",
+                f"Candidate: {candidate.candidate_id}\nCandidate Evaluation: {candidate.candidate_evaluation_id}\nSummary: {candidate.display_snapshot}\nProfile Binding: {candidate.profile_binding_id}\nCore Publication: {publication.publication_id}\nProducer module: {producer.producer_module_id}\nProducer source: {producer.source_record_kind}:{producer.source_record_id}\nProducer native revision: {producer.native_revision if producer.native_revision is not None else '(none)'}\nArtifact: {artifact.artifact_id if artifact else '(none)'}\nArtifact kind/representation: {artifact.artifact_kind + '/' + artifact.representation_kind if artifact else '(none)'}\nSubject relationships: {', '.join(x.relationship_kind + ':' + x.source_subject_kind + ':' + x.source_subject_id for x in endpoint.subject_relationship_assertions)}\nCondition: {candidate.condition_state}\nUnresolved codes: {', '.join(candidate.unresolved_condition_codes) or '(none)'}\nEligible sections: {', '.join(candidate.eligible_section_ids)}\nAvailability: {', '.join(x.dimension + '=' + x.outcome for x in candidate.availability_observations)}\nCollaborative semantics: Group Membership != Artifact Author; Artifact Subject != Artifact Author; documented contribution != whole-Artifact authorship; represented Group remains separate; Group Score target != individual Score.",
                 file=output,
             )
         else:
@@ -402,6 +428,8 @@ def run_workflow_command(
                 f"Proposed publications: {len(discovery_result.proposed_publication_ids)}\nEvaluated: {len(discovery_result.evaluation_results)}\nFindings: {len(discovery_result.findings)}",
                 file=output,
             )
+            for finding in discovery_result.findings:
+                print(f"{finding.code}\tstage={finding.stage}", file=output)
         return 0
     if command == "selection":
         expected_state = _required_expected(args)
@@ -582,6 +610,25 @@ def run_workflow_command(
             )
         return 0
     if command == "snapshot":
+        if subcommand == "plan-show":
+            exact_plan = show_snapshot_plan(root, args.snapshot_build_plan_id)
+            kinds = tuple(item.materialization_kind for item in exact_plan.entry_plans)
+            print(
+                f"Build Plan: {exact_plan.snapshot_build_plan_id}\n"
+                f"Build Request: {exact_plan.snapshot_build_request_id}\n"
+                f"Snapshot Series: {exact_plan.snapshot_series_id}\n"
+                f"Composition revision: {exact_plan.composition_revision}\n"
+                f"Audience Context: {exact_plan.audience_context_id}\n"
+                f"Entries: {len(exact_plan.entry_plans)}\n"
+                f"Copied/generated/reference-only: "
+                f"{kinds.count('copied_source')}/{kinds.count('generated_vitrine')}/"
+                f"{kinds.count('reference_only')}\n"
+                f"Exports: {', '.join(item.export_format for item in exact_plan.export_plans)}\n"
+                f"Acknowledged obligations: "
+                f"{', '.join(exact_plan.acknowledged_obligation_codes) or '(none)'}",
+                file=output,
+            )
+            return 0
         if subcommand == "edition":
             series_view = show_snapshot_series(root, args.snapshot_series_id)
             if args.snapshot_edition_command == "list":
@@ -623,8 +670,8 @@ def run_workflow_command(
         if subcommand == "custody":
             audit = inspect_snapshot_custody(root)
             print(f"Custody findings: {len(audit.findings)}", file=output)
-            for finding in audit.findings:
-                print(f"{finding.code}\t{finding.summary}", file=output)
+            for custody_finding in audit.findings:
+                print(f"{custody_finding.code}\t{custody_finding.summary}", file=output)
             return 0
         if subcommand == "series":
             if args.snapshot_series_command == "list":
@@ -676,20 +723,16 @@ def run_workflow_command(
                 file=output,
             )
         elif subcommand == "plan":
-            template = _plan_template(args.from_plan_json)
-            plan_result = plan_snapshot_build(
+            specification = _plan_specification(args.from_plan_json)
+            plan_result = prepare_snapshot_build(
                 root,
-                snapshot_build_request_id=args.snapshot_build_request_id,
-                entry_plans=template.entry_plans,
-                export_plans=template.export_plans,
-                planned_by=_actor_value(args),
-                expected_state_revision=_required_expected(args),
-                acknowledged_obligation_codes=template.acknowledged_obligation_codes,
-                predecessor_plan_id=template.predecessor_plan_id,
-                builder_contract_id=template.builder_contract_id,
-                builder_contract_version=template.builder_contract_version,
-                path_policy_id=template.path_policy_id,
-                digest_policy_id=template.digest_policy_id,
+                SnapshotPlanningRequest(
+                    snapshot_build_request_id=args.snapshot_build_request_id,
+                    planned_by=_actor_value(args),
+                    expected_state_revision=_required_expected(args),
+                ),
+                provider=dependencies.snapshot_planning_provider,
+                specification=specification,
             )
             plan_record = plan_result.records[0]
             if not isinstance(plan_record, SnapshotBuildPlan):
