@@ -287,6 +287,18 @@ def validate(
                     timings=timings,
                 )
             _run(
+                [
+                    sys.executable,
+                    "scripts/smoke_test_end_to_end_wheel.py",
+                    str(wheels[0]),
+                    str(core_wheel),
+                ],
+                cwd=root,
+                env=env,
+                phase="installed-wheel acceptance: end-to-end",
+                timings=timings,
+            )
+            _run(
                 ["git", "diff", "--check"],
                 cwd=root,
                 env=env,

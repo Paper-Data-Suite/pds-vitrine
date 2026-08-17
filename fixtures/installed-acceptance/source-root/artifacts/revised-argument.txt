@@ -1,0 +1,3 @@
+Revised synthetic argument.
+
+The writer narrows the claim, connects each quoted detail to the reasoning, and explains why the evidence supports the conclusion. This later work is distinct from the baseline and is copied only after explicit Selection and Placement.
