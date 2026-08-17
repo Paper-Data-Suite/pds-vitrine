@@ -1,0 +1,3 @@
+Baseline synthetic argument.
+
+The writer states a broad claim and cites one relevant detail, but the explanation remains general. This file is intentionally simple so installed Snapshot acceptance can verify exact copied bytes without importing a producer package.
