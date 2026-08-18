@@ -1,5 +1,6 @@
 include README.md
 include CHANGELOG.md
+include RELEASE_NOTES_v0.2.0.md
 include Security.md
 include pyproject.toml
 include run_tests.ps1

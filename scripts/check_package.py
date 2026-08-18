@@ -75,8 +75,12 @@ ALLOWED_RUNTIME_FILES = {
 REQUIRED_SDIST_FILES = {
     "CHANGELOG.md",
     "MANIFEST.in",
+    "RELEASE_NOTES_v0.2.0.md",
     "README.md",
     "Security.md",
+    "docs/release_checklist.md",
+    "docs/v0.2.0-release-audit.md",
+    "docs/v0.2.0-release-compatibility.md",
     "docs/contracts/foundational-runtime-models-v1.md",
     "docs/contracts/canonical-storage-v1.md",
     "docs/contracts/portfolio-subject-workflows-v1.md",
@@ -129,6 +133,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/verify_installed_end_to_end_reload.py",
     "scripts/validate_portfolio_foundation.py",
     "scripts/validate_repository.py",
+    "scripts/validate_release_contract.py",
     "scripts/validate_representative_portfolios.py",
     "scripts/validate_runtime_models.py",
     "scripts/validate_canonical_storage.py",
@@ -203,6 +208,7 @@ REQUIRED_SDIST_FILES = {
     "tests/test_showcase_portfolio_vertical_slice.py",
     "tests/test_validate_showcase_portfolio.py",
     "tests/test_installed_end_to_end_acceptance.py",
+    "tests/test_validate_release_contract.py",
     "fixtures/representative-portfolios/improvement/runtime/baseline-manifest.json",
     "fixtures/representative-portfolios/improvement/runtime/later-manifest.json",
     "fixtures/representative-portfolios/showcase/runtime/polished-manifest.json",
@@ -216,7 +222,7 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
     metadata = email.message_from_bytes(metadata_bytes)
     if metadata.get("Name") != "pds-vitrine":
         findings.append(f"unexpected distribution name: {metadata.get('Name')}")
-    if metadata.get("Version") != "0.2.0.dev0":
+    if metadata.get("Version") != "0.2.0":
         findings.append(f"unexpected version: {metadata.get('Version')}")
     if metadata.get("Requires-Python") != ">=3.11":
         findings.append(

@@ -1,9 +1,11 @@
 # Vitrine Documentation
 
 Vitrine completed its audited v0.1.0 foundation with a
-`ready_for_implementation` verdict and is implementing the v0.2.0 runtime
-foundation. Documents distinguish accepted architecture, conceptual designs,
-exact runtime contracts, validated fixtures, and deferred workflows.
+`ready_for_implementation` verdict and has completed the v0.2.0 runtime
+implementation through installed end-to-end acceptance. Issue #40 has promoted
+the source release identity to `0.2.0`; qualification, publication, and fresh-download
+verification remain pending. Documents distinguish accepted architecture, exact
+runtime contracts, validated fixtures, release-audit evidence, and deferred workflows.
 
 ## Runtime implementation
 
@@ -36,6 +38,16 @@ Development fixture adapters, Snapshot fixture providers, and fixture renderers
 are not installed producer integrations. Candidate, Selection, curation
 approval, Snapshot build authority, disclosure authorization, and external
 Issuance remain distinct.
+
+## v0.2.0 release audit
+
+- [v0.2.0 release notes](../RELEASE_NOTES_v0.2.0.md) — reviewed release notes and explicit deferred/live-integration boundary.
+- [v0.2.0 release audit](v0.2.0-release-audit.md) — ADR conformance, preserved v0.1 findings, #26 exit conditions, privacy/persistence/Snapshot audit, and release-preparation verdict.
+- [v0.2.0 release compatibility boundary](v0.2.0-release-compatibility.md) — frozen target package/runtime contract, fixture/live producer boundary, fail-closed defaults, and deferred scope.
+- [Release checklist](release_checklist.md) — separate release-preparation PR, exact-main qualification, immutable GitHub Release publication, and fresh-download verification phases.
+
+These documents describe release preparation until an authenticated `v0.2.0` tag and
+GitHub Release are actually published and independently reverified.
 
 ## Foundation research
 

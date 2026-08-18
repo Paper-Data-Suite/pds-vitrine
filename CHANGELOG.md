@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+No unreleased changes.
+
+## 0.2.0 - 2026-08-17
+
 ### Added
 
-- Installable, typed `pds-vitrine` package baseline at `0.2.0.dev0`.
+- First installable, typed `pds-vitrine` runtime release at `0.2.0`.
 - Required `pds-core>=0.6,<0.7` runtime dependency.
 - Side-effect-free help and version commands.
 - Minimal teacher-facing menu and thin Core-owned workspace wrappers.
@@ -101,6 +105,14 @@ All notable changes to this project will be documented in this file.
   Selection and collaborator-treatment review, immutable Composition, five-entry
   audience-safe Snapshot, reproducible directory Export, and producer-independent
   historical verification.
+- Shared Portfolio-centered direct CLI and low-density teacher-facing workflows
+  backed by one explicit fail-closed `VitrineWorkflowDependencies` context.
+- Installed end-to-end acceptance from noneditable Vitrine/Core wheels covering
+  exact cross-class Subject identity, fixture/live non-masquerading, Core-backed
+  publication/discovery, Improvement and Showcase curation/Snapshots, actual
+  Export privacy scanning, source drift/removal, fresh-process historical reload,
+  discriminating Current Edition pointer resolution, and checkout/package write
+  isolation.
 
 Vitrine now persists foundational metadata, provides Portfolio Subject and
 Profile workflows, implements the producer projection adapter boundary, executes
