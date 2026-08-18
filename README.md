@@ -5,9 +5,8 @@ provenance, and producing purpose-specific, immutable portfolio snapshots.
 
 ## Current status
 
-Vitrine is implementing its v0.2.0 runtime foundation after completing an
-audited v0.1.0 architecture and fixture foundation. The package remains at
-`0.2.0.dev0` and now provides:
+Vitrine v0.2.0 defines the first executable runtime release built on the
+audited v0.1.0 architecture and fixture foundation. The release contents provide:
 
 - the installable `pds-vitrine` distribution and `vitrine` command;
 - released Core 0.6 workspace integration;
@@ -216,11 +215,11 @@ python scripts/validate_repository.py --core-wheel <wheel>
 ```
 
 The complete gate authenticates Core; runs pytest, Ruff, strict Mypy, runtime and
-workflow validators including producer-adapter, Candidate-discovery, curation,
-and immutable Snapshot workflow validation; validates documentation and
-representative fixtures; builds distributions; checks Twine/package contents;
-runs isolated installed-wheel smoke tests including Snapshot imports; and
-verifies repository cleanliness.
+workflow validators including the narrow v0.2.0 release-contract gate; validates
+documentation and representative fixtures; builds distributions; checks
+Twine/package contents; runs the five narrow installed-wheel smokes once each;
+runs the combined installed end-to-end acceptance exactly once; and verifies
+repository cleanliness.
 
 The dedicated Snapshot acceptance validator can also be run directly:
 
@@ -246,6 +245,10 @@ Documentation is indexed in [`docs/README.md`](docs/README.md).
 
 Key entry points:
 
+- [v0.2.0 release notes](RELEASE_NOTES_v0.2.0.md)
+- [v0.2.0 release audit](docs/v0.2.0-release-audit.md)
+- [v0.2.0 release compatibility](docs/v0.2.0-release-compatibility.md)
+- [Release checklist](docs/release_checklist.md)
 - [Foundational runtime models](docs/contracts/foundational-runtime-models-v1.md)
 - [Canonical storage](docs/contracts/canonical-storage-v1.md)
 - [Portfolio Subject workflows](docs/contracts/portfolio-subject-workflows-v1.md)
