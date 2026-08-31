@@ -19,6 +19,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Profile workflows", ("scripts/validate_profile_workflows.py",)),
     ("producer adapters", ("scripts/validate_producer_adapters.py",)),
     (
+        "released producer contracts",
+        ("scripts/validate_released_producer_contracts.py",),
+    ),
+    (
         "Candidate discovery",
         ("scripts/validate_candidate_discovery.py", "--skip-focused-tests"),
     ),

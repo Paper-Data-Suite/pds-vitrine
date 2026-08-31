@@ -39,6 +39,8 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/portfolio_menu.py",
     "vitrine/portfolio_services.py",
     "vitrine/producer_adapters.py",
+    "vitrine/released_producer_contracts.py",
+    "vitrine/released_producer_schema_audit.py",
     "vitrine/subject_cli.py",
     "vitrine/subject_menu.py",
     "vitrine/subject_services.py",

@@ -22,6 +22,7 @@ from vitrine.models.common import (
     require_enum,
     require_identifier,
     require_lower_identifier,
+    require_nonnegative_int,
     require_optional_text,
     require_relative_path,
     require_text,
@@ -39,6 +40,7 @@ SNAPSHOT_BUILD_AUTHORITY_OUTCOMES: Final[frozenset[str]] = frozenset(
 )
 SNAPSHOT_BUILD_OPERATION: Final[str] = "build_snapshot"
 SNAPSHOT_SOURCE_STABILITY_CONTRACT: Final[str] = "filesystem_reread_v1"
+SNAPSHOT_AUTHORIZED_SOURCE_BYTES_CONTRACT: Final[str] = "authorized_source_bytes_v1"
 
 SNAPSHOT_MATERIALIZATION_CODES: Final[frozenset[str]] = frozenset(
     {
@@ -296,11 +298,66 @@ class SnapshotSourceResult:
             ) from error
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SnapshotAuthorizedSourceBytesResult:
+    """Producer-authorized immutable bytes for one exact planned Artifact."""
+
+    provider_id: str
+    provider_version: str
+    source_publication_id: str
+    source_artifact_id: str
+    content: bytes
+    media_type: str
+    source_digest: DigestReference | None = None
+    byte_size: int | None = None
+    acquisition_contract_version: str = SNAPSHOT_AUTHORIZED_SOURCE_BYTES_CONTRACT
+
+    def __post_init__(self) -> None:
+        try:
+            for name in (
+                "provider_id",
+                "provider_version",
+                "source_publication_id",
+                "source_artifact_id",
+                "acquisition_contract_version",
+            ):
+                object.__setattr__(
+                    self, name, require_identifier(getattr(self, name), name)
+                )
+            if not isinstance(self.content, bytes):
+                raise VitrineModelValidationError("content must be immutable bytes.")
+            object.__setattr__(
+                self,
+                "media_type",
+                require_text(self.media_type, "media_type", maximum=200),
+            )
+            if self.source_digest is not None and not isinstance(
+                self.source_digest, DigestReference
+            ):
+                raise VitrineModelValidationError(
+                    "source_digest must be DigestReference or null."
+                )
+            if self.byte_size is not None:
+                object.__setattr__(
+                    self,
+                    "byte_size",
+                    require_nonnegative_int(self.byte_size, "byte_size"),
+                )
+        except VitrineModelValidationError as error:
+            raise SnapshotMaterializationError(
+                "snapshot.invalid_request",
+                "Authorized Snapshot source-byte result is invalid.",
+                stage="source_resolution",
+            ) from error
+
+
 class SnapshotSourceProvider(Protocol):
     @property
     def descriptor(self) -> SnapshotSourceProviderDescriptor: ...
 
-    def resolve(self, request: SnapshotSourceRequest) -> SnapshotSourceResult: ...
+    def resolve(
+        self, request: SnapshotSourceRequest
+    ) -> SnapshotSourceResult | SnapshotAuthorizedSourceBytesResult: ...
 
     def confirm_stability(
         self, request: SnapshotSourceRequest, result: SnapshotSourceResult
@@ -741,6 +798,15 @@ def copy_planned_source_to_staging(
             "Snapshot source provider could not resolve the planned source.",
             stage="source_resolution",
         ) from error
+    if not isinstance(
+        resolved, (SnapshotSourceResult, SnapshotAuthorizedSourceBytesResult)
+    ):
+        raise SnapshotMaterializationError(
+            "snapshot.source_integrity_failed",
+            "Snapshot source provider returned an unsupported result type.",
+            stage="source_resolution",
+        )
+
     descriptor = provider.descriptor
     artifact = entry.source_artifact
     assert artifact is not None
@@ -749,24 +815,67 @@ def copy_planned_source_to_staging(
         or resolved.provider_version != descriptor.provider_version
         or resolved.source_publication_id != entry.source_publication_id
         or resolved.source_artifact_id != artifact.artifact_id
-        or resolved.source_relative_path != artifact.source_locator
-        or resolved.stability_contract != SNAPSHOT_SOURCE_STABILITY_CONTRACT
     ):
         raise SnapshotMaterializationError(
             "snapshot.source_integrity_failed",
             "Snapshot source provider resolution does not match the immutable Entry Plan.",
             stage="source_resolution",
         )
-    source_path = _source_file(resolved)
-    try:
-        acquired = source_path.read_bytes()
-    except OSError as error:
-        raise SnapshotMaterializationError(
-            "snapshot.source_unavailable",
-            "Planned Snapshot source could not be read.",
-            stage="source_read",
-        ) from error
-    acquired_digest = _sha256(acquired)
+
+    filesystem_result: SnapshotSourceResult | None = None
+    if isinstance(resolved, SnapshotAuthorizedSourceBytesResult):
+        if (
+            resolved.acquisition_contract_version
+            != SNAPSHOT_AUTHORIZED_SOURCE_BYTES_CONTRACT
+            or resolved.media_type != entry.media_type
+            or resolved.media_type != artifact.media_type
+        ):
+            raise SnapshotMaterializationError(
+                "snapshot.source_integrity_failed",
+                "Authorized source-byte metadata does not match the immutable Entry Plan.",
+                stage="source_resolution",
+            )
+        acquired = resolved.content
+        acquired_digest = _sha256(acquired)
+        if resolved.source_digest is not None and not hmac.compare_digest(
+            resolved.source_digest.value, acquired_digest.value
+        ):
+            raise SnapshotMaterializationError(
+                "snapshot.source_digest_mismatch",
+                "Authorized source-byte digest does not match the returned bytes.",
+                stage="source_verify",
+            )
+        if resolved.byte_size is not None and resolved.byte_size != len(acquired):
+            raise SnapshotMaterializationError(
+                "snapshot.source_integrity_failed",
+                "Authorized source-byte size does not match the returned bytes.",
+                stage="source_verify",
+            )
+        source_stability_result = "not_applicable"
+    else:
+        filesystem_result = resolved
+        if (
+            artifact.source_locator is None
+            or resolved.source_relative_path != artifact.source_locator
+            or resolved.stability_contract != SNAPSHOT_SOURCE_STABILITY_CONTRACT
+        ):
+            raise SnapshotMaterializationError(
+                "snapshot.source_integrity_failed",
+                "Filesystem source resolution does not match the immutable Entry Plan.",
+                stage="source_resolution",
+            )
+        source_path = _source_file(resolved)
+        try:
+            acquired = source_path.read_bytes()
+        except OSError as error:
+            raise SnapshotMaterializationError(
+                "snapshot.source_unavailable",
+                "Planned Snapshot source could not be read.",
+                stage="source_read",
+            ) from error
+        acquired_digest = _sha256(acquired)
+        source_stability_result = "verified"
+
     claims = tuple(
         claim
         for claim in (entry.producer_source_digest_claim, artifact.source_digest)
@@ -809,37 +918,41 @@ def copy_planned_source_to_staging(
             "Staged Snapshot bytes do not match the acquired source bytes.",
             stage="staging_verify",
         )
-    try:
-        provider_stable = provider.confirm_stability(request, resolved)
-    except Exception as error:
-        raise SnapshotMaterializationError(
-            "snapshot.source_changed_during_acquisition",
-            "Snapshot source stability could not be confirmed.",
-            stage="source_stability",
-        ) from error
-    try:
-        reread = source_path.read_bytes()
-    except OSError as error:
-        raise SnapshotMaterializationError(
-            "snapshot.source_changed_during_acquisition",
-            "Snapshot source became unavailable during acquisition.",
-            stage="source_stability",
-        ) from error
-    reread_digest = _sha256(reread)
-    if (
-        not provider_stable
-        or len(reread) != len(acquired)
-        or not hmac.compare_digest(reread_digest.value, acquired_digest.value)
-    ):
+
+    if filesystem_result is not None:
+        source_path = _source_file(filesystem_result)
         try:
-            target.unlink()
-        except OSError:
-            pass
-        raise SnapshotMaterializationError(
-            "snapshot.source_changed_during_acquisition",
-            "Snapshot source changed during acquisition.",
-            stage="source_stability",
-        )
+            provider_stable = provider.confirm_stability(request, filesystem_result)
+        except Exception as error:
+            raise SnapshotMaterializationError(
+                "snapshot.source_changed_during_acquisition",
+                "Snapshot source stability could not be confirmed.",
+                stage="source_stability",
+            ) from error
+        try:
+            reread = source_path.read_bytes()
+        except OSError as error:
+            raise SnapshotMaterializationError(
+                "snapshot.source_changed_during_acquisition",
+                "Snapshot source became unavailable during acquisition.",
+                stage="source_stability",
+            ) from error
+        reread_digest = _sha256(reread)
+        if (
+            not provider_stable
+            or len(reread) != len(acquired)
+            or not hmac.compare_digest(reread_digest.value, acquired_digest.value)
+        ):
+            try:
+                target.unlink()
+            except OSError:
+                pass
+            raise SnapshotMaterializationError(
+                "snapshot.source_changed_during_acquisition",
+                "Snapshot source changed during acquisition.",
+                stage="source_stability",
+            )
+
     return SnapshotCopiedBytesResult(
         entry_plan_id=entry.entry_plan_id,
         target_relative_path=entry.target_relative_path,
@@ -848,6 +961,7 @@ def copy_planned_source_to_staging(
         acquired_source_digest=acquired_digest,
         copied_output_digest=output_digest,
         byte_size=len(staged),
+        source_stability_result=source_stability_result,
     )
 
 
@@ -959,10 +1073,12 @@ def render_planned_entry_to_staging(
 
 __all__ = [
     "SNAPSHOT_BUILD_AUTHORITY_OUTCOMES",
+    "SNAPSHOT_AUTHORIZED_SOURCE_BYTES_CONTRACT",
     "SNAPSHOT_BUILD_OPERATION",
     "SNAPSHOT_SOURCE_STABILITY_CONTRACT",
     "SnapshotBuildAuthorityDecision",
     "SnapshotBuildAuthorityGate",
+    "SnapshotAuthorizedSourceBytesResult",
     "SnapshotBuildAuthorityRequest",
     "SnapshotCopiedBytesResult",
     "SnapshotGeneratedBytesResult",
