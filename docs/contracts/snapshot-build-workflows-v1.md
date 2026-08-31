@@ -282,37 +282,77 @@ representation_kind
 
 No wildcard or generic private-file provider is used.
 
-A provider returns an approved root plus an exact relative locator for the exact
-planned Publication/Artifact. The custody layer then independently enforces
-containment and regular-file rules.
+A provider may return exactly one of two bounded runtime result shapes:
+
+```text
+SnapshotSourceResult
+  -> approved canonical filesystem root + exact relative locator
+  -> Vitrine performs containment, regular-file, reread, and stability checks
+
+SnapshotAuthorizedSourceBytesResult
+  -> producer-authorized immutable bytes + bounded media/digest/size metadata
+  -> Vitrine never receives or reconstructs a producer-native source path
+```
+
+The authorized-byte result uses the exact runtime acquisition contract:
+
+```text
+authorized_source_bytes_v1
+```
+
+`SnapshotAuthorizedSourceBytesResult` is an additive runtime boundary, not a new
+persisted Snapshot record. `SourceArtifactReference.source_locator` was already
+nullable, so a copied-source Plan may preserve exact Artifact identity without
+fabricating a path when the producer owns artifact resolution.
+
+Build authority remains outside producer artifact authorization. Vitrine checks
+Snapshot build authority before provider resolution; a live Quillan or Concord
+provider must then perform its producer-owned artifact authorization before native
+I/O and return bytes only after an `allowed` decision.
 
 Development fixture providers are explicit test infrastructure, not production
 producer readers.
 
 ## Exact-byte copying
 
-For copied Entries:
+For every copied Entry:
 
 1. validate Plan/Attempt/Entry binding;
 2. require build authority;
 3. select one exact provider;
-4. resolve one exact planned source;
-5. reject unsafe/link/reparse/nonregular paths;
-6. read binary source bytes;
+4. resolve one exact planned Publication/Artifact;
+5. verify provider, Publication, Artifact, and representation identity;
+6. acquire source bytes through one approved result mode;
 7. independently SHA-256 acquired bytes;
-8. verify producer digest claim when supplied;
-9. verify declared size when supplied;
+8. verify producer/provider digest claims when supplied;
+9. verify declared sizes when supplied;
 10. exclusively write staging bytes;
 11. close/reopen and SHA-256 staged output;
-12. verify staged size;
-13. confirm provider stability;
-14. reread/re-hash the original source;
-15. fail closed if source changed.
+12. verify staged size and digest.
+
+Filesystem result mode additionally:
+
+1. requires the frozen Artifact to carry the exact approved source locator;
+2. rejects unsafe/link/reparse/nonregular paths;
+3. confirms provider stability;
+4. rereads/re-hashes the original source;
+5. fails closed if that source changed.
+
+Authorized immutable-byte mode instead:
+
+1. requires `authorized_source_bytes_v1`;
+2. requires exact planned Artifact and media-type identity;
+3. validates any provider-returned digest and byte size;
+4. performs no Vitrine-side producer filesystem lookup or reread;
+5. records source stability as `not_applicable` because the acquired value is the
+   producer-authorized immutable byte sequence itself.
 
 The producer digest claim, acquired-source digest, and output digest remain
 distinct provenance values even when exact copying makes the latter two equal.
 
-No source successor is followed after planning.
+No source successor is followed after planning, and no temporary native-looking
+path may be fabricated to bridge a producer-owned artifact API.
+
 
 ## Deterministic renderers
 

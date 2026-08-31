@@ -303,10 +303,6 @@ class SnapshotEntryPlan:
                 raise VitrineModelValidationError(
                     "copied_source Entry Plans must not carry renderer inputs."
                 )
-            if self.source_artifact is None or self.source_artifact.source_locator is None:
-                raise VitrineModelValidationError(
-                    "copied_source Entry Plans require an exact approved source locator."
-                )
         elif kind == "generated_vitrine":
             if self.target_relative_path is None or self.media_type is None:
                 raise VitrineModelValidationError(

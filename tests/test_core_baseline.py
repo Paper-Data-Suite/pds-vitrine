@@ -10,7 +10,7 @@ from pds_core.workspace import inspect_workspace_root
 def test_core_version_and_public_workspace_identifier_contracts() -> None:
     import pds_core
 
-    assert pds_core.__version__ == "0.6.0"
+    assert pds_core.__version__ == "0.6.3"
     assert validate_identifier("vitrine") == "vitrine"
     assert inspect_workspace_root is not None
 

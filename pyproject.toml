@@ -85,6 +85,7 @@ files = [
     "scripts/validate_subject_workflows.py",
     "scripts/validate_profile_workflows.py",
     "scripts/validate_producer_adapters.py",
+    "scripts/validate_released_producer_contracts.py",
     "scripts/validate_candidate_discovery.py",
     "scripts/validate_curation_workflows.py",
     "scripts/validate_snapshot_workflows.py",

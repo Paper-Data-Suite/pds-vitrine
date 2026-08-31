@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+import vitrine.snapshot_materialization as snapshot_materialization
 from vitrine.models import (
     ActorAttribution,
     DigestReference,
@@ -20,6 +21,7 @@ from vitrine.models import (
 )
 from vitrine.snapshot_custody import create_snapshot_staging
 from vitrine.snapshot_materialization import (
+    SnapshotAuthorizedSourceBytesResult,
     SnapshotBuildAuthorityDecision,
     SnapshotCopiedBytesResult,
     SnapshotGeneratedBytesResult,
@@ -361,3 +363,191 @@ def test_generated_entry_requires_exact_renderer_configuration(tmp_path: Path) -
     assert staging.content_path(result.target_relative_path).read_bytes() == (
         b"# Reflection\n\nExact revision 1.\n"
     )
+
+
+class _AuthorizedBytesProvider:
+    descriptor = SnapshotSourceProviderDescriptor(
+        provider_id="quillan_fixture_source_provider",
+        provider_version="1",
+        producer_module_id="vitrine_quillan_fixture",
+        projection_kind="student_work",
+        projection_contract_version="fixture_projection_v1",
+        artifact_kind="original_student_work",
+        representation_kind="student_work",
+    )
+
+    def __init__(
+        self,
+        payload: bytes,
+        *,
+        media_type: str = "text/plain",
+        source_digest: DigestReference | None = None,
+        byte_size: int | None = None,
+        source_publication_id: str = "publication_work",
+        source_artifact_id: str = "artifact_work",
+    ) -> None:
+        self.payload = payload
+        self.media_type = media_type
+        self.source_digest = source_digest
+        self.byte_size = byte_size
+        self.source_publication_id = source_publication_id
+        self.source_artifact_id = source_artifact_id
+        self.resolve_calls = 0
+        self.confirm_calls = 0
+
+    def resolve(self, request: SnapshotSourceRequest) -> SnapshotAuthorizedSourceBytesResult:
+        self.resolve_calls += 1
+        return SnapshotAuthorizedSourceBytesResult(
+            provider_id=self.descriptor.provider_id,
+            provider_version=self.descriptor.provider_version,
+            source_publication_id=self.source_publication_id,
+            source_artifact_id=self.source_artifact_id,
+            content=self.payload,
+            media_type=self.media_type,
+            source_digest=self.source_digest,
+            byte_size=self.byte_size,
+        )
+
+    def confirm_stability(
+        self, request: SnapshotSourceRequest, result: SnapshotSourceResult
+    ) -> bool:
+        self.confirm_calls += 1
+        raise AssertionError("authorized immutable bytes must not use filesystem stability")
+
+
+def _plan_without_source_locator(payload: bytes) -> SnapshotBuildPlan:
+    plan = _plan(payload)
+    copied = plan.entry_plans[0]
+    assert copied.source_artifact is not None
+    locatorless = replace(
+        copied,
+        source_artifact=replace(copied.source_artifact, source_locator=None),
+    )
+    provisional = replace(
+        plan,
+        entry_plans=(locatorless, *plan.entry_plans[1:]),
+        plan_fingerprint="0" * 64,
+    )
+    return replace(provisional, plan_fingerprint=snapshot_plan_fingerprint(provisional))
+
+
+def test_authorized_immutable_bytes_need_no_source_locator_or_filesystem_resolution(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = b"producer-authorized exact bytes\n"
+    plan = _plan_without_source_locator(payload)
+    attempt = _attempt(plan)
+    staging = create_snapshot_staging(tmp_path, attempt.snapshot_build_attempt_id)
+    provider = _AuthorizedBytesProvider(payload)
+
+    def fail_source_file(result: object) -> Path:
+        raise AssertionError("authorized immutable bytes attempted filesystem resolution")
+
+    monkeypatch.setattr(snapshot_materialization, "_source_file", fail_source_file)
+    result = copy_planned_source_to_staging(
+        plan=plan,
+        attempt=attempt,
+        entry_plan_id="entry_plan_work",
+        staging=staging,
+        authority_gate=_AuthorityGate("allowed"),
+        source_providers=SnapshotSourceProviderRegistry((provider,)),
+    )
+
+    assert result.acquired_source_digest == _sha(payload)
+    assert result.copied_output_digest == _sha(payload)
+    assert result.source_stability_result == "not_applicable"
+    assert staging.content_path(result.target_relative_path).read_bytes() == payload
+    assert provider.resolve_calls == 1
+    assert provider.confirm_calls == 0
+
+
+def test_authorized_source_bytes_require_exact_media_type(tmp_path: Path) -> None:
+    payload = b"producer-authorized exact bytes\n"
+    plan = _plan_without_source_locator(payload)
+    attempt = _attempt(plan)
+    staging = create_snapshot_staging(tmp_path, attempt.snapshot_build_attempt_id)
+
+    with pytest.raises(SnapshotMaterializationError) as captured:
+        copy_planned_source_to_staging(
+            plan=plan,
+            attempt=attempt,
+            entry_plan_id="entry_plan_work",
+            staging=staging,
+            authority_gate=_AuthorityGate("allowed"),
+            source_providers=SnapshotSourceProviderRegistry(
+                (_AuthorizedBytesProvider(payload, media_type="application/pdf"),)
+            ),
+        )
+    assert captured.value.code == "snapshot.source_integrity_failed"
+    assert not any(staging.content_root.rglob("*"))
+
+
+def test_authorized_source_bytes_verify_provider_digest(tmp_path: Path) -> None:
+    payload = b"producer-authorized exact bytes\n"
+    plan = _plan_without_source_locator(payload)
+    attempt = _attempt(plan)
+    staging = create_snapshot_staging(tmp_path, attempt.snapshot_build_attempt_id)
+
+    with pytest.raises(SnapshotMaterializationError) as captured:
+        copy_planned_source_to_staging(
+            plan=plan,
+            attempt=attempt,
+            entry_plan_id="entry_plan_work",
+            staging=staging,
+            authority_gate=_AuthorityGate("allowed"),
+            source_providers=SnapshotSourceProviderRegistry(
+                (
+                    _AuthorizedBytesProvider(
+                        payload,
+                        source_digest=DigestReference(value="f" * 64),
+                    ),
+                )
+            ),
+        )
+    assert captured.value.code == "snapshot.source_digest_mismatch"
+    assert not any(staging.content_root.rglob("*"))
+
+
+def test_authorized_source_bytes_verify_provider_size(tmp_path: Path) -> None:
+    payload = b"producer-authorized exact bytes\n"
+    plan = _plan_without_source_locator(payload)
+    attempt = _attempt(plan)
+    staging = create_snapshot_staging(tmp_path, attempt.snapshot_build_attempt_id)
+
+    with pytest.raises(SnapshotMaterializationError) as captured:
+        copy_planned_source_to_staging(
+            plan=plan,
+            attempt=attempt,
+            entry_plan_id="entry_plan_work",
+            staging=staging,
+            authority_gate=_AuthorityGate("allowed"),
+            source_providers=SnapshotSourceProviderRegistry(
+                (_AuthorizedBytesProvider(payload, byte_size=len(payload) + 1),)
+            ),
+        )
+    assert captured.value.code == "snapshot.source_integrity_failed"
+    assert not any(staging.content_root.rglob("*"))
+
+
+def test_filesystem_provider_cannot_invent_locator_for_locatorless_plan(
+    tmp_path: Path,
+) -> None:
+    payload = b"producer-authorized exact bytes\n"
+    plan = _plan_without_source_locator(payload)
+    attempt = _attempt(plan)
+    staging = create_snapshot_staging(tmp_path, attempt.snapshot_build_attempt_id)
+
+    with pytest.raises(SnapshotMaterializationError) as captured:
+        copy_planned_source_to_staging(
+            plan=plan,
+            attempt=attempt,
+            entry_plan_id="entry_plan_work",
+            staging=staging,
+            authority_gate=_AuthorityGate("allowed"),
+            source_providers=SnapshotSourceProviderRegistry(
+                (_FileProvider(tmp_path.resolve()),)
+            ),
+        )
+    assert captured.value.code == "snapshot.source_integrity_failed"
+    assert not any(staging.content_root.rglob("*"))
