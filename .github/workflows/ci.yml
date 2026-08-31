@@ -40,14 +40,14 @@ jobs:
         run: |
           $coreDirectory = Join-Path $env:RUNNER_TEMP "core"
           New-Item -ItemType Directory -Force -Path $coreDirectory | Out-Null
-          $coreWheel = Join-Path $coreDirectory "pds_core-0.6.0-py3-none-any.whl"
+          $coreWheel = Join-Path $coreDirectory "pds_core-0.6.3-py3-none-any.whl"
           "PDS_CORE_WHEEL=$coreWheel" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Download official Core release wheel
         shell: pwsh
         run: |
           Invoke-WebRequest `
-            -Uri "https://github.com/Paper-Data-Suite/pds-core/releases/download/v0.6.0/pds_core-0.6.0-py3-none-any.whl" `
+            -Uri "https://github.com/Paper-Data-Suite/pds-core/releases/download/v0.6.3/pds_core-0.6.3-py3-none-any.whl" `
             -OutFile $env:PDS_CORE_WHEEL `
             -ErrorAction Stop
           if (-not (Test-Path -LiteralPath $env:PDS_CORE_WHEEL -PathType Leaf)) {
@@ -109,14 +109,14 @@ jobs:
         run: |
           $coreDirectory = Join-Path $env:RUNNER_TEMP "core"
           New-Item -ItemType Directory -Force -Path $coreDirectory | Out-Null
-          $coreWheel = Join-Path $coreDirectory "pds_core-0.6.0-py3-none-any.whl"
+          $coreWheel = Join-Path $coreDirectory "pds_core-0.6.3-py3-none-any.whl"
           "PDS_CORE_WHEEL=$coreWheel" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Download official Core release wheel
         shell: pwsh
         run: |
           Invoke-WebRequest `
-            -Uri "https://github.com/Paper-Data-Suite/pds-core/releases/download/v0.6.0/pds_core-0.6.0-py3-none-any.whl" `
+            -Uri "https://github.com/Paper-Data-Suite/pds-core/releases/download/v0.6.3/pds_core-0.6.3-py3-none-any.whl" `
             -OutFile $env:PDS_CORE_WHEEL `
             -ErrorAction Stop
           if (-not (Test-Path -LiteralPath $env:PDS_CORE_WHEEL -PathType Leaf)) {
