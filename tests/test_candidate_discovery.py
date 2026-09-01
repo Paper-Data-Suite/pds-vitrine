@@ -44,6 +44,7 @@ from vitrine.development_candidate_fixtures import (
 from vitrine.models import CandidateEvaluation, PortfolioCandidate, PortfolioSelection
 from vitrine.producer_adapters import (
     ProducerProjectionAdapterRegistry,
+    ProducerReaderError,
     build_adapter_registry,
 )
 from vitrine.storage import (
@@ -599,3 +600,118 @@ def test_canonically_published_malformed_manifest_fails_in_exact_reader(tmp_path
     assert tuple(item.code for item in result.findings) == (
         "candidate.reader_failed",
     )
+
+
+def test_authorization_gate_exception_prevents_manifest_byte_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    setup = build_candidate_fixture_workspace(tmp_path)
+    calls = 0
+
+    def forbidden_read(*_args: object, **_kwargs: object) -> bytes:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("manifest bytes must not be read")
+
+    class FailingAuthorizationGate:
+        def authorize(self, _request: object) -> object:
+            raise RuntimeError("PRIVATE authorization provider detail")
+
+    monkeypatch.setattr(
+        candidate_services,
+        "_read_verified_manifest_bytes",
+        forbidden_read,
+    )
+    result = _run(
+        setup,
+        "vitrine_scoreform_fixture",
+        gate=FailingAuthorizationGate(),  # type: ignore[arg-type]
+    )
+    assert calls == 0
+    assert result.evaluation_results == ()
+    assert tuple(item.code for item in result.findings) == (
+        "candidate.authorization_unresolved",
+    )
+
+
+def test_invalid_authorization_decision_prevents_manifest_byte_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    setup = build_candidate_fixture_workspace(tmp_path)
+    calls = 0
+
+    def forbidden_read(*_args: object, **_kwargs: object) -> bytes:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("manifest bytes must not be read")
+
+    class InvalidAuthorizationGate:
+        def authorize(self, _request: object) -> object:
+            return object()
+
+    monkeypatch.setattr(
+        candidate_services,
+        "_read_verified_manifest_bytes",
+        forbidden_read,
+    )
+    result = _run(
+        setup,
+        "vitrine_scoreform_fixture",
+        gate=InvalidAuthorizationGate(),  # type: ignore[arg-type]
+    )
+    assert calls == 0
+    assert result.evaluation_results == ()
+    assert tuple(item.code for item in result.findings) == (
+        "candidate.authorization_unresolved",
+    )
+
+
+def test_candidate_pipeline_uses_shared_authorized_manifest_service(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    setup = build_candidate_fixture_workspace(tmp_path)
+    calls: list[str] = []
+    original = candidate_services.read_authorized_producer_manifest
+
+    def recording_read(*args: object, **kwargs: object) -> object:
+        calls.append("shared_authorized_read")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        candidate_services,
+        "read_authorized_producer_manifest",
+        recording_read,
+    )
+
+    result = _run(setup, "vitrine_scoreform_fixture")
+
+    assert result.findings == ()
+    assert len(result.evaluation_results) == 2
+    assert calls == ["shared_authorized_read"]
+
+
+def test_candidate_reader_failure_from_shared_service_stays_bounded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    setup = build_candidate_fixture_workspace(tmp_path)
+
+    def failing_read(*_args: object, **_kwargs: object) -> object:
+        raise ProducerReaderError(
+            "reader.validation_failed",
+            "producer_reader",
+            "PRIVATE_STUDENT_RESPONSE",
+        )
+
+    monkeypatch.setattr(
+        candidate_services,
+        "read_authorized_producer_manifest",
+        failing_read,
+    )
+
+    result = _run(setup, "vitrine_scoreform_fixture")
+
+    assert result.evaluation_results == ()
+    assert tuple(item.code for item in result.findings) == (
+        "candidate.reader_failed",
+    )
+    assert "PRIVATE_STUDENT_RESPONSE" not in repr(result.findings)

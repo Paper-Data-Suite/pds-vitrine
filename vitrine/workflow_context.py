@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from pds_core.publication_compatibility import PublicationProducerRegistry
+from pds_core.publication_compatibility import (
+    PublicationProducerRegistry,
+    build_publication_producer_registry,
+)
 
 from vitrine.candidate_services import (
     SourceReadAuthorizationDecision,
@@ -72,6 +75,16 @@ class VitrineWorkflowDependencies:
     development_fixture_mode: bool = False
 
 
+
+def build_installed_producer_registry() -> PublicationProducerRegistry:
+    """Explicitly discover installed producer Profiles through Core."""
+
+    return build_publication_producer_registry(
+        explicit_profiles=(),
+        discover_installed=True,
+    )
+
+
 def default_workflow_dependencies() -> VitrineWorkflowDependencies:
     """Return a fail-closed production context with no implicit integrations."""
     return VitrineWorkflowDependencies(
@@ -86,4 +99,8 @@ def default_workflow_dependencies() -> VitrineWorkflowDependencies:
     )
 
 
-__all__ = ["VitrineWorkflowDependencies", "default_workflow_dependencies"]
+__all__ = [
+    "VitrineWorkflowDependencies",
+    "build_installed_producer_registry",
+    "default_workflow_dependencies",
+]

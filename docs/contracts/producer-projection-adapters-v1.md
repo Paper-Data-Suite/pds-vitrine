@@ -387,3 +387,30 @@ Adapter selection remains transient and exact; Candidate discovery adds Core
 canonical reload, explicit authorization, manifest-byte verification, Portfolio
 Subject resolution, Profile eligibility, and guarded Candidate persistence
 outside the adapter contract.
+
+
+## Issue #58 installed reader implementation
+
+Issue #58 implements the live **reader invocation boundary**, not the live
+producer projection adapters.
+
+The previous "future live reader" placeholder is now realized by
+`vitrine.producer_reader_services`:
+
+```text
+#57 audited reader identity
+-> lazy installed distribution/module/symbol resolution
+-> exact immutable bytes
+-> producer-owned validated public model
+```
+
+The installed reader contract is `vitrine_installed_producer_reader_v1`.
+Installed-reader construction does not import producer packages and does not
+register adapters.
+
+Candidate orchestration uses `read_authorized_producer_manifest()` so source-read
+authorization, Core manifest verification, exact-byte rehashing, and reader
+invocation are one shared trust boundary before pure adapter projection.
+
+The default/ordinary adapter registry remains empty. Live ScoreForm, Quillan,
+and Concord adapter declarations are still owned by #59-#61.

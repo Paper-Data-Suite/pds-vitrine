@@ -382,3 +382,42 @@ This validator is intentionally a contract guard. Downstream issues may extend
 the integration implementation, but any deliberate change to a frozen #57
 contract requires an explicit compatibility decision rather than accidental
 drift.
+
+
+## Issue #58 implementation status
+
+Issue #58 is implemented.
+
+The reusable runtime contract is documented in
+`installed-producer-reader-services-v1.md`.
+
+Implemented boundaries now available to #59-#62 are:
+
+```text
+vitrine_producer_reader_service_v1
+vitrine_installed_producer_reader_v1
+SourceReadAuthorizationRequest / Decision / Gate
+read_verified_publication_manifest_bytes(...)
+read_authorized_producer_manifest(...)
+build_audited_installed_producer_reader(...)
+build_audited_installed_producer_readers(...)
+build_installed_producer_registry(...)
+```
+
+Reader bindings are derived only from the #57 audit, remain lazy, and do not
+make package version part of semantic compatibility.
+
+Candidate now consumes the shared authorized-read operation directly. The
+ordinary live adapter registry remains empty, so #58 does not claim ScoreForm,
+Quillan, or Concord projection support.
+
+The remaining handoff is therefore narrow:
+
+- #59 implements ScoreForm projection only;
+- #60 implements Quillan projection plus Quillan Artifact authorization;
+- #61 implements Concord projection plus Concord Artifact authorization;
+- #62 builds user-facing compatibility diagnostics over the stable failure
+  distinctions.
+
+Manifest source-read authorization, producer Artifact authorization, Snapshot
+build authority, and disclosure authority remain separate.
