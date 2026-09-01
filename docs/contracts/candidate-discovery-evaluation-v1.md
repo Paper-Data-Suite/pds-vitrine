@@ -353,3 +353,37 @@ python scripts\validate_candidate_discovery.py
 
 or the complete repository gate. The validator also verifies the #28
 foundational runtime fixture hashes remain byte-identical.
+
+
+## Issue #58 shared reader service
+
+Issue #58 extracts the authorization/manifest/reader portion of this Candidate
+pipeline into `vitrine.producer_reader_services`.
+
+Candidate orchestration now calls:
+
+```text
+read_authorized_producer_manifest(...)
+```
+
+after canonical state, Core producer compatibility, and exact adapter selection.
+That shared operation performs:
+
+```text
+source-read authorization
+-> Core manifest verification
+-> immutable manifest byte read
+-> independent post-read SHA-256 verification
+-> selected adapter reader invocation
+```
+
+Candidate then passes the returned validated public model to the selected
+adapter's pure `project()` operation.
+
+This refactor does not change Candidate current-selectable policy, Subject
+resolution, Profile eligibility, persistence, final source-stability checks, or
+the `candidate.*` failure surface.
+
+Installed Core producer Profile discovery is explicit through
+`build_installed_producer_registry()`; `default_workflow_dependencies()` remains
+empty/fail-closed and performs no installed producer discovery.

@@ -23,6 +23,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_released_producer_contracts.py",),
     ),
     (
+        "producer reader services",
+        ("scripts/validate_producer_reader_services.py",),
+    ),
+    (
         "Candidate discovery",
         ("scripts/validate_candidate_discovery.py", "--skip-focused-tests"),
     ),

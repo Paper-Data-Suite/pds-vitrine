@@ -8,14 +8,12 @@ persistence.
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Final, Protocol
+from typing import Final, Protocol, cast
 
 from pds_core.academic_catalog import (
     AcademicCatalogCompatibilityError,
@@ -44,12 +42,8 @@ from pds_core.publication_compatibility import (
 from pds_core.publication_records import PublicationRecord
 from pds_core.publication_storage import (
     PublicationIntegrityError,
-    PublicationManifestError,
-    PublicationManifestIntegrityError,
-    PublicationManifestNotFoundError,
     PublicationReadError,
     list_publication_record_set,
-    verify_publication_manifest,
 )
 from pds_core.registry_services import (
     RegistryServiceIntegrityError,
@@ -81,8 +75,6 @@ from vitrine.models import (
     VitrineRecord,
 )
 from vitrine.models.common import (
-    lower_key_tuple,
-    require_controlled_key,
     require_identifier,
     require_positive_int,
     require_text,
@@ -99,6 +91,21 @@ from vitrine.producer_adapters import (
     ProducerReaderError,
     ProjectedProducerSource,
 )
+from vitrine.producer_reader_services import (
+    ProducerReaderServiceError,
+    authorize_source_read,
+    read_authorized_producer_manifest,
+    read_verified_publication_manifest_bytes,
+)
+from vitrine.producer_reader_services import (
+    SourceReadAuthorizationDecision as _SharedSourceReadAuthorizationDecision,
+)
+from vitrine.producer_reader_services import (
+    SourceReadAuthorizationGate as _SharedSourceReadAuthorizationGate,
+)
+from vitrine.producer_reader_services import (
+    SourceReadAuthorizationRequest as _SharedSourceReadAuthorizationRequest,
+)
 from vitrine.profile_state import collect_profile_state_issues, project_profile_state
 from vitrine.storage import (
     VitrineStorageConflictError,
@@ -112,9 +119,6 @@ from vitrine.storage import (
 
 CANDIDATE_EVALUATOR_CONTRACT_VERSION: Final[str] = "vitrine_candidate_evaluator_v1"
 SOURCE_READ_OPERATION: Final[str] = "candidate_source_read"
-_AUTHORIZATION_OUTCOMES: Final[frozenset[str]] = frozenset(
-    {"allowed", "denied", "unresolved"}
-)
 _RESULT_DISPOSITIONS: Final[frozenset[str]] = frozenset(
     {"created", "existing", "evaluation_only"}
 )
@@ -184,58 +188,32 @@ class CandidateWorkflowError(RuntimeError):
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class SourceReadAuthorizationRequest:
-    portfolio_id: str
-    portfolio_subject_id: str
-    publication_id: str
-    operation: str
-    purpose: str
+class SourceReadAuthorizationRequest(_SharedSourceReadAuthorizationRequest):
+    """Backward-compatible Candidate import for the shared source-read request."""
 
     def __post_init__(self) -> None:
         try:
-            for name in ("portfolio_id", "portfolio_subject_id", "publication_id"):
-                object.__setattr__(
-                    self, name, require_identifier(getattr(self, name), name)
-                )
-            object.__setattr__(
-                self,
-                "operation",
-                require_controlled_key(self.operation, "operation"),
-            )
-            object.__setattr__(
-                self, "purpose", require_text(self.purpose, "purpose", maximum=500)
-            )
-        except VitrineModelValidationError as error:
+            _SharedSourceReadAuthorizationRequest.__post_init__(self)
+        except ProducerReaderServiceError as error:
             raise CandidateWorkflowError(
                 "candidate.invalid_request",
                 "Source-read authorization request is invalid.",
-                stage="authorization_request",
+                stage=error.stage,
             ) from error
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class SourceReadAuthorizationDecision:
-    outcome: str
-    reason_codes: tuple[str, ...] = ()
+class SourceReadAuthorizationDecision(_SharedSourceReadAuthorizationDecision):
+    """Backward-compatible Candidate import for the shared source-read decision."""
 
     def __post_init__(self) -> None:
-        if self.outcome not in _AUTHORIZATION_OUTCOMES:
-            raise CandidateWorkflowError(
-                "candidate.invalid_request",
-                "Source-read authorization outcome is invalid.",
-                stage="authorization",
-            )
         try:
-            object.__setattr__(
-                self,
-                "reason_codes",
-                lower_key_tuple(self.reason_codes, "reason_codes"),
-            )
-        except VitrineModelValidationError as error:
+            _SharedSourceReadAuthorizationDecision.__post_init__(self)
+        except ProducerReaderServiceError as error:
             raise CandidateWorkflowError(
                 "candidate.invalid_request",
-                "Source-read authorization reason codes are invalid.",
-                stage="authorization",
+                "Source-read authorization decision is invalid.",
+                stage=error.stage,
             ) from error
 
 
@@ -734,92 +712,74 @@ def _authorize(
         purpose=purpose,
     )
     try:
-        decision = gate.authorize(request)
-    except Exception as error:
+        decision = authorize_source_read(
+            cast(_SharedSourceReadAuthorizationGate, gate),
+            request,
+        )
+    except ProducerReaderServiceError as error:
+        if error.code == "source_read.invalid_request":
+            code = "candidate.invalid_request"
+            message = "Source-read authorization request is invalid."
+        elif error.code == "source_read.authorization_denied":
+            code = "candidate.authorization_denied"
+            message = "Source-read authorization was denied."
+        else:
+            code = "candidate.authorization_unresolved"
+            message = "Source-read authorization could not be established."
         raise CandidateWorkflowError(
-            "candidate.authorization_unresolved",
-            "Source-read authorization could not be established.",
-            stage="source_authorization",
+            code,
+            message,
+            stage=error.stage,
         ) from error
-    if not isinstance(decision, SourceReadAuthorizationDecision):
-        raise CandidateWorkflowError(
-            "candidate.authorization_unresolved",
-            "Source-read authorization gate returned an invalid decision.",
-            stage="source_authorization",
-        )
-    if decision.outcome == "denied":
-        raise CandidateWorkflowError(
-            "candidate.authorization_denied",
-            "Source-read authorization was denied.",
-            stage="source_authorization",
-        )
-    if decision.outcome != "allowed":
-        raise CandidateWorkflowError(
-            "candidate.authorization_unresolved",
-            "Source-read authorization is unresolved.",
-            stage="source_authorization",
-        )
-    return decision
+    return cast(SourceReadAuthorizationDecision, decision)
 
 
-def _read_verified_manifest_bytes(
-    workspace_root: str | Path, publication: PublicationRecord
-) -> bytes:
-    lexical_root = Path(workspace_root).absolute()
-    lexical_path = lexical_root.joinpath(*publication.manifest_path.split("/"))
-    current = lexical_path
+
+def _authorize_read_and_parse_manifest(
+    workspace_root: str | Path,
+    *,
+    gate: SourceReadAuthorizationGate,
+    portfolio: Portfolio,
+    publication: PublicationRecord,
+    purpose: str,
+    adapter: ProducerProjectionAdapter,
+) -> tuple[SourceReadAuthorizationDecision, bytes, object]:
+    request = SourceReadAuthorizationRequest(
+        portfolio_id=portfolio.portfolio_id,
+        portfolio_subject_id=portfolio.portfolio_subject_id,
+        publication_id=publication.publication_id,
+        operation=SOURCE_READ_OPERATION,
+        purpose=purpose,
+    )
     try:
-        while current != lexical_root:
-            if current.is_symlink():
-                raise CandidateWorkflowError(
-                    "candidate.manifest_integrity_failed",
-                    "Canonical Publication manifest path traverses a symlink.",
-                    stage="manifest_integrity",
-                )
-            current = current.parent
-    except OSError as error:
-        raise CandidateWorkflowError(
-            "candidate.manifest_integrity_failed",
-            "Canonical Publication manifest path could not be inspected safely.",
-            stage="manifest_integrity",
-        ) from error
-    try:
-        path = verify_publication_manifest(workspace_root, publication)
-    except PublicationManifestNotFoundError as error:
-        raise CandidateWorkflowError(
-            "candidate.manifest_missing",
-            "Canonical Publication manifest is unavailable.",
-            stage="manifest_integrity",
-        ) from error
-    except (PublicationManifestIntegrityError, PublicationManifestError) as error:
-        raise CandidateWorkflowError(
-            "candidate.manifest_integrity_failed",
-            "Canonical Publication manifest failed integrity verification.",
-            stage="manifest_integrity",
-        ) from error
-    try:
-        data = path.read_bytes()
-    except OSError as error:
-        raise CandidateWorkflowError(
-            "candidate.manifest_missing",
-            "Verified Publication manifest could not be read.",
-            stage="manifest_integrity",
-        ) from error
-    actual = hashlib.sha256(data).hexdigest()
-    if not hmac.compare_digest(actual, publication.manifest_digest):
-        raise CandidateWorkflowError(
-            "candidate.manifest_integrity_failed",
-            "Publication manifest changed before producer reading.",
-            stage="manifest_integrity",
+        result = read_authorized_producer_manifest(
+            workspace_root,
+            publication=publication,
+            authorization_gate=cast(_SharedSourceReadAuthorizationGate, gate),
+            authorization_request=request,
+            reader=adapter.reader,
         )
-    return data
-
-
-def _project(
-    adapter: ProducerProjectionAdapter, data: bytes
-) -> tuple[ProjectedProducerSource, ...]:
-    try:
-        public_model = adapter.reader.read(data)
+    except ProducerReaderServiceError as error:
+        if error.code == "source_read.invalid_request":
+            code = "candidate.invalid_request"
+            message = "Source-read authorization request is invalid."
+        elif error.code == "source_read.authorization_denied":
+            code = "candidate.authorization_denied"
+            message = "Source-read authorization was denied."
+        elif error.code == "source_read.authorization_unresolved":
+            code = "candidate.authorization_unresolved"
+            message = "Source-read authorization could not be established."
+        elif error.code == "source_read.manifest_missing":
+            code = "candidate.manifest_missing"
+            message = "Canonical Publication manifest is unavailable."
+        else:
+            code = "candidate.manifest_integrity_failed"
+            message = "Canonical Publication manifest failed integrity verification."
+        raise CandidateWorkflowError(
+            code,
+            message,
+            stage=error.stage,
+        ) from error
     except ProducerReaderError as error:
         raise CandidateWorkflowError(
             "candidate.reader_failed",
@@ -827,6 +787,39 @@ def _project(
             stage="producer_reader",
             diagnostic_fields=(("code", error.code),),
         ) from error
+    return (
+        cast(SourceReadAuthorizationDecision, result.authorization),
+        result.manifest_bytes,
+        result.public_model,
+    )
+
+
+def _read_verified_manifest_bytes(
+    workspace_root: str | Path, publication: PublicationRecord
+) -> bytes:
+    try:
+        return read_verified_publication_manifest_bytes(
+            workspace_root,
+            publication,
+        )
+    except ProducerReaderServiceError as error:
+        if error.code == "source_read.manifest_missing":
+            code = "candidate.manifest_missing"
+            message = "Canonical Publication manifest is unavailable."
+        else:
+            code = "candidate.manifest_integrity_failed"
+            message = "Canonical Publication manifest failed integrity verification."
+        raise CandidateWorkflowError(
+            code,
+            message,
+            stage=error.stage,
+        ) from error
+
+
+def _project_public_model(
+    adapter: ProducerProjectionAdapter,
+    public_model: object,
+) -> tuple[ProjectedProducerSource, ...]:
     try:
         batch = adapter.project(public_model)
     except ProducerProjectionError as error:
@@ -851,6 +844,23 @@ def _project(
             stage="producer_parse",
         )
     return batch.projected_sources
+
+
+def _project(
+    adapter: ProducerProjectionAdapter, data: bytes
+) -> tuple[ProjectedProducerSource, ...]:
+    """Backward-compatible pure reader-plus-projection helper for focused tests."""
+
+    try:
+        public_model = adapter.reader.read(data)
+    except ProducerReaderError as error:
+        raise CandidateWorkflowError(
+            "candidate.reader_failed",
+            "Producer public reader rejected the verified manifest.",
+            stage="producer_reader",
+            diagnostic_fields=(("code", error.code),),
+        ) from error
+    return _project_public_model(adapter, public_model)
 
 
 def _core_source_reference(
@@ -1385,14 +1395,15 @@ def _process_publication(
         )
 
     adapter = _select_adapter(adapter_registry, _adapter_request(publication, registration))
-    authorization = _authorize(
-        authorization_gate,
+    authorization, data, public_model = _authorize_read_and_parse_manifest(
+        workspace_root,
+        gate=authorization_gate,
         portfolio=portfolio,
         publication=publication,
         purpose=request.requested_purpose,
+        adapter=adapter,
     )
-    data = _read_verified_manifest_bytes(workspace_root, publication)
-    sources = _project(adapter, data)
+    sources = _project_public_model(adapter, public_model)
 
     core_reference = _core_source_reference(
         publication,
