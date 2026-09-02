@@ -191,7 +191,10 @@ def _runtime_boundary_findings() -> list[str]:
     ordinary_adapter_ids = tuple(
         item.declaration.adapter_id for item in ordinary_registry.adapters
     )
-    if ordinary_adapter_ids != ("vitrine_scoreform_live_adapter",):
+    if ordinary_adapter_ids != (
+        "vitrine_concord_live_adapter",
+        "vitrine_scoreform_live_adapter",
+    ):
         findings.append(
             f"ordinary adapter registry drifted: {ordinary_adapter_ids!r}"
         )

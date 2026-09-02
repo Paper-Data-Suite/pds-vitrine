@@ -65,11 +65,14 @@ from vitrine.producer_adapters import build_adapter_registry
 registry = build_adapter_registry()
 assert tuple(
     adapter.declaration.adapter_id for adapter in registry.adapters
-) == ("vitrine_scoreform_live_adapter",)
+) == (
+    "vitrine_concord_live_adapter",
+    "vitrine_scoreform_live_adapter",
+)
 assert tuple(
     adapter.declaration.support_key.producer_module_id
     for adapter in registry.adapters
-) == ("scoreform",)
+) == ("concord", "scoreform")
 assert PublicationProducerRegistry(profiles=()).profiles == ()
 fixture_profiles = build_development_fixture_producer_registry()
 assert len(fixture_profiles.profiles) == 3

@@ -63,14 +63,30 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         )
         _run([str(python), "-m", "pip", "check"], cwd=work, env=env)
         code = """
+from vitrine.concord_artifact_source import (
+    CONCORD_ARTIFACT_SOURCE_PROVIDER_DESCRIPTOR,
+)
 from vitrine.development_adapters import build_development_fixture_adapter_registry
 from vitrine.producer_adapters import build_adapter_registry
+assert CONCORD_ARTIFACT_SOURCE_PROVIDER_DESCRIPTOR.producer_module_id == "concord"
+assert (
+    CONCORD_ARTIFACT_SOURCE_PROVIDER_DESCRIPTOR.representation_kind
+    == "concord:returned_artifact_pdf"
+)
 ordinary = build_adapter_registry()
 assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
+    'vitrine_concord_live_adapter',
     'vitrine_scoreform_live_adapter',
 )
-assert ordinary.adapters[0].declaration.integration_kind == 'live'
-assert ordinary.adapters[0].reader.descriptor.package_identity == 'scoreform'
+assert all(item.declaration.integration_kind == 'live' for item in ordinary.adapters)
+assert {
+    item.declaration.support_key.producer_module_id:
+    item.reader.descriptor.package_identity
+    for item in ordinary.adapters
+} == {
+    'concord': 'pds-concord',
+    'scoreform': 'scoreform',
+}
 fixture = build_development_fixture_adapter_registry()
 assert len(fixture.adapters) == 3
 assert all(item.declaration.integration_kind == 'development_fixture' for item in fixture.adapters)
@@ -79,17 +95,27 @@ assert all(item.declaration.integration_kind == 'development_fixture' for item i
         console = _console_path(environment)
         _run([str(console), "adapters", "--help"], cwd=work, env=env)
         ordinary_output = _run([str(console), "adapters", "list"], cwd=work, env=env)
-        if "vitrine_scoreform_live_adapter" not in ordinary_output:
-            raise RuntimeError("default adapter CLI is missing live ScoreForm")
+        for adapter_id in (
+            "vitrine_concord_live_adapter",
+            "vitrine_scoreform_live_adapter",
+        ):
+            if adapter_id not in ordinary_output:
+                raise RuntimeError(f"default adapter CLI is missing {adapter_id}")
         if "fixture" in ordinary_output.lower():
             raise RuntimeError("default adapter CLI exposed development fixtures")
-        show_output = _run(
-            [str(console), "adapters", "show", "vitrine_scoreform_live_adapter"],
-            cwd=work,
-            env=env,
-        )
-        if "Integration kind: live" not in show_output:
-            raise RuntimeError("live ScoreForm adapter show diagnostics are missing")
+        for adapter_id, producer in (
+            ("vitrine_concord_live_adapter", "concord"),
+            ("vitrine_scoreform_live_adapter", "scoreform"),
+        ):
+            show_output = _run(
+                [str(console), "adapters", "show", adapter_id],
+                cwd=work,
+                env=env,
+            )
+            if "Integration kind: live" not in show_output:
+                raise RuntimeError(f"{adapter_id} show diagnostics are missing")
+            if f"Producer module: {producer}" not in show_output:
+                raise RuntimeError(f"{adapter_id} show producer identity is missing")
         fixture_output = _run(
             [str(console), "adapters", "list", "--include-development-fixtures"],
             cwd=work,

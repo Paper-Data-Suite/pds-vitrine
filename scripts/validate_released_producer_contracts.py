@@ -304,18 +304,43 @@ def _validate_registry_separation() -> None:
     ordinary = build_adapter_registry()
     _require(
         tuple(item.declaration.adapter_id for item in ordinary.adapters)
-        == ("vitrine_scoreform_live_adapter",),
-        "ordinary adapter registry must contain exactly the ScoreForm live adapter",
+        == (
+            "vitrine_concord_live_adapter",
+            "vitrine_scoreform_live_adapter",
+        ),
+        "ordinary adapter registry must contain exactly completed live adapters",
     )
-    live = ordinary.adapters[0].declaration
-    _require(live.integration_kind == "live", "ScoreForm adapter is not live")
+    live_by_module = {
+        item.declaration.support_key.producer_module_id: item.declaration
+        for item in ordinary.adapters
+    }
     _require(
-        live.support_key is SCOREFORM_LIVE_SUPPORT_KEY,
+        set(live_by_module) == {"concord", "scoreform"},
+        "ordinary live adapter module set changed",
+    )
+    scoreform = live_by_module["scoreform"]
+    concord = live_by_module["concord"]
+    _require(
+        scoreform.integration_kind == "live" and concord.integration_kind == "live",
+        "completed adapter is not live",
+    )
+    _require(
+        scoreform.support_key is SCOREFORM_LIVE_SUPPORT_KEY,
         "ScoreForm live adapter is not bound to the frozen support key",
     )
     _require(
-        live.public_reader_id == "vitrine_installed_scoreform_academic_result_reader",
+        concord.support_key is CONCORD_LIVE_SUPPORT_KEY,
+        "Concord live adapter is not bound to the frozen support key",
+    )
+    _require(
+        scoreform.public_reader_id
+        == "vitrine_installed_scoreform_academic_result_reader",
         "ScoreForm live adapter reader binding changed",
+    )
+    _require(
+        concord.public_reader_id
+        == "vitrine_installed_concord_academic_result_reader",
+        "Concord live adapter reader binding changed",
     )
 
     fixtures = build_development_fixture_adapter_registry()

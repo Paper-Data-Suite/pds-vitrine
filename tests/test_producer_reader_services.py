@@ -145,10 +145,14 @@ def test_audited_installed_reader_catalog_is_lazy_and_live(
     )
     ordinary = build_adapter_registry()
     assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
+        "vitrine_concord_live_adapter",
         "vitrine_scoreform_live_adapter",
     )
     assert all(
-        name != "scoreform" and not name.startswith("scoreform.")
+        not any(
+            name == producer or name.startswith(f"{producer}.")
+            for producer in ("concord", "quillan", "scoreform")
+        )
         for name in sys.modules
     )
 

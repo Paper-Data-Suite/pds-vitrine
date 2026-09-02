@@ -614,7 +614,10 @@ def _inside_qualification(fixture_dir: Path) -> None:
         ProducerAdapterSupportRequest,
         build_adapter_registry,
     )
-    from vitrine.released_producer_contracts import SCOREFORM_LIVE_SUPPORT_KEY
+    from vitrine.released_producer_contracts import (
+        CONCORD_LIVE_SUPPORT_KEY,
+        SCOREFORM_LIVE_SUPPORT_KEY,
+    )
 
     scoreform_profile_module = importlib.import_module("scoreform.pds_publication")
     get_scoreform_profile = getattr(
@@ -731,6 +734,121 @@ def _inside_qualification(fixture_dir: Path) -> None:
         len(batch.projected_sources),
     )
 
+    concord_profile_module = importlib.import_module("concord.pds_publication")
+    get_concord_profile = getattr(
+        concord_profile_module, "get_publication_producer_profile", None
+    )
+    if not callable(get_concord_profile):
+        raise RuntimeError("exact Concord wheel is missing its public producer Profile")
+    concord_profile = get_concord_profile()
+    if concord_profile.module_id != "concord":
+        raise RuntimeError("exact Concord wheel returned the wrong producer Profile")
+    if concord_profile.supported_core_publication_schema_versions != frozenset({"1"}):
+        raise RuntimeError("Concord Profile Core publication support changed")
+    if concord_profile.supported_academic_work_contract_versions != frozenset(
+        {"concord_academic_work_v1"}
+    ):
+        raise RuntimeError("Concord Profile academic-work support changed")
+    if len(concord_profile.publication_contracts) != 1:
+        raise RuntimeError("Concord Profile publication contract count changed")
+    concord_contract = concord_profile.publication_contracts[0]
+    if concord_contract.publication_kind != "academic_result_set":
+        raise RuntimeError("Concord Profile publication kind changed")
+    if concord_contract.manifest_contract_versions != frozenset(
+        {"concord_academic_result_manifest_v1"}
+    ):
+        raise RuntimeError("Concord Profile manifest contract changed")
+    if concord_contract.supported_capabilities != frozenset(
+        {"criterion_scores", "moderated_scores", "standards_ratings"}
+    ):
+        raise RuntimeError("Concord Profile capabilities changed")
+    if len(concord_contract.source_record_contracts) != 1:
+        raise RuntimeError("Concord Profile source-record support changed")
+    concord_source = concord_contract.source_record_contracts[0]
+    if (
+        concord_source.record_kind != "activity"
+        or concord_source.contract_versions != frozenset({"concord_activity_v1"})
+        or concord_source.allows_unversioned
+        or concord_contract.allows_missing_source_record
+    ):
+        raise RuntimeError("Concord Profile Activity source-record semantics changed")
+
+    concord_key = CONCORD_LIVE_SUPPORT_KEY
+    concord_request = ProducerAdapterSupportRequest(
+        producer_module_id=concord_key.producer_module_id,
+        core_publication_schema_version=concord_key.core_publication_schema_version,
+        publication_kind=concord_key.publication_kind,
+        manifest_contract_version=concord_key.manifest_contract_version,
+        producer_contract_version=concord_key.producer_contract_version,
+        source_record_kind=concord_key.source_record_kind,
+        source_record_contract_version=concord_key.source_record_contract_version,
+        capabilities=(
+            "criterion_scores",
+            "moderated_scores",
+            "standards_ratings",
+        ),
+    )
+    concord_adapter = build_adapter_registry().select_adapter(concord_request)
+    concord_batch = concord_adapter.project(models["concord"])
+    if len(concord_batch.projected_sources) != 1:
+        raise RuntimeError("Concord live adapter changed exact-wheel Score cardinality")
+    concord_score = concord_batch.projected_sources[0]
+    if concord_score.projection_kind != "concord:score_summary":
+        raise RuntimeError("Concord exact-wheel projection kind changed")
+    if concord_score.producer_source.source_record_id != "score-local":
+        raise RuntimeError("Concord exact-wheel Score identity changed")
+    if (
+        len(concord_score.source_relationships) != 1
+        or concord_score.source_relationships[0].relationship_kind
+        != "individual_score_target"
+        or concord_score.source_relationships[0].source_subject_id
+        != "student-qualification"
+    ):
+        raise RuntimeError("Concord exact-wheel student Score target changed")
+    concord_fields = {
+        field.key: field.value for field in concord_score.display_snapshot.fields
+    }
+    expected_fields = {
+        "criterion_kind": "local",
+        "scoring_scale_type": "teacher_defined",
+        "scale_level_values": (1,),
+        "scale_level_value_types": ("int",),
+        "score_disposition": "scored",
+        "score_native_value": 1,
+        "score_native_value_type": "int",
+        "score_current_state": "current",
+    }
+    for field, expected_value in expected_fields.items():
+        if concord_fields.get(field) != expected_value:
+            raise RuntimeError(
+                f"Concord exact-wheel projection changed {field}"
+            )
+    if (
+        concord_score.source_artifact.source_locator is not None
+        or concord_score.source_artifact.source_digest is not None
+        or concord_score.source_artifact.byte_size is not None
+    ):
+        raise RuntimeError("Concord Score summary fabricated source access metadata")
+    concord_lowered = repr(concord_batch).lower()
+    for prohibited in (
+        "grade",
+        "proficiency",
+        "mastery",
+        "portfolio-worthy",
+        "selected score",
+    ):
+        if prohibited in concord_lowered:
+            raise RuntimeError(
+                f"Concord live adapter inferred prohibited semantics: {prohibited}"
+            )
+
+    print(
+        "PASS exact-wheel Concord live projection qualification",
+        metadata.version("pds-core"),
+        metadata.version("pds-concord"),
+        len(concord_batch.projected_sources),
+    )
+
     print("PASS exact-wheel installed producer reader qualification")
 
 
@@ -797,6 +915,19 @@ def qualify(wheel_dir: Path) -> None:
                 "--inside",
                 "--fixture-dir",
                 str(fixture_dir),
+            ],
+            cwd=repository_root,
+            env=child_env,
+            check=True,
+        )
+        subprocess.run(
+            [
+                str(python),
+                str(
+                    repository_root
+                    / "scripts"
+                    / "qualify_concord_artifact_source.py"
+                ),
             ],
             cwd=repository_root,
             env=child_env,

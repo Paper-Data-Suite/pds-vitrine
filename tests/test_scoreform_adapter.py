@@ -371,12 +371,18 @@ def test_live_module_and_adapter_construction_do_not_import_scoreform(
     assert after == before
 
 
-def test_slice_three_registers_only_scoreform_live_but_workflow_stays_fail_closed() -> None:
+def test_completed_live_registry_keeps_scoreform_bound_and_workflow_fail_closed() -> None:
     ordinary = build_adapter_registry()
     assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
+        "vitrine_concord_live_adapter",
         "vitrine_scoreform_live_adapter",
     )
-    assert ordinary.adapters[0].declaration.support_key is SCOREFORM_LIVE_SUPPORT_KEY
+    scoreform = next(
+        item
+        for item in ordinary.adapters
+        if item.declaration.adapter_id == "vitrine_scoreform_live_adapter"
+    )
+    assert scoreform.declaration.support_key is SCOREFORM_LIVE_SUPPORT_KEY
 
     dependencies = default_workflow_dependencies()
     assert dependencies.producer_registry.profiles == ()

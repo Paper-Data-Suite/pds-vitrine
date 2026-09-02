@@ -957,13 +957,18 @@ def build_adapter_registry(
             "adapters must be iterable.",
         ) from error
 
-    # Local import avoids a producer-adapter module cycle while preserving the
-    # ScoreForm package's lazy installed-reader boundary. Constructing the live
-    # adapter reads no ScoreForm package or workspace state.
+    # Local imports avoid producer-adapter module cycles while preserving each
+    # producer package's lazy installed-reader boundary. Constructing live
+    # adapters reads no sibling package or workspace state.
+    from vitrine.concord_adapter import build_concord_live_adapter
     from vitrine.scoreform_adapter import build_scoreform_live_adapter
 
     registry = ProducerProjectionAdapterRegistry(
-        adapters=(build_scoreform_live_adapter(), *raw)
+        adapters=(
+            build_concord_live_adapter(),
+            build_scoreform_live_adapter(),
+            *raw,
+        )
     )
     fixture = next(
         (
