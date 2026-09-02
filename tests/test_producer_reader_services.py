@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from typing import cast
@@ -142,7 +143,14 @@ def test_audited_installed_reader_catalog_is_lazy_and_live(
         == INSTALLED_PRODUCER_READER_CONTRACT_VERSION
         for reader in readers
     )
-    assert build_adapter_registry().adapters == ()
+    ordinary = build_adapter_registry()
+    assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
+        "vitrine_scoreform_live_adapter",
+    )
+    assert all(
+        name != "scoreform" and not name.startswith("scoreform.")
+        for name in sys.modules
+    )
 
 
 def test_reader_binding_is_derived_from_authoritative_audit() -> None:

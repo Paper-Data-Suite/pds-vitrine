@@ -190,8 +190,19 @@ def test_fixture_and_live_support_identities_remain_disjoint() -> None:
     )
 
 
-def test_audited_contract_catalog_does_not_activate_live_adapters() -> None:
-    assert build_adapter_registry().adapters == ()
+def test_audited_contract_catalog_activates_only_implemented_live_adapters() -> None:
+    registry = build_adapter_registry()
+    assert tuple(
+        adapter.declaration.adapter_id for adapter in registry.adapters
+    ) == ("vitrine_scoreform_live_adapter",)
+    assert tuple(
+        adapter.declaration.support_key.producer_module_id
+        for adapter in registry.adapters
+    ) == ("scoreform",)
+    assert all(
+        adapter.declaration.integration_kind == "live"
+        for adapter in registry.adapters
+    )
 
 
 def test_artifact_access_is_separate_from_manifest_support() -> None:

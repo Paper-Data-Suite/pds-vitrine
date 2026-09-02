@@ -142,8 +142,9 @@ validated public-model objects.
 
 The reader performs no filesystem or network access.
 
-A future live ScoreForm adapter may delegate to ScoreForm's installed public
-reader. Issue #32 does not do so and imports no sibling producer package.
+Issue #59 now implements the live ScoreForm adapter by delegating to
+ScoreForm's installed public reader bound by issue #58. Adapter and registry
+construction remain lazy and do not import ScoreForm merely for diagnostics.
 
 ## Projection boundary
 
@@ -206,10 +207,13 @@ Overlapping capability claims that both match one request are conflicts.
 
 ## Ordinary versus fixture registry
 
-`build_adapter_registry()` is the ordinary runtime construction surface. Issue
-#32 performs no installed-reader discovery and the default registry is empty.
+`build_adapter_registry()` is the ordinary runtime construction surface. After
+issue #59 it contains exactly the live ScoreForm adapter. Constructing this
+registry does not import ScoreForm.
 
-Passing a development fixture to that constructor fails with:
+Quillan and Concord live adapters remain absent until #60 and #61.
+
+Passing a development fixture to that constructor still fails with:
 
 ```text
 adapter.fixture_not_enabled
@@ -339,9 +343,10 @@ vitrine adapters list --include-development-fixtures
 vitrine adapters show <adapter_id> --include-development-fixtures
 ```
 
-The default command reports no live adapter registrations. Fixture payloads are
-never displayed. There is deliberately no teacher-facing adapter-management
-menu.
+The default command reports the live ScoreForm registration. Quillan and
+Concord remain absent until their live adapter issues. Development fixtures
+remain opt-in and fixture payloads are never displayed. There is deliberately no
+teacher-facing adapter-management menu.
 
 ## Packaging
 
@@ -356,8 +361,9 @@ fixtures/producer-adapters/
 
 They are not packaged as runtime producer data in the wheel.
 
-Vitrine retains only its Core runtime dependency and adds no ScoreForm, Quillan,
-or Concord dependency or entry-point discovery.
+The runtime wheel now includes `vitrine/scoreform_adapter.py`, while Vitrine
+retains only its Core runtime dependency and adds no hard ScoreForm, Quillan, or
+Concord dependency or automatic producer entry-point discovery.
 
 ## #33 handoff
 
@@ -412,5 +418,9 @@ Candidate orchestration uses `read_authorized_producer_manifest()` so source-rea
 authorization, Core manifest verification, exact-byte rehashing, and reader
 invocation are one shared trust boundary before pure adapter projection.
 
-The default/ordinary adapter registry remains empty. Live ScoreForm, Quillan,
-and Concord adapter declarations are still owned by #59-#61.
+Issue #59 now adds exactly one ordinary live registration:
+`vitrine_scoreform_live_adapter`. Quillan and Concord live declarations remain
+owned by #60 and #61.
+
+The complete ScoreForm contract is documented in
+[live-scoreform-projection-adapter-v1.md](live-scoreform-projection-adapter-v1.md).

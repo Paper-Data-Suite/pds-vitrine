@@ -2,15 +2,21 @@ from __future__ import annotations
 
 import io
 
+import pytest
+
 from vitrine import cli
 
 
-def test_default_adapter_list_does_not_present_fixtures_as_live() -> None:
+def test_default_adapter_list_contains_only_live_scoreform() -> None:
     output = io.StringIO()
     error = io.StringIO()
     assert cli.main(["adapters", "list"], output=output, error=error) == 0
-    assert output.getvalue().strip() == "No live producer adapters are registered."
-    assert "fixture" not in output.getvalue().lower()
+    text = output.getvalue()
+    assert "vitrine_scoreform_live_adapter" in text
+    assert "\tlive\tscoreform\t" in text
+    assert "fixture" not in text.lower()
+    assert "quillan" not in text.lower()
+    assert "concord" not in text.lower()
     assert error.getvalue() == ""
 
 
@@ -24,10 +30,40 @@ def test_adapter_list_can_explicitly_include_development_fixtures() -> None:
         == 0
     )
     text = output.getvalue()
+    assert "vitrine_scoreform_live_adapter" in text
     assert "vitrine_scoreform_fixture_adapter" in text
     assert "vitrine_quillan_fixture_adapter" in text
     assert "vitrine_concord_fixture_adapter" in text
     assert text.count("development_fixture") == 3
+    assert text.count("\tlive\t") == 1
+
+
+def test_live_adapter_show_is_available_without_fixture_opt_in_and_is_lazy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import vitrine.scoreform_adapter as scoreform_adapter
+
+    def forbidden_import(_name: str) -> object:
+        raise AssertionError("adapter diagnostics must not import ScoreForm")
+
+    monkeypatch.setattr(scoreform_adapter, "import_module", forbidden_import)
+    output = io.StringIO()
+    error = io.StringIO()
+    assert (
+        cli.main(
+            ["adapters", "show", "vitrine_scoreform_live_adapter"],
+            output=output,
+            error=error,
+        )
+        == 0
+    )
+    text = output.getvalue()
+    assert "Integration kind: live" in text
+    assert "Producer module: scoreform" in text
+    assert "scoreform_academic_result_manifest_v1" in text
+    assert "vitrine_installed_scoreform_academic_result_reader" in text
+    assert "student_" not in text
+    assert error.getvalue() == ""
 
 
 def test_adapter_show_requires_fixture_opt_in() -> None:

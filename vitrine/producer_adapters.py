@@ -943,8 +943,9 @@ def build_adapter_registry(
 ) -> ProducerProjectionAdapterRegistry:
     """Build the ordinary runtime registry without installed-package discovery.
 
-    Explicit development-fixture adapters are rejected here. Tests and developer
-    tools must opt into ``build_development_fixture_adapter_registry`` instead.
+    The built-in registry contains only completed live adapters. Explicit additional
+    live adapters may be supplied by callers. Development-fixture adapters remain
+    rejected here and require ``build_development_fixture_adapter_registry``.
     """
 
     try:
@@ -955,7 +956,15 @@ def build_adapter_registry(
             "registry",
             "adapters must be iterable.",
         ) from error
-    registry = ProducerProjectionAdapterRegistry(adapters=raw)
+
+    # Local import avoids a producer-adapter module cycle while preserving the
+    # ScoreForm package's lazy installed-reader boundary. Constructing the live
+    # adapter reads no ScoreForm package or workspace state.
+    from vitrine.scoreform_adapter import build_scoreform_live_adapter
+
+    registry = ProducerProjectionAdapterRegistry(
+        adapters=(build_scoreform_live_adapter(), *raw)
+    )
     fixture = next(
         (
             adapter

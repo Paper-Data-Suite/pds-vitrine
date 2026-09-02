@@ -87,6 +87,7 @@ files = [
     "scripts/validate_producer_adapters.py",
     "scripts/validate_released_producer_contracts.py",
     "scripts/validate_producer_reader_services.py",
+    "scripts/validate_scoreform_adapter.py",
     "scripts/qualify_installed_producer_readers.py",
     "scripts/validate_candidate_discovery.py",
     "scripts/validate_curation_workflows.py",

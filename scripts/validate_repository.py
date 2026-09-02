@@ -27,6 +27,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_producer_reader_services.py",),
     ),
     (
+        "live ScoreForm adapter",
+        ("scripts/validate_scoreform_adapter.py", "--skip-focused-tests"),
+    ),
+    (
         "Candidate discovery",
         ("scripts/validate_candidate_discovery.py", "--skip-focused-tests"),
     ),

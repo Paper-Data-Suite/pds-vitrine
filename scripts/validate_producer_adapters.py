@@ -67,8 +67,14 @@ def _require_error_code(callback: Callable[[], object], expected: str) -> None:
 
 def validate(root: Path) -> None:
     ordinary = build_adapter_registry()
-    if ordinary.adapters:
-        raise RuntimeError("ordinary registry unexpectedly contains adapters")
+    if tuple(item.declaration.adapter_id for item in ordinary.adapters) != (
+        "vitrine_scoreform_live_adapter",
+    ):
+        raise RuntimeError(
+            "ordinary registry must contain exactly the ScoreForm live adapter"
+        )
+    if ordinary.adapters[0].declaration.integration_kind != "live":
+        raise RuntimeError("ordinary ScoreForm adapter is not marked live")
 
     fixture_registry = build_development_fixture_adapter_registry()
     if not fixture_registry.adapters or any(
@@ -167,6 +173,9 @@ def validate(root: Path) -> None:
         lambda: fixture_registry.select_adapter(live_scoreform),
         "adapter.unsupported_contract",
     )
+    selected_live = ordinary.select_adapter(live_scoreform)
+    if selected_live.declaration.adapter_id != "vitrine_scoreform_live_adapter":
+        raise RuntimeError("ordinary ScoreForm support request selected the wrong adapter")
 
     fixture_root = root / "tests" / "fixtures" / "runtime-models"
     for filename, expected in EXPECTED_RUNTIME_HASHES.items():

@@ -66,7 +66,11 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
 from vitrine.development_adapters import build_development_fixture_adapter_registry
 from vitrine.producer_adapters import build_adapter_registry
 ordinary = build_adapter_registry()
-assert ordinary.adapters == ()
+assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
+    'vitrine_scoreform_live_adapter',
+)
+assert ordinary.adapters[0].declaration.integration_kind == 'live'
+assert ordinary.adapters[0].reader.descriptor.package_identity == 'scoreform'
 fixture = build_development_fixture_adapter_registry()
 assert len(fixture.adapters) == 3
 assert all(item.declaration.integration_kind == 'development_fixture' for item in fixture.adapters)
@@ -75,8 +79,17 @@ assert all(item.declaration.integration_kind == 'development_fixture' for item i
         console = _console_path(environment)
         _run([str(console), "adapters", "--help"], cwd=work, env=env)
         ordinary_output = _run([str(console), "adapters", "list"], cwd=work, env=env)
-        if ordinary_output.strip() != "No live producer adapters are registered.":
-            raise RuntimeError("default adapter CLI output misrepresents fixture readiness")
+        if "vitrine_scoreform_live_adapter" not in ordinary_output:
+            raise RuntimeError("default adapter CLI is missing live ScoreForm")
+        if "fixture" in ordinary_output.lower():
+            raise RuntimeError("default adapter CLI exposed development fixtures")
+        show_output = _run(
+            [str(console), "adapters", "show", "vitrine_scoreform_live_adapter"],
+            cwd=work,
+            env=env,
+        )
+        if "Integration kind: live" not in show_output:
+            raise RuntimeError("live ScoreForm adapter show diagnostics are missing")
         fixture_output = _run(
             [str(console), "adapters", "list", "--include-development-fixtures"],
             cwd=work,

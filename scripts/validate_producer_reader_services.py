@@ -128,9 +128,16 @@ def _validate_audited_reader_bindings() -> None:
 
 
 def _validate_fail_closed_defaults() -> None:
+    ordinary = build_adapter_registry()
     _require(
-        build_adapter_registry().adapters == (),
-        "ordinary adapter registry must remain empty before #59-#61",
+        tuple(item.declaration.adapter_id for item in ordinary.adapters)
+        == ("vitrine_scoreform_live_adapter",),
+        "ordinary registry must contain exactly the completed ScoreForm live adapter",
+    )
+    _require(
+        ordinary.adapters[0].reader.descriptor.public_reader_id
+        == "vitrine_installed_scoreform_academic_result_reader",
+        "ScoreForm live adapter is not bound to the #58 installed reader",
     )
     dependencies = default_workflow_dependencies()
     _require(

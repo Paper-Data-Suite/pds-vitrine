@@ -303,8 +303,19 @@ def _validate_schema_audit() -> None:
 def _validate_registry_separation() -> None:
     ordinary = build_adapter_registry()
     _require(
-        not ordinary.adapters,
-        "ordinary adapter registry must remain empty until live adapters exist",
+        tuple(item.declaration.adapter_id for item in ordinary.adapters)
+        == ("vitrine_scoreform_live_adapter",),
+        "ordinary adapter registry must contain exactly the ScoreForm live adapter",
+    )
+    live = ordinary.adapters[0].declaration
+    _require(live.integration_kind == "live", "ScoreForm adapter is not live")
+    _require(
+        live.support_key is SCOREFORM_LIVE_SUPPORT_KEY,
+        "ScoreForm live adapter is not bound to the frozen support key",
+    )
+    _require(
+        live.public_reader_id == "vitrine_installed_scoreform_academic_result_reader",
+        "ScoreForm live adapter reader binding changed",
     )
 
     fixtures = build_development_fixture_adapter_registry()

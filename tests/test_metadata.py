@@ -21,8 +21,21 @@ def test_package_identity_and_dependency_metadata() -> None:
 
 
 def test_no_core_or_producer_entry_points_are_declared() -> None:
-    text = Path("pyproject.toml").read_text(encoding="utf-8")
-    assert "paper_data_suite.modules" not in text
-    assert "paper_data_suite.publication_producers" not in text
-    for dependency in ("scoreform", "quillan", "concord", "portia", "meridian"):
-        assert dependency not in text.casefold()
+    data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+    project = data["project"]
+
+    assert "entry-points" not in project
+    assert project["scripts"] == {"vitrine": "vitrine.cli:main"}
+
+    dependency_sets = (
+        tuple(project["dependencies"]),
+        *(
+            tuple(requirements)
+            for requirements in project.get("optional-dependencies", {}).values()
+        ),
+    )
+    forbidden = ("scoreform", "quillan", "concord", "portia", "meridian")
+    for dependencies in dependency_sets:
+        for requirement in dependencies:
+            normalized = requirement.casefold().replace("_", "-")
+            assert not any(name in normalized for name in forbidden)

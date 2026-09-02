@@ -22,9 +22,10 @@ docs/contracts/released-producer-semantic-crosswalk-v1.md
 docs/contracts/snapshot-build-workflows-v1.md
 ```
 
-Issue #57 records the integration contract. It does not implement a live
-ScoreForm, Quillan, or Concord adapter, and `build_adapter_registry()` must
-remain empty until those adapters are implemented downstream.
+Issue #57 records the integration contract. Downstream issue #59 now implements
+the first live adapter, ScoreForm. At the end of #59,
+`build_adapter_registry()` contains exactly that live ScoreForm declaration;
+Quillan and Concord remain unregistered until #60 and #61.
 
 ## Frozen release anchors
 
@@ -196,7 +197,10 @@ latest attempt != selected attempt
 highest score != portfolio-worthy attempt
 ```
 
-The live adapter must preserve exact assignment, student, attempt, question,
+Issue #59 is implemented. Its operational contract is
+[live-scoreform-projection-adapter-v1.md](live-scoreform-projection-adapter-v1.md).
+
+The live adapter preserves exact assignment, student, attempt, question,
 standards-alignment, response-state, points, and lineage evidence without:
 
 - choosing latest/highest/best/official attempt;
@@ -372,7 +376,7 @@ The validator freezes:
 - exact live support keys;
 - required semantic-crosswalk coverage;
 - the two and only two #57 schema extensions;
-- ordinary live-registry emptiness;
+- ordinary live-registry identity (exactly ScoreForm after #59);
 - fixture/live identity separation;
 - absence of hard ScoreForm/Quillan/Concord runtime dependencies;
 - absence of eager sibling producer imports while validating #57;
@@ -407,13 +411,14 @@ build_installed_producer_registry(...)
 Reader bindings are derived only from the #57 audit, remain lazy, and do not
 make package version part of semantic compatibility.
 
-Candidate now consumes the shared authorized-read operation directly. The
-ordinary live adapter registry remains empty, so #58 does not claim ScoreForm,
-Quillan, or Concord projection support.
+Candidate consumes the shared authorized-read operation directly. Issue #58
+itself did not claim live projection support; issue #59 now supplies the exact
+ScoreForm live projection declaration while preserving the same authorization
+and reader boundary.
 
 The remaining handoff is therefore narrow:
 
-- #59 implements ScoreForm projection only;
+- #59 ScoreForm projection is implemented and frozen by its dedicated contract;
 - #60 implements Quillan projection plus Quillan Artifact authorization;
 - #61 implements Concord projection plus Concord Artifact authorization;
 - #62 builds user-facing compatibility diagnostics over the stable failure

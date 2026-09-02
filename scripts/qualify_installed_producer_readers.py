@@ -103,17 +103,27 @@ def _scoreform_bytes() -> bytes:
                 "assignment_id": "qualification_quiz",
                 "choices": ["A", "B", "C", "D"],
                 "layout_id": "standard_15q_abcd_v1",
-                "question_count": 1,
+                "question_count": 3,
                 "questions": [
                     {
                         "points_possible": 1,
                         "question_number": 1,
+                        "standard_ids": ["standard_reading_1"],
+                    },
+                    {
+                        "points_possible": 1,
+                        "question_number": 2,
                         "standard_ids": [],
-                    }
+                    },
+                    {
+                        "points_possible": 1,
+                        "question_number": 3,
+                        "standard_ids": ["standard_language_2", "standard_reading_3"],
+                    },
                 ],
-                "standards_profile_id": None,
-                "title": "Installed Reader Qualification",
-                "total_points": 1,
+                "standards_profile_id": "qualification_profile",
+                "title": "Installed ScoreForm Projection Qualification",
+                "total_points": 3,
             },
             "contract_version": "scoreform_academic_result_manifest_v1",
             "generated_at": "2026-08-31T20:00:00.000000Z",
@@ -140,23 +150,109 @@ def _scoreform_bytes() -> bytes:
                     "attempts": [
                         {
                             "attempt_number": 1,
-                            "points_earned": 1,
-                            "points_possible": 1,
-                            "provenance": {},
-                            "recorded_at": "2026-08-31T19:55:00.000000Z",
+                            "points_earned": 2,
+                            "points_possible": 3,
+                            "provenance": {
+                                "artifact_id": "artifact_alpha",
+                                "generation_id": "generation_alpha",
+                                "issuance_id": "issuance_alpha",
+                                "logical_pages": [1, 2],
+                                "page_ids": ["page_alpha_1", "page_alpha_2"],
+                                "retained_source_path": "scans/source/2026-08-20/qualification-private.pdf",
+                                "route_ids": ["route_alpha_1", "route_alpha_2"],
+                                "source_page_numbers": [4, 5],
+                                "source_scan_id": "scan_alpha",
+                                "source_sha256": "c" * 64,
+                            },
+                            "recorded_at": "2026-08-20T14:30:00.000000Z",
                             "responses": [
                                 {
                                     "correct": True,
                                     "question_number": 1,
                                     "response_state": "selected",
                                     "selected_answer": "A",
-                                }
+                                },
+                                {
+                                    "correct": False,
+                                    "question_number": 2,
+                                    "response_state": "blank",
+                                    "selected_answer": None,
+                                },
+                                {
+                                    "correct": True,
+                                    "question_number": 3,
+                                    "response_state": "selected",
+                                    "selected_answer": "C",
+                                },
+                            ],
+                            "result_origin": "pds2_scan",
+                        },
+                        {
+                            "attempt_number": 2,
+                            "points_earned": 1,
+                            "points_possible": 3,
+                            "provenance": {
+                                "review_reference": {"failure_id": "failure_alpha"}
+                            },
+                            "recorded_at": "2026-08-21T14:30:00.000000Z",
+                            "responses": [
+                                {
+                                    "correct": True,
+                                    "question_number": 1,
+                                    "response_state": "selected",
+                                    "selected_answer": "B",
+                                },
+                                {
+                                    "correct": False,
+                                    "question_number": 2,
+                                    "response_state": "ambiguous",
+                                    "selected_answer": None,
+                                },
+                                {
+                                    "correct": False,
+                                    "question_number": 3,
+                                    "response_state": "selected",
+                                    "selected_answer": "D",
+                                },
+                            ],
+                            "result_origin": "scan_review_manual",
+                        },
+                    ],
+                    "student_id": "student_alpha",
+                },
+                {
+                    "attempts": [
+                        {
+                            "attempt_number": 1,
+                            "points_earned": 3,
+                            "points_possible": 3,
+                            "provenance": {},
+                            "recorded_at": "2026-08-22T14:30:00.000000Z",
+                            "responses": [
+                                {
+                                    "correct": True,
+                                    "question_number": 1,
+                                    "response_state": "selected",
+                                    "selected_answer": "A",
+                                },
+                                {
+                                    "correct": True,
+                                    "question_number": 2,
+                                    "response_state": "selected",
+                                    "selected_answer": "B",
+                                },
+                                {
+                                    "correct": True,
+                                    "question_number": 3,
+                                    "response_state": "selected",
+                                    "selected_answer": "C",
+                                },
                             ],
                             "result_origin": "plain_paper_manual",
                         }
                     ],
-                    "student_id": "student_qualification",
-                }
+                    "student_id": "student_beta",
+                },
             ],
             "work": {
                 "class_id": "class_qualification",
@@ -165,7 +261,6 @@ def _scoreform_bytes() -> bytes:
             },
         }
     )
-
 
 def _quillan_bytes() -> bytes:
     return _canonical_json_bytes(
@@ -489,10 +584,12 @@ def _inside_qualification(fixture_dir: Path) -> None:
     if tuple(sorted(by_module)) != ("concord", "quillan", "scoreform"):
         raise RuntimeError("audited installed reader set changed")
 
+    models: dict[str, object] = {}
     for module_id in ("scoreform", "quillan", "concord"):
         reader = by_module[module_id]
         audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE[module_id]
         model = reader.read(payloads[module_id])
+        models[module_id] = model
         if getattr(model, "producer_module_id", None) != module_id:
             raise RuntimeError(f"{module_id} reader returned the wrong producer model")
         if (
@@ -512,6 +609,127 @@ def _inside_qualification(fixture_dir: Path) -> None:
             reader.descriptor.public_reader_id,
             hashlib.sha256(payloads[module_id]).hexdigest(),
         )
+
+    from vitrine.producer_adapters import (
+        ProducerAdapterSupportRequest,
+        build_adapter_registry,
+    )
+    from vitrine.released_producer_contracts import SCOREFORM_LIVE_SUPPORT_KEY
+
+    scoreform_profile_module = importlib.import_module("scoreform.pds_publication")
+    get_scoreform_profile = getattr(
+        scoreform_profile_module, "get_publication_producer_profile", None
+    )
+    if not callable(get_scoreform_profile):
+        raise RuntimeError("exact ScoreForm wheel is missing its public producer Profile")
+    scoreform_profile = get_scoreform_profile()
+    if scoreform_profile.module_id != "scoreform":
+        raise RuntimeError("exact ScoreForm wheel returned the wrong producer Profile")
+    if scoreform_profile.supported_core_publication_schema_versions != frozenset({"1"}):
+        raise RuntimeError("ScoreForm Profile Core publication support changed")
+    if scoreform_profile.supported_academic_work_contract_versions != frozenset(
+        {"scoreform_academic_work_v1"}
+    ):
+        raise RuntimeError("ScoreForm Profile academic-work support changed")
+    if len(scoreform_profile.publication_contracts) != 1:
+        raise RuntimeError("ScoreForm Profile publication contract count changed")
+    profile_contract = scoreform_profile.publication_contracts[0]
+    if profile_contract.publication_kind != "academic_result_set":
+        raise RuntimeError("ScoreForm Profile publication kind changed")
+    if profile_contract.manifest_contract_versions != frozenset(
+        {"scoreform_academic_result_manifest_v1"}
+    ):
+        raise RuntimeError("ScoreForm Profile manifest contract changed")
+    if profile_contract.supported_capabilities != frozenset(
+        {"multiple_attempts", "points", "question_evidence"}
+    ):
+        raise RuntimeError("ScoreForm Profile capabilities changed")
+    if profile_contract.source_record_contracts or not profile_contract.allows_missing_source_record:
+        raise RuntimeError("ScoreForm Profile source-record semantics changed")
+
+    key = SCOREFORM_LIVE_SUPPORT_KEY
+    request = ProducerAdapterSupportRequest(
+        producer_module_id=key.producer_module_id,
+        core_publication_schema_version=key.core_publication_schema_version,
+        publication_kind=key.publication_kind,
+        manifest_contract_version=key.manifest_contract_version,
+        producer_contract_version=key.producer_contract_version,
+        source_record_kind=key.source_record_kind,
+        source_record_contract_version=key.source_record_contract_version,
+        capabilities=key.required_capabilities,
+    )
+    adapter = build_adapter_registry().select_adapter(request)
+    batch = adapter.project(models["scoreform"])
+    if len(batch.projected_sources) != 3:
+        raise RuntimeError("ScoreForm live adapter did not preserve all three attempts")
+
+    projected = {
+        (
+            source.source_relationships[0].source_subject_id,
+            source.producer_source.native_revision,
+        ): source
+        for source in batch.projected_sources
+    }
+    expected_attempts = {
+        ("student_alpha", 1),
+        ("student_alpha", 2),
+        ("student_beta", 1),
+    }
+    if set(projected) != expected_attempts:
+        raise RuntimeError("ScoreForm live adapter changed attempt cardinality or subjects")
+    alpha_one = projected[("student_alpha", 1)]
+    alpha_two = projected[("student_alpha", 2)]
+    alpha_one_fields = {
+        field.key: field.value for field in alpha_one.display_snapshot.fields
+    }
+    alpha_two_fields = {
+        field.key: field.value for field in alpha_two.display_snapshot.fields
+    }
+    if alpha_one_fields["points_earned"] != 2 or alpha_two_fields["points_earned"] != 1:
+        raise RuntimeError("ScoreForm live adapter selected/ranked attempts instead of preserving them")
+    if alpha_one_fields["response_states"] != (
+        "1:selected",
+        "2:blank",
+        "3:selected",
+    ):
+        raise RuntimeError("ScoreForm live adapter changed response-state evidence")
+    if alpha_two_fields["response_states"] != (
+        "1:selected",
+        "2:ambiguous",
+        "3:selected",
+    ):
+        raise RuntimeError("ScoreForm live adapter collapsed ambiguous response state")
+    if alpha_one_fields["question_standard_alignments"] != (
+        "1:standard_reading_1",
+        "3:standard_language_2",
+        "3:standard_reading_3",
+    ):
+        raise RuntimeError("ScoreForm live adapter changed standard alignments")
+    if alpha_one.source_artifact.source_locator is not None:
+        raise RuntimeError("ScoreForm summary unexpectedly exposes a source locator")
+    if alpha_one.source_artifact.source_digest is not None:
+        raise RuntimeError("ScoreForm summary borrowed a retained scan digest")
+    if "retained_source_path" in alpha_one_fields:
+        raise RuntimeError("ScoreForm live adapter exposed retained_source_path")
+    if "qualification-private.pdf" in repr(batch):
+        raise RuntimeError("ScoreForm live adapter leaked retained scan path")
+    if any(
+        field.key == "selected_answer"
+        for source in batch.projected_sources
+        for field in source.display_snapshot.fields
+    ):
+        raise RuntimeError("ScoreForm live adapter exposed selected-answer content")
+    lowered = repr(batch).lower()
+    for prohibited in ("grade", "proficiency", "mastery", "portfolio-worthy", "selected attempt"):
+        if prohibited in lowered:
+            raise RuntimeError(f"ScoreForm live adapter inferred prohibited semantics: {prohibited}")
+
+    print(
+        "PASS exact-wheel ScoreForm live projection qualification",
+        metadata.version("pds-core"),
+        metadata.version("scoreform"),
+        len(batch.projected_sources),
+    )
 
     print("PASS exact-wheel installed producer reader qualification")
 
