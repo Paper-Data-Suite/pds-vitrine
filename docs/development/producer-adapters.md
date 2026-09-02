@@ -7,6 +7,8 @@ Issue #32 implements the pure producer-reader and Vitrine projection boundary.
 - `vitrine/producer_adapters.py` — support request/key, declaration, reader and
   adapter protocols, transient projection models, structured errors, registry,
   and ordinary registry constructor.
+- `vitrine/scoreform_adapter.py` — live ScoreForm projection bound lazily to
+  the audited installed reader and frozen #57 support key.
 - `vitrine/development_adapters.py` — strict ScoreForm-, Quillan-, and
   Concord-shaped development readers/adapters plus explicit fixture registry.
 - `vitrine/adapter_cli.py` — non-mutating power-user diagnostics.
@@ -44,7 +46,10 @@ from vitrine.producer_adapters import build_adapter_registry
 registry = build_adapter_registry()
 ```
 
-Issue #32 intentionally returns an empty ordinary registry.
+After issue #59 the ordinary registry contains exactly
+`vitrine_scoreform_live_adapter`. Building it remains valid without ScoreForm
+installed because producer import is lazy. Quillan and Concord live adapters are
+not yet registered.
 
 Development/test code must opt in:
 
@@ -106,12 +111,14 @@ fixtures/producer-adapters/
 
 These files belong to the source distribution/repository, not the runtime wheel.
 
-## Future live integrations
+## Live integration progression
 
-A future live adapter may bind an installed producer-owned public reader, but it
-must define explicit package trust/discovery and exact support declarations in a
-separate integration issue. Do not turn issue #32 fixture infrastructure into an
-automatic plugin loader.
+Issue #59 implements the first live adapter, ScoreForm, through an exact frozen
+support declaration and the audited installed-reader service. It does not turn
+issue #32 fixture infrastructure into an automatic plugin loader.
+
+Future Quillan and Concord integrations must follow the same explicit package
+trust, exact support-key, authorization, reader, and projection boundaries.
 
 ## Candidate consumer
 
@@ -121,3 +128,20 @@ support requests only from canonical Core Publication/registration state,
 requires explicit source-read authorization, verifies the exact manifest bytes,
 and only then invokes the selected reader/adapter. This does not change the #32
 fixture isolation or establish a live producer integration.
+
+## ScoreForm live contract
+
+The operational boundary is documented in
+[`live-scoreform-projection-adapter-v1.md`](../contracts/live-scoreform-projection-adapter-v1.md).
+
+Keep these invariants explicit:
+
+```text
+one represented attempt = one projected source
+blank != ambiguous != selected
+question alignment != standards rating
+correctness != proficiency
+points != Grade
+retained_source_path != Vitrine Artifact authorization
+Candidate != Selection
+```

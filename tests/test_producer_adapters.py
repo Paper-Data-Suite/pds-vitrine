@@ -109,9 +109,13 @@ def test_support_request_rejects_wildcard_contracts() -> None:
     assert raised.value.code == "adapter.invalid_support_request"
 
 
-def test_default_registry_is_empty_and_rejects_fixture_injection() -> None:
+def test_default_registry_contains_only_scoreform_live_and_rejects_fixture_injection() -> None:
     ordinary = build_adapter_registry()
-    assert ordinary.adapters == ()
+    assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
+        "vitrine_scoreform_live_adapter",
+    )
+    assert ordinary.adapters[0].declaration.integration_kind == "live"
+    assert ordinary.adapters[0].declaration.support_key.producer_module_id == "scoreform"
     fixture_adapter = build_development_fixture_adapter_registry().adapters[0]
     with pytest.raises(ProducerAdapterError) as raised:
         build_adapter_registry(adapters=(fixture_adapter,))

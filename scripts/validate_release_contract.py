@@ -188,8 +188,13 @@ def _runtime_boundary_findings() -> list[str]:
         findings.append("default Snapshot-build authority is not fail-closed")
 
     ordinary_registry = build_adapter_registry()
-    if ordinary_registry.adapters != ():
-        findings.append("ordinary adapter registry contains implicit adapters")
+    ordinary_adapter_ids = tuple(
+        item.declaration.adapter_id for item in ordinary_registry.adapters
+    )
+    if ordinary_adapter_ids != ("vitrine_scoreform_live_adapter",):
+        findings.append(
+            f"ordinary adapter registry drifted: {ordinary_adapter_ids!r}"
+        )
 
     fixture_profiles = build_development_fixture_producer_registry()
     fixture_profile_ids = tuple(item.module_id for item in fixture_profiles.profiles)

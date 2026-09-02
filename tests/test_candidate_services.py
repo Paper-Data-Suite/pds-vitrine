@@ -55,4 +55,12 @@ def test_fixture_profiles_are_explicit_and_not_live_producer_identities() -> Non
     assert registry.get("scoreform") is None
     assert registry.get("quillan") is None
     assert registry.get("concord") is None
-    assert build_adapter_registry().adapters == ()
+
+    ordinary = build_adapter_registry()
+    assert tuple(
+        adapter.declaration.adapter_id for adapter in ordinary.adapters
+    ) == ("vitrine_scoreform_live_adapter",)
+    assert (
+        ordinary.adapters[0].declaration.support_key.producer_module_id
+        == "scoreform"
+    )

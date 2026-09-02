@@ -62,7 +62,14 @@ from pds_core.publication_compatibility import PublicationProducerRegistry
 from vitrine.candidate_services import CandidateDiscoveryRequest, SourceReadAuthorizationDecision
 from vitrine.development_candidate_fixtures import build_development_fixture_producer_registry
 from vitrine.producer_adapters import build_adapter_registry
-assert build_adapter_registry().adapters == ()
+registry = build_adapter_registry()
+assert tuple(
+    adapter.declaration.adapter_id for adapter in registry.adapters
+) == ("vitrine_scoreform_live_adapter",)
+assert tuple(
+    adapter.declaration.support_key.producer_module_id
+    for adapter in registry.adapters
+) == ("scoreform",)
 assert PublicationProducerRegistry(profiles=()).profiles == ()
 fixture_profiles = build_development_fixture_producer_registry()
 assert len(fixture_profiles.profiles) == 3

@@ -40,6 +40,7 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/portfolio_services.py",
     "vitrine/producer_adapters.py",
     "vitrine/producer_reader_services.py",
+    "vitrine/scoreform_adapter.py",
     "vitrine/released_producer_contracts.py",
     "vitrine/released_producer_schema_audit.py",
     "vitrine/subject_cli.py",
@@ -145,6 +146,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/validate_profile_workflows.py",
     "scripts/validate_producer_adapters.py",
     "scripts/validate_producer_reader_services.py",
+    "scripts/validate_scoreform_adapter.py",
     "scripts/qualify_installed_producer_readers.py",
     "scripts/validate_candidate_discovery.py",
     "scripts/validate_curation_workflows.py",
@@ -189,6 +191,7 @@ REQUIRED_SDIST_FILES = {
     "tests/test_validate_profile_workflows.py",
     "tests/test_producer_adapters.py",
     "tests/test_producer_reader_services.py",
+    "tests/test_scoreform_adapter.py",
     "tests/test_validate_producer_adapters.py",
     "tests/test_candidate_services.py",
     "tests/test_workflow_context.py",
@@ -222,6 +225,7 @@ REQUIRED_SDIST_FILES = {
     "fixtures/representative-portfolios/showcase/runtime/polished-manifest.json",
     "fixtures/representative-portfolios/showcase/runtime/concord-manifest.json",
     "vitrine/py.typed",
+    "docs/contracts/live-scoreform-projection-adapter-v1.md",
 }
 
 
