@@ -77,7 +77,11 @@ def _validate_declaration_and_registry() -> None:
     _require(adapter.reader.descriptor.package_identity == "scoreform", "ScoreForm package identity changed")
 
     ordinary = build_adapter_registry()
-    _require(tuple(item.declaration.adapter_id for item in ordinary.adapters) == ("vitrine_scoreform_live_adapter",), "ordinary registry contains unexpected adapters")
+    _require(
+        tuple(item.declaration.adapter_id for item in ordinary.adapters)
+        == ("vitrine_concord_live_adapter", "vitrine_scoreform_live_adapter"),
+        "ordinary registry does not contain completed live adapters",
+    )
     _require(ordinary.select_adapter(_request()).declaration.adapter_id == "vitrine_scoreform_live_adapter", "exact ScoreForm support did not select live adapter")
     try:
         ordinary.select_adapter(replace(_request(), manifest_contract_version="scoreform_unknown_manifest_v1"))
@@ -88,9 +92,16 @@ def _validate_declaration_and_registry() -> None:
 
     fixtures = build_development_fixture_adapter_registry()
     combined = ProducerProjectionAdapterRegistry(adapters=ordinary.adapters + fixtures.adapters)
-    _require(len(combined.adapters) == 4, "live/fixture registry separation changed")
-    _require(sum(item.declaration.integration_kind == "live" for item in combined.adapters) == 1, "unexpected live adapter count before #60/#61")
-    _require({item.declaration.support_key.producer_module_id for item in ordinary.adapters} == {"scoreform"}, "Quillan or Concord live adapter registered early")
+    _require(len(combined.adapters) == 5, "live/fixture registry separation changed")
+    _require(
+        sum(item.declaration.integration_kind == "live" for item in combined.adapters) == 2,
+        "unexpected live adapter count after #61",
+    )
+    _require(
+        {item.declaration.support_key.producer_module_id for item in ordinary.adapters}
+        == {"concord", "scoreform"},
+        "ordinary live producer set changed unexpectedly",
+    )
 
     dependencies = default_workflow_dependencies()
     _require(dependencies.producer_registry.profiles == (), "default workflow unexpectedly discovers producer Profiles")
@@ -108,7 +119,7 @@ def _validate_cli() -> None:
     _require("vitrine_scoreform_live_adapter" in text, "live ScoreForm missing from CLI")
     _require("fixture" not in text.lower(), "default CLI exposed fixture adapter")
     _require("quillan" not in text.lower(), "Quillan live adapter appeared early")
-    _require("concord" not in text.lower(), "Concord live adapter appeared early")
+    _require("vitrine_concord_live_adapter" in text, "live Concord missing from CLI")
     _require(not error.getvalue(), "adapter list wrote unexpected stderr")
     shown = io.StringIO()
     _require(cli.main(["adapters", "show", "vitrine_scoreform_live_adapter"], output=shown) == 0, "adapter show command failed")

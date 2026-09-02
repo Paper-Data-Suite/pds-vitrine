@@ -68,13 +68,16 @@ def _require_error_code(callback: Callable[[], object], expected: str) -> None:
 def validate(root: Path) -> None:
     ordinary = build_adapter_registry()
     if tuple(item.declaration.adapter_id for item in ordinary.adapters) != (
+        "vitrine_concord_live_adapter",
         "vitrine_scoreform_live_adapter",
     ):
         raise RuntimeError(
-            "ordinary registry must contain exactly the ScoreForm live adapter"
+            "ordinary registry must contain exactly the completed live adapters"
         )
-    if ordinary.adapters[0].declaration.integration_kind != "live":
-        raise RuntimeError("ordinary ScoreForm adapter is not marked live")
+    if any(
+        item.declaration.integration_kind != "live" for item in ordinary.adapters
+    ):
+        raise RuntimeError("ordinary registry contains a non-live adapter")
 
     fixture_registry = build_development_fixture_adapter_registry()
     if not fixture_registry.adapters or any(
@@ -176,6 +179,24 @@ def validate(root: Path) -> None:
     selected_live = ordinary.select_adapter(live_scoreform)
     if selected_live.declaration.adapter_id != "vitrine_scoreform_live_adapter":
         raise RuntimeError("ordinary ScoreForm support request selected the wrong adapter")
+
+    live_concord = ProducerAdapterSupportRequest(
+        producer_module_id="concord",
+        core_publication_schema_version="1",
+        publication_kind="academic_result_set",
+        manifest_contract_version="concord_academic_result_manifest_v1",
+        producer_contract_version="concord_academic_work_v1",
+        source_record_kind="activity",
+        source_record_contract_version="concord_activity_v1",
+        capabilities=(
+            "criterion_scores",
+            "moderated_scores",
+            "standards_ratings",
+        ),
+    )
+    selected_concord = ordinary.select_adapter(live_concord)
+    if selected_concord.declaration.adapter_id != "vitrine_concord_live_adapter":
+        raise RuntimeError("ordinary Concord support request selected the wrong adapter")
 
     fixture_root = root / "tests" / "fixtures" / "runtime-models"
     for filename, expected in EXPECTED_RUNTIME_HASHES.items():

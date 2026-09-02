@@ -9,6 +9,12 @@ Issue #32 implements the pure producer-reader and Vitrine projection boundary.
   and ordinary registry constructor.
 - `vitrine/scoreform_adapter.py` — live ScoreForm projection bound lazily to
   the audited installed reader and frozen #57 support key.
+- `vitrine/concord_adapter.py` — live Concord Score/Evidence/Moderation projection
+  bound lazily to the audited installed reader and frozen #57 support key.
+- `vitrine/concord_artifact_context.py` — canonical Candidate/Selection/Core
+  provenance revalidation for copied Concord Artifact Snapshot entries.
+- `vitrine/concord_artifact_source.py` — separately authorized Concord
+  `returned_artifact_pdf` Snapshot source provider.
 - `vitrine/development_adapters.py` — strict ScoreForm-, Quillan-, and
   Concord-shaped development readers/adapters plus explicit fixture registry.
 - `vitrine/adapter_cli.py` — non-mutating power-user diagnostics.
@@ -46,10 +52,16 @@ from vitrine.producer_adapters import build_adapter_registry
 registry = build_adapter_registry()
 ```
 
-After issue #59 the ordinary registry contains exactly
-`vitrine_scoreform_live_adapter`. Building it remains valid without ScoreForm
-installed because producer import is lazy. Quillan and Concord live adapters are
-not yet registered.
+After issue #61 the completed ordinary registry contains exactly:
+
+```text
+vitrine_concord_live_adapter
+vitrine_scoreform_live_adapter
+```
+
+Building it remains valid without ScoreForm or Concord installed because
+producer import is lazy. Default workflow dependencies remain intentionally
+fail-closed and do not auto-enable either live adapter.
 
 Development/test code must opt in:
 
@@ -117,8 +129,10 @@ Issue #59 implements the first live adapter, ScoreForm, through an exact frozen
 support declaration and the audited installed-reader service. It does not turn
 issue #32 fixture infrastructure into an automatic plugin loader.
 
-Future Quillan and Concord integrations must follow the same explicit package
-trust, exact support-key, authorization, reader, and projection boundaries.
+Concord now follows the same explicit package trust, exact support-key,
+authorization, reader, projection, Candidate, and Snapshot boundaries. Future
+live integrations must preserve those distinctions rather than adding automatic
+plugin fallback.
 
 ## Candidate consumer
 
@@ -134,7 +148,7 @@ fixture isolation or establish a live producer integration.
 The operational boundary is documented in
 [`live-scoreform-projection-adapter-v1.md`](../contracts/live-scoreform-projection-adapter-v1.md).
 
-Keep these invariants explicit:
+Keep these ScoreForm invariants explicit:
 
 ```text
 one represented attempt = one projected source
@@ -144,4 +158,23 @@ correctness != proficiency
 points != Grade
 retained_source_path != Vitrine Artifact authorization
 Candidate != Selection
+```
+
+## Concord live contract
+
+The operational #61 boundary is documented in
+[`live-concord-projection-artifact-adapter-v1.md`](../contracts/live-concord-projection-artifact-adapter-v1.md).
+
+Keep these Concord invariants explicit:
+
+```text
+one represented Score revision = one projected Score source
+one represented Evidence Link = one projected Evidence Link source
+1 != 1.0 != "1" != true
+Group Score != individual Score
+non-score disposition != zero
+manifest authorization != Artifact authorization
+Snapshot build authority != Artifact authorization
+Candidate != Selection
+returned_artifact_pdf -> authorized_source_bytes_v1
 ```

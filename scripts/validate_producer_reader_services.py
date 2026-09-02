@@ -131,13 +131,24 @@ def _validate_fail_closed_defaults() -> None:
     ordinary = build_adapter_registry()
     _require(
         tuple(item.declaration.adapter_id for item in ordinary.adapters)
-        == ("vitrine_scoreform_live_adapter",),
-        "ordinary registry must contain exactly the completed ScoreForm live adapter",
+        == (
+            "vitrine_concord_live_adapter",
+            "vitrine_scoreform_live_adapter",
+        ),
+        "ordinary registry must contain exactly the completed live adapters",
     )
+    expected_readers = {
+        "concord": "vitrine_installed_concord_academic_result_reader",
+        "scoreform": "vitrine_installed_scoreform_academic_result_reader",
+    }
+    actual_readers = {
+        item.declaration.support_key.producer_module_id:
+        item.reader.descriptor.public_reader_id
+        for item in ordinary.adapters
+    }
     _require(
-        ordinary.adapters[0].reader.descriptor.public_reader_id
-        == "vitrine_installed_scoreform_academic_result_reader",
-        "ScoreForm live adapter is not bound to the #58 installed reader",
+        actual_readers == expected_readers,
+        "completed live adapters are not bound to the #58 installed readers",
     )
     dependencies = default_workflow_dependencies()
     _require(

@@ -72,8 +72,10 @@ reader available != live adapter registered
 live adapter registered != source read authorized
 ```
 
-The ordinary `build_adapter_registry()` remains empty until #59-#61 register
-producer-specific projection adapters.
+The reader service itself does not auto-register producers. Completed live
+integration issues extend the ordinary `build_adapter_registry()` explicitly.
+After #61, the completed live declarations are ScoreForm and Concord; default
+workflow dependencies remain separately fail-closed and empty.
 
 ## Reader failures
 
@@ -262,9 +264,11 @@ authorization/resolution.
 
 ### #61
 
-Receives the installed Concord manifest reader and validated Concord public
-model. #61 separately implements Concord projection plus producer-owned Artifact
-authorization/rendering.
+Implemented. The installed Concord manifest reader feeds
+`vitrine_concord_live_adapter`; copied Concord Artifact evidence uses a
+separately authorized `vitrine_concord_returned_artifact_source_provider`.
+The operational contract is
+`live-concord-projection-artifact-adapter-v1.md`.
 
 ### #62
 
@@ -308,7 +312,12 @@ The harness:
 6. invokes the ScoreForm, Quillan, and Concord reader bindings on canonical
    synthetic Academic Result Manifest bytes;
 7. requires each returned producer public model to preserve the exact producer
-   and manifest-contract identity.
+   and manifest-contract identity;
+8. qualifies the live ScoreForm and Concord projection adapters against the
+   exact released public models;
+9. creates synthetic Concord producer-native Artifact state through released
+   production APIs and qualifies the separately authorized
+   `returned_artifact_pdf` -> `authorized_source_bytes_v1` path.
 
 ScoreForm and Quillan qualification bytes are Vitrine-owned synthetic canonical
 manifests shaped only to the released public contract. Concord canonical bytes

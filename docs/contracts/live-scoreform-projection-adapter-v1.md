@@ -311,19 +311,20 @@ Candidate != Selection
 
 ## Registry and diagnostics
 
-At the end of issue #59, the ordinary runtime registry contains exactly:
+Issue #59 originally registered ScoreForm as the only live adapter. After
+issue #61, the completed ordinary runtime registry contains:
 
 ```text
+vitrine_concord_live_adapter
 vitrine_scoreform_live_adapter
 ```
 
 The three Vitrine-owned development fixture adapters remain isolated behind the
 explicit development fixture registry.
 
-Quillan and Concord live adapters remain absent until #60 and #61.
-
-Default adapter diagnostics can list/show the live ScoreForm declaration without
-ScoreForm being installed.
+Default adapter diagnostics can list/show either completed live declaration
+without ScoreForm or Concord being installed. ScoreForm's frozen support key and
+projection semantics are unchanged by the registry extension.
 
 ## Packaging and qualification
 
@@ -348,12 +349,11 @@ and three independent live ScoreForm attempt projections.
 
 ## Downstream handoff
 
-Issue #60 may add live Quillan projection and Artifact support. Issue #61 may add
-live Concord projection and Artifact support. They must extend the ordinary
-registry deliberately without changing ScoreForm's frozen support key or
-projection semantics.
+Issue #61 now adds live Concord projection and Artifact support while leaving
+ScoreForm's frozen support key and projection semantics unchanged.
 
-Issue #62 may expose compatibility diagnostics over the stable exact-match and
-privacy-safe failure boundaries.
+Issue #60 may add live Quillan projection and Artifact support when implemented
+or reconciled. Issue #62 may expose compatibility diagnostics over the stable
+exact-match and privacy-safe failure boundaries.
 
 No downstream integration may use a development fixture as a live fallback.

@@ -22,10 +22,11 @@ docs/contracts/released-producer-semantic-crosswalk-v1.md
 docs/contracts/snapshot-build-workflows-v1.md
 ```
 
-Issue #57 records the integration contract. Downstream issue #59 now implements
-the first live adapter, ScoreForm. At the end of #59,
-`build_adapter_registry()` contains exactly that live ScoreForm declaration;
-Quillan and Concord remain unregistered until #60 and #61.
+Issue #57 records the integration contract. Issues #59 and #61 now implement
+the completed live ScoreForm and Concord integrations. After #61,
+`build_adapter_registry()` contains exactly those two live declarations in
+deterministic identity order. Development fixtures remain separate, and default
+workflow dependencies remain fail-closed rather than auto-enabling producers.
 
 ## Frozen release anchors
 
@@ -328,6 +329,13 @@ authorized immutable `returned_artifact_pdf` bytes but may not request or
 reconstruct an arbitrary Concord path, filename, Scan Reference, or native
 record selector.
 
+Issue #61 is implemented. Its operational contract is
+[live-concord-projection-artifact-adapter-v1.md](live-concord-projection-artifact-adapter-v1.md).
+The implementation preserves every represented Score revision and Evidence Link,
+uses the exact historical source snapshot for Artifact acquisition, and keeps
+manifest authorization, Snapshot build authority, Concord Artifact
+authorization, and disclosure authority separate.
+
 ## #62 — Compatibility and unsupported-contract diagnostics
 
 Issue #62 inherits the exact support keys and failure boundaries rather than
@@ -376,7 +384,7 @@ The validator freezes:
 - exact live support keys;
 - required semantic-crosswalk coverage;
 - the two and only two #57 schema extensions;
-- ordinary live-registry identity (exactly ScoreForm after #59);
+- ordinary completed live-registry identity (ScoreForm + Concord after #61);
 - fixture/live identity separation;
 - absence of hard ScoreForm/Quillan/Concord runtime dependencies;
 - absence of eager sibling producer imports while validating #57;
@@ -419,8 +427,10 @@ and reader boundary.
 The remaining handoff is therefore narrow:
 
 - #59 ScoreForm projection is implemented and frozen by its dedicated contract;
-- #60 implements Quillan projection plus Quillan Artifact authorization;
-- #61 implements Concord projection plus Concord Artifact authorization;
+- #60 implements/reconciles Quillan projection plus Quillan Artifact
+  authorization when that work lands;
+- #61 Concord projection plus Concord Artifact authorization is implemented and
+  frozen by its dedicated contract;
 - #62 builds user-facing compatibility diagnostics over the stable failure
   distinctions.
 
