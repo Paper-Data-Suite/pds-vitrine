@@ -35,6 +35,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_concord_adapter.py", "--skip-focused-tests"),
     ),
     (
+        "live Quillan adapter",
+        ("scripts/validate_quillan_adapter.py", "--skip-focused-tests"),
+    ),
+    (
         "Candidate discovery",
         ("scripts/validate_candidate_discovery.py", "--skip-focused-tests"),
     ),

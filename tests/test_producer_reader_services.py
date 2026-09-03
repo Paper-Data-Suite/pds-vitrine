@@ -146,6 +146,7 @@ def test_audited_installed_reader_catalog_is_lazy_and_live(
     ordinary = build_adapter_registry()
     assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
         "vitrine_concord_live_adapter",
+        "vitrine_quillan_live_adapter",
         "vitrine_scoreform_live_adapter",
     )
     assert all(

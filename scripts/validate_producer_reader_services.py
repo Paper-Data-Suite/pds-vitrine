@@ -133,12 +133,14 @@ def _validate_fail_closed_defaults() -> None:
         tuple(item.declaration.adapter_id for item in ordinary.adapters)
         == (
             "vitrine_concord_live_adapter",
+            "vitrine_quillan_live_adapter",
             "vitrine_scoreform_live_adapter",
         ),
         "ordinary registry must contain exactly the completed live adapters",
     )
     expected_readers = {
         "concord": "vitrine_installed_concord_academic_result_reader",
+        "quillan": "vitrine_installed_quillan_academic_result_reader",
         "scoreform": "vitrine_installed_scoreform_academic_result_reader",
     }
     actual_readers = {

@@ -67,12 +67,13 @@ assert tuple(
     adapter.declaration.adapter_id for adapter in registry.adapters
 ) == (
     "vitrine_concord_live_adapter",
+    "vitrine_quillan_live_adapter",
     "vitrine_scoreform_live_adapter",
 )
 assert tuple(
     adapter.declaration.support_key.producer_module_id
     for adapter in registry.adapters
-) == ("concord", "scoreform")
+) == ("concord", "quillan", "scoreform")
 assert PublicationProducerRegistry(profiles=()).profiles == ()
 fixture_profiles = build_development_fixture_producer_registry()
 assert len(fixture_profiles.profiles) == 3

@@ -2104,6 +2104,14 @@ def _sealed_disposition(prepared: SnapshotPreparedEntry) -> str:
     }[prepared.disposition]
 
 
+def _materialized_entry_media_type(
+    entry: SnapshotEntryPlan, prepared: SnapshotPreparedEntry
+) -> str | None:
+    if prepared.copied_bytes is not None:
+        return prepared.copied_bytes.media_type
+    return entry.media_type
+
+
 def _manifest_entry_json(
     entry: SnapshotEntryPlan,
     prepared: SnapshotPreparedEntry,
@@ -2137,7 +2145,7 @@ def _manifest_entry_json(
             entry.producer_source_digest_claim
         ),
         "target_relative_path": entry.target_relative_path,
-        "media_type": entry.media_type,
+        "media_type": _materialized_entry_media_type(entry, prepared),
         "required_review_ids": _strings_json(entry.required_review_ids),
         "permitted_omission_reason": entry.permitted_omission_reason,
         "input_references": _input_references_json(entry),
@@ -2202,7 +2210,7 @@ def _logical_entry_json(
             entry.producer_source_digest_claim
         ),
         "relative_path": entry.target_relative_path,
-        "media_type": entry.media_type,
+        "media_type": _materialized_entry_media_type(entry, prepared),
         "renderer_id": entry.renderer_id,
         "renderer_version": entry.renderer_version,
         "renderer_contract_version": entry.renderer_contract_version,
@@ -2419,7 +2427,13 @@ def _build_sealed_records(
                     stage="seal_records",
                 )
             assert plan_entry.target_relative_path is not None
-            assert plan_entry.media_type is not None
+            materialized_media_type = _materialized_entry_media_type(plan_entry, prepared)
+            if materialized_media_type is None:
+                raise SnapshotWorkflowError(
+                    "snapshot.final_verification_failed",
+                    "Prepared Entry has no materialized media type.",
+                    stage="seal_records",
+                )
             entry_record = SnapshotEntry(
                 snapshot_entry_id=snapshot_entry_id,
                 snapshot_edition=edition_ref,
@@ -2427,7 +2441,7 @@ def _build_sealed_records(
                 section_id=plan_entry.section_id,
                 ordinal=plan_entry.ordinal,
                 relative_path=plan_entry.target_relative_path,
-                media_type=plan_entry.media_type,
+                media_type=materialized_media_type,
                 content_class=plan_entry.content_class,
                 display_title=None,
                 source_placement_id=plan_entry.placement_id,

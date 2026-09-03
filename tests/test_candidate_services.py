@@ -61,9 +61,10 @@ def test_fixture_profiles_are_explicit_and_not_live_producer_identities() -> Non
         adapter.declaration.adapter_id for adapter in ordinary.adapters
     ) == (
         "vitrine_concord_live_adapter",
+        "vitrine_quillan_live_adapter",
         "vitrine_scoreform_live_adapter",
     )
     assert {
         adapter.declaration.support_key.producer_module_id
         for adapter in ordinary.adapters
-    } == {"concord", "scoreform"}
+    } == {"concord", "quillan", "scoreform"}

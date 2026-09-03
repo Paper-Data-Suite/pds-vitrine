@@ -13,11 +13,12 @@ def test_default_adapter_list_contains_completed_live_adapters() -> None:
     assert cli.main(["adapters", "list"], output=output, error=error) == 0
     text = output.getvalue()
     assert "vitrine_concord_live_adapter" in text
+    assert "vitrine_quillan_live_adapter" in text
     assert "vitrine_scoreform_live_adapter" in text
     assert "\tlive\tconcord\t" in text
+    assert "\tlive\tquillan\t" in text
     assert "\tlive\tscoreform\t" in text
     assert "fixture" not in text.lower()
-    assert "quillan" not in text.lower()
     assert error.getvalue() == ""
 
 
@@ -32,12 +33,13 @@ def test_adapter_list_can_explicitly_include_development_fixtures() -> None:
     )
     text = output.getvalue()
     assert "vitrine_concord_live_adapter" in text
+    assert "vitrine_quillan_live_adapter" in text
     assert "vitrine_scoreform_live_adapter" in text
     assert "vitrine_scoreform_fixture_adapter" in text
     assert "vitrine_quillan_fixture_adapter" in text
     assert "vitrine_concord_fixture_adapter" in text
     assert text.count("development_fixture") == 3
-    assert text.count("\tlive\t") == 2
+    assert text.count("\tlive\t") == 3
 
 
 def test_live_adapter_show_is_available_without_fixture_opt_in_and_is_lazy(

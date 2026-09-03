@@ -126,6 +126,7 @@ def _validate_declaration_registry_and_provider() -> None:
         identities
         == (
             "vitrine_concord_live_adapter",
+            "vitrine_quillan_live_adapter",
             "vitrine_scoreform_live_adapter",
         ),
         "ordinary registry does not contain exactly completed live adapters",
@@ -159,10 +160,10 @@ def _validate_declaration_registry_and_provider() -> None:
     combined = ProducerProjectionAdapterRegistry(
         adapters=ordinary.adapters + fixtures.adapters
     )
-    _require(len(combined.adapters) == 5, "live/fixture registry separation changed")
+    _require(len(combined.adapters) == 6, "live/fixture registry separation changed")
     _require(
-        sum(item.declaration.integration_kind == "live" for item in combined.adapters) == 2,
-        "unexpected live adapter count after #61",
+        sum(item.declaration.integration_kind == "live" for item in combined.adapters) == 3,
+        "unexpected live adapter count after #60",
     )
 
     descriptor = CONCORD_ARTIFACT_SOURCE_PROVIDER_DESCRIPTOR
@@ -212,7 +213,6 @@ def _validate_cli() -> None:
     ):
         _require(marker in text, f"live adapter missing from CLI: {marker}")
     _require("fixture" not in text.lower(), "default CLI exposed fixture adapter")
-    _require("quillan" not in text.lower(), "Quillan live adapter appeared early")
     _require(not error.getvalue(), "adapter list wrote unexpected stderr")
 
     shown = io.StringIO()

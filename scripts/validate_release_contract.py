@@ -193,6 +193,7 @@ def _runtime_boundary_findings() -> list[str]:
     )
     if ordinary_adapter_ids != (
         "vitrine_concord_live_adapter",
+        "vitrine_quillan_live_adapter",
         "vitrine_scoreform_live_adapter",
     ):
         findings.append(

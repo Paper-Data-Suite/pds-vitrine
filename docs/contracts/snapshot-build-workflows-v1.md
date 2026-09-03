@@ -294,11 +294,17 @@ SnapshotAuthorizedSourceBytesResult
   -> Vitrine never receives or reconstructs a producer-native source path
 ```
 
-The authorized-byte result uses the exact runtime acquisition contract:
+Authorized-byte results use one of two exact runtime acquisition contracts:
 
 ```text
 authorized_source_bytes_v1
+authorized_source_bytes_deferred_media_v1
 ```
+
+`authorized_source_bytes_v1` preserves the original exact-media rule. The
+second contract is a narrow post-#61 extension for producers such as released
+Quillan 0.10.0 whose public manifest cannot expose exact Artifact media before a
+separate producer-owned authorization step.
 
 `SnapshotAuthorizedSourceBytesResult` is an additive runtime boundary, not a new
 persisted Snapshot record. `SourceArtifactReference.source_locator` was already
@@ -340,12 +346,32 @@ Filesystem result mode additionally:
 
 Authorized immutable-byte mode instead:
 
-1. requires `authorized_source_bytes_v1`;
-2. requires exact planned Artifact and media-type identity;
-3. validates any provider-returned digest and byte size;
-4. performs no Vitrine-side producer filesystem lookup or reread;
-5. records source stability as `not_applicable` because the acquired value is the
+1. requires one supported authorized-byte acquisition contract;
+2. validates any provider-returned digest and byte size;
+3. performs no Vitrine-side producer filesystem lookup or reread;
+4. records source stability as `not_applicable` because the acquired value is the
    producer-authorized immutable byte sequence itself.
+
+For `authorized_source_bytes_v1`, provider-returned, Entry-Plan, and source-Artifact
+media types must remain exactly equal.
+
+For `authorized_source_bytes_deferred_media_v1`:
+
+1. the immutable `SnapshotEntryPlan.media_type` and
+   `SourceArtifactReference.media_type` must both be exactly
+   `application/octet-stream`;
+2. that value means "not knowable before authorization" and is not a wildcard;
+3. the exact source provider descriptor must declare a nonempty closed
+   `concrete_media_types` allowlist;
+4. the producer-returned media type must belong to that allowlist;
+5. the planned target path must be suffix-neutral so the Plan does not claim a
+   representation it cannot yet know;
+6. the concrete returned media type is carried in `SnapshotCopiedBytesResult` and
+   persisted as the existing `SnapshotEntry.media_type` and internal
+   Manifest/logical-inventory media type.
+
+No frozen Snapshot record shape changes. Existing filesystem, generated,
+ScoreForm, Concord, and `authorized_source_bytes_v1` semantics remain unchanged.
 
 The producer digest claim, acquired-source digest, and output digest remain
 distinct provenance values even when exact copying makes the latter two equal.

@@ -312,10 +312,11 @@ Candidate != Selection
 ## Registry and diagnostics
 
 Issue #59 originally registered ScoreForm as the only live adapter. After
-issue #61, the completed ordinary runtime registry contains:
+issue #60, the completed ordinary runtime registry contains:
 
 ```text
 vitrine_concord_live_adapter
+vitrine_quillan_live_adapter
 vitrine_scoreform_live_adapter
 ```
 
@@ -352,8 +353,10 @@ and three independent live ScoreForm attempt projections.
 Issue #61 now adds live Concord projection and Artifact support while leaving
 ScoreForm's frozen support key and projection semantics unchanged.
 
-Issue #60 may add live Quillan projection and Artifact support when implemented
-or reconciled. Issue #62 may expose compatibility diagnostics over the stable
-exact-match and privacy-safe failure boundaries.
+Issue #60 now implements live Quillan projection and separately authorized
+Quillan Artifact support without changing ScoreForm's frozen semantics. Its
+operational contract is `live-quillan-projection-artifact-adapter-v1.md`. Issue
+#62 may expose compatibility diagnostics over the stable exact-match and
+privacy-safe failure boundaries.
 
 No downstream integration may use a development fixture as a live fallback.

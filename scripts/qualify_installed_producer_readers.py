@@ -616,6 +616,7 @@ def _inside_qualification(fixture_dir: Path) -> None:
     )
     from vitrine.released_producer_contracts import (
         CONCORD_LIVE_SUPPORT_KEY,
+        QUILLAN_LIVE_SUPPORT_KEY,
         SCOREFORM_LIVE_SUPPORT_KEY,
     )
 
@@ -732,6 +733,77 @@ def _inside_qualification(fixture_dir: Path) -> None:
         metadata.version("pds-core"),
         metadata.version("scoreform"),
         len(batch.projected_sources),
+    )
+
+    quillan_profile_module = importlib.import_module("quillan.pds_publication")
+    get_quillan_profile = getattr(
+        quillan_profile_module, "get_publication_producer_profile", None
+    )
+    if not callable(get_quillan_profile):
+        raise RuntimeError("exact Quillan wheel is missing its public producer Profile")
+    quillan_profile = get_quillan_profile()
+    if quillan_profile.module_id != "quillan":
+        raise RuntimeError("exact Quillan wheel returned the wrong producer Profile")
+    if quillan_profile.supported_core_publication_schema_versions != frozenset({"1"}):
+        raise RuntimeError("Quillan Profile Core publication support changed")
+    if quillan_profile.supported_academic_work_contract_versions != frozenset(
+        {"quillan_academic_work_v1"}
+    ):
+        raise RuntimeError("Quillan Profile academic-work support changed")
+    if len(quillan_profile.publication_contracts) != 1:
+        raise RuntimeError("Quillan Profile publication contract count changed")
+    quillan_contract = quillan_profile.publication_contracts[0]
+    if quillan_contract.publication_kind != "academic_result_set":
+        raise RuntimeError("Quillan Profile publication kind changed")
+    if quillan_contract.manifest_contract_versions != frozenset(
+        {"quillan_academic_result_manifest_v1"}
+    ):
+        raise RuntimeError("Quillan Profile manifest contract changed")
+    if quillan_contract.supported_capabilities != frozenset({"standards_ratings"}):
+        raise RuntimeError("Quillan Profile capabilities changed")
+    if quillan_contract.source_record_contracts or not quillan_contract.allows_missing_source_record:
+        raise RuntimeError("Quillan Profile source-record semantics changed")
+
+    quillan_key = QUILLAN_LIVE_SUPPORT_KEY
+    quillan_request = ProducerAdapterSupportRequest(
+        producer_module_id=quillan_key.producer_module_id,
+        core_publication_schema_version=quillan_key.core_publication_schema_version,
+        publication_kind=quillan_key.publication_kind,
+        manifest_contract_version=quillan_key.manifest_contract_version,
+        producer_contract_version=quillan_key.producer_contract_version,
+        source_record_kind=quillan_key.source_record_kind,
+        source_record_contract_version=quillan_key.source_record_contract_version,
+        capabilities=quillan_key.required_capabilities,
+    )
+    quillan_adapter = build_adapter_registry().select_adapter(quillan_request)
+    quillan_batch = quillan_adapter.project(models["quillan"])
+    quillan_representations = {source.projection_kind for source in quillan_batch.projected_sources}
+    expected_quillan = {
+        "quillan:review_summary",
+        "quillan:feedback_pdf",
+        "quillan:feedback_markdown",
+    }
+    if quillan_representations != expected_quillan or len(quillan_batch.projected_sources) != 3:
+        raise RuntimeError("Quillan exact-wheel plain-paper projection cardinality changed")
+    if any(source.projection_kind == "quillan:selected_student_work" for source in quillan_batch.projected_sources):
+        raise RuntimeError("Quillan plain-paper exact-wheel projection fabricated digital work")
+    for source in quillan_batch.projected_sources:
+        if len(source.source_relationships) != 1 or source.source_relationships[0].source_subject_id != "student_qualification":
+            raise RuntimeError("Quillan exact-wheel student relationship changed")
+        if source.source_artifact is None or source.source_artifact.source_locator is not None:
+            raise RuntimeError("Quillan exact-wheel projection fabricated source access")
+    lowered = repr(quillan_batch).lower()
+    if "explain the evidence" in lowered:
+        raise RuntimeError("Quillan exact-wheel projection leaked private assignment prompt")
+    for prohibited in ("proficiency", "mastery", "portfolio-worthy"):
+        if prohibited in lowered:
+            raise RuntimeError(f"Quillan live adapter inferred prohibited semantics: {prohibited}")
+
+    print(
+        "PASS exact-wheel Quillan live projection qualification",
+        metadata.version("pds-core"),
+        metadata.version("quillan"),
+        len(quillan_batch.projected_sources),
     )
 
     concord_profile_module = importlib.import_module("concord.pds_publication")
@@ -927,6 +999,19 @@ def qualify(wheel_dir: Path) -> None:
                     repository_root
                     / "scripts"
                     / "qualify_concord_artifact_source.py"
+                ),
+            ],
+            cwd=repository_root,
+            env=child_env,
+            check=True,
+        )
+        subprocess.run(
+            [
+                str(python),
+                str(
+                    repository_root
+                    / "scripts"
+                    / "qualify_quillan_artifact_source.py"
                 ),
             ],
             cwd=repository_root,

@@ -79,7 +79,11 @@ def _validate_declaration_and_registry() -> None:
     ordinary = build_adapter_registry()
     _require(
         tuple(item.declaration.adapter_id for item in ordinary.adapters)
-        == ("vitrine_concord_live_adapter", "vitrine_scoreform_live_adapter"),
+        == (
+            "vitrine_concord_live_adapter",
+            "vitrine_quillan_live_adapter",
+            "vitrine_scoreform_live_adapter",
+        ),
         "ordinary registry does not contain completed live adapters",
     )
     _require(ordinary.select_adapter(_request()).declaration.adapter_id == "vitrine_scoreform_live_adapter", "exact ScoreForm support did not select live adapter")
@@ -92,14 +96,14 @@ def _validate_declaration_and_registry() -> None:
 
     fixtures = build_development_fixture_adapter_registry()
     combined = ProducerProjectionAdapterRegistry(adapters=ordinary.adapters + fixtures.adapters)
-    _require(len(combined.adapters) == 5, "live/fixture registry separation changed")
+    _require(len(combined.adapters) == 6, "live/fixture registry separation changed")
     _require(
-        sum(item.declaration.integration_kind == "live" for item in combined.adapters) == 2,
-        "unexpected live adapter count after #61",
+        sum(item.declaration.integration_kind == "live" for item in combined.adapters) == 3,
+        "unexpected live adapter count after #60",
     )
     _require(
         {item.declaration.support_key.producer_module_id for item in ordinary.adapters}
-        == {"concord", "scoreform"},
+        == {"concord", "quillan", "scoreform"},
         "ordinary live producer set changed unexpectedly",
     )
 
@@ -118,7 +122,7 @@ def _validate_cli() -> None:
     text = output.getvalue()
     _require("vitrine_scoreform_live_adapter" in text, "live ScoreForm missing from CLI")
     _require("fixture" not in text.lower(), "default CLI exposed fixture adapter")
-    _require("quillan" not in text.lower(), "Quillan live adapter appeared early")
+    _require("vitrine_quillan_live_adapter" in text, "live Quillan missing from CLI")
     _require("vitrine_concord_live_adapter" in text, "live Concord missing from CLI")
     _require(not error.getvalue(), "adapter list wrote unexpected stderr")
     shown = io.StringIO()

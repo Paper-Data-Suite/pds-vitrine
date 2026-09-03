@@ -6,7 +6,7 @@ import hashlib
 import hmac
 import stat
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Final, Protocol
 
 from vitrine.models import (
@@ -41,6 +41,10 @@ SNAPSHOT_BUILD_AUTHORITY_OUTCOMES: Final[frozenset[str]] = frozenset(
 SNAPSHOT_BUILD_OPERATION: Final[str] = "build_snapshot"
 SNAPSHOT_SOURCE_STABILITY_CONTRACT: Final[str] = "filesystem_reread_v1"
 SNAPSHOT_AUTHORIZED_SOURCE_BYTES_CONTRACT: Final[str] = "authorized_source_bytes_v1"
+SNAPSHOT_AUTHORIZED_SOURCE_BYTES_DEFERRED_MEDIA_CONTRACT: Final[str] = (
+    "authorized_source_bytes_deferred_media_v1"
+)
+SNAPSHOT_DEFERRED_SOURCE_MEDIA_TYPE: Final[str] = "application/octet-stream"
 
 SNAPSHOT_MATERIALIZATION_CODES: Final[frozenset[str]] = frozenset(
     {
@@ -187,6 +191,7 @@ class SnapshotSourceProviderDescriptor:
     projection_contract_version: str
     artifact_kind: str
     representation_kind: str
+    concrete_media_types: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         try:
@@ -205,6 +210,19 @@ class SnapshotSourceProviderDescriptor:
                     name,
                     require_controlled_key(getattr(self, name), name),
                 )
+            media_types = tuple(
+                require_text(value, "concrete_media_types", maximum=200)
+                for value in self.concrete_media_types
+            )
+            if len(set(media_types)) != len(media_types):
+                raise VitrineModelValidationError(
+                    "concrete_media_types must not contain duplicates."
+                )
+            if SNAPSHOT_DEFERRED_SOURCE_MEDIA_TYPE in media_types:
+                raise VitrineModelValidationError(
+                    "concrete_media_types must contain concrete media, not the deferred marker."
+                )
+            object.__setattr__(self, "concrete_media_types", tuple(sorted(media_types)))
         except VitrineModelValidationError as error:
             raise SnapshotMaterializationError(
                 "snapshot.invalid_request",
@@ -589,6 +607,7 @@ class SnapshotCopiedBytesResult:
     acquired_source_digest: DigestReference
     copied_output_digest: DigestReference
     byte_size: int
+    media_type: str
     source_stability_result: str = "verified"
 
 
@@ -759,6 +778,55 @@ def _source_file(result: SnapshotSourceResult) -> Path:
     return current
 
 
+def _authorized_source_media_type(
+    *,
+    entry: SnapshotEntryPlan,
+    resolved: SnapshotAuthorizedSourceBytesResult,
+    descriptor: SnapshotSourceProviderDescriptor,
+) -> str:
+    artifact = entry.source_artifact
+    assert artifact is not None
+    if resolved.acquisition_contract_version == SNAPSHOT_AUTHORIZED_SOURCE_BYTES_CONTRACT:
+        if resolved.media_type != entry.media_type or resolved.media_type != artifact.media_type:
+            raise SnapshotMaterializationError(
+                "snapshot.source_integrity_failed",
+                "Authorized source-byte metadata does not match the immutable Entry Plan.",
+                stage="source_resolution",
+            )
+        return resolved.media_type
+
+    if (
+        resolved.acquisition_contract_version
+        != SNAPSHOT_AUTHORIZED_SOURCE_BYTES_DEFERRED_MEDIA_CONTRACT
+    ):
+        raise SnapshotMaterializationError(
+            "snapshot.source_integrity_failed",
+            "Authorized source-byte acquisition contract is unsupported.",
+            stage="source_resolution",
+        )
+    if (
+        entry.media_type != SNAPSHOT_DEFERRED_SOURCE_MEDIA_TYPE
+        or artifact.media_type != SNAPSHOT_DEFERRED_SOURCE_MEDIA_TYPE
+        or not descriptor.concrete_media_types
+        or resolved.media_type not in descriptor.concrete_media_types
+    ):
+        raise SnapshotMaterializationError(
+            "snapshot.source_integrity_failed",
+            "Deferred authorized source media does not satisfy the frozen provider contract.",
+            stage="source_resolution",
+        )
+    if (
+        entry.target_relative_path is None
+        or PurePosixPath(entry.target_relative_path).suffix
+    ):
+        raise SnapshotMaterializationError(
+            "snapshot.source_integrity_failed",
+            "Deferred-media Snapshot targets must be suffix-neutral.",
+            stage="source_resolution",
+        )
+    return resolved.media_type
+
+
 def copy_planned_source_to_staging(
     *,
     plan: SnapshotBuildPlan,
@@ -810,6 +878,8 @@ def copy_planned_source_to_staging(
     descriptor = provider.descriptor
     artifact = entry.source_artifact
     assert artifact is not None
+    assert entry.media_type is not None
+    materialized_media_type = entry.media_type
     if (
         resolved.provider_id != descriptor.provider_id
         or resolved.provider_version != descriptor.provider_version
@@ -824,17 +894,11 @@ def copy_planned_source_to_staging(
 
     filesystem_result: SnapshotSourceResult | None = None
     if isinstance(resolved, SnapshotAuthorizedSourceBytesResult):
-        if (
-            resolved.acquisition_contract_version
-            != SNAPSHOT_AUTHORIZED_SOURCE_BYTES_CONTRACT
-            or resolved.media_type != entry.media_type
-            or resolved.media_type != artifact.media_type
-        ):
-            raise SnapshotMaterializationError(
-                "snapshot.source_integrity_failed",
-                "Authorized source-byte metadata does not match the immutable Entry Plan.",
-                stage="source_resolution",
-            )
+        materialized_media_type = _authorized_source_media_type(
+            entry=entry,
+            resolved=resolved,
+            descriptor=descriptor,
+        )
         acquired = resolved.content
         acquired_digest = _sha256(acquired)
         if resolved.source_digest is not None and not hmac.compare_digest(
@@ -961,6 +1025,7 @@ def copy_planned_source_to_staging(
         acquired_source_digest=acquired_digest,
         copied_output_digest=output_digest,
         byte_size=len(staged),
+        media_type=materialized_media_type,
         source_stability_result=source_stability_result,
     )
 
@@ -1074,7 +1139,9 @@ def render_planned_entry_to_staging(
 __all__ = [
     "SNAPSHOT_BUILD_AUTHORITY_OUTCOMES",
     "SNAPSHOT_AUTHORIZED_SOURCE_BYTES_CONTRACT",
+    "SNAPSHOT_AUTHORIZED_SOURCE_BYTES_DEFERRED_MEDIA_CONTRACT",
     "SNAPSHOT_BUILD_OPERATION",
+    "SNAPSHOT_DEFERRED_SOURCE_MEDIA_TYPE",
     "SNAPSHOT_SOURCE_STABILITY_CONTRACT",
     "SnapshotBuildAuthorityDecision",
     "SnapshotBuildAuthorityGate",

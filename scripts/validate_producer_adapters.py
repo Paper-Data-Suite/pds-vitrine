@@ -69,6 +69,7 @@ def validate(root: Path) -> None:
     ordinary = build_adapter_registry()
     if tuple(item.declaration.adapter_id for item in ordinary.adapters) != (
         "vitrine_concord_live_adapter",
+        "vitrine_quillan_live_adapter",
         "vitrine_scoreform_live_adapter",
     ):
         raise RuntimeError(

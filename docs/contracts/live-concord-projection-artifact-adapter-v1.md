@@ -598,10 +598,11 @@ privacy classification != disclosure authorization
 
 ## Registry and CLI
 
-After issue #61, the completed ordinary live registry contains:
+After issue #60, the completed ordinary live registry contains:
 
 ```text
 vitrine_concord_live_adapter
+vitrine_quillan_live_adapter
 vitrine_scoreform_live_adapter
 ```
 

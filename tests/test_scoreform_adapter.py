@@ -375,6 +375,7 @@ def test_completed_live_registry_keeps_scoreform_bound_and_workflow_fail_closed(
     ordinary = build_adapter_registry()
     assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
         "vitrine_concord_live_adapter",
+        "vitrine_quillan_live_adapter",
         "vitrine_scoreform_live_adapter",
     )
     scoreform = next(
