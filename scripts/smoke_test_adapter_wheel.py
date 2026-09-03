@@ -66,9 +66,17 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
 from vitrine.concord_artifact_source import (
     CONCORD_ARTIFACT_SOURCE_PROVIDER_DESCRIPTOR,
 )
+from vitrine.quillan_artifact_source import (
+    QUILLAN_FEEDBACK_MARKDOWN_SOURCE_PROVIDER_DESCRIPTOR,
+    QUILLAN_FEEDBACK_PDF_SOURCE_PROVIDER_DESCRIPTOR,
+    QUILLAN_STUDENT_WORK_SOURCE_PROVIDER_DESCRIPTOR,
+)
 from vitrine.development_adapters import build_development_fixture_adapter_registry
 from vitrine.producer_adapters import build_adapter_registry
 assert CONCORD_ARTIFACT_SOURCE_PROVIDER_DESCRIPTOR.producer_module_id == "concord"
+assert QUILLAN_STUDENT_WORK_SOURCE_PROVIDER_DESCRIPTOR.producer_module_id == "quillan"
+assert QUILLAN_FEEDBACK_PDF_SOURCE_PROVIDER_DESCRIPTOR.producer_module_id == "quillan"
+assert QUILLAN_FEEDBACK_MARKDOWN_SOURCE_PROVIDER_DESCRIPTOR.producer_module_id == "quillan"
 assert (
     CONCORD_ARTIFACT_SOURCE_PROVIDER_DESCRIPTOR.representation_kind
     == "concord:returned_artifact_pdf"
@@ -76,6 +84,7 @@ assert (
 ordinary = build_adapter_registry()
 assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
     'vitrine_concord_live_adapter',
+    'vitrine_quillan_live_adapter',
     'vitrine_scoreform_live_adapter',
 )
 assert all(item.declaration.integration_kind == 'live' for item in ordinary.adapters)
@@ -85,6 +94,7 @@ assert {
     for item in ordinary.adapters
 } == {
     'concord': 'pds-concord',
+    'quillan': 'quillan',
     'scoreform': 'scoreform',
 }
 fixture = build_development_fixture_adapter_registry()
@@ -97,6 +107,7 @@ assert all(item.declaration.integration_kind == 'development_fixture' for item i
         ordinary_output = _run([str(console), "adapters", "list"], cwd=work, env=env)
         for adapter_id in (
             "vitrine_concord_live_adapter",
+            "vitrine_quillan_live_adapter",
             "vitrine_scoreform_live_adapter",
         ):
             if adapter_id not in ordinary_output:
@@ -105,6 +116,7 @@ assert all(item.declaration.integration_kind == 'development_fixture' for item i
             raise RuntimeError("default adapter CLI exposed development fixtures")
         for adapter_id, producer in (
             ("vitrine_concord_live_adapter", "concord"),
+            ("vitrine_quillan_live_adapter", "quillan"),
             ("vitrine_scoreform_live_adapter", "scoreform"),
         ):
             show_output = _run(

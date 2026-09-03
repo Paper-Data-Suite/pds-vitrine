@@ -113,6 +113,7 @@ def test_default_registry_contains_completed_live_adapters_and_rejects_fixture_i
     ordinary = build_adapter_registry()
     assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
         "vitrine_concord_live_adapter",
+        "vitrine_quillan_live_adapter",
         "vitrine_scoreform_live_adapter",
     )
     assert all(
@@ -120,7 +121,7 @@ def test_default_registry_contains_completed_live_adapters_and_rejects_fixture_i
     )
     assert {
         item.declaration.support_key.producer_module_id for item in ordinary.adapters
-    } == {"concord", "scoreform"}
+    } == {"concord", "quillan", "scoreform"}
     fixture_adapter = build_development_fixture_adapter_registry().adapters[0]
     with pytest.raises(ProducerAdapterError) as raised:
         build_adapter_registry(adapters=(fixture_adapter,))

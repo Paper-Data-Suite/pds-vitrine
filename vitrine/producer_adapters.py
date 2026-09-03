@@ -961,11 +961,13 @@ def build_adapter_registry(
     # producer package's lazy installed-reader boundary. Constructing live
     # adapters reads no sibling package or workspace state.
     from vitrine.concord_adapter import build_concord_live_adapter
+    from vitrine.quillan_adapter import build_quillan_live_adapter
     from vitrine.scoreform_adapter import build_scoreform_live_adapter
 
     registry = ProducerProjectionAdapterRegistry(
         adapters=(
             build_concord_live_adapter(),
+            build_quillan_live_adapter(),
             build_scoreform_live_adapter(),
             *raw,
         )

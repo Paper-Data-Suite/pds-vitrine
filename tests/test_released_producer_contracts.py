@@ -196,12 +196,13 @@ def test_audited_contract_catalog_activates_only_implemented_live_adapters() -> 
         adapter.declaration.adapter_id for adapter in registry.adapters
     ) == (
         "vitrine_concord_live_adapter",
+        "vitrine_quillan_live_adapter",
         "vitrine_scoreform_live_adapter",
     )
     assert tuple(
         adapter.declaration.support_key.producer_module_id
         for adapter in registry.adapters
-    ) == ("concord", "scoreform")
+    ) == ("concord", "quillan", "scoreform")
     assert all(
         adapter.declaration.integration_kind == "live"
         for adapter in registry.adapters

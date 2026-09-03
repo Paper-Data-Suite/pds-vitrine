@@ -306,6 +306,7 @@ def _validate_registry_separation() -> None:
         tuple(item.declaration.adapter_id for item in ordinary.adapters)
         == (
             "vitrine_concord_live_adapter",
+            "vitrine_quillan_live_adapter",
             "vitrine_scoreform_live_adapter",
         ),
         "ordinary adapter registry must contain exactly completed live adapters",
@@ -315,18 +316,25 @@ def _validate_registry_separation() -> None:
         for item in ordinary.adapters
     }
     _require(
-        set(live_by_module) == {"concord", "scoreform"},
+        set(live_by_module) == {"concord", "quillan", "scoreform"},
         "ordinary live adapter module set changed",
     )
     scoreform = live_by_module["scoreform"]
+    quillan = live_by_module["quillan"]
     concord = live_by_module["concord"]
     _require(
-        scoreform.integration_kind == "live" and concord.integration_kind == "live",
+        scoreform.integration_kind == "live"
+        and quillan.integration_kind == "live"
+        and concord.integration_kind == "live",
         "completed adapter is not live",
     )
     _require(
         scoreform.support_key is SCOREFORM_LIVE_SUPPORT_KEY,
         "ScoreForm live adapter is not bound to the frozen support key",
+    )
+    _require(
+        quillan.support_key is QUILLAN_LIVE_SUPPORT_KEY,
+        "Quillan live adapter is not bound to the frozen support key",
     )
     _require(
         concord.support_key is CONCORD_LIVE_SUPPORT_KEY,
@@ -336,6 +344,11 @@ def _validate_registry_separation() -> None:
         scoreform.public_reader_id
         == "vitrine_installed_scoreform_academic_result_reader",
         "ScoreForm live adapter reader binding changed",
+    )
+    _require(
+        quillan.public_reader_id
+        == "vitrine_installed_quillan_academic_result_reader",
+        "Quillan live adapter reader binding changed",
     )
     _require(
         concord.public_reader_id

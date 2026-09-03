@@ -25,8 +25,9 @@ canonical Core state
 -> Candidate/Profile policy
 ```
 
-This issue does not implement the ScoreForm, Quillan, or Concord live projection
-adapters. Those remain #59, #60, and #61.
+Issue #58 itself does not implement producer projection adapters. Downstream
+issues #59, #60, and #61 now implement the completed live ScoreForm, Quillan,
+and Concord integrations over this reader boundary.
 
 ## Authoritative reader identities
 
@@ -74,8 +75,8 @@ live adapter registered != source read authorized
 
 The reader service itself does not auto-register producers. Completed live
 integration issues extend the ordinary `build_adapter_registry()` explicitly.
-After #61, the completed live declarations are ScoreForm and Concord; default
-workflow dependencies remain separately fail-closed and empty.
+After #60, the completed live declarations are Concord, Quillan, and ScoreForm;
+default workflow dependencies remain separately fail-closed and empty.
 
 ## Reader failures
 
@@ -213,7 +214,7 @@ Importing or installing a producer does not auto-enable a Vitrine integration.
 
 It does not authorize producer Artifacts.
 
-Quillan Artifact authorization remains #60 through:
+Quillan Artifact authorization is implemented by #60 through:
 
 ```text
 quillan.academic_result_artifacts
@@ -258,9 +259,10 @@ projection semantics.
 
 ### #60
 
-Receives the installed Quillan manifest reader and validated Quillan public
-model. #60 separately implements Quillan projection plus producer-owned Artifact
-authorization/resolution.
+Implemented. The installed Quillan manifest reader feeds
+`vitrine_quillan_live_adapter`; copied selected work and feedback use the
+separately authorized Quillan Artifact provider family. The operational
+contract is `live-quillan-projection-artifact-adapter-v1.md`.
 
 ### #61
 
@@ -313,17 +315,19 @@ The harness:
    synthetic Academic Result Manifest bytes;
 7. requires each returned producer public model to preserve the exact producer
    and manifest-contract identity;
-8. qualifies the live ScoreForm and Concord projection adapters against the
-   exact released public models;
-9. creates synthetic Concord producer-native Artifact state through released
-   production APIs and qualifies the separately authorized
-   `returned_artifact_pdf` -> `authorized_source_bytes_v1` path.
+8. qualifies the live ScoreForm, Quillan, and Concord projection adapters
+   against the exact released public models;
+9. creates producer-native Concord and Quillan Artifact state through released
+   production APIs and qualifies both separately authorized Artifact paths,
+   including Quillan deferred-media selected student work and exact PDF/Markdown
+   feedback.
 
-ScoreForm and Quillan qualification bytes are Vitrine-owned synthetic canonical
-manifests shaped only to the released public contract. Concord canonical bytes
-are produced in a separate fresh process using Concord's released public
-manifest value/writer API, then consumed in a second fresh process so lazy-reader
-import behavior remains observable.
+ScoreForm and Quillan reader-qualification bytes are Vitrine-owned synthetic
+canonical manifests shaped only to the released public contract. Quillan's
+Artifact qualifier separately creates genuine producer-native routed evidence
+and feedback exports through installed production APIs. Concord canonical bytes
+and Artifact state are likewise created through the released producer surfaces.
+Fresh-process boundaries keep lazy-reader import behavior observable.
 
 Run from the repository root with the audited wheels in Downloads:
 

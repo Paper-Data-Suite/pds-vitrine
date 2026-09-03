@@ -22,11 +22,18 @@ docs/contracts/released-producer-semantic-crosswalk-v1.md
 docs/contracts/snapshot-build-workflows-v1.md
 ```
 
-Issue #57 records the integration contract. Issues #59 and #61 now implement
-the completed live ScoreForm and Concord integrations. After #61,
-`build_adapter_registry()` contains exactly those two live declarations in
-deterministic identity order. Development fixtures remain separate, and default
-workflow dependencies remain fail-closed rather than auto-enabling producers.
+Issue #57 records the integration contract. Issues #59, #60, and #61 now
+implement the completed live ScoreForm, Quillan, and Concord integrations.
+After #60, `build_adapter_registry()` contains exactly those three live
+declarations in deterministic identity order. Development fixtures remain
+separate, and default workflow dependencies remain fail-closed rather than
+auto-enabling producers.
+
+The completed live registry is therefore:
+
+```text
+Concord + Quillan + ScoreForm
+```
 
 ## Frozen release anchors
 
@@ -224,6 +231,9 @@ Artifact capability.
 Issue #60 inherits the Quillan support key, native-rating crosswalk, and the
 separate Quillan Artifact boundary.
 
+Issue #60 is implemented. Its operational contract is
+[live-quillan-projection-artifact-adapter-v1.md](live-quillan-projection-artifact-adapter-v1.md).
+
 Stable Artifact module:
 
 ```text
@@ -384,7 +394,7 @@ The validator freezes:
 - exact live support keys;
 - required semantic-crosswalk coverage;
 - the two and only two #57 schema extensions;
-- ordinary completed live-registry identity (ScoreForm + Concord after #61);
+- ordinary completed live-registry identity (Concord + Quillan + ScoreForm after #60);
 - fixture/live identity separation;
 - absence of hard ScoreForm/Quillan/Concord runtime dependencies;
 - absence of eager sibling producer imports while validating #57;
@@ -427,8 +437,8 @@ and reader boundary.
 The remaining handoff is therefore narrow:
 
 - #59 ScoreForm projection is implemented and frozen by its dedicated contract;
-- #60 implements/reconciles Quillan projection plus Quillan Artifact
-  authorization when that work lands;
+- #60 Quillan projection plus Quillan Artifact authorization is implemented
+  and frozen by its dedicated operational contract;
 - #61 Concord projection plus Concord Artifact authorization is implemented and
   frozen by its dedicated contract;
 - #62 builds user-facing compatibility diagnostics over the stable failure
