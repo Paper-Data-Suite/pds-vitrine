@@ -921,6 +921,46 @@ def _inside_qualification(fixture_dir: Path) -> None:
         len(concord_batch.projected_sources),
     )
 
+    from vitrine.compatibility_diagnostics import (
+        diagnose_installed_producer_readiness,
+    )
+
+    readiness = diagnose_installed_producer_readiness()
+    readiness_by_producer = {
+        report.producer_module_id: report for report in readiness
+    }
+    if tuple(sorted(readiness_by_producer)) != (
+        "concord",
+        "quillan",
+        "scoreform",
+    ):
+        raise RuntimeError("issue #62 installed-readiness producer set changed")
+    for producer in ("scoreform", "quillan", "concord"):
+        report = readiness_by_producer[producer]
+        if not report.ready:
+            raise RuntimeError(
+                f"issue #62 exact-wheel readiness is not ready for {producer}"
+            )
+        checks = {item.stage: item for item in report.checks}
+        expected_artifact_outcome = (
+            "not_applicable" if producer == "scoreform" else "ready"
+        )
+        if checks["artifact_api"].outcome != expected_artifact_outcome:
+            raise RuntimeError(
+                f"issue #62 Artifact readiness changed for {producer}"
+            )
+        audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE[producer]
+        distribution_fields = dict(checks["reader_distribution"].safe_fields)
+        if (
+            distribution_fields.get("installed_distribution_version")
+            != audit.release_version
+        ):
+            raise RuntimeError(
+                f"issue #62 qualification provenance changed for {producer}"
+            )
+
+    print("PASS exact-wheel issue #62 installed-readiness qualification")
+
     print("PASS exact-wheel installed producer reader qualification")
 
 

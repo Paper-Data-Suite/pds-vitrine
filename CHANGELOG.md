@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-No unreleased changes.
+### Added
+
+- Versioned transient cross-producer compatibility diagnostics for released
+  ScoreForm, Quillan, and Concord integrations.
+- Read-only installed producer readiness, exact semantic support explanation,
+  canonical Publication preflight, and authorization-gated read/projection probes.
+- Producer Artifact diagnostic mapping that preserves Snapshot failure codes while
+  keeping ScoreForm Artifact readiness explicitly not applicable.
+- Direct `vitrine compatibility` CLI commands, reusable repository validation,
+  isolated wheel smoke coverage, and exact released-wheel readiness qualification.
 
 ## 0.2.0 - 2026-08-17
 

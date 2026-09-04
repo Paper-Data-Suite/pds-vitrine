@@ -13,6 +13,10 @@ from pds_core.workspace import WorkspaceRootError
 from vitrine import __version__
 from vitrine import menu as menu_module
 from vitrine.adapter_cli import configure_adapter_parser, run_adapter_command
+from vitrine.compatibility_cli import (
+    configure_compatibility_parser,
+    run_compatibility_command,
+)
 from vitrine.profile_cli import configure_profile_parser, run_profile_command
 from vitrine.subject_cli import configure_subject_parser, run_subject_command
 from vitrine.workflow_cli import configure_workflow_parsers, run_workflow_command
@@ -55,6 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
     configure_subject_parser(subparsers)
     configure_profile_parser(subparsers)
     configure_adapter_parser(subparsers)
+    configure_compatibility_parser(subparsers)
     configure_workflow_parsers(subparsers)
 
     workspace_parser = subparsers.add_parser(
@@ -164,6 +169,13 @@ def main(
             return run_subject_command(args, output=stdout, error=stderr)
         if args.command == "profile":
             return run_profile_command(args, output=stdout, error=stderr)
+        if args.command == "compatibility":
+            return run_compatibility_command(
+                args,
+                output=stdout,
+                error=stderr,
+                dependencies=dependencies,
+            )
         if args.command == "adapters":
             return run_adapter_command(args, output=stdout, error=stderr)
         if args.command in {
