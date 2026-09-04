@@ -27,6 +27,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_producer_reader_services.py",),
     ),
     (
+        "cross-producer compatibility",
+        ("scripts/validate_compatibility_diagnostics.py",),
+    ),
+    (
         "live ScoreForm adapter",
         ("scripts/validate_scoreform_adapter.py", "--skip-focused-tests"),
     ),
@@ -295,6 +299,7 @@ def validate(
             wheel_smokes = (
                 ("base", "scripts/smoke_test_wheel.py"),
                 ("adapter", "scripts/smoke_test_adapter_wheel.py"),
+                ("compatibility", "scripts/smoke_test_compatibility_wheel.py"),
                 ("Candidate", "scripts/smoke_test_candidate_wheel.py"),
                 ("curation", "scripts/smoke_test_curation_wheel.py"),
                 ("Snapshot", "scripts/smoke_test_snapshot_wheel.py"),
