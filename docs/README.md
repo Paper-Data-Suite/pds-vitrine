@@ -13,6 +13,7 @@ runtime contracts, validated fixtures, release-audit evidence, and deferred work
 - [Canonical storage v1](contracts/canonical-storage-v1.md) — workspace-scoped canonical paths, immutable record/state history, current-pointer publication, concurrency, strict loading, recovery boundaries, and catalog nonauthority implemented by issue #29.
 - [Portfolio Subject workflows v1](contracts/portfolio-subject-workflows-v1.md) — exact Core roster linking, attributable identity decisions, correction, merge/split history, CLI, and low-density teacher workflows implemented by issue #30.
 - [Portfolio Profile workflows v1](contracts/portfolio-profile-workflows-v1.md) — explicit Profile lifecycle, Requirement identity, exact Binding, overlays, composition, and migration implemented by issue #31.
+- [Starter Portfolio Profiles v1](contracts/starter-portfolio-profiles-v1.md) — optional packaged Improvement/Showcase Profiles, read-only planning, explicit atomic activation, and producer-neutral policy implemented by issue #63.
 - [Producer projection adapter boundary v1](contracts/producer-projection-adapters-v1.md) — exact support requests/keys, immutable reader/adapter declarations, deterministic conflict-detecting registry, strict development fixtures, transient projections, and structured failures implemented by issue #32.
 - [Candidate discovery and evaluation v1](contracts/candidate-discovery-evaluation-v1.md) — bounded Core catalog discovery, canonical reload, explicit authorization, verified reader bytes, Subject/Profile evaluation, and guarded Candidate persistence implemented by issue #33.
 - [Curation workflows v1](contracts/curation-workflows-v1.md) — explicit Proposal/Decision/Selection provenance, lifecycle, Placement/Arrangement pointers, Annotation, Reflection, Review, and immutable Composition state implemented by issue #34.
@@ -21,6 +22,7 @@ runtime contracts, validated fixtures, release-audit evidence, and deferred work
 - [Canonical-storage development](development/canonical-storage.md) — persistence, historical reads, audits, catalogs, locks, and focused validation.
 - [Portfolio Subject workflow development](development/portfolio-subject-workflows.md) — application services, direct CLI, teacher menu, and workflow validation.
 - [Portfolio Profile workflow development](development/portfolio-profile-workflows.md) — Profile service, CLI/menu, and migration guidance.
+- [Starter Portfolio Profile development](development/starter-portfolio-profiles.md) — catalog, validation, planning, installation, CLI/menu, customization, and wheel acceptance guidance.
 - [Producer-adapter development](development/producer-adapters.md) — exact selection, fixture isolation, reader purity, and adapter validation.
 - [Candidate-discovery development](development/candidate-discovery.md) — runtime construction, authorization gate, exact Subject/Profile evaluation, and focused validation.
 - [Curation workflow development](development/curation-workflows.md) — guarded curation services, authority gate, pointer concurrency, revisioning, and Composition guidance.
@@ -130,6 +132,10 @@ fixtures/representative-portfolios/
 - [ADR 0007: Snapshot and Immutability](decisions/0007-snapshot-export-checksum-and-immutability.md)
 - [ADR 0008: Privacy and Audience Controls](decisions/0008-privacy-redaction-and-audience-controls.md)
 - [ADR 0009: Regulated Portfolio Profiles](decisions/0009-regulated-portfolio-and-compliance-profiles.md)
+
+## Issue validation
+
+- [Issue #63 starter Profile validation](validation/issue-63-starter-profile-validation.md) — focused, package, isolated-wheel, and complete repository acceptance evidence.
 
 ## Authority
 

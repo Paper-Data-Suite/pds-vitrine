@@ -20,6 +20,8 @@ from vitrine.profile_services import (
     create_profile_family,
     create_profile_revision,
     list_bindable_profile_revisions,
+    list_profile_families,
+    observe_profile_state_revision,
 )
 
 
@@ -199,3 +201,117 @@ def test_expected_profile_error_is_concise_without_traceback(
     text = output.getvalue()
     assert "Profile problem [state_conflict]: Vitrine state changed." in text
     assert "Traceback" not in text
+
+
+def test_starter_profile_preview_and_plan_are_read_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = make_profile_workspace(tmp_path)
+    monkeypatch.setenv("PDS_WORKSPACE_ROOT", str(workspace))
+    before = observe_profile_state_revision(workspace)
+    recorder = ScreenRecorder()
+    run_profile_menu(
+        input_fn=scripted_input(
+            [
+                "9",  # starter Profiles
+                "1",  # improvement starter
+                "1",  # review installation plan
+                "b",  # do not install
+                "b",  # leave starter preview
+                "b",  # leave starter list
+                "b",  # leave Profile menu
+            ]
+        ),
+        output=recorder.output,
+        clear_fn=recorder.clear,
+    )
+    assert observe_profile_state_revision(workspace) == before
+    text = recorder.output.getvalue()
+    assert "Starter Improvement Portfolio" in text
+    assert "Sections" in text
+    assert "Requirements" in text
+    assert "Known limitations" in text
+    assert "Starter Profile Installation Plan" in text
+    assert "Records to create: 6" in text
+    assert "Activation notice" in text
+    assert not any(
+        family.profile_family_id == "vitrine_starter_improvement_family"
+        for family in list_profile_families(workspace)
+    )
+
+
+def test_starter_profile_install_requires_final_confirmation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = make_profile_workspace(tmp_path)
+    monkeypatch.setenv("PDS_WORKSPACE_ROOT", str(workspace))
+    before = observe_profile_state_revision(workspace)
+    output = io.StringIO()
+    run_profile_menu(
+        input_fn=scripted_input(
+            [
+                "9",
+                "1",
+                "1",
+                "1",
+                "teacher_starter",
+                "local_instructional_policy",
+                "Reviewed starter for local use.",
+                "",  # cancel at final INSTALL confirmation
+                "b",
+                "b",
+                "b",
+            ]
+        ),
+        output=output,
+        clear_fn=lambda: None,
+    )
+    assert "Confirm Starter Profile Installation" in output.getvalue()
+    assert observe_profile_state_revision(workspace) == before
+    assert not any(
+        family.profile_family_id == "vitrine_starter_improvement_family"
+        for family in list_profile_families(workspace)
+    )
+
+
+def test_starter_profile_menu_installs_one_bindable_canonical_profile(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = make_profile_workspace(tmp_path)
+    monkeypatch.setenv("PDS_WORKSPACE_ROOT", str(workspace))
+    assert observe_profile_state_revision(workspace) == 1
+    output = io.StringIO()
+    run_profile_menu(
+        input_fn=scripted_input(
+            [
+                "9",
+                "1",
+                "1",
+                "1",
+                "teacher_starter",
+                "local_instructional_policy",
+                "Reviewed starter for local use.",
+                "INSTALL",
+                "",  # success pause
+                "b",  # leave starter list
+                "b",  # leave Profile menu
+            ]
+        ),
+        output=output,
+        clear_fn=lambda: None,
+    )
+    assert observe_profile_state_revision(workspace) == 2
+    assert any(
+        family.profile_family_id == "vitrine_starter_improvement_family"
+        for family in list_profile_families(workspace)
+    )
+    bindable = list_bindable_profile_revisions(workspace)
+    installed = next(
+        item
+        for item in bindable
+        if item.reference.portfolio_profile_id == "vitrine_starter_improvement"
+        and item.reference.profile_revision == 1
+    )
+    assert installed.lifecycle_status == "activated"
+    assert installed.requirement_count == 4
+    assert "Starter Profile installed. Vitrine state revision: 2." in output.getvalue()

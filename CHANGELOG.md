@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Optional packaged Improvement and Showcase starter Portfolio Profiles
+  with deterministic Vitrine-authored policy, read-only validation/planning,
+  explicit atomic activation, idempotent exact reuse, and no hidden purpose
+  behavior or sibling producer dependency.
+- Direct `vitrine profile starter` list/show/validate/plan/install commands,
+  low-density teacher review/confirmation workflows, dedicated validation,
+  package-content enforcement, and isolated Core+Vitrine wheel acceptance.
 - Versioned transient cross-producer compatibility diagnostics for released
   ScoreForm, Quillan, and Concord integrations.
 - Read-only installed producer readiness, exact semantic support explanation,

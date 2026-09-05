@@ -1,0 +1,230 @@
+{
+  "contract_version": "vitrine_starter_profile_pack_v1",
+  "description": "General teacher-editable starter Profile for curating selected work, optional supporting evidence, reflection, and review requirements for a bounded showcase audience.",
+  "family": {
+    "created_at": "2026-09-04T00:00:00+00:00",
+    "created_by": {
+      "actor_id": "vitrine_starter_profile_catalog",
+      "actor_kind": "system",
+      "display_label_snapshot": "Vitrine starter Profile catalog",
+      "owning_system": "vitrine",
+      "role_snapshot": "starter_profile_author"
+    },
+    "description": "Vitrine-owned general starter family for explicitly curated showcase presentation.",
+    "label": "Starter Showcase Portfolio",
+    "profile_family_id": "vitrine_starter_showcase_family",
+    "purpose_kind": "showcase"
+  },
+  "label": "Starter Showcase Portfolio",
+  "purpose_kind": "showcase",
+  "requirements": [
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_showcase",
+      "profile_revision": 1,
+      "requirement_id": "featured_work_cardinality",
+      "requirement_kind": "section",
+      "satisfaction_class": "placement_cardinality",
+      "scope_kind": "section",
+      "scope_reference": "featured_work",
+      "statement": "The Featured Work section must contain one to three explicitly curated work items.",
+      "title": "Featured work"
+    },
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_showcase",
+      "profile_revision": 1,
+      "requirement_id": "showcase_reflection",
+      "requirement_kind": "reflection",
+      "satisfaction_class": "reflection_presence",
+      "scope_kind": "section",
+      "scope_reference": "reflection",
+      "statement": "The student provides reflection connected to the exact curated showcase work.",
+      "title": "Student showcase reflection"
+    },
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_showcase",
+      "profile_revision": 1,
+      "requirement_id": "privacy_review",
+      "requirement_kind": "audience",
+      "satisfaction_class": "privacy_review",
+      "scope_kind": "audience",
+      "scope_reference": "external_review",
+      "statement": "Review the exact bounded showcase presentation for privacy concerns before outward-facing use.",
+      "title": "Privacy review"
+    },
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_showcase",
+      "profile_revision": 1,
+      "requirement_id": "rights_review",
+      "requirement_kind": "audience",
+      "satisfaction_class": "rights_review",
+      "scope_kind": "audience",
+      "scope_reference": "external_review",
+      "statement": "Review rights and reuse concerns for the exact curated showcase material before outward-facing use.",
+      "title": "Rights review"
+    },
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_showcase",
+      "profile_revision": 1,
+      "requirement_id": "accessibility_treatment",
+      "requirement_kind": "audience",
+      "satisfaction_class": "accessibility_review",
+      "scope_kind": "audience",
+      "scope_reference": "external_review",
+      "statement": "Review accessibility treatment for the bounded showcase presentation.",
+      "title": "Accessibility treatment"
+    },
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "conditional",
+      "portfolio_profile_id": "vitrine_starter_showcase",
+      "profile_revision": 1,
+      "requirement_id": "collaborative_work_treatment",
+      "requirement_kind": "approval",
+      "satisfaction_class": "curation_review",
+      "scope_kind": "portfolio",
+      "statement": "When collaborative work is curated, review attribution, collaborator treatment, and minimum-necessary presentation explicitly.",
+      "title": "Collaborative-work treatment"
+    },
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_showcase",
+      "profile_revision": 1,
+      "requirement_id": "final_curator_approval",
+      "requirement_kind": "approval",
+      "satisfaction_class": "curation_review",
+      "scope_kind": "portfolio",
+      "statement": "A teacher or authorized curator approves the exact curated showcase before outward-facing presentation.",
+      "title": "Final curator approval"
+    }
+  ],
+  "revision": {
+    "applicability": {
+      "cohorts": [],
+      "content_areas": [],
+      "grade_bands": [],
+      "school_years": []
+    },
+    "audience_rules": [
+      {
+        "allowed_content_classes": [
+          "assessment_summary",
+          "audience_safe_attribution",
+          "curation_rationale",
+          "feedback",
+          "portfolio_index",
+          "reflection",
+          "student_work"
+        ],
+        "audience_class": "external_reviewer",
+        "audience_rule_id": "external_review",
+        "presentation_class": "showcase",
+        "prohibited_content_classes": [
+          "private_teacher_note",
+          "raw_collaborator_data",
+          "restricted_internal",
+          "secure_assessment_content"
+        ],
+        "purpose": "Bounded external-review presentation policy for explicitly curated showcase material. Profile audience policy is not disclosure authorization or permission to publish.",
+        "required_review_classes": [
+          "accessibility_review",
+          "privacy_review",
+          "rights_review"
+        ]
+      }
+    ],
+    "created_at": "2026-09-04T00:00:00+00:00",
+    "created_by": {
+      "actor_id": "vitrine_starter_profile_catalog",
+      "actor_kind": "system",
+      "display_label_snapshot": "Vitrine starter Profile catalog",
+      "owning_system": "vitrine",
+      "role_snapshot": "starter_profile_author"
+    },
+    "known_limitations": [
+      "This starter does not determine which work is portfolio-worthy.",
+      "This starter does not grant permission to disclose student work.",
+      "Privacy, rights, accessibility, and collaborator review remain explicit human or policy decisions.",
+      "This starter is general Vitrine guidance, not school, district, state, regulatory, grading, or proficiency policy."
+    ],
+    "label": "Starter Showcase Portfolio",
+    "portfolio_profile_id": "vitrine_starter_showcase",
+    "predecessor_revision": null,
+    "profile_family_id": "vitrine_starter_showcase_family",
+    "profile_revision": 1,
+    "purpose_kind": "showcase",
+    "sections": [
+      {
+        "allowed_candidate_kinds": [
+          "student_work"
+        ],
+        "label": "Featured Work",
+        "maximum_placements": 3,
+        "minimum_placements": 1,
+        "obligation": "required",
+        "order": 1,
+        "purpose": "Explicitly curated work selected for the showcase. Featured means curated into this section; Vitrine does not rank or identify best work.",
+        "reflection_requirement": "none",
+        "required_relationship_kinds": [],
+        "section_id": "featured_work"
+      },
+      {
+        "allowed_candidate_kinds": [
+          "assessment_summary",
+          "feedback"
+        ],
+        "label": "Supporting Evidence",
+        "maximum_placements": 3,
+        "minimum_placements": 0,
+        "obligation": "optional",
+        "order": 2,
+        "purpose": "Optional explicitly curated assessment or feedback evidence that provides context without equating a score or rating with the featured work itself.",
+        "reflection_requirement": "none",
+        "required_relationship_kinds": [],
+        "section_id": "supporting_evidence"
+      },
+      {
+        "allowed_candidate_kinds": [
+          "student_work"
+        ],
+        "label": "Showcase Reflection",
+        "maximum_placements": 0,
+        "minimum_placements": 0,
+        "obligation": "required",
+        "order": 3,
+        "purpose": "Student-authored context, choices, process, learning, or significance connected to the exact curated work. The Profile does not infer best work, mastery, proficiency, growth, or portfolio worthiness.",
+        "reflection_requirement": "required",
+        "required_relationship_kinds": [],
+        "section_id": "reflection"
+      }
+    ],
+    "source_authority_references": [
+      "vitrine_starter_profile_catalog_v1"
+    ]
+  },
+  "starter_profile_id": "showcase_portfolio_v1"
+}

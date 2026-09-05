@@ -266,3 +266,18 @@ Profile requirement
 ```
 
 No Core or producer canonical record is mutated by these services.
+
+## Optional packaged starter Profiles
+
+Issue #63 adds optional packaged Improvement and Showcase starter content without
+changing this Profile contract. A starter install creates/reuses ordinary
+`PortfolioProfileFamily`, exact `PortfolioProfileRevision`,
+`PortfolioProfileRequirement`, and explicit lifecycle records. `purpose_kind`
+remains classification only and never expands into hidden sections,
+Requirements, audience policy, or evidence selection.
+
+The exact starter-specific catalog, provenance, planning, installation,
+producer-neutrality, and no-reactivation rules are frozen in
+[Starter Portfolio Profiles v1](starter-portfolio-profiles-v1.md). Installed
+starter revisions remain immutable and are customized only through ordinary
+successor Revision, Overlay/Composition, or separate Profile-series workflows.
