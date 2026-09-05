@@ -1,0 +1,23 @@
+{
+  "contract_version": "vitrine_starter_profile_catalog_v1",
+  "starters": [
+    {
+      "label": "Starter Improvement Portfolio",
+      "portfolio_profile_id": "vitrine_starter_improvement",
+      "profile_family_id": "vitrine_starter_improvement_family",
+      "profile_revision": 1,
+      "purpose_kind": "improvement",
+      "resource_name": "improvement_portfolio_v1.json",
+      "starter_profile_id": "improvement_portfolio_v1"
+    },
+    {
+      "label": "Starter Showcase Portfolio",
+      "portfolio_profile_id": "vitrine_starter_showcase",
+      "profile_family_id": "vitrine_starter_showcase_family",
+      "profile_revision": 1,
+      "purpose_kind": "showcase",
+      "resource_name": "showcase_portfolio_v1.json",
+      "starter_profile_id": "showcase_portfolio_v1"
+    }
+  ]
+}

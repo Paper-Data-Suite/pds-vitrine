@@ -51,6 +51,16 @@ from vitrine.profile_services import (
     migrate_portfolio_profile,
     observe_profile_state_revision,
 )
+from vitrine.starter_profiles import (
+    StarterProfileError,
+    StarterProfileInstallPlan,
+    StarterProfilePack,
+    StarterProfileSummary,
+    get_starter_profile_pack,
+    install_starter_profile,
+    list_starter_profile_packs,
+    plan_starter_profile_install,
+)
 from vitrine.storage import VitrineStorageError
 
 
@@ -812,6 +822,335 @@ def _compose(
     _show_success("Effective Profile Revision composed. It remains inactive until activated.", input_fn=input_fn, output=output, clear_fn=clear_fn)
 
 
+def _render_starter_preview(output: TextIO, pack: StarterProfilePack) -> None:
+    _write(
+        output,
+        pack.label,
+        "",
+        f"Starter ID: {pack.starter_profile_id}",
+        f"Purpose: {pack.purpose_kind}",
+        f"Family: {pack.family.profile_family_id}",
+        f"Profile: {pack.revision.portfolio_profile_id}@{pack.revision.profile_revision}",
+        "",
+        pack.description,
+        "",
+        "Authority notice: this packaged starter is general Vitrine guidance, not",
+        "school, district, state, regulatory, grading, or proficiency policy.",
+        "",
+        "Sections",
+    )
+    for section in pack.revision.sections:
+        maximum = (
+            "unbounded"
+            if section.maximum_placements is None
+            else str(section.maximum_placements)
+        )
+        _write(
+            output,
+            f"- {section.order}. {section.label} ({section.section_id})",
+            f"  {section.obligation}; placements "
+            f"{section.minimum_placements}..{maximum}; "
+            f"reflection {section.reflection_requirement}",
+            f"  Candidate kinds: "
+            f"{', '.join(section.allowed_candidate_kinds) or '-'}",
+            f"  {section.purpose}",
+        )
+    _write(output, "", "Audience rules")
+    if not pack.revision.audience_rules:
+        _write(output, "- none")
+    for rule in pack.revision.audience_rules:
+        _write(
+            output,
+            f"- {rule.audience_class}: {rule.purpose}",
+            f"  Prohibited: "
+            f"{', '.join(rule.prohibited_content_classes) or '-'}",
+            f"  Required reviews: "
+            f"{', '.join(rule.required_review_classes) or '-'}",
+        )
+    _write(output, "", "Requirements")
+    for requirement in pack.requirements:
+        scope = requirement.scope_kind
+        if requirement.scope_reference is not None:
+            scope = f"{scope}:{requirement.scope_reference}"
+        _write(
+            output,
+            f"- {requirement.title} ({requirement.requirement_id})",
+            f"  {requirement.obligation} {requirement.requirement_kind}; "
+            f"scope {scope}",
+            f"  {requirement.statement}",
+        )
+    _write(output, "", "Known limitations")
+    for limitation in pack.revision.known_limitations:
+        _write(output, f"- {limitation}")
+
+
+def _render_starter_plan(output: TextIO, plan: StarterProfileInstallPlan) -> None:
+    observed = (
+        "none"
+        if plan.observed_state_revision is None
+        else str(plan.observed_state_revision)
+    )
+    _write(
+        output,
+        "Starter Profile Installation Plan",
+        "",
+        f"Starter: {plan.label} ({plan.starter_profile_id})",
+        f"Profile: {plan.portfolio_profile_id}@{plan.profile_revision}",
+        f"Observed Vitrine state revision: {observed}",
+        f"Observed lifecycle: {plan.observed_lifecycle_status}",
+        f"Lifecycle action: {plan.lifecycle_disposition}",
+        "",
+        "Canonical components",
+    )
+    for component in plan.components:
+        detail = (
+            f" [{component.detail_code}]"
+            if component.detail_code is not None
+            else ""
+        )
+        _write(
+            output,
+            f"- {component.component_kind}:{component.component_id}: "
+            f"{component.disposition}{detail}",
+        )
+    _write(
+        output,
+        "",
+        f"Records to create: {plan.created_record_count}",
+        f"Exact records to reuse: {plan.reused_record_count}",
+        f"Conflicts: {plan.conflict_record_count}",
+        f"Would change canonical state: {'yes' if plan.would_change else 'no'}",
+    )
+    if plan.activation_required:
+        _write(
+            output,
+            "",
+            "Activation notice: installation will activate this exact starter",
+            "Profile Revision, making it available for new Portfolio Bindings.",
+        )
+    elif plan.lifecycle_disposition == "already_active":
+        _write(
+            output,
+            "",
+            "This exact starter Revision is already active; installation will not",
+            "create another activation event.",
+        )
+
+
+def _choose_starter_profile(
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> StarterProfileSummary | None:
+    starters = list_starter_profile_packs()
+    clear_fn()
+    _write(
+        output,
+        "Starter Profiles",
+        "",
+        "Packaged starters are optional convenience content. Nothing is installed",
+        "until you review a plan and explicitly confirm installation.",
+        "",
+    )
+    for index, starter in enumerate(starters, start=1):
+        _write(
+            output,
+            f"{index}. {starter.label} — {starter.purpose_kind}; "
+            f"{starter.portfolio_profile_id}@{starter.profile_revision}",
+        )
+    _nav(output)
+    _write(output, "")
+    choice = _read(input_fn, "Choice: ")
+    navigation = _navigation(choice)
+    if not choice or navigation is NavigationChoice.BACK:
+        return None
+    if choice.isdigit() and 1 <= int(choice) <= len(starters):
+        return starters[int(choice) - 1]
+    _write(output, navigation_hint())
+    _pause(input_fn)
+    return None
+
+
+def _install_reviewed_starter(
+    workspace: Path,
+    session: ProfileMenuSession,
+    plan: StarterProfileInstallPlan,
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> bool:
+    context = _authority_reason(
+        session,
+        "Starter Profile Installation Authority",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+    )
+    if context is None:
+        return False
+    actor, authority, reason = context
+    clear_fn()
+    _write(
+        output,
+        "Confirm Starter Profile Installation",
+        "",
+        f"Starter: {plan.label}",
+        f"Profile: {plan.portfolio_profile_id}@{plan.profile_revision}",
+        f"Records to create: {plan.created_record_count}",
+        f"Exact records to reuse: {plan.reused_record_count}",
+        f"Authority/reference: {authority}",
+        f"Reason: {reason}",
+        "",
+    )
+    if plan.activation_required:
+        _write(
+            output,
+            "This installation will explicitly activate the exact starter Profile",
+            "Revision and make it available for new Portfolio Bindings.",
+            "",
+        )
+    if not _confirm("INSTALL", input_fn=input_fn):
+        return False
+    result = install_starter_profile(
+        plan.starter_profile_id,
+        workspace_root=workspace,
+        actor=actor,
+        reason=reason,
+        authority_reference=authority,
+        expected_state_revision=plan.observed_state_revision,
+    )
+    state_text = (
+        "unchanged"
+        if result.resulting_state_revision is None
+        else str(result.resulting_state_revision)
+    )
+    _show_success(
+        f"Starter Profile installed. Vitrine state revision: {state_text}.",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+    )
+    return True
+
+
+def _review_starter_install_plan(
+    workspace: Path,
+    session: ProfileMenuSession,
+    starter_profile_id: str,
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> bool:
+    plan = plan_starter_profile_install(
+        starter_profile_id,
+        workspace_root=workspace,
+    )
+    clear_fn()
+    _render_starter_plan(output, plan)
+    if plan.has_conflicts:
+        _write(
+            output,
+            "",
+            "Installation is blocked. Existing immutable or lifecycle state must be",
+            "reviewed explicitly; this workflow will not overwrite or reactivate it.",
+        )
+        _pause(input_fn)
+        return False
+    if not plan.would_change:
+        _write(
+            output,
+            "",
+            "No installation change is needed. The exact starter definition is",
+            "already active and available for ordinary Profile Bindings.",
+        )
+        _pause(input_fn)
+        return False
+    _write(output, "", "1. Install this reviewed starter")
+    _nav(output)
+    _write(output, "")
+    choice = _read(input_fn, "Choice: ")
+    navigation = _navigation(choice)
+    if not choice or navigation is NavigationChoice.BACK:
+        return False
+    if choice != "1":
+        _write(output, navigation_hint())
+        _pause(input_fn)
+        return False
+    return _install_reviewed_starter(
+        workspace,
+        session,
+        plan,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+    )
+
+
+def _starter_profile_detail(
+    workspace: Path,
+    session: ProfileMenuSession,
+    starter_profile_id: str,
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> None:
+    pack = get_starter_profile_pack(starter_profile_id)
+    while True:
+        clear_fn()
+        _render_starter_preview(output, pack)
+        _write(output, "", "1. Review installation plan")
+        _nav(output)
+        _write(output, "")
+        choice = _read(input_fn, "Choice: ")
+        navigation = _navigation(choice)
+        if not choice or navigation is NavigationChoice.BACK:
+            return
+        if choice == "1":
+            installed = _review_starter_install_plan(
+                workspace,
+                session,
+                starter_profile_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+            )
+            if installed:
+                return
+        else:
+            _write(output, navigation_hint())
+            _pause(input_fn)
+
+
+def _starter_profiles(
+    workspace: Path,
+    session: ProfileMenuSession,
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> None:
+    while True:
+        selected = _choose_starter_profile(
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+        )
+        if selected is None:
+            return
+        _starter_profile_detail(
+            workspace,
+            session,
+            selected.starter_profile_id,
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+        )
+
+
 def _view_profiles(
     workspace: Path, *, input_fn: InputFunction, output: TextIO, clear_fn: ClearFunction
 ) -> None:
@@ -847,6 +1186,7 @@ def run_profile_menu(
             "6. Migrate Portfolio Profile",
             "7. Local Profile Overlay",
             "8. Compose Effective Profile",
+            "9. Starter Profiles",
             "H. Help",
             "B. Back",
             "M. Main Menu",
@@ -877,12 +1217,29 @@ def run_profile_menu(
                 _overlay(workspace, session, input_fn=input_fn, output=output, clear_fn=clear_fn)
             elif choice == "8":
                 _compose(workspace, session, input_fn=input_fn, output=output, clear_fn=clear_fn)
+            elif choice == "9":
+                _starter_profiles(
+                    workspace,
+                    session,
+                    input_fn=input_fn,
+                    output=output,
+                    clear_fn=clear_fn,
+                )
             else:
-                _write(output, "Please choose 1-8, H, B, M, or Q.")
+                _write(output, "Please choose 1-9, H, B, M, or Q.")
                 _pause(input_fn)
-        except (ProfileWorkflowError, VitrineStorageError, ValueError) as error:
+        except (
+            ProfileWorkflowError,
+            StarterProfileError,
+            VitrineStorageError,
+            ValueError,
+        ) as error:
             clear_fn()
-            code = error.code if isinstance(error, ProfileWorkflowError) else "profile_workflow_error"
+            code = (
+                error.code
+                if isinstance(error, (ProfileWorkflowError, StarterProfileError))
+                else "profile_workflow_error"
+            )
             _write(output, f"Profile problem [{code}]: {error}")
             _pause(input_fn)
 

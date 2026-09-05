@@ -17,6 +17,7 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("canonical storage", ("scripts/validate_canonical_storage.py",)),
     ("Subject workflows", ("scripts/validate_subject_workflows.py",)),
     ("Profile workflows", ("scripts/validate_profile_workflows.py",)),
+    ("starter Profiles", ("scripts/validate_starter_profiles.py",)),
     ("producer adapters", ("scripts/validate_producer_adapters.py",)),
     (
         "released producer contracts",
@@ -298,6 +299,7 @@ def validate(
             )
             wheel_smokes = (
                 ("base", "scripts/smoke_test_wheel.py"),
+                ("starter Profiles", "scripts/smoke_test_starter_profiles_wheel.py"),
                 ("adapter", "scripts/smoke_test_adapter_wheel.py"),
                 ("compatibility", "scripts/smoke_test_compatibility_wheel.py"),
                 ("Candidate", "scripts/smoke_test_candidate_wheel.py"),

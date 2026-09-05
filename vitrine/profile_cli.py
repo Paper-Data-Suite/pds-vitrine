@@ -39,6 +39,17 @@ from vitrine.profile_services import (
     observe_profile_state_revision,
     transition_profile_lifecycle,
 )
+from vitrine.starter_profiles import (
+    StarterProfileError,
+    StarterProfileInstallPlan,
+    StarterProfileInstallResult,
+    StarterProfilePack,
+    get_starter_profile_pack,
+    install_starter_profile,
+    list_starter_profile_packs,
+    plan_starter_profile_install,
+    validate_starter_profile_pack,
+)
 from vitrine.storage import VitrineStorageError
 
 
@@ -93,6 +104,45 @@ def configure_profile_parser(
     show_parser.add_argument("profile_id")
     show_parser.add_argument("--revision", type=int, required=True)
     _add_workspace(show_parser)
+
+    starter = commands.add_parser(
+        "starter", help="Discover, preview, plan, or install packaged starter Profiles."
+    )
+    starter_cmd = starter.add_subparsers(
+        dest="profile_starter_command", required=True
+    )
+    starter_cmd.add_parser(
+        "list", help="List packaged starter Profiles without workspace access."
+    )
+    starter_show = starter_cmd.add_parser(
+        "show", help="Preview one packaged starter Profile without workspace access."
+    )
+    starter_show.add_argument("starter_profile_id")
+    starter_validate = starter_cmd.add_parser(
+        "validate",
+        help="Validate one packaged starter Profile without workspace access.",
+    )
+    starter_validate.add_argument("starter_profile_id")
+    starter_plan = starter_cmd.add_parser(
+        "plan", help="Plan one starter installation without changing canonical state."
+    )
+    starter_plan.add_argument("starter_profile_id")
+    _add_workspace(starter_plan)
+    starter_install = starter_cmd.add_parser(
+        "install", help="Explicitly install and activate one packaged starter Profile."
+    )
+    starter_install.add_argument("starter_profile_id")
+    starter_install.add_argument(
+        "--confirm",
+        action="store_true",
+        help=(
+            "Confirm the reviewed installation plan and activation of the exact "
+            "starter Profile Revision."
+        ),
+    )
+    _add_actor(starter_install)
+    _add_expected(starter_install)
+    _add_workspace(starter_install)
 
     family = commands.add_parser("family", help="Manage Profile Families.")
     family_cmd = family.add_subparsers(dest="profile_family_command", required=True)
@@ -278,6 +328,161 @@ def _print_analysis(analysis: ProfileMigrationAnalysis, output: TextIO) -> None:
     print(f"Blocked: {'yes' if analysis.blocked else 'no'}", file=output)
 
 
+def _print_starter_pack(pack: StarterProfilePack, output: TextIO) -> None:
+    print(f"Starter: {pack.starter_profile_id}", file=output)
+    print(f"Label: {pack.label}", file=output)
+    print(f"Description: {pack.description}", file=output)
+    print(f"Purpose: {pack.purpose_kind}", file=output)
+    print(f"Family: {pack.family.profile_family_id}", file=output)
+    print(
+        f"Profile: {pack.revision.portfolio_profile_id}@"
+        f"{pack.revision.profile_revision}",
+        file=output,
+    )
+    print(
+        "Authority notice: packaged starter content is Vitrine-owned general "
+        "guidance, not school, district, state, regulatory, grading, or "
+        "proficiency policy.",
+        file=output,
+    )
+    print("Sections:", file=output)
+    for section in pack.revision.sections:
+        maximum = (
+            "unbounded"
+            if section.maximum_placements is None
+            else str(section.maximum_placements)
+        )
+        print(
+            f"- {section.order}. {section.section_id}: {section.label} "
+            f"[{section.obligation}] placements="
+            f"{section.minimum_placements}..{maximum} "
+            f"reflection={section.reflection_requirement}",
+            file=output,
+        )
+        print(f"  Purpose: {section.purpose}", file=output)
+        print(
+            "  Candidate kinds: "
+            + (", ".join(section.allowed_candidate_kinds) or "-"),
+            file=output,
+        )
+    print("Audience rules:", file=output)
+    if not pack.revision.audience_rules:
+        print("- none", file=output)
+    for rule in pack.revision.audience_rules:
+        print(
+            f"- {rule.audience_rule_id}: {rule.audience_class}; "
+            f"presentation={rule.presentation_class}",
+            file=output,
+        )
+        print(
+            "  Allowed: " + (", ".join(rule.allowed_content_classes) or "-"),
+            file=output,
+        )
+        print(
+            "  Prohibited: "
+            + (", ".join(rule.prohibited_content_classes) or "-"),
+            file=output,
+        )
+        print(
+            "  Required reviews: "
+            + (", ".join(rule.required_review_classes) or "-"),
+            file=output,
+        )
+    print("Requirements:", file=output)
+    for requirement in pack.requirements:
+        scope = requirement.scope_kind
+        if requirement.scope_reference is not None:
+            scope = f"{scope}:{requirement.scope_reference}"
+        print(
+            f"- {requirement.requirement_id}: {requirement.obligation} "
+            f"{requirement.requirement_kind}; scope={scope}; "
+            f"satisfaction={requirement.satisfaction_class}",
+            file=output,
+        )
+        print(f"  {requirement.statement}", file=output)
+    print("Known limitations:", file=output)
+    for limitation in pack.revision.known_limitations:
+        print(f"- {limitation}", file=output)
+
+
+def _print_starter_plan(plan: StarterProfileInstallPlan, output: TextIO) -> None:
+    print(f"Starter: {plan.starter_profile_id}", file=output)
+    print(f"Label: {plan.label}", file=output)
+    print(f"Purpose: {plan.purpose_kind}", file=output)
+    print(f"Family: {plan.profile_family_id}", file=output)
+    print(
+        f"Profile: {plan.portfolio_profile_id}@{plan.profile_revision}",
+        file=output,
+    )
+    observed = (
+        "none"
+        if plan.observed_state_revision is None
+        else str(plan.observed_state_revision)
+    )
+    print(f"Observed state revision: {observed}", file=output)
+    print(f"Observed lifecycle: {plan.observed_lifecycle_status}", file=output)
+    print(f"Lifecycle disposition: {plan.lifecycle_disposition}", file=output)
+    print(
+        f"Activation required: {'yes' if plan.activation_required else 'no'}",
+        file=output,
+    )
+    bindable = not plan.has_conflicts and plan.lifecycle_disposition in {
+        "activate_new",
+        "activate_existing_exact",
+        "already_active",
+    }
+    print(
+        f"Bindable after requested install: {'yes' if bindable else 'no'}",
+        file=output,
+    )
+    print("Canonical components:", file=output)
+    for item in plan.components:
+        detail = f" ({item.detail_code})" if item.detail_code is not None else ""
+        print(
+            f"- {item.component_kind}:{item.component_id}: "
+            f"{item.disposition}{detail}",
+            file=output,
+        )
+    print(f"Create count: {plan.created_record_count}", file=output)
+    print(f"Exact reuse count: {plan.reused_record_count}", file=output)
+    print(f"Conflict count: {plan.conflict_record_count}", file=output)
+    print(
+        f"Would change canonical state: {'yes' if plan.would_change else 'no'}",
+        file=output,
+    )
+    if plan.activation_required:
+        print(
+            "Activation notice: installation will activate this exact starter "
+            "Profile Revision, making it available for new Portfolio Bindings.",
+            file=output,
+        )
+
+
+def _print_starter_install(
+    result: StarterProfileInstallResult, output: TextIO
+) -> None:
+    if result.commit is None:
+        print(
+            "No change: exact starter definition is already active and usable.",
+            file=output,
+        )
+    else:
+        print(f"State revision: {result.commit.state_revision}", file=output)
+    print(
+        f"Profile: {result.plan.portfolio_profile_id}@"
+        f"{result.plan.profile_revision}",
+        file=output,
+    )
+    print(f"Lifecycle: {result.plan.lifecycle_disposition}", file=output)
+    if result.activation_event_id is not None:
+        print(f"Activation event: {result.activation_event_id}", file=output)
+    if result.committed_component_ids:
+        print(
+            "Committed components: " + ", ".join(result.committed_component_ids),
+            file=output,
+        )
+
+
 def run_profile_command(args: argparse.Namespace, *, output: TextIO, error: TextIO) -> int:
     """Execute one direct Profile command without interactive prompting."""
     try:
@@ -305,6 +510,68 @@ def run_profile_command(args: argparse.Namespace, *, output: TextIO, error: Text
             for requirement in requirements:
                 print(f"- {requirement.requirement_id}: {requirement.obligation} {requirement.requirement_kind}", file=output)
             return 0
+        if command == "starter":
+            starter_command = args.profile_starter_command
+            if starter_command == "list":
+                for starter_summary in list_starter_profile_packs():
+                    print(
+                        f"{starter_summary.starter_profile_id}\t"
+                        f"{starter_summary.purpose_kind}\t"
+                        f"{starter_summary.label}\t"
+                        f"family={starter_summary.profile_family_id}\t"
+                        f"profile={starter_summary.portfolio_profile_id}@"
+                        f"{starter_summary.profile_revision}\t"
+                        f"sections={starter_summary.section_count}\t"
+                        f"requirements={starter_summary.requirement_count}",
+                        file=output,
+                    )
+                return 0
+            if starter_command == "show":
+                _print_starter_pack(
+                    get_starter_profile_pack(args.starter_profile_id), output
+                )
+                return 0
+            if starter_command == "validate":
+                starter_validation = validate_starter_profile_pack(
+                    args.starter_profile_id
+                )
+                if not starter_validation.valid:
+                    raise StarterProfileError(
+                        "starter_profile_invalid",
+                        "Packaged starter Profile failed validation: "
+                        + ", ".join(starter_validation.issue_codes),
+                    )
+                print(
+                    f"PASS starter Profile: {starter_validation.starter_profile_id}",
+                    file=output,
+                )
+                return 0
+            if starter_command == "plan":
+                _print_starter_plan(
+                    plan_starter_profile_install(
+                        args.starter_profile_id,
+                        workspace_root=args.workspace_root,
+                    ),
+                    output,
+                )
+                return 0
+            if starter_command == "install":
+                if not args.confirm:
+                    raise StarterProfileError(
+                        "starter_profile_confirmation_required",
+                        "Starter installation requires --confirm after reviewing "
+                        "the installation plan.",
+                    )
+                starter_result = install_starter_profile(
+                    args.starter_profile_id,
+                    workspace_root=args.workspace_root,
+                    actor=_actor(args),
+                    reason=args.reason,
+                    authority_reference=args.authority_reference,
+                    expected_state_revision=_expected(args),
+                )
+                _print_starter_install(starter_result, output)
+                return 0
         if command == "family":
             if args.profile_family_command == "list":
                 for family in list_profile_families(args.workspace_root):
@@ -420,8 +687,17 @@ def run_profile_command(args: argparse.Namespace, *, output: TextIO, error: Text
             print(f"Effective Profile: {composition_result.effective_revision.portfolio_profile_id}@{composition_result.effective_revision.profile_revision}", file=output)
             print(f"Composition: {composition_result.composition_id}", file=output)
             return 0
-    except (OSError, ValueError, VitrineStorageError, ProfileWorkflowError) as exc:
-        code = exc.code if isinstance(exc, ProfileWorkflowError) else "profile_command_failed"
+    except (
+        OSError,
+        ValueError,
+        VitrineStorageError,
+        ProfileWorkflowError,
+        StarterProfileError,
+    ) as exc:
+        if isinstance(exc, (ProfileWorkflowError, StarterProfileError)):
+            code = exc.code
+        else:
+            code = "profile_command_failed"
         print(f"Error [{code}]: {exc}", file=error)
         return 1
     raise AssertionError(f"Unhandled Profile command: {args.profile_command}")

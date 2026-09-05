@@ -1,0 +1,193 @@
+{
+  "contract_version": "vitrine_starter_profile_pack_v1",
+  "description": "General teacher-editable starter Profile for curating explicit baseline and later evidence, optional supporting feedback, and a student comparison reflection.",
+  "family": {
+    "created_at": "2026-09-04T00:00:00+00:00",
+    "created_by": {
+      "actor_id": "vitrine_starter_profile_catalog",
+      "actor_kind": "system",
+      "display_label_snapshot": "Vitrine starter Profile catalog",
+      "owning_system": "vitrine",
+      "role_snapshot": "starter_profile_author"
+    },
+    "description": "Vitrine-owned general starter family for explicit evidence comparison over time.",
+    "label": "Starter Improvement Portfolio",
+    "profile_family_id": "vitrine_starter_improvement_family",
+    "purpose_kind": "improvement"
+  },
+  "label": "Starter Improvement Portfolio",
+  "purpose_kind": "improvement",
+  "requirements": [
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_improvement",
+      "profile_revision": 1,
+      "requirement_id": "baseline_cardinality",
+      "requirement_kind": "section",
+      "satisfaction_class": "placement_cardinality",
+      "scope_kind": "section",
+      "scope_reference": "baseline",
+      "statement": "The Baseline Evidence section must contain exactly one explicitly curated item.",
+      "title": "Baseline evidence"
+    },
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_improvement",
+      "profile_revision": 1,
+      "requirement_id": "later_evidence_cardinality",
+      "requirement_kind": "section",
+      "satisfaction_class": "placement_cardinality",
+      "scope_kind": "section",
+      "scope_reference": "later_evidence",
+      "statement": "The Later Evidence section must contain one to three explicitly curated items.",
+      "title": "Later evidence"
+    },
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_improvement",
+      "profile_revision": 1,
+      "requirement_id": "comparison_reflection",
+      "requirement_kind": "reflection",
+      "satisfaction_class": "reflection_presence",
+      "scope_kind": "section",
+      "scope_reference": "reflection",
+      "statement": "The student interprets the exact curated baseline and later evidence without treating the Profile as proof that improvement occurred.",
+      "title": "Student comparison reflection"
+    },
+    {
+      "authority_references": [
+        "vitrine_starter_profile_catalog_v1"
+      ],
+      "obligation": "required",
+      "portfolio_profile_id": "vitrine_starter_improvement",
+      "profile_revision": 1,
+      "requirement_id": "teacher_review",
+      "requirement_kind": "approval",
+      "satisfaction_class": "curation_review",
+      "scope_kind": "portfolio",
+      "statement": "A teacher or authorized curator reviews the explicit evidence comparison before treating the Portfolio as ready for its intended use.",
+      "title": "Teacher review"
+    }
+  ],
+  "revision": {
+    "applicability": {
+      "cohorts": [],
+      "content_areas": [],
+      "grade_bands": [],
+      "school_years": []
+    },
+    "audience_rules": [
+      {
+        "allowed_content_classes": [
+          "assessment_summary",
+          "feedback",
+          "portfolio_index",
+          "reflection",
+          "student_work"
+        ],
+        "audience_class": "student",
+        "audience_rule_id": "student_review",
+        "presentation_class": "student_portfolio",
+        "prohibited_content_classes": [
+          "private_teacher_note",
+          "restricted_internal"
+        ],
+        "purpose": "Student-facing review of explicitly curated improvement evidence. This audience rule is policy metadata only and is not source-read or disclosure authority.",
+        "required_review_classes": []
+      }
+    ],
+    "created_at": "2026-09-04T00:00:00+00:00",
+    "created_by": {
+      "actor_id": "vitrine_starter_profile_catalog",
+      "actor_kind": "system",
+      "display_label_snapshot": "Vitrine starter Profile catalog",
+      "owning_system": "vitrine",
+      "role_snapshot": "starter_profile_author"
+    },
+    "known_limitations": [
+      "This starter does not determine whether improvement occurred.",
+      "Evidence inclusion is an explicit curation decision.",
+      "Scores, ratings, attempts, dates, or revision numbers do not establish improvement automatically.",
+      "This starter is general Vitrine guidance, not school, district, state, regulatory, grading, or proficiency policy."
+    ],
+    "label": "Starter Improvement Portfolio",
+    "portfolio_profile_id": "vitrine_starter_improvement",
+    "predecessor_revision": null,
+    "profile_family_id": "vitrine_starter_improvement_family",
+    "profile_revision": 1,
+    "purpose_kind": "improvement",
+    "sections": [
+      {
+        "allowed_candidate_kinds": [
+          "assessment_summary",
+          "student_work"
+        ],
+        "label": "Baseline Evidence",
+        "maximum_placements": 1,
+        "minimum_placements": 1,
+        "obligation": "required",
+        "order": 1,
+        "purpose": "One explicitly selected starting-point item used for later comparison. The section does not identify an earliest, lowest, or otherwise preferred source automatically.",
+        "reflection_requirement": "none",
+        "required_relationship_kinds": [],
+        "section_id": "baseline"
+      },
+      {
+        "allowed_candidate_kinds": [
+          "assessment_summary",
+          "student_work"
+        ],
+        "label": "Later Evidence",
+        "maximum_placements": 3,
+        "minimum_placements": 1,
+        "obligation": "required",
+        "order": 2,
+        "purpose": "One or more explicitly selected later items that the student and teacher may compare with the baseline. Placement is explicit curation, not automatic latest, highest, or best selection.",
+        "reflection_requirement": "none",
+        "required_relationship_kinds": [],
+        "section_id": "later_evidence"
+      },
+      {
+        "allowed_candidate_kinds": [
+          "feedback"
+        ],
+        "label": "Supporting Feedback",
+        "maximum_placements": 2,
+        "minimum_placements": 0,
+        "obligation": "optional",
+        "order": 3,
+        "purpose": "Optional explicitly selected student-facing feedback that helps contextualize the selected evidence when such feedback exists.",
+        "reflection_requirement": "none",
+        "required_relationship_kinds": [],
+        "section_id": "supporting_feedback"
+      },
+      {
+        "allowed_candidate_kinds": [
+          "student_work"
+        ],
+        "label": "Comparison Reflection",
+        "maximum_placements": 0,
+        "minimum_placements": 0,
+        "obligation": "required",
+        "order": 4,
+        "purpose": "Student-authored interpretation of the exact curated baseline and later evidence. The Profile does not calculate or assert improvement.",
+        "reflection_requirement": "required",
+        "required_relationship_kinds": [],
+        "section_id": "reflection"
+      }
+    ],
+    "source_authority_references": [
+      "vitrine_starter_profile_catalog_v1"
+    ]
+  },
+  "starter_profile_id": "improvement_portfolio_v1"
+}

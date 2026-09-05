@@ -63,3 +63,17 @@ git diff --check
 ```
 
 The full repository gate must also pass before merge.
+
+## Packaged starter Profiles
+
+Issue #63 supplies optional packaged starter Profiles through the same Profile
+services rather than a parallel runtime path. Listing, preview, validation, and
+installation planning are read-only; confirmed installation performs one
+guarded canonical batch and records explicit activation provenance when needed.
+An already-active exact starter is an idempotent no-op, while terminal lifecycle
+states are never silently reactivated.
+
+See [Starter Portfolio Profile development](starter-portfolio-profiles.md) for
+catalog APIs, direct CLI, teacher-menu flow, customization, validation, and
+installed-wheel acceptance. Do not make `purpose_kind` imply starter content or
+edit installed immutable starter records in place.
