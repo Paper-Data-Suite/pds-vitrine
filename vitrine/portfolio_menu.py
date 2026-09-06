@@ -11,6 +11,7 @@ from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 from pds_core.workspace import resolve_workspace_root
 
 from vitrine.audience_services import create_audience_context, list_audience_contexts
+from vitrine.candidate_inbox import CandidateInboxQuery, list_candidate_inbox
 from vitrine.candidate_services import (
     CandidateDiscoveryRequest,
     discover_and_evaluate_candidates,
@@ -303,9 +304,13 @@ def _profile_binding_workflow(
         f"Potentially affected Selections: {analysis.potentially_affected_selection_count}",
         f"Blocked: {'yes' if analysis.blocked else 'no'}",
     )
-    if analysis.blocked or _read(
-        input_fn, "Type MIGRATE to migrate explicitly to this exact revision: "
-    ) != "MIGRATE":
+    if (
+        analysis.blocked
+        or _read(
+            input_fn, "Type MIGRATE to migrate explicitly to this exact revision: "
+        )
+        != "MIGRATE"
+    ):
         return
     migrate_portfolio_profile(
         root,
@@ -335,8 +340,7 @@ def _show_candidate_facts(
         for item in endpoint.subject_relationship_assertions
     )
     availability = ", ".join(
-        f"{item.dimension}={item.outcome}"
-        for item in detail.availability_observations
+        f"{item.dimension}={item.outcome}" for item in detail.availability_observations
     )
     _write(
         output,
@@ -355,8 +359,7 @@ def _show_candidate_facts(
         f"{artifact.artifact_kind + '/' + artifact.representation_kind if artifact else '(none)'}",
         f"Subject relationships: {relationships or '(none)'}",
         f"Condition: {detail.condition_state}",
-        "Evaluation reasons: "
-        f"{', '.join(detail.evaluation_reason_codes) or '(none)'}",
+        f"Evaluation reasons: {', '.join(detail.evaluation_reason_codes) or '(none)'}",
         "Unresolved condition codes: "
         f"{', '.join(detail.unresolved_condition_codes) or '(none)'}",
         f"Availability: {availability or '(none)'}",
@@ -429,9 +432,11 @@ def _curation_workflow(
             _write(output, "That Selection Decision is not available.")
             return
         mutation_actor = actor or _actor(input_fn)
-        if mutation_actor is not None and _read(
-            input_fn, "Type DECIDE to record this immutable Decision: "
-        ) == "DECIDE":
+        if (
+            mutation_actor is not None
+            and _read(input_fn, "Type DECIDE to record this immutable Decision: ")
+            == "DECIDE"
+        ):
             decide_selection_proposal(
                 root,
                 portfolio_id=portfolio_id,
@@ -440,7 +445,8 @@ def _curation_workflow(
                 decided_by=mutation_actor,
                 expected_state_revision=observed,
                 authority_gate=dependencies.curation_authority_gate,
-                rationale_text=_read(input_fn, "Decision rationale (optional): ") or None,
+                rationale_text=_read(input_fn, "Decision rationale (optional): ")
+                or None,
             )
             _write(output, "Selection Decision recorded.")
         return
@@ -522,7 +528,10 @@ def _curation_workflow(
             reason=reason,
         )
         _write(output, "Selection withdrawn.")
-    elif action == "4" and _read(input_fn, "Type INVALIDATE to confirm: ") == "INVALIDATE":
+    elif (
+        action == "4"
+        and _read(input_fn, "Type INVALIDATE to confirm: ") == "INVALIDATE"
+    ):
         invalidate_selection(
             root,
             portfolio_id=portfolio_id,
@@ -549,9 +558,14 @@ def _curation_workflow(
         successor = _numbered_choice(
             _read(input_fn, "Replacement Candidate number: "), candidates
         )
-        if successor is not None and not isinstance(successor, NavigationChoice) and _read(
-            input_fn, "Type REPLACE to preserve eligible Placement sections: "
-        ) == "REPLACE":
+        if (
+            successor is not None
+            and not isinstance(successor, NavigationChoice)
+            and _read(
+                input_fn, "Type REPLACE to preserve eligible Placement sections: "
+            )
+            == "REPLACE"
+        ):
             replace_selection(
                 root,
                 portfolio_id=portfolio_id,
@@ -673,6 +687,45 @@ def _portfolio_context(
                     )
                     for finding in discovery.findings:
                         _write(output, f"{finding.code} — stage {finding.stage}")
+            inbox = list_candidate_inbox(
+                root,
+                CandidateInboxQuery(
+                    portfolio_id=portfolio_id,
+                    limit=100,
+                ),
+            )
+            _write(output, "", "Current Candidate Inbox", "")
+            if not inbox.items:
+                _write(output, "No persisted Candidate inbox entries.")
+            for inbox_item in inbox.items:
+                outcome = (
+                    "Unavailable"
+                    if inbox_item.evaluation_outcome is None
+                    else inbox_item.evaluation_outcome.replace("_", " ").title()
+                )
+                currentness = (
+                    "Unavailable"
+                    if inbox_item.stale_state is None
+                    else inbox_item.stale_state.replace("_", " ").title()
+                )
+                condition = (
+                    ""
+                    if inbox_item.candidate_condition is None
+                    else " — "
+                    + inbox_item.candidate_condition.replace("_", " ").title()
+                )
+                attention = " — Attention needed" if inbox_item.attention_needed else ""
+                _write(
+                    output,
+                    f"- {inbox_item.source_display_label}",
+                    f"  {outcome}{condition} — {currentness}{attention}",
+                )
+            _write(
+                output,
+                "",
+                "Positive Candidates available for explicit curation",
+                "",
+            )
             candidates = list_candidate_summaries(root, portfolio_id)
             candidate_observed = _require_observed_revision(root)
             if not candidates:
@@ -735,11 +788,17 @@ def _portfolio_context(
                                     proposer=mutation_actor,
                                     proposal_origin="teacher",
                                     proposed_section_ids=sections,
-                                    rationale_text=_read(input_fn, "Proposal rationale (optional): ") or None,
+                                    rationale_text=_read(
+                                        input_fn, "Proposal rationale (optional): "
+                                    )
+                                    or None,
                                     expected_state_revision=candidate_observed,
                                     authority_gate=dependencies.curation_authority_gate,
                                 )
-                                _write(output, f"Selection Proposal recorded at state revision {result.state_revision}.")
+                                _write(
+                                    output,
+                                    f"Selection Proposal recorded at state revision {result.state_revision}.",
+                                )
                             elif mutation_actor is not None:
                                 result = select_candidate_directly(
                                     root,
@@ -750,7 +809,10 @@ def _portfolio_context(
                                     expected_state_revision=candidate_observed,
                                     authority_gate=dependencies.curation_authority_gate,
                                 )
-                                _write(output, f"Direct Selection recorded at state revision {result.state_revision}.")
+                                _write(
+                                    output,
+                                    f"Direct Selection recorded at state revision {result.state_revision}.",
+                                )
                 elif raw_candidate and chosen_candidate is None:
                     _write(output, "That Candidate number is not available.")
         elif choice == "4":

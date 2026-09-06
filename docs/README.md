@@ -16,6 +16,7 @@ runtime contracts, validated fixtures, release-audit evidence, and deferred work
 - [Starter Portfolio Profiles v1](contracts/starter-portfolio-profiles-v1.md) — optional packaged Improvement/Showcase Profiles, read-only planning, explicit atomic activation, and producer-neutral policy implemented by issue #63.
 - [Producer projection adapter boundary v1](contracts/producer-projection-adapters-v1.md) — exact support requests/keys, immutable reader/adapter declarations, deterministic conflict-detecting registry, strict development fixtures, transient projections, and structured failures implemented by issue #32.
 - [Candidate discovery and evaluation v1](contracts/candidate-discovery-evaluation-v1.md) — bounded Core catalog discovery, canonical reload, explicit authorization, verified reader bytes, Subject/Profile evaluation, and guarded Candidate persistence implemented by issue #33.
+- [Candidate Inbox v1](contracts/candidate-inbox-v1.md) — explicit Candidate current-Evaluation pointers, workspace-wide positive/negative review, bounded staleness/attention, provenance, CLI/menu, and suppression-safe read behavior implemented by issue #64.
 - [Curation workflows v1](contracts/curation-workflows-v1.md) — explicit Proposal/Decision/Selection provenance, lifecycle, Placement/Arrangement pointers, Annotation, Reflection, Review, and immutable Composition state implemented by issue #34.
 - [Snapshot build workflows v1](contracts/snapshot-build-workflows-v1.md) — exact Composition-bound Request/Plan/Attempt execution, guarded byte custody, Series locks, exact source/render boundaries, deterministic Manifest/Seal/Edition creation, directory Export, verification, current pointer, and recovery implemented by issue #35.
 - [Runtime-model development](development/runtime-models.md) — public imports, construction, conversion, fixtures, and validation commands.
@@ -25,6 +26,7 @@ runtime contracts, validated fixtures, release-audit evidence, and deferred work
 - [Starter Portfolio Profile development](development/starter-portfolio-profiles.md) — catalog, validation, planning, installation, CLI/menu, customization, and wheel acceptance guidance.
 - [Producer-adapter development](development/producer-adapters.md) — exact selection, fixture isolation, reader purity, and adapter validation.
 - [Candidate-discovery development](development/candidate-discovery.md) — runtime construction, authorization gate, exact Subject/Profile evaluation, and focused validation.
+- [Candidate Inbox development](development/candidate-inbox.md) — current-Evaluation pointer rules, read-only projection, Portfolio reuse, focused validation, and installed-wheel acceptance.
 - [Curation workflow development](development/curation-workflows.md) — guarded curation services, authority gate, pointer concurrency, revisioning, and Composition guidance.
 - [Snapshot build workflow development](development/snapshot-build-workflows.md) — Plan construction, exact provider/renderer boundaries, Series locking, sealing, Export verification, recovery, and validation.
 - [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, packaging, and CI.
@@ -136,6 +138,7 @@ fixtures/representative-portfolios/
 ## Issue validation
 
 - [Issue #63 starter Profile validation](validation/issue-63-starter-profile-validation.md) — focused, package, isolated-wheel, and complete repository acceptance evidence.
+- [Issue #64 Candidate Inbox validation](validation/issue-64-candidate-inbox-validation.md) — current-Evaluation, positive/negative, staleness/attention, privacy, package, and isolated-wheel acceptance evidence.
 
 ## Authority
 

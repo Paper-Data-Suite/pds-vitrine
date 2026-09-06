@@ -387,3 +387,13 @@ the `candidate.*` failure surface.
 Installed Core producer Profile discovery is explicit through
 `build_installed_producer_registry()`; `default_workflow_dependencies()` remains
 empty/fail-closed and performs no installed producer discovery.
+
+## Issue #64 current-Evaluation extension
+
+Issue #64 operationalizes ADR 0004's explicit Candidate current-Evaluation state without changing the `vitrine_candidate_evaluator_v1` discovery meaning.
+
+Every newly created positive Candidate is now committed atomically with `CandidateCurrentEvaluationPointerRevision(pointer_revision=1)`. Exact positive replay creates no duplicate pointer revision. A later Evaluation in the same exact Candidate series requires explicit Evaluation predecessor lineage and an explicit successor pointer. Currentness is never selected from `evaluated_at`, identifier ordering, storage ordering, or filenames.
+
+Pre-#64 Candidates may fall back to their creation `PortfolioCandidate.candidate_evaluation_id` only while no explicit pointer or successor Evaluation makes the governing Evaluation ambiguous.
+
+The read-only `vitrine_candidate_inbox_v1` projection is documented in [candidate-inbox-v1.md](candidate-inbox-v1.md). Candidate discovery remains an explicit source-read/mutation operation; opening the inbox never runs discovery.

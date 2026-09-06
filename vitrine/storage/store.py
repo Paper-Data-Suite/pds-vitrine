@@ -13,6 +13,10 @@ from typing import Any, cast
 
 from pds_core.workspace import inspect_workspace_root, resolve_workspace_root
 
+from vitrine.candidate_state import (
+    collect_candidate_state_issues,
+    project_candidate_state,
+)
 from vitrine.identity_state import (
     collect_identity_state_issues,
     project_identity_state,
@@ -383,6 +387,13 @@ def _validate_state_records(
     graph_issues = collect_record_graph_issues(graph)
     if graph_issues:
         raise VitrineStorageGraphIntegrityError(message, issues=graph_issues)
+    candidate_state = project_candidate_state(values)
+    candidate_issues = collect_candidate_state_issues(candidate_state)
+    if candidate_issues:
+        raise VitrineStorageGraphIntegrityError(
+            "persisted Candidate state is invalid.",
+            issues=candidate_issues,
+        )
     identity_state = project_identity_state(values)
     identity_issues = tuple(
         issue

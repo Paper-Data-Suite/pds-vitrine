@@ -3,6 +3,7 @@
 from .audiences import AudienceContext
 from .candidates import (
     CandidateAvailabilityObservation,
+    CandidateCurrentEvaluationPointerRevision,
     CandidateEvaluation,
     CandidateSourceEndpoint,
     PortfolioCandidate,
@@ -129,6 +130,7 @@ __all__ = [
     "ActorAttribution",
     "AudienceContext",
     "CandidateAvailabilityObservation",
+    "CandidateCurrentEvaluationPointerRevision",
     "CandidateEvaluation",
     "CandidateSourceEndpoint",
     "ClassQualifiedStudentRef",
