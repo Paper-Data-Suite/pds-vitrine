@@ -4,7 +4,14 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import cast
 
-from vitrine.curation_state import collect_curation_state_issues, project_curation_state
+from vitrine.candidate_state import (
+    collect_candidate_state_issues,
+    project_candidate_state,
+)
+from vitrine.curation_state import (
+    collect_curation_state_issues,
+    project_curation_state,
+)
 from vitrine.models import VitrineRecord
 from vitrine.snapshot_state import collect_snapshot_state_issues, project_snapshot_state
 
@@ -164,7 +171,16 @@ def commit_record_batch(
             combined = (*load_state_records(root, expected_state_revision), *candidates)
         except VitrineStorageNotFoundError:
             combined = candidates
-    curation_issues = collect_curation_state_issues(project_curation_state(combined))
+    candidate_issues = collect_candidate_state_issues(
+        project_candidate_state(combined)
+    )
+    if candidate_issues:
+        raise VitrineStorageValidationError(
+            f"candidate state is invalid ({candidate_issues[0].code})."
+        )
+    curation_issues = collect_curation_state_issues(
+        project_curation_state(combined)
+    )
     if curation_issues:
         raise VitrineStorageValidationError(
             f"curation state is invalid ({curation_issues[0].code})."

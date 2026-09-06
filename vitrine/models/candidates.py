@@ -14,6 +14,7 @@ from .common import (
     require_controlled_key,
     require_enum,
     require_identifier,
+    require_positive_int,
     require_record_envelope,
     require_text,
 )
@@ -60,6 +61,9 @@ CANDIDATE_CONDITION_STATES: Final[frozenset[str]] = frozenset(
 )
 
 CANDIDATE_EVALUATION_RECORD_TYPE: Final[str] = "candidate_evaluation"
+CANDIDATE_CURRENT_EVALUATION_POINTER_RECORD_TYPE: Final[str] = (
+    "candidate_current_evaluation_pointer_revision"
+)
 CANDIDATE_RECORD_TYPE: Final[str] = "portfolio_candidate"
 
 
@@ -244,6 +248,112 @@ class CandidateEvaluation:
                     "predecessor_evaluation_id must differ from candidate_evaluation_id."
                 )
             object.__setattr__(self, "predecessor_evaluation_id", predecessor)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class CandidateCurrentEvaluationPointerRevision:
+    candidate_id: str
+    pointer_revision: int
+    current_candidate_evaluation_id: str
+    updated_at: datetime
+    updated_by: ActorAttribution
+    reason: str
+    predecessor_pointer_revision: int | None = None
+    previous_candidate_evaluation_id: str | None = None
+    schema_version: str = field(default=SCHEMA_VERSION)
+    record_type: str = field(
+        default=CANDIDATE_CURRENT_EVALUATION_POINTER_RECORD_TYPE
+    )
+
+    def __post_init__(self) -> None:
+        require_record_envelope(
+            self.schema_version,
+            self.record_type,
+            CANDIDATE_CURRENT_EVALUATION_POINTER_RECORD_TYPE,
+        )
+        object.__setattr__(
+            self,
+            "candidate_id",
+            require_identifier(self.candidate_id, "candidate_id"),
+        )
+        object.__setattr__(
+            self,
+            "pointer_revision",
+            require_positive_int(
+                self.pointer_revision,
+                "pointer_revision",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "current_candidate_evaluation_id",
+            require_identifier(
+                self.current_candidate_evaluation_id,
+                "current_candidate_evaluation_id",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "updated_at",
+            require_aware_datetime(self.updated_at, "updated_at"),
+        )
+        if not isinstance(self.updated_by, ActorAttribution):
+            raise VitrineModelValidationError(
+                "updated_by must be ActorAttribution."
+            )
+        object.__setattr__(
+            self,
+            "reason",
+            require_text(self.reason, "reason", maximum=1000),
+        )
+
+        predecessor = self.predecessor_pointer_revision
+        previous_evaluation = self.previous_candidate_evaluation_id
+        if self.pointer_revision == 1:
+            if predecessor is not None or previous_evaluation is not None:
+                raise VitrineModelValidationError(
+                    "initial Candidate Current Evaluation Pointer must not "
+                    "identify predecessor state."
+                )
+        elif predecessor is None or previous_evaluation is None:
+            raise VitrineModelValidationError(
+                "successor Candidate Current Evaluation Pointer requires "
+                "both pointer and Evaluation predecessor state."
+            )
+
+        if predecessor is not None:
+            predecessor = require_positive_int(
+                predecessor,
+                "predecessor_pointer_revision",
+            )
+            if predecessor >= self.pointer_revision:
+                raise VitrineModelValidationError(
+                    "predecessor_pointer_revision must be lower than "
+                    "pointer_revision."
+                )
+            object.__setattr__(
+                self,
+                "predecessor_pointer_revision",
+                predecessor,
+            )
+        if previous_evaluation is not None:
+            previous_evaluation = require_identifier(
+                previous_evaluation,
+                "previous_candidate_evaluation_id",
+            )
+            if (
+                previous_evaluation
+                == self.current_candidate_evaluation_id
+            ):
+                raise VitrineModelValidationError(
+                    "previous_candidate_evaluation_id must differ from "
+                    "the current Candidate Evaluation."
+                )
+            object.__setattr__(
+                self,
+                "previous_candidate_evaluation_id",
+                previous_evaluation,
+            )
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

@@ -61,6 +61,7 @@ from vitrine.models import (
     AcademicWorkRegistrationSnapshot,
     ActorAttribution,
     CandidateAvailabilityObservation,
+    CandidateCurrentEvaluationPointerRevision,
     CandidateEvaluation,
     CandidateSourceEndpoint,
     ClassQualifiedStudentRef,
@@ -1315,6 +1316,16 @@ def _evaluate_source(
         created_at=now,
         created_by=request.requesting_actor,
     )
+    pointer = CandidateCurrentEvaluationPointerRevision(
+        candidate_id=candidate.candidate_id,
+        pointer_revision=1,
+        current_candidate_evaluation_id=(
+            evaluation.candidate_evaluation_id
+        ),
+        updated_at=now,
+        updated_by=request.requesting_actor,
+        reason="candidate_created",
+    )
     return (
         CandidateEvaluationResult(
             publication_id=publication.publication_id,
@@ -1323,7 +1334,7 @@ def _evaluate_source(
             candidate=candidate,
             disposition="created",
         ),
-        (evaluation, candidate),
+        (evaluation, candidate, pointer),
     )
 
 

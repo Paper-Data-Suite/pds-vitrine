@@ -29,7 +29,11 @@ from pds_core.routing_models import (
 from vitrine.record_registry import RECORD_DESCRIPTORS
 
 from .audiences import AudienceContext
-from .candidates import CandidateEvaluation, PortfolioCandidate
+from .candidates import (
+    CandidateCurrentEvaluationPointerRevision,
+    CandidateEvaluation,
+    PortfolioCandidate,
+)
 from .curation import (
     PortfolioPlacement,
     PortfolioSelection,
@@ -109,6 +113,7 @@ VitrineRecord: TypeAlias = (
     | PortfolioProfileComposition
     | PortfolioProfileMigration
     | CandidateEvaluation
+    | CandidateCurrentEvaluationPointerRevision
     | PortfolioCandidate
     | PortfolioSelection
     | PortfolioPlacement

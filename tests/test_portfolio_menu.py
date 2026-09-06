@@ -33,9 +33,7 @@ def test_numbered_choice_preserves_back_navigation() -> None:
     assert portfolio_menu._numbered_choice("B", ("first",)) is not None
 
 
-@pytest.mark.parametrize(
-    ("raw", "error"), (("M", ReturnToMainMenu), ("Q", QuitPDS))
-)
+@pytest.mark.parametrize(("raw", "error"), (("M", ReturnToMainMenu), ("Q", QuitPDS)))
 def test_numbered_choice_preserves_core_unwind_navigation(
     raw: str, error: type[Exception]
 ) -> None:
@@ -103,7 +101,9 @@ def test_candidate_number_maps_to_exact_candidate_before_selection(
         snapshot_series_count=0,
     )
     monkeypatch.setattr(
-        portfolio_menu, "show_portfolio", lambda _root, _id: SimpleNamespace(summary=summary)
+        portfolio_menu,
+        "show_portfolio",
+        lambda _root, _id: SimpleNamespace(summary=summary),
     )
     candidates = tuple(
         SimpleNamespace(
@@ -114,7 +114,14 @@ def test_candidate_number_maps_to_exact_candidate_before_selection(
         )
         for index in (1, 2)
     )
-    monkeypatch.setattr(portfolio_menu, "list_candidate_summaries", lambda *_: candidates)
+    monkeypatch.setattr(
+        portfolio_menu, "list_candidate_summaries", lambda *_: candidates
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "list_candidate_inbox",
+        lambda *_args, **_kwargs: SimpleNamespace(items=()),
+    )
     endpoint = SimpleNamespace(
         core_publication=SimpleNamespace(publication_id="publication_exact"),
         producer_source=SimpleNamespace(
@@ -146,7 +153,9 @@ def test_candidate_number_maps_to_exact_candidate_before_selection(
             eligible_section_ids=("section_2",),
         ),
     )
-    monkeypatch.setattr(portfolio_menu, "observe_portfolio_state_revision", lambda _root: 12)
+    monkeypatch.setattr(
+        portfolio_menu, "observe_portfolio_state_revision", lambda _root: 12
+    )
     selected: list[str] = []
 
     def select(_root: Path, **kwargs: object) -> object:
@@ -263,9 +272,7 @@ def test_profile_migration_preserves_exact_observed_revision(
             SimpleNamespace(label="Target", reference=target),
         ),
     )
-    impact = SimpleNamespace(
-        added=(), removed=(), replaced=(), materially_changed=()
-    )
+    impact = SimpleNamespace(added=(), removed=(), replaced=(), materially_changed=())
     monkeypatch.setattr(
         portfolio_menu,
         "analyze_profile_migration",
@@ -310,7 +317,9 @@ def test_teacher_decision_uses_exact_proposal_and_observed_revision(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(portfolio_menu, "list_active_selections", lambda *_: ())
-    monkeypatch.setattr(portfolio_menu, "observe_portfolio_state_revision", lambda _: 23)
+    monkeypatch.setattr(
+        portfolio_menu, "observe_portfolio_state_revision", lambda _: 23
+    )
     decided: list[dict[str, object]] = []
     monkeypatch.setattr(
         portfolio_menu,
@@ -335,7 +344,10 @@ def test_teacher_decision_uses_exact_proposal_and_observed_revision(
 
 @pytest.mark.parametrize(
     ("action", "confirmation", "service_name"),
-    (("3", "WITHDRAW", "withdraw_selection"), ("4", "INVALIDATE", "invalidate_selection")),
+    (
+        ("3", "WITHDRAW", "withdraw_selection"),
+        ("4", "INVALIDATE", "invalidate_selection"),
+    ),
 )
 def test_teacher_selection_lifecycle_maps_exact_selection(
     tmp_path: Path,
@@ -350,7 +362,9 @@ def test_teacher_selection_lifecycle_maps_exact_selection(
     monkeypatch.setattr(
         portfolio_menu, "list_active_selections", lambda *_: (selection,)
     )
-    monkeypatch.setattr(portfolio_menu, "observe_portfolio_state_revision", lambda _: 29)
+    monkeypatch.setattr(
+        portfolio_menu, "observe_portfolio_state_revision", lambda _: 29
+    )
     monkeypatch.setattr(
         portfolio_menu,
         "show_candidate_detail",

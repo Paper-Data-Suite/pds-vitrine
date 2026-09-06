@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from typing import Any
 
 from vitrine.models.audiences import AudienceContext
-from vitrine.models.candidates import CandidateEvaluation, PortfolioCandidate
+from vitrine.models.candidates import (
+    CandidateCurrentEvaluationPointerRevision,
+    CandidateEvaluation,
+    PortfolioCandidate,
+)
 from vitrine.models.curation import (
     PortfolioPlacement,
     PortfolioSelection,
@@ -164,6 +168,13 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
         CandidateEvaluation,
         "candidate_evaluations",
         ("candidate_evaluation_id",),
+    ),
+    RecordDescriptor(
+        "candidate_current_evaluation_pointer_revision",
+        CandidateCurrentEvaluationPointerRevision,
+        None,
+        ("candidate_id", "pointer_revision"),
+        ("pointer_revision",),
     ),
     RecordDescriptor(
         "portfolio_candidate",

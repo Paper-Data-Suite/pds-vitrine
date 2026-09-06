@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Teacher Candidate Inbox with explicit append-preserving current-Evaluation
+  pointers, workspace-wide positive/negative review, suppression-safe counts,
+  bounded stale/attention signals, observational Selection state, and exact
+  Profile/Core/producer/Artifact/Subject provenance.
+- Read-only `vitrine candidate inbox` list/detail CLI, top-level Candidate Inbox
+  teacher menu, Portfolio-filtered reuse, dedicated validation, package guards,
+  and isolated Core+Vitrine installed-wheel acceptance.
 - Optional packaged Improvement and Showcase starter Portfolio Profiles
   with deterministic Vitrine-authored policy, read-only validation/planning,
   explicit atomic activation, idempotent exact reuse, and no hidden purpose

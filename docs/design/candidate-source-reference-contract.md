@@ -1918,3 +1918,22 @@ No open question permits:
 - automatic attempt selection;
 - Portia existence leakage;
 - or in-place Candidate retargeting.
+
+## Runtime implementation note — issue #64
+
+Issue #64 implements the design's Candidate Current Pointer as the canonical append-preserving `CandidateCurrentEvaluationPointerRevision`.
+
+The runtime preserves these design rules:
+
+```text
+current Evaluation is explicit
+legacy fallback is narrow and ambiguity fails closed
+Evaluation successor lineage is explicit
+pointer successor lineage is explicit
+source/context changes create a different Candidate meaning
+Selection provenance remains frozen to the exact Evaluation selected
+```
+
+The implementation deliberately keeps pointer state beside the foundational `VitrineRecordGraph` rather than changing the frozen foundational graph shape. Canonical storage validates the combined Candidate state on commit and reload.
+
+The transient `vitrine_candidate_inbox_v1` projection consumes this canonical state for workspace review, bounded staleness/attention, and provenance without creating a second durable Candidate index or currentness authority.

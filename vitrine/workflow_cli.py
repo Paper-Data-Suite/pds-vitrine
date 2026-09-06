@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 from pathlib import Path
 from typing import TextIO
 
@@ -12,6 +13,13 @@ from vitrine.audience_services import (
     create_audience_context,
     list_audience_contexts,
     show_audience_context,
+)
+from vitrine.candidate_inbox import (
+    CandidateInboxDetail,
+    CandidateInboxItem,
+    CandidateInboxQuery,
+    get_candidate_inbox_detail,
+    list_candidate_inbox,
 )
 from vitrine.candidate_services import (
     CandidateDiscoveryRequest,
@@ -30,6 +38,7 @@ from vitrine.curation_services import (
 )
 from vitrine.models import (
     ActorAttribution,
+    CandidateSourceEndpoint,
     SnapshotBuildPlan,
     SnapshotBuildRequest,
     SnapshotSeries,
@@ -120,6 +129,48 @@ def configure_workflow_parsers(
     c_show = candidates.add_parser("show")
     c_show.add_argument("candidate_id")
     _workspace(c_show)
+    inbox = candidates.add_parser(
+        "inbox",
+        help="Review current Candidate and Evaluation inbox state.",
+    )
+    inbox_subcommands = inbox.add_subparsers(
+        dest="candidate_inbox_command",
+    )
+    inbox.add_argument("--portfolio-id")
+    inbox.add_argument("--subject-id")
+    inbox.add_argument("--purpose")
+    inbox.add_argument(
+        "--outcome",
+        action="append",
+        default=[],
+        metavar="OUTCOME",
+    )
+    inbox.add_argument(
+        "--condition",
+        action="append",
+        default=[],
+        metavar="CONDITION",
+    )
+    inbox.add_argument("--attention-only", action="store_true")
+    inbox.add_argument("--stale-only", action="store_true")
+    inbox.add_argument(
+        "--selected-state",
+        choices=("selected", "unselected", "historical_only"),
+    )
+    inbox.add_argument("--module-id")
+    inbox.add_argument(
+        "--evaluated-since",
+        metavar="ISO_DATETIME",
+    )
+    inbox.add_argument("--limit", type=int, default=100)
+    _workspace(inbox)
+
+    inbox_show = inbox_subcommands.add_parser(
+        "show",
+        help="Show exact persisted provenance for one inbox entry.",
+    )
+    inbox_show.add_argument("entry_id")
+    _workspace(inbox_show)
     discover = candidates.add_parser("discover")
     discover.add_argument("portfolio_id")
     discover.add_argument("--purpose", required=True)
@@ -285,6 +336,310 @@ def configure_workflow_parsers(
     _workspace(custody)
 
 
+def _inbox_datetime(raw: str | None) -> datetime | None:
+    if raw is None:
+        return None
+    try:
+        return datetime.fromisoformat(raw)
+    except ValueError as error:
+        raise ValueError(
+            "evaluated_since_invalid: --evaluated-since must be an ISO datetime"
+        ) from error
+
+
+def _inbox_query(args: argparse.Namespace) -> CandidateInboxQuery:
+    return CandidateInboxQuery(
+        portfolio_id=args.portfolio_id,
+        portfolio_subject_id=args.subject_id,
+        profile_purpose=args.purpose,
+        evaluation_outcomes=tuple(args.outcome),
+        candidate_conditions=tuple(args.condition),
+        attention_only=args.attention_only,
+        stale_only=args.stale_only,
+        selected_state=args.selected_state,
+        producer_module_id=args.module_id,
+        evaluated_since=_inbox_datetime(args.evaluated_since),
+        limit=args.limit,
+    )
+
+
+def _teacher_label(value: str | None) -> str:
+    if value is None:
+        return "Unavailable"
+    return value.replace("_", " ").strip().title()
+
+
+def _selection_label(item: CandidateInboxItem) -> str:
+    if item.selected_state == "selected":
+        return "Selected"
+    if item.selected_state == "historical_only":
+        return "Historical selection only"
+    return "Not selected"
+
+
+def _print_candidate_inbox_item(
+    item: CandidateInboxItem,
+    *,
+    output: TextIO,
+) -> None:
+    outcome = _teacher_label(item.evaluation_outcome)
+    condition = (
+        ""
+        if item.candidate_condition is None
+        else f" | {_teacher_label(item.candidate_condition)}"
+    )
+    freshness = _teacher_label(item.stale_state)
+    attention = " | Attention needed" if item.attention_needed else ""
+    print(
+        (
+            f"{item.entry_id}\t{outcome}{condition} | {freshness}"
+            f"{attention} | {_selection_label(item)}\t"
+            f"{item.source_display_label}"
+        ),
+        file=output,
+    )
+
+
+def _detail_endpoint(
+    detail: CandidateInboxDetail,
+) -> CandidateSourceEndpoint | None:
+    if detail.evaluation is not None and detail.evaluation.source_endpoint is not None:
+        return detail.evaluation.source_endpoint
+    if detail.candidate is not None:
+        return detail.candidate.source_endpoint
+    return None
+
+
+def _print_candidate_inbox_detail(
+    detail: CandidateInboxDetail,
+    *,
+    output: TextIO,
+) -> None:
+    item = detail.item
+    endpoint = _detail_endpoint(detail)
+    print(f"Candidate Inbox Entry: {item.entry_id}", file=output)
+    print(f"Source: {item.source_display_label}", file=output)
+    print(
+        f"Outcome: {_teacher_label(item.evaluation_outcome)}",
+        file=output,
+    )
+    print(
+        f"Condition: {_teacher_label(item.candidate_condition)}",
+        file=output,
+    )
+    print(
+        f"Currentness: {_teacher_label(item.stale_state)}",
+        file=output,
+    )
+    print(
+        (f"Stale reasons: {', '.join(item.stale_reason_codes) or '(none)'}"),
+        file=output,
+    )
+    print(
+        (f"Attention: {'yes' if item.attention_needed else 'no'}"),
+        file=output,
+    )
+    print(
+        (f"Attention reasons: {', '.join(item.attention_reason_codes) or '(none)'}"),
+        file=output,
+    )
+    print(f"Selection: {_selection_label(item)}", file=output)
+    print(f"Portfolio: {item.portfolio_id}", file=output)
+    print(f"Portfolio label: {item.portfolio_label}", file=output)
+    print(f"Subject: {item.portfolio_subject_id}", file=output)
+    print(f"Subject label: {item.subject_label}", file=output)
+    print(f"Profile Binding: {item.profile_binding_id}", file=output)
+    print(
+        (
+            f"Profile: {item.portfolio_profile_id}"
+            f"@{item.profile_revision} ({item.profile_label})"
+        ),
+        file=output,
+    )
+    print(f"Profile purpose: {item.profile_purpose}", file=output)
+    print(
+        (
+            "Current Candidate Evaluation: "
+            f"{item.current_evaluation_id or '(unresolved)'}"
+        ),
+        file=output,
+    )
+    print(
+        f"Current resolution: {item.current_resolution}",
+        file=output,
+    )
+    print(
+        (f"Eligible sections: {', '.join(item.eligible_section_ids) or '(none)'}"),
+        file=output,
+    )
+    print(
+        (f"Active Selections: {', '.join(item.active_selection_ids) or '(none)'}"),
+        file=output,
+    )
+    print(
+        (
+            "Historical Selections: "
+            f"{', '.join(item.historical_selection_ids) or '(none)'}"
+        ),
+        file=output,
+    )
+
+    if endpoint is None:
+        print("Core Publication: (unavailable)", file=output)
+        print("Producer source: (unavailable)", file=output)
+        print("Artifact: (unavailable)", file=output)
+        print("Subject relationships: (unavailable)", file=output)
+    else:
+        publication = endpoint.core_publication
+        producer = endpoint.producer_source
+        artifact = endpoint.source_artifact
+        print(
+            f"Core Publication: {publication.publication_id}",
+            file=output,
+        )
+        print(
+            f"Producer module: {producer.producer_module_id}",
+            file=output,
+        )
+        print(
+            (
+                "Producer source: "
+                f"{producer.source_record_kind}:"
+                f"{producer.source_record_id}"
+            ),
+            file=output,
+        )
+        print(
+            (f"Producer native revision: {producer.native_revision or '(none)'}"),
+            file=output,
+        )
+        print(
+            (f"Artifact: {artifact.artifact_id if artifact else '(none)'}"),
+            file=output,
+        )
+        print(
+            (
+                "Artifact kind/representation: "
+                f"{artifact.artifact_kind + '/' + artifact.representation_kind if artifact else '(none)'}"
+            ),
+            file=output,
+        )
+        relationships = ", ".join(
+            (
+                f"{value.relationship_kind}:"
+                f"{value.source_subject_kind}:"
+                f"{value.source_subject_id}"
+            )
+            for value in endpoint.subject_relationship_assertions
+        )
+        print(
+            f"Subject relationships: {relationships or '(none)'}",
+            file=output,
+        )
+
+    if endpoint is not None:
+        publication = endpoint.core_publication
+        producer = endpoint.producer_source
+        artifact = endpoint.source_artifact
+        print(
+            (
+                "Core work: "
+                f"{publication.work.module_id}:"
+                f"{publication.work.class_id}:"
+                f"{publication.work.work_id}"
+            ),
+            file=output,
+        )
+        print(f"Publication kind: {publication.publication_kind}", file=output)
+        print(
+            f"Record set: {publication.record_set_id}@{publication.record_set_revision}",
+            file=output,
+        )
+        print(
+            f"Manifest contract: {publication.manifest_contract_version}",
+            file=output,
+        )
+        print(f"Published at: {publication.published_at.isoformat()}", file=output)
+        print(
+            "Registration revision: "
+            f"{publication.academic_work_registration_revision or '(none)'}",
+            file=output,
+        )
+        print(
+            f"Observed series state: {publication.observed_series_state}", file=output
+        )
+        print(
+            f"Observed withdrawal state: {publication.observed_withdrawal_state}",
+            file=output,
+        )
+        print(
+            f"Producer lifecycle: {producer.native_lifecycle or '(none)'}",
+            file=output,
+        )
+        print(
+            f"Producer disposition: {producer.native_disposition or '(none)'}",
+            file=output,
+        )
+        print(
+            f"Producer lineage: {producer.lineage_reference or '(none)'}",
+            file=output,
+        )
+        print(f"Reader contract: {producer.reader_contract_version}", file=output)
+        print(
+            f"Projection contract: {producer.projection_contract_version}",
+            file=output,
+        )
+        if artifact is not None:
+            print(f"Artifact media type: {artifact.media_type}", file=output)
+    if detail.evaluation is not None:
+        print(
+            "Matched Profile rules: "
+            f"{', '.join(detail.evaluation.matched_profile_rule_ids) or '(none)'}",
+            file=output,
+        )
+
+    if detail.evaluation is not None:
+        evaluation = detail.evaluation
+        print(
+            (f"Evaluation reasons: {', '.join(evaluation.reason_codes) or '(none)'}"),
+            file=output,
+        )
+        availability = ", ".join(
+            f"{value.dimension}={value.outcome}"
+            for value in evaluation.availability_observations
+        )
+        print(
+            f"Availability: {availability or '(none)'}",
+            file=output,
+        )
+        print(
+            (f"Evaluator contract: {evaluation.evaluator_contract_version}"),
+            file=output,
+        )
+    print(
+        (
+            "Evaluation history: "
+            + ", ".join(
+                value.candidate_evaluation_id for value in detail.evaluation_history
+            )
+        ),
+        file=output,
+    )
+    print(
+        (
+            "Current-pointer history: "
+            + (
+                ", ".join(
+                    f"{value.pointer_revision}:{value.current_candidate_evaluation_id}"
+                    for value in detail.pointer_history
+                )
+                or "(none)"
+            )
+        ),
+        file=output,
+    )
+
+
 def _actor_value(args: argparse.Namespace) -> ActorAttribution:
     return ActorAttribution(
         actor_kind=args.actor_kind,
@@ -392,6 +747,43 @@ def run_workflow_command(
                     f"{candidate_summary.candidate_id}\t{candidate_summary.condition_state}\t{candidate_summary.display_snapshot}\tselected={candidate_summary.active_selection_id or 'no'}",
                     file=output,
                 )
+        elif subcommand == "inbox":
+            inbox_command = getattr(
+                args,
+                "candidate_inbox_command",
+                None,
+            )
+            if inbox_command == "show":
+                detail = get_candidate_inbox_detail(
+                    root,
+                    args.entry_id,
+                )
+                _print_candidate_inbox_detail(
+                    detail,
+                    output=output,
+                )
+            else:
+                result = list_candidate_inbox(
+                    root,
+                    _inbox_query(args),
+                )
+                print(
+                    (
+                        "Candidate Inbox: "
+                        f"{result.matched_count} matching"
+                        + (
+                            f" (showing {len(result.items)})"
+                            if result.truncated
+                            else ""
+                        )
+                    ),
+                    file=output,
+                )
+                for item in result.items:
+                    _print_candidate_inbox_item(
+                        item,
+                        output=output,
+                    )
         elif subcommand == "show":
             candidate = show_candidate_detail(root, args.candidate_id)
             endpoint = candidate.source_endpoint
