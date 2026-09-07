@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import TextIO
 
@@ -39,6 +39,8 @@ from vitrine.curation_services import (
 from vitrine.models import (
     ActorAttribution,
     CandidateSourceEndpoint,
+    ClassQualifiedStudentRef,
+    ProfileRevisionRef,
     SnapshotBuildPlan,
     SnapshotBuildRequest,
     SnapshotSeries,
@@ -50,6 +52,14 @@ from vitrine.portfolio_services import (
     observe_portfolio_state_revision,
     show_portfolio,
 )
+from vitrine.portfolio_setup import (
+    CreatePortfolioForStudentRequest,
+    PortfolioSetupError,
+    PortfolioSetupPlan,
+    create_portfolio_for_student,
+    plan_create_portfolio_for_student,
+)
+from vitrine.profile_services import ProfileBindingContext
 from vitrine.snapshot_distribution import (
     inspect_snapshot_custody,
     verify_snapshot_edition,
@@ -69,6 +79,7 @@ from vitrine.snapshot_services import (
     seal_snapshot_build_attempt,
     start_snapshot_build_attempt,
 )
+from vitrine.subject_services import IdentityDecisionContext
 from vitrine.workflow_context import VitrineWorkflowDependencies
 from vitrine.workflow_views import (
     list_candidate_summaries,
@@ -79,6 +90,7 @@ from vitrine.workflow_views import (
     show_snapshot_plan,
     show_snapshot_series,
 )
+from vitrine.workspace import show_workspace
 
 
 def _workspace(parser: argparse.ArgumentParser) -> None:
@@ -121,6 +133,47 @@ def configure_workflow_parsers(
     p_create.add_argument("--title")
     p_create.add_argument("--description")
     _actor(p_create)
+
+    p_setup = portfolios.add_parser(
+        "create-for-student",
+        help="Plan or create a Portfolio from one exact Core roster student.",
+    )
+    p_setup.add_argument("--class-id", required=True)
+    p_setup.add_argument("--school-year", required=True)
+    p_setup.add_argument("--student-id", required=True)
+    p_setup.add_argument(
+        "--purpose",
+        required=True,
+        choices=("improvement", "showcase"),
+    )
+    p_setup.add_argument("--profile-id", required=True)
+    p_setup.add_argument("--profile-revision", required=True, type=int)
+    subject_mode = p_setup.add_mutually_exclusive_group()
+    subject_mode.add_argument("--new-subject", action="store_true")
+    subject_mode.add_argument("--existing-subject-id")
+    p_setup.add_argument(
+        "--identity-basis-type",
+        choices=(
+            "direct_teacher_knowledge",
+            "verified_sis_information",
+            "authorized_institutional_crosswalk",
+            "student_confirmation",
+            "other_authorized_basis",
+        ),
+    )
+    p_setup.add_argument("--identity-basis-summary")
+    p_setup.add_argument(
+        "--identity-authority-source",
+        default="local_teacher_workflow",
+    )
+    p_setup.add_argument("--institution-id")
+    p_setup.add_argument("--program-id")
+    p_setup.add_argument("--content-area")
+    p_setup.add_argument("--as-of")
+    p_setup.add_argument("--title")
+    p_setup.add_argument("--description")
+    p_setup.add_argument("--dry-run", action="store_true")
+    _actor(p_setup)
 
     candidates = _nested(subparsers, "candidate", "Discover and review Candidates.")
     c_list = candidates.add_parser("list")
@@ -681,6 +734,166 @@ def _mapping(values: list[str], *, integer_values: bool) -> dict[str, int | str 
     return result
 
 
+def _optional_date(value: str | None) -> date | None:
+    if value is None:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError as error:
+        raise PortfolioSetupError(
+            "profile_context_invalid",
+            "--as-of must use YYYY-MM-DD.",
+        ) from error
+
+
+def _portfolio_setup_request(
+    args: argparse.Namespace,
+) -> CreatePortfolioForStudentRequest:
+    actor = _actor_value(args)
+    if args.new_subject:
+        subject_action = "create_new"
+        existing_subject_id = None
+    elif args.existing_subject_id is not None:
+        subject_action = "link_existing"
+        existing_subject_id = args.existing_subject_id
+    else:
+        subject_action = None
+        existing_subject_id = None
+
+    identity_context: IdentityDecisionContext | None = None
+    if subject_action is not None:
+        if not args.identity_basis_type or not args.identity_basis_summary:
+            raise PortfolioSetupError(
+                "identity_basis_required",
+                "Explicit Subject creation/linking requires --identity-basis-type "
+                "and --identity-basis-summary.",
+            )
+        identity_context = IdentityDecisionContext(
+            actor=actor,
+            authority_source=args.identity_authority_source,
+            basis_type=args.identity_basis_type,
+            basis_summary=args.identity_basis_summary,
+        )
+
+    return CreatePortfolioForStudentRequest(
+        student_reference=ClassQualifiedStudentRef(
+            school_year=args.school_year,
+            class_id=args.class_id,
+            student_id=args.student_id,
+        ),
+        purpose_kind=args.purpose,
+        profile_revision=ProfileRevisionRef(
+            portfolio_profile_id=args.profile_id,
+            profile_revision=args.profile_revision,
+        ),
+        profile_context=ProfileBindingContext(
+            as_of=_optional_date(args.as_of),
+            institution_id=args.institution_id,
+            program_id=args.program_id,
+            content_area=args.content_area,
+        ),
+        subject_action=subject_action,
+        existing_subject_id=existing_subject_id,
+        identity_context=identity_context,
+        title_snapshot=args.title,
+        description_snapshot=args.description,
+    )
+
+
+def _print_portfolio_setup_plan(
+    plan: PortfolioSetupPlan,
+    *,
+    output: TextIO,
+    dry_run: bool,
+) -> None:
+    print("Create Portfolio for Student plan", file=output)
+    print(f"Contract: {plan.contract_version}", file=output)
+    observed = (
+        str(plan.observed_state_revision)
+        if plan.observed_state_revision is not None
+        else "(none)"
+    )
+    print(f"Observed state revision: {observed}", file=output)
+    print(f"Ready: {'yes' if plan.ready else 'no'}", file=output)
+    if plan.student is not None:
+        print(f"Student: {plan.student.display_name}", file=output)
+        print(
+            "Roster reference: "
+            f"{plan.student.reference.school_year}:"
+            f"{plan.student.reference.class_id}:"
+            f"{plan.student.reference.student_id}",
+            file=output,
+        )
+    print(f"Subject action: {plan.subject_action or '(unresolved)'}", file=output)
+    print(f"Portfolio Subject: {plan.portfolio_subject_id or '(none)'}", file=output)
+    if plan.selected_profile is not None:
+        reference = plan.selected_profile.reference
+        print(
+            f"Profile: {reference.portfolio_profile_id}:{reference.profile_revision}",
+            file=output,
+        )
+    print(
+        "Existing Portfolios: "
+        + (
+            ", ".join(item.portfolio_id for item in plan.existing_portfolios)
+            or "(none)"
+        ),
+        file=output,
+    )
+    print(
+        "Planned records: " + (", ".join(plan.planned_record_kinds) or "(none)"),
+        file=output,
+    )
+    print(
+        "Blocking codes: " + (", ".join(plan.blocking_codes) or "(none)"),
+        file=output,
+    )
+    print(
+        f"Mutation: {'dry-run only' if dry_run else 'requested'}",
+        file=output,
+    )
+
+
+def _run_create_for_student(
+    args: argparse.Namespace,
+    *,
+    root: Path | None,
+    output: TextIO,
+) -> None:
+    resolved_root = show_workspace(root).root
+    request = _portfolio_setup_request(args)
+    plan = plan_create_portfolio_for_student(resolved_root, request)
+    if (
+        args.expected_state_revision is not None
+        and args.expected_state_revision != plan.observed_state_revision
+    ):
+        raise PortfolioSetupError(
+            "state_conflict",
+            f"Vitrine state changed: expected {args.expected_state_revision!r}, "
+            f"found {plan.observed_state_revision!r}.",
+        )
+    _print_portfolio_setup_plan(plan, output=output, dry_run=args.dry_run)
+    if not plan.ready:
+        raise PortfolioSetupError(
+            plan.blocking_codes[0] if plan.blocking_codes else "setup_plan_invalid",
+            "Create Portfolio for Student plan is not ready.",
+        )
+    if args.dry_run:
+        return
+    result = create_portfolio_for_student(
+        resolved_root,
+        plan,
+        actor=_actor_value(args),
+    )
+    print(
+        f"Created Portfolio for Student: {result.portfolio_id}\n"
+        f"Portfolio Subject: {result.portfolio_subject_id}\n"
+        f"Profile Binding: {result.profile_binding_id}\n"
+        f"State revision: {result.state_revision}",
+        file=output,
+    )
+
+
 def _plan_specification(path: Path) -> SnapshotPlanSpecification:
     try:
         data = path.read_bytes()
@@ -726,7 +939,9 @@ def run_workflow_command(
                 f"Portfolio: {portfolio_summary.portfolio_id}\nTitle: {portfolio_summary.title_snapshot or '(none)'}\nSubject: {portfolio_summary.portfolio_subject_id}\nProfile Binding: {portfolio_summary.profile_binding_id or '(none)'}\nCandidates: {portfolio_summary.candidate_count}\nActive Selections: {portfolio_summary.active_selection_count}\nCurrent Composition: {portfolio_summary.current_composition_revision or '(none)'}\nSnapshot Series: {portfolio_summary.snapshot_series_count}",
                 file=output,
             )
-        else:
+        elif subcommand == "create-for-student":
+            _run_create_for_student(args, root=root, output=output)
+        elif subcommand == "create":
             portfolio_result = create_portfolio(
                 root,
                 portfolio_subject_id=args.subject_id,
@@ -739,6 +954,8 @@ def run_workflow_command(
                 f"Created Portfolio: {portfolio_result.portfolio.portfolio_id}\nState revision: {portfolio_result.state_revision}",
                 file=output,
             )
+        else:
+            raise AssertionError(f"Unhandled Portfolio command: {subcommand}")
         return 0
     if command == "candidate":
         if subcommand == "list":

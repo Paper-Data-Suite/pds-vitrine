@@ -35,11 +35,11 @@ from vitrine.models import (
     SnapshotSeries,
 )
 from vitrine.portfolio_services import (
-    create_portfolio,
     list_portfolios,
     observe_portfolio_state_revision,
     show_portfolio,
 )
+from vitrine.portfolio_setup_menu import run_create_portfolio_for_student_menu
 from vitrine.profile_services import (
     ProfileBindingContext,
     analyze_profile_migration,
@@ -65,7 +65,6 @@ from vitrine.snapshot_services import (
     start_snapshot_build_attempt,
 )
 from vitrine.subject_menu import run_subject_menu
-from vitrine.subject_services import list_subjects
 from vitrine.workflow_context import VitrineWorkflowDependencies
 from vitrine.workflow_views import (
     CandidateDetail,
@@ -1074,7 +1073,7 @@ def run_portfolio_menu(
             output,
             "Portfolios",
             "",
-            "1. Create Portfolio",
+            "1. Create Portfolio for Student",
             "2. Open Portfolio",
             "3. List Portfolios",
             "H. Help",
@@ -1089,8 +1088,9 @@ def run_portfolio_menu(
                 output,
                 "Portfolio Help",
                 "",
-                "Create a Portfolio for one exact current Portfolio Subject.",
-                "Choosing a Profile remains a separate action.",
+                "Create a Portfolio by choosing an exact Core class and roster student.",
+                "Cross-class identity is explicit; names and repeated IDs never auto-link.",
+                "Guided setup binds one exact activated Profile Revision.",
             )
             _pause(input_fn)
             continue
@@ -1098,52 +1098,23 @@ def run_portfolio_menu(
             return
         try:
             if choice == "1":
-                clear_fn()
-                _write(output, "Create Portfolio", "")
-                observed_revision = observe_portfolio_state_revision(root)
-                subjects = tuple(
-                    item for item in list_subjects(root) if item.status == "current"
+                existing_portfolio_id = run_create_portfolio_for_student_menu(
+                    workspace_root=root,
+                    input_fn=input_fn,
+                    output=output,
+                    clear_fn=clear_fn,
+                    actor=session_actor,
                 )
-                for index, item in enumerate(subjects, 1):
-                    _write(
-                        output,
-                        f"{index}. {item.display_name or '(unnamed Subject)'}",
-                        f"   {item.portfolio_subject_id}",
+                if existing_portfolio_id is not None:
+                    _portfolio_context(
+                        root=root,
+                        portfolio_id=existing_portfolio_id,
+                        input_fn=input_fn,
+                        output=output,
+                        clear_fn=clear_fn,
+                        dependencies=dependencies,
+                        actor=session_actor,
                     )
-                raw_subject = _read(input_fn, "Subject number (B to cancel): ")
-                selected_subject = _numbered_choice(raw_subject, subjects)
-                if isinstance(selected_subject, NavigationChoice):
-                    continue
-                if selected_subject is None:
-                    _write(output, "That Subject number is not available.")
-                    _pause(input_fn)
-                    continue
-                subject_id = selected_subject.portfolio_subject_id
-                _write(
-                    output,
-                    f"Selected Subject: {selected_subject.display_name or '(unnamed Subject)'}",
-                    f"Exact Subject ID: {subject_id}",
-                )
-                title = _read(input_fn, "Title (optional): ") or None
-                description = _read(input_fn, "Description (optional): ") or None
-                if session_actor is None:
-                    session_actor = _actor(input_fn)
-                if session_actor is None:
-                    continue
-                confirmation = _read(input_fn, "Type CREATE to create this Portfolio: ")
-                if confirmation != "CREATE":
-                    continue
-                result = create_portfolio(
-                    root,
-                    portfolio_subject_id=subject_id,
-                    created_by=session_actor,
-                    expected_state_revision=observed_revision,
-                    title_snapshot=title,
-                    description_snapshot=description,
-                )
-                clear_fn()
-                _write(output, "Portfolio Created", "", result.portfolio.portfolio_id)
-                _pause(input_fn)
             elif choice == "2":
                 selected = _choose_portfolio(
                     root=root,

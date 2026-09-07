@@ -240,3 +240,11 @@ Profile mechanisms rather than editing the installed Revision in place:
 
 No customization path changes the meaning of `purpose_kind` or creates hidden
 starter policy.
+
+## Issue #65 guided setup handoff
+
+`Create Portfolio for Student` may list an already installed and bindable starter
+Revision exactly like any other Profile Revision. It does not install, activate,
+reactivate, upgrade, or otherwise mutate starter Profiles. If no suitable
+bindable Profile exists, setup stops read-only. See
+[Create Portfolio for Student v1](create-portfolio-for-student-v1.md).

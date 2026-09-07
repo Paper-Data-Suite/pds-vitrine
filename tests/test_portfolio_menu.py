@@ -45,28 +45,21 @@ def test_numbered_choice_maps_one_based_value() -> None:
     assert portfolio_menu._numbered_choice("2", ("first", "second")) == "second"
 
 
-def test_teacher_creation_selects_subject_and_preserves_observed_revision(
+def test_teacher_creation_routes_to_guided_student_setup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    events: list[object] = []
-    subject = SimpleNamespace(
-        portfolio_subject_id="subject_exact",
-        display_name="Synthetic learner",
-        status="current",
-    )
-    monkeypatch.setattr(portfolio_menu, "list_subjects", lambda _root: (subject,))
+    routed: list[object] = []
+
+    def guided(**kwargs: object) -> str | None:
+        routed.append(kwargs)
+        return None
+
     monkeypatch.setattr(
         portfolio_menu,
-        "observe_portfolio_state_revision",
-        lambda _root: events.append("observed") or 7,
+        "run_create_portfolio_for_student_menu",
+        guided,
     )
-
-    def create(_root: Path, **kwargs: object) -> object:
-        events.append(kwargs)
-        return SimpleNamespace(portfolio=SimpleNamespace(portfolio_id="portfolio_new"))
-
-    monkeypatch.setattr(portfolio_menu, "create_portfolio", create)
-    raw_input = _inputs(["1", "1", "Title", "Description", "CREATE", "", "B"])
+    raw_input = _inputs(["1", "B"])
 
     portfolio_menu.run_portfolio_menu(
         input_fn=lambda prompt: raw_input(prompt),  # type: ignore[operator]
@@ -77,13 +70,11 @@ def test_teacher_creation_selects_subject_and_preserves_observed_revision(
         actor=ACTOR,
     )
 
-    assert events[0] == "observed"
-    request = events[1]
+    assert len(routed) == 1
+    request = routed[0]
     assert isinstance(request, dict)
-    assert request["portfolio_subject_id"] == "subject_exact"
-    assert request["expected_state_revision"] == 7
-    assert request["title_snapshot"] == "Title"
-    assert request["description_snapshot"] == "Description"
+    assert request["workspace_root"] == tmp_path
+    assert request["actor"] == ACTOR
 
 
 def test_candidate_number_maps_to_exact_candidate_before_selection(

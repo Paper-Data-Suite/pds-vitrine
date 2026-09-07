@@ -49,6 +49,8 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/menu_types.py",
     "vitrine/portfolio_menu.py",
     "vitrine/portfolio_services.py",
+    "vitrine/portfolio_setup.py",
+    "vitrine/portfolio_setup_menu.py",
     "vitrine/publication_diagnostics.py",
     "vitrine/producer_adapters.py",
     "vitrine/producer_reader_services.py",
@@ -114,6 +116,7 @@ REQUIRED_SDIST_FILES = {
     "docs/contracts/cross-producer-compatibility-diagnostics-v1.md",
     "docs/contracts/candidate-discovery-evaluation-v1.md",
     "docs/contracts/candidate-inbox-v1.md",
+    "docs/contracts/create-portfolio-for-student-v1.md",
     "docs/contracts/curation-workflows-v1.md",
     "docs/contracts/snapshot-build-workflows-v1.md",
     "docs/development/runtime-models.md",
@@ -125,6 +128,7 @@ REQUIRED_SDIST_FILES = {
     "docs/development/cross-producer-compatibility-diagnostics.md",
     "docs/development/candidate-discovery.md",
     "docs/development/candidate-inbox.md",
+    "docs/development/create-portfolio-for-student.md",
     "docs/development/curation-workflows.md",
     "docs/development/snapshot-build-workflows.md",
     "docs/development/improvement-portfolio-vertical-slice.md",
@@ -159,6 +163,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/smoke_test_compatibility_wheel.py",
     "scripts/smoke_test_candidate_wheel.py",
     "scripts/smoke_test_candidate_inbox_wheel.py",
+    "scripts/smoke_test_portfolio_setup_wheel.py",
     "scripts/smoke_test_curation_wheel.py",
     "scripts/smoke_test_snapshot_wheel.py",
     "scripts/smoke_test_end_to_end_wheel.py",
@@ -184,6 +189,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/qualify_quillan_artifact_source.py",
     "scripts/validate_candidate_discovery.py",
     "scripts/validate_candidate_inbox.py",
+    "scripts/validate_portfolio_setup.py",
     "scripts/validate_curation_workflows.py",
     "scripts/validate_snapshot_workflows.py",
     "scripts/validate_improvement_portfolio.py",
@@ -258,6 +264,12 @@ REQUIRED_SDIST_FILES = {
     "tests/test_candidate_inbox_menu.py",
     "tests/test_validate_candidate_discovery.py",
     "tests/test_validate_candidate_inbox.py",
+    "tests/test_portfolio_setup_planner.py",
+    "tests/test_portfolio_setup_atomic.py",
+    "tests/test_portfolio_setup_menu.py",
+    "tests/test_portfolio_setup_cli.py",
+    "tests/test_portfolio_setup_acceptance.py",
+    "tests/test_validate_portfolio_setup.py",
     "tests/test_curation_models.py",
     "tests/test_curation_state.py",
     "tests/test_curation_services.py",
@@ -295,6 +307,7 @@ REQUIRED_SDIST_FILES = {
     "docs/validation/issue-62-cross-producer-compatibility-validation.md",
     "docs/validation/issue-63-starter-profile-validation.md",
     "docs/validation/issue-64-candidate-inbox-validation.md",
+    "docs/validation/issue-65-create-portfolio-for-student-validation.md",
 }
 
 
@@ -320,7 +333,9 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
         "pds-portia",
         "pds-meridian",
     )
-    if any(any(name in item.lower() for name in sibling_names) for item in requirements):
+    if any(
+        any(name in item.lower() for name in sibling_names) for item in requirements
+    ):
         findings.append(f"forbidden producer runtime dependency: {requirements}")
     return findings
 
@@ -370,9 +385,8 @@ def validate_wheel(path: Path) -> list[str]:
             if _unsafe_path(name):
                 findings.append(f"unsafe wheel path: {name}")
             is_runtime = name in ALLOWED_RUNTIME_FILES
-            is_metadata = (
-                allowed_metadata_root is not None
-                and name.startswith(f"{allowed_metadata_root}/")
+            is_metadata = allowed_metadata_root is not None and name.startswith(
+                f"{allowed_metadata_root}/"
             )
             if not is_runtime and not is_metadata:
                 findings.append(f"unexpected top-level wheel content: {name}")
@@ -415,8 +429,7 @@ def validate_sdist(path: Path) -> list[str]:
             return findings
         root_name = next(iter(roots))
         relative_names = {
-            PurePosixPath(name).relative_to(root_name).as_posix()
-            for name in file_names
+            PurePosixPath(name).relative_to(root_name).as_posix() for name in file_names
         }
         for name in file_names:
             if "/.git/" in f"/{name}/" or "__pycache__/" in name:

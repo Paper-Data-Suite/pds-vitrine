@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Create Portfolio for Student guided setup with exact Core roster selection,
+  explicit cross-class Subject association, exact Improvement/Showcase Profile
+  Revision choice, read-only planning, and one guarded atomic setup commit.
+- Teacher menu and noninteractive `vitrine portfolio create-for-student`
+  workflow with fully resolved `--dry-run`, dedicated validation, package
+  guards, and isolated Core+Vitrine installed-wheel acceptance.
 - Teacher Candidate Inbox with explicit append-preserving current-Evaluation
   pointers, workspace-wide positive/negative review, suppression-safe counts,
   bounded stale/attention signals, observational Selection state, and exact
