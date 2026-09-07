@@ -151,3 +151,12 @@ behavioral/biometric-like matching signals.
 Identity reads remain canonical-JSON based. The SQLite catalog is optional
 acceleration only. Missing or corrupt catalog state cannot change identity
 results.
+
+## Issue #65 guided setup handoff
+
+Issue #65 composes this exact Subject workflow into `Create Portfolio for
+Student`. It reuses an already resolved exact roster link, requires an explicit
+new-Subject or existing-Subject choice for an unlinked endpoint, and blocks on
+identity conflict or historical Subject state. It does not infer cross-class
+identity or perform merge/split/correction automatically. See
+[Create Portfolio for Student v1](create-portfolio-for-student-v1.md).

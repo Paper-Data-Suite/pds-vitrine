@@ -281,3 +281,12 @@ producer-neutrality, and no-reactivation rules are frozen in
 [Starter Portfolio Profiles v1](starter-portfolio-profiles-v1.md). Installed
 starter revisions remain immutable and are customized only through ordinary
 successor Revision, Overlay/Composition, or separate Profile-series workflows.
+
+## Issue #65 guided setup handoff
+
+Issue #65 consumes exact bindable Profile Revisions through the existing Profile
+state and applicability rules. Purpose only filters choices; setup never
+installs or reactivates a starter Profile and never chooses a Revision
+automatically. The final Profile Binding is created in the same guarded batch as
+the rest of the reviewed setup. See
+[Create Portfolio for Student v1](create-portfolio-for-student-v1.md).

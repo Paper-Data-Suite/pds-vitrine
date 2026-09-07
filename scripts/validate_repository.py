@@ -52,6 +52,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_candidate_inbox.py", "--skip-focused-tests"),
     ),
     (
+        "Create Portfolio for Student",
+        ("scripts/validate_portfolio_setup.py", "--skip-focused-tests"),
+    ),
+    (
         "curation workflows",
         ("scripts/validate_curation_workflows.py", "--skip-focused-tests"),
     ),
@@ -166,7 +170,9 @@ def validate(
     root = Path(__file__).resolve().parents[1]
     initial_status = _git_status(root)
     if initial_status and not allow_dirty:
-        raise RuntimeError("repository must be clean; use --allow-dirty during development")
+        raise RuntimeError(
+            "repository must be clean; use --allow-dirty during development"
+        )
 
     timings: list[PhaseTiming] = []
     validation_started = perf_counter()
@@ -310,6 +316,10 @@ def validate(
                 (
                     "Candidate inbox",
                     "scripts/smoke_test_candidate_inbox_wheel.py",
+                ),
+                (
+                    "portfolio setup",
+                    "scripts/smoke_test_portfolio_setup_wheel.py",
                 ),
                 ("curation", "scripts/smoke_test_curation_wheel.py"),
                 ("Snapshot", "scripts/smoke_test_snapshot_wheel.py"),
