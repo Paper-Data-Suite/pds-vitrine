@@ -21,6 +21,11 @@ from vitrine.candidate_inbox import (
     get_candidate_inbox_detail,
     list_candidate_inbox,
 )
+from vitrine.candidate_review_cli import (
+    CANDIDATE_REVIEW_CLI_COMMANDS,
+    configure_candidate_review_parsers,
+    run_candidate_review_command,
+)
 from vitrine.candidate_services import (
     CandidateDiscoveryRequest,
     discover_and_evaluate_candidates,
@@ -238,6 +243,7 @@ def configure_workflow_parsers(
     )
     discover.add_argument("--limit", type=int, default=100)
     _actor(discover)
+    configure_candidate_review_parsers(candidates)
 
     selections = _nested(subparsers, "selection", "Curate explicit Selections.")
     add = selections.add_parser("add")
@@ -958,6 +964,12 @@ def run_workflow_command(
             raise AssertionError(f"Unhandled Portfolio command: {subcommand}")
         return 0
     if command == "candidate":
+        if subcommand in CANDIDATE_REVIEW_CLI_COMMANDS:
+            return run_candidate_review_command(
+                args,
+                dependencies=dependencies,
+                output=output,
+            )
         if subcommand == "list":
             for candidate_summary in list_candidate_summaries(root, args.portfolio_id):
                 print(

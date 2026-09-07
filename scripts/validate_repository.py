@@ -59,6 +59,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         "curation workflows",
         ("scripts/validate_curation_workflows.py", "--skip-focused-tests"),
     ),
+    (
+        "guided Candidate review/Selection",
+        (
+            "scripts/validate_candidate_review_selection.py",
+            "--skip-focused-tests",
+        ),
+    ),
     ("Snapshot workflows", ("scripts/validate_snapshot_workflows.py",)),
     ("improvement Portfolio", ("scripts/validate_improvement_portfolio.py",)),
     ("interface workflows", ("scripts/validate_interface_workflows.py",)),
@@ -322,6 +329,10 @@ def validate(
                     "scripts/smoke_test_portfolio_setup_wheel.py",
                 ),
                 ("curation", "scripts/smoke_test_curation_wheel.py"),
+                (
+                    "guided Candidate review/Selection",
+                    "scripts/smoke_test_candidate_review_selection_wheel.py",
+                ),
                 ("Snapshot", "scripts/smoke_test_snapshot_wheel.py"),
             )
             for label, script in wheel_smokes:

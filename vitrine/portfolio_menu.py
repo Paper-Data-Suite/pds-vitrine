@@ -11,7 +11,7 @@ from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 from pds_core.workspace import resolve_workspace_root
 
 from vitrine.audience_services import create_audience_context, list_audience_contexts
-from vitrine.candidate_inbox import CandidateInboxQuery, list_candidate_inbox
+from vitrine.candidate_review_menu import run_candidate_review_menu
 from vitrine.candidate_services import (
     CandidateDiscoveryRequest,
     discover_and_evaluate_candidates,
@@ -21,10 +21,8 @@ from vitrine.curation_services import (
     decide_selection_proposal,
     invalidate_selection,
     place_selection,
-    propose_candidate_selection,
     reorder_section,
     replace_selection,
-    select_candidate_directly,
     withdraw_selection,
 )
 from vitrine.menu_types import ClearFunction, InputFunction
@@ -599,8 +597,8 @@ def _portfolio_context(
             "",
             "1. Overview / Subject Links",
             "2. Profile Binding",
-            "3. Discover / Review Candidates",
-            "4. Curate Selections / Arrange Sections",
+            "3. Discover Candidates",
+            "4. Review Candidates / Selections",
             "5. Working Composition",
             "6. Snapshot",
             "H. Help",
@@ -644,11 +642,11 @@ def _portfolio_context(
                 actor=actor,
             )
         elif choice == "3":
-            _write(output, "Review Candidates", "")
+            _write(output, "Discover Candidates", "")
             if (
                 _read(
                     input_fn,
-                    "Type DISCOVER to query configured Candidate sources, or Enter to review: ",
+                    "Type DISCOVER to query configured Candidate sources, or Enter to cancel: ",
                 )
                 == "DISCOVER"
             ):
@@ -686,141 +684,18 @@ def _portfolio_context(
                     )
                     for finding in discovery.findings:
                         _write(output, f"{finding.code} — stage {finding.stage}")
-            inbox = list_candidate_inbox(
-                root,
-                CandidateInboxQuery(
-                    portfolio_id=portfolio_id,
-                    limit=100,
-                ),
-            )
-            _write(output, "", "Current Candidate Inbox", "")
-            if not inbox.items:
-                _write(output, "No persisted Candidate inbox entries.")
-            for inbox_item in inbox.items:
-                outcome = (
-                    "Unavailable"
-                    if inbox_item.evaluation_outcome is None
-                    else inbox_item.evaluation_outcome.replace("_", " ").title()
-                )
-                currentness = (
-                    "Unavailable"
-                    if inbox_item.stale_state is None
-                    else inbox_item.stale_state.replace("_", " ").title()
-                )
-                condition = (
-                    ""
-                    if inbox_item.candidate_condition is None
-                    else " — "
-                    + inbox_item.candidate_condition.replace("_", " ").title()
-                )
-                attention = " — Attention needed" if inbox_item.attention_needed else ""
-                _write(
-                    output,
-                    f"- {inbox_item.source_display_label}",
-                    f"  {outcome}{condition} — {currentness}{attention}",
-                )
-            _write(
-                output,
-                "",
-                "Positive Candidates available for explicit curation",
-                "",
-            )
-            candidates = list_candidate_summaries(root, portfolio_id)
-            candidate_observed = _require_observed_revision(root)
-            if not candidates:
-                _write(
-                    output,
-                    "No Candidates. Discovery requires configured source-read integration and authority.",
-                )
-            for index, candidate_item in enumerate(candidates, 1):
-                _write(
-                    output,
-                    f"{index}. {candidate_item.display_snapshot}",
-                    f"   {candidate_item.candidate_id} — {candidate_item.condition_state}",
-                )
-            if candidates:
-                raw_candidate = _read(
-                    input_fn,
-                    "Candidate number to review (Enter to leave unchanged): ",
-                )
-                chosen_candidate = _numbered_choice(raw_candidate, candidates)
-                if chosen_candidate is not None and not isinstance(
-                    chosen_candidate, NavigationChoice
-                ):
-                    clear_fn()
-                    candidate_detail = _show_candidate_facts(
-                        root, chosen_candidate.candidate_id, output
+                    _write(
+                        output,
+                        "Candidate discovery completed. Review is a separate persisted-state step.",
                     )
-                    acknowledged = True
-                    if candidate_detail.unresolved_condition_codes:
-                        _write(
-                            output,
-                            "Acknowledgement does not satisfy a separate Profile review requirement.",
-                        )
-                        acknowledged = (
-                            _read(
-                                input_fn,
-                                "Type ACKNOWLEDGE to confirm you reviewed these conditions: ",
-                            )
-                            == "ACKNOWLEDGE"
-                        )
-                    if acknowledged:
-                        action = _read(
-                            input_fn,
-                            "Type PROPOSE for Proposal -> Decision, SELECT for Direct Selection, or Enter: ",
-                        )
-                        if action in {"PROPOSE", "SELECT"}:
-                            mutation_actor = actor or _actor(input_fn)
-                            sections = tuple(
-                                item.strip()
-                                for item in _read(
-                                    input_fn,
-                                    "Section IDs (comma-separated): ",
-                                ).split(",")
-                                if item.strip()
-                            )
-                            if mutation_actor is not None and action == "PROPOSE":
-                                result = propose_candidate_selection(
-                                    root,
-                                    portfolio_id=portfolio_id,
-                                    candidate_id=chosen_candidate.candidate_id,
-                                    proposer=mutation_actor,
-                                    proposal_origin="teacher",
-                                    proposed_section_ids=sections,
-                                    rationale_text=_read(
-                                        input_fn, "Proposal rationale (optional): "
-                                    )
-                                    or None,
-                                    expected_state_revision=candidate_observed,
-                                    authority_gate=dependencies.curation_authority_gate,
-                                )
-                                _write(
-                                    output,
-                                    f"Selection Proposal recorded at state revision {result.state_revision}.",
-                                )
-                            elif mutation_actor is not None:
-                                result = select_candidate_directly(
-                                    root,
-                                    portfolio_id=portfolio_id,
-                                    candidate_id=chosen_candidate.candidate_id,
-                                    selected_by=mutation_actor,
-                                    proposed_section_ids=sections,
-                                    expected_state_revision=candidate_observed,
-                                    authority_gate=dependencies.curation_authority_gate,
-                                )
-                                _write(
-                                    output,
-                                    f"Direct Selection recorded at state revision {result.state_revision}.",
-                                )
-                elif raw_candidate and chosen_candidate is None:
-                    _write(output, "That Candidate number is not available.")
         elif choice == "4":
-            _curation_workflow(
-                root=root,
+            run_candidate_review_menu(
                 portfolio_id=portfolio_id,
                 input_fn=input_fn,
                 output=output,
+                clear_fn=clear_fn,
                 dependencies=dependencies,
+                workspace_root=root,
                 actor=actor,
             )
         elif choice == "5":

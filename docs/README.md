@@ -17,6 +17,7 @@ runtime contracts, validated fixtures, release-audit evidence, and deferred work
 - [Producer projection adapter boundary v1](contracts/producer-projection-adapters-v1.md) — exact support requests/keys, immutable reader/adapter declarations, deterministic conflict-detecting registry, strict development fixtures, transient projections, and structured failures implemented by issue #32.
 - [Candidate discovery and evaluation v1](contracts/candidate-discovery-evaluation-v1.md) — bounded Core catalog discovery, canonical reload, explicit authorization, verified reader bytes, Subject/Profile evaluation, and guarded Candidate persistence implemented by issue #33.
 - [Candidate Inbox v1](contracts/candidate-inbox-v1.md) — explicit Candidate current-Evaluation pointers, workspace-wide positive/negative review, bounded staleness/attention, provenance, CLI/menu, and suppression-safe read behavior implemented by issue #64.
+- [Guided Candidate review and Selection v1](contracts/guided-candidate-review-selection-v1.md) — Candidate Inbox-backed teacher review, explicit select/decline/Placement/lifecycle/content/review orchestration, exact concurrency, menu/CLI reuse, and producer-independent curation implemented by issue #66.
 - [Create Portfolio for Student v1](contracts/create-portfolio-for-student-v1.md) — exact Core roster selection, explicit cross-class Subject association, exact Profile choice, read-only planning, and one-batch guarded setup implemented by issue #65.
 - [Curation workflows v1](contracts/curation-workflows-v1.md) — explicit Proposal/Decision/Selection provenance, lifecycle, Placement/Arrangement pointers, Annotation, Reflection, Review, and immutable Composition state implemented by issue #34.
 - [Snapshot build workflows v1](contracts/snapshot-build-workflows-v1.md) — exact Composition-bound Request/Plan/Attempt execution, guarded byte custody, Series locks, exact source/render boundaries, deterministic Manifest/Seal/Edition creation, directory Export, verification, current pointer, and recovery implemented by issue #35.
@@ -28,6 +29,7 @@ runtime contracts, validated fixtures, release-audit evidence, and deferred work
 - [Producer-adapter development](development/producer-adapters.md) — exact selection, fixture isolation, reader purity, and adapter validation.
 - [Candidate-discovery development](development/candidate-discovery.md) — runtime construction, authorization gate, exact Subject/Profile evaluation, and focused validation.
 - [Candidate Inbox development](development/candidate-inbox.md) — current-Evaluation pointer rules, read-only projection, Portfolio reuse, focused validation, and installed-wheel acceptance.
+- [Guided Candidate review and Selection development](development/guided-candidate-review-selection.md) — planner/executor boundaries, exact Evaluation provenance, explicit section/Placement intent, lifecycle/content/review orchestration, menu/CLI integration, and validation.
 - [Create Portfolio for Student development](development/create-portfolio-for-student.md) — planner-first orchestration, exact identity/Profile boundaries, atomic commit, teacher menu, CLI, and installed-wheel acceptance.
 - [Curation workflow development](development/curation-workflows.md) — guarded curation services, authority gate, pointer concurrency, revisioning, and Composition guidance.
 - [Snapshot build workflow development](development/snapshot-build-workflows.md) — Plan construction, exact provider/renderer boundaries, Series locking, sealing, Export verification, recovery, and validation.
@@ -142,6 +144,7 @@ fixtures/representative-portfolios/
 - [Issue #63 starter Profile validation](validation/issue-63-starter-profile-validation.md) — focused, package, isolated-wheel, and complete repository acceptance evidence.
 - [Issue #64 Candidate Inbox validation](validation/issue-64-candidate-inbox-validation.md) — current-Evaluation, positive/negative, staleness/attention, privacy, package, and isolated-wheel acceptance evidence.
 - [Issue #65 Create Portfolio for Student validation](validation/issue-65-create-portfolio-for-student-validation.md) — exact roster identity, Profile selection, atomic setup, interface, package, and isolated-wheel acceptance evidence.
+- [Issue #66 guided Candidate review and Selection validation](validation/issue-66-guided-candidate-review-selection-validation.md) — cross-workflow history, concurrency/authority negatives, menu/CLI parity, package guards, isolated Core+Vitrine wheel smoke, and complete qualification commands.
 
 ## Authority
 
