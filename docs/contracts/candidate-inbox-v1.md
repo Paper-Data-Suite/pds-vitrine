@@ -121,7 +121,7 @@ vitrine candidate inbox
 vitrine candidate inbox show ENTRY_ID
 ```
 
-The CLI requires no actor credentials for read-only display. The teacher shell exposes `5. Candidate Inbox`. The Portfolio Discover / Review Candidates workflow keeps discovery explicit and uses the same inbox service with an exact Portfolio filter for persisted review. Guided review and Selection remain issue #66 scope.
+The CLI requires no actor credentials for read-only display. The teacher shell exposes `5. Candidate Inbox`. The Portfolio Discover / Review Candidates workflow keeps discovery explicit and uses the same inbox service with an exact Portfolio filter for persisted review. Issue #66 now layers `vitrine.candidate_review` over this exact projection for guided Selection/Placement/Annotation/Reflection/Review orchestration; opening guided review remains read-only with respect to discovery and producer reads.
 
 ## Validation
 

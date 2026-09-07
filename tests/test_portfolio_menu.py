@@ -77,7 +77,7 @@ def test_teacher_creation_routes_to_guided_student_setup(
     assert request["actor"] == ACTOR
 
 
-def test_candidate_number_maps_to_exact_candidate_before_selection(
+def test_portfolio_review_route_uses_guided_candidate_review_menu(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     summary = SimpleNamespace(
@@ -96,65 +96,13 @@ def test_candidate_number_maps_to_exact_candidate_before_selection(
         "show_portfolio",
         lambda _root, _id: SimpleNamespace(summary=summary),
     )
-    candidates = tuple(
-        SimpleNamespace(
-            candidate_id=f"candidate_{index}",
-            display_snapshot=f"Candidate {index}",
-            condition_state="ready_for_consideration",
-            eligible_section_ids=(f"section_{index}",),
-        )
-        for index in (1, 2)
-    )
-    monkeypatch.setattr(
-        portfolio_menu, "list_candidate_summaries", lambda *_: candidates
-    )
+    routed: list[dict[str, object]] = []
     monkeypatch.setattr(
         portfolio_menu,
-        "list_candidate_inbox",
-        lambda *_args, **_kwargs: SimpleNamespace(items=()),
+        "run_candidate_review_menu",
+        lambda **kwargs: routed.append(kwargs),
     )
-    endpoint = SimpleNamespace(
-        core_publication=SimpleNamespace(publication_id="publication_exact"),
-        producer_source=SimpleNamespace(
-            producer_module_id="fixture_module",
-            source_record_kind="attempt",
-            source_record_id="source_exact",
-            native_revision=4,
-        ),
-        source_artifact=SimpleNamespace(
-            artifact_id="artifact_exact",
-            artifact_kind="document",
-            representation_kind="text",
-        ),
-        subject_relationship_assertions=(),
-    )
-    monkeypatch.setattr(
-        portfolio_menu,
-        "show_candidate_detail",
-        lambda _root, candidate_id: SimpleNamespace(
-            candidate_id=candidate_id,
-            candidate_evaluation_id=f"evaluation_{candidate_id}",
-            profile_binding_id="binding_exact",
-            display_snapshot="Candidate detail",
-            source_endpoint=endpoint,
-            condition_state="ready_for_consideration",
-            evaluation_reason_codes=("profile_rule_match",),
-            unresolved_condition_codes=(),
-            availability_observations=(),
-            eligible_section_ids=("section_2",),
-        ),
-    )
-    monkeypatch.setattr(
-        portfolio_menu, "observe_portfolio_state_revision", lambda _root: 12
-    )
-    selected: list[str] = []
-
-    def select(_root: Path, **kwargs: object) -> object:
-        selected.append(str(kwargs["candidate_id"]))
-        return SimpleNamespace(state_revision=13)
-
-    monkeypatch.setattr(portfolio_menu, "select_candidate_directly", select)
-    raw_input = _inputs(["3", "", "2", "SELECT", "section_2", "", "B"])
+    raw_input = _inputs(["4", "", "B"])
 
     portfolio_menu._portfolio_context(
         root=tmp_path,
@@ -166,7 +114,10 @@ def test_candidate_number_maps_to_exact_candidate_before_selection(
         actor=ACTOR,
     )
 
-    assert selected == ["candidate_2"]
+    assert len(routed) == 1
+    assert routed[0]["portfolio_id"] == "portfolio_exact"
+    assert routed[0]["workspace_root"] == tmp_path
+    assert routed[0]["actor"] == ACTOR
 
 
 def test_portfolio_subject_route_uses_exact_subject_id(

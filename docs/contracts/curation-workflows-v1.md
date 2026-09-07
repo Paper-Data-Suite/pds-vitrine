@@ -253,6 +253,32 @@ feedback remain separate. Concord Group Membership, Artifact Author,
 documented contribution, Artifact Subject, and Group Score target remain
 distinct. Portia ingestion is not added. Meridian is not a runtime dependency.
 
+## Guided Candidate review and Selection
+
+Issue #66 adds `vitrine_guided_candidate_review_v1` as a transient
+presentation-independent orchestration layer over the Candidate Inbox and these
+canonical curation services. It does not add a durable review-session record or
+a second Selection model.
+
+Fresh teacher decline is represented atomically as an optional rationale plus
+`SelectionProposal(proposal_origin=teacher)` and
+`SelectionDecision(decision=rejected)`, with no positive Selection or Placement.
+Fresh positive Selection continues through direct-selection Proposal + accepted
+Decision + Selection + activation event.
+
+Guided actions require explicit section intent, preserve the distinction between
+Candidate Inbox current Evaluation and immutable Candidate/curation provenance
+Evaluation, and carry exact observed Vitrine state revisions. Placement,
+withdrawal, and replacement also carry exact observed Arrangement pointer
+revisions. Replacement requires a disposition for every active old Placement;
+the guided path never infers same-section preservation or first/best/all section
+intent.
+
+Annotation, Reflection, and curation Review remain the existing revisioned
+canonical records. Teacher acknowledgement of a Candidate condition does not
+clear the condition, and every mutation continues through the injected
+`CurationAuthorityGate`.
+
 ## Failures
 
 Application failures use stable `curation.*` codes through

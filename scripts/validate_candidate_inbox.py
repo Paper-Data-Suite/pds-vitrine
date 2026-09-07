@@ -209,16 +209,35 @@ def validate(*, run_focused_tests: bool = True) -> None:
     portfolio_menu = (ROOT / "vitrine" / "portfolio_menu.py").read_text(
         encoding="utf-8"
     )
-    if "list_candidate_inbox(" not in portfolio_menu:
+    if "run_candidate_review_menu(" not in portfolio_menu:
         raise RuntimeError(
-            "Portfolio Candidate review does not reuse Candidate inbox service"
+            "Portfolio Candidate review does not route through guided review"
+        )
+
+    candidate_review_menu = (
+        ROOT / "vitrine" / "candidate_review_menu.py"
+    ).read_text(encoding="utf-8")
+    if "list_candidate_review_entries(" not in candidate_review_menu:
+        raise RuntimeError(
+            "guided Candidate review menu does not reuse guided review projection"
         )
     if (
-        "CandidateInboxQuery(" not in portfolio_menu
-        or "portfolio_id=portfolio_id" not in portfolio_menu
+        "CandidateInboxQuery(" not in candidate_review_menu
+        or "portfolio_id=portfolio_id" not in candidate_review_menu
     ):
         raise RuntimeError(
-            "Portfolio Candidate review does not apply exact Portfolio filtering"
+            "guided Candidate review does not apply exact Portfolio filtering"
+        )
+
+    candidate_review = (ROOT / "vitrine" / "candidate_review.py").read_text(
+        encoding="utf-8"
+    )
+    if (
+        "list_candidate_inbox(" not in candidate_review
+        or "get_candidate_inbox_detail(" not in candidate_review
+    ):
+        raise RuntimeError(
+            "guided Candidate review does not reuse authoritative Candidate inbox services"
         )
 
     if run_focused_tests:

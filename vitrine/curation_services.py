@@ -83,6 +83,7 @@ CURATION_OPERATIONS: Final[frozenset[str]] = frozenset(
         "propose_selection",
         "decide_selection",
         "direct_select",
+        "direct_decline",
         "withdraw_selection",
         "replace_selection",
         "invalidate_selection",
@@ -1179,6 +1180,121 @@ def select_candidate_directly(
     return _validated_commit(workspace_root, context, records)
 
 
+def reject_candidate_directly(
+    workspace_root: str | Path,
+    *,
+    portfolio_id: str,
+    candidate_id: str,
+    rejected_by: ActorAttribution,
+    proposed_section_ids: tuple[str, ...],
+    expected_state_revision: int,
+    authority_gate: CurationAuthorityGate,
+    intended_profile_requirement_ids: tuple[str, ...] = (),
+    rationale_text: str | None = None,
+    clock: Clock = _clock,
+    id_factory: IdFactory = _id,
+) -> CurationMutationResult:
+    """Atomically persist a fresh teacher Proposal and rejected Decision."""
+
+    context = _load_context(workspace_root, portfolio_id, expected_state_revision)
+    candidate = _candidate(context, candidate_id)
+    try:
+        sections = identifier_tuple(
+            proposed_section_ids, "proposed_section_ids", nonempty=True
+        )
+        requirement_ids = identifier_tuple(
+            intended_profile_requirement_ids,
+            "intended_profile_requirement_ids",
+        )
+    except VitrineModelValidationError as error:
+        raise CurationWorkflowError(
+            "curation.invalid_request",
+            "Direct decline fields are invalid.",
+            stage="direct_decline",
+        ) from error
+    for section_id in sections:
+        _section(context, section_id)
+        if section_id not in candidate.eligible_section_ids:
+            raise CurationWorkflowError(
+                "curation.section_not_candidate_eligible",
+                "Candidate is not eligible for a proposed section.",
+                stage="direct_decline",
+            )
+    _require_profile_requirements(context, requirement_ids)
+    undecided = tuple(
+        proposal
+        for proposal in context.curation.proposals
+        if proposal.portfolio_id == context.portfolio.portfolio_id
+        and proposal.profile_binding_id == context.binding.profile_binding_id
+        and proposal.candidate_id == candidate.candidate_id
+        and not any(
+            decision.selection_proposal_id == proposal.selection_proposal_id
+            for decision in context.curation.decisions
+        )
+    )
+    if undecided:
+        raise CurationWorkflowError(
+            "curation.invalid_request",
+            "Candidate already has an undecided Selection Proposal; decide that exact Proposal.",
+            stage="direct_decline",
+        )
+    authority = _authority(
+        authority_gate,
+        context,
+        rejected_by,
+        "direct_decline",
+        candidate_id=candidate.candidate_id,
+        requirement_ids=requirement_ids,
+        candidate_condition_state=candidate.condition_state,
+    )
+    now = _now(clock)
+    proposal_id = id_factory("selection_proposal")
+    rationale = _rationale(
+        context=context,
+        target_kind="selection_proposal",
+        target_id=proposal_id,
+        action_kind="direct_decline",
+        author=rejected_by,
+        text=rationale_text,
+        requirement_ids=requirement_ids,
+        now=now,
+        id_factory=id_factory,
+    )
+    proposal = SelectionProposal(
+        selection_proposal_id=proposal_id,
+        portfolio_id=context.portfolio.portfolio_id,
+        portfolio_subject_id=context.portfolio.portfolio_subject_id,
+        profile_binding_id=context.binding.profile_binding_id,
+        profile_revision=context.binding.profile_revision,
+        candidate_id=candidate.candidate_id,
+        candidate_evaluation_id=candidate.candidate_evaluation_id,
+        proposer=rejected_by,
+        proposal_origin="teacher",
+        proposed_section_ids=sections,
+        intended_profile_requirement_ids=requirement_ids,
+        candidate_condition_state_snapshot=candidate.condition_state,
+        proposed_at=now,
+        rationale_id=None if rationale is None else rationale.rationale_id,
+    )
+    decision = SelectionDecision(
+        selection_decision_id=id_factory("selection_decision"),
+        selection_proposal_id=proposal.selection_proposal_id,
+        decision="rejected",
+        decided_at=now,
+        decided_by=rejected_by,
+        authority_reference=authority.authority_reference or "",
+        matched_profile_requirement_ids=requirement_ids,
+        condition_codes=authority.acknowledged_condition_codes,
+        rationale_id=None if rationale is None else rationale.rationale_id,
+    )
+    records: tuple[VitrineRecord, ...] = (
+        *((rationale,) if rationale is not None else ()),
+        proposal,
+        decision,
+    )
+    return _validated_commit(workspace_root, context, records)
+
+
 def _current_selection_event(context: _Context, selection_id: str) -> SelectionLifecycleEvent:
     heads = context.curation.selection_heads(selection_id)
     if len(heads) != 1 or heads[0].event_kind != "activated":
@@ -1715,6 +1831,7 @@ def replace_selection(
     expected_pointer_revisions: Mapping[str, int | None],
     authority_gate: CurationAuthorityGate,
     reason: str,
+    proposed_section_ids: tuple[str, ...] | None = None,
     clock: Clock = _clock,
     id_factory: IdFactory = _id,
 ) -> CurationMutationResult:
@@ -1773,16 +1890,40 @@ def replace_selection(
         created_at=now,
         text=require_text(reason, "reason", maximum=4000),
     )
-    proposed_sections = tuple(
-        sorted(
-            {
-                target
-                for target in placement_dispositions.values()
-                if target is not None
-            }
-            or set(successor.eligible_section_ids[:1])
+    if proposed_section_ids is None:
+        # Preserve the frozen low-level API for existing callers. Guided review
+        # always supplies explicit section intent and never enters this branch.
+        proposed_sections = tuple(
+            sorted(
+                {
+                    target
+                    for target in placement_dispositions.values()
+                    if target is not None
+                }
+                or set(successor.eligible_section_ids[:1])
+            )
         )
-    )
+    else:
+        try:
+            proposed_sections = identifier_tuple(
+                proposed_section_ids,
+                "proposed_section_ids",
+                nonempty=True,
+            )
+        except VitrineModelValidationError as error:
+            raise CurationWorkflowError(
+                "curation.invalid_request",
+                "Replacement Proposal section intent is invalid.",
+                stage="replacement",
+            ) from error
+        for proposed_section_id in proposed_sections:
+            _section(context, proposed_section_id)
+            if proposed_section_id not in successor.eligible_section_ids:
+                raise CurationWorkflowError(
+                    "curation.section_not_candidate_eligible",
+                    "Replacement Candidate is not eligible for a proposed section.",
+                    stage="replacement",
+                )
     proposal = SelectionProposal(
         selection_proposal_id=proposal_id,
         portfolio_id=context.portfolio.portfolio_id,
@@ -2715,6 +2856,7 @@ __all__ = [
     "place_selection",
     "propose_candidate_selection",
     "reorder_section",
+    "reject_candidate_directly",
     "replace_placement",
     "replace_selection",
     "review_curation_target",

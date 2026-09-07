@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Guided Candidate review and Selection over the canonical Candidate Inbox,
+  with explicit current-versus-curation Evaluation provenance, atomic fresh
+  select/decline history, separate Placement, append-preserving withdrawal, and
+  fully explicit replacement dispositions.
+- Revisioned guided Annotation, Reflection, and exact-target curation Review,
+  teacher Portfolio-menu integration, noninteractive task-level Candidate CLI,
+  cross-workflow concurrency/authority acceptance, dedicated validation,
+  package guards, and isolated Core+Vitrine wheel smoke.
 - Create Portfolio for Student guided setup with exact Core roster selection,
   explicit cross-class Subject association, exact Improvement/Showcase Profile
   Revision choice, read-only planning, and one guarded atomic setup commit.
