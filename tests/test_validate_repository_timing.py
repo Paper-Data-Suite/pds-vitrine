@@ -95,4 +95,7 @@ def test_repository_gate_avoids_nested_focused_pytest_reexecution() -> None:
         "scripts/validate_candidate_review_selection.py",
         "--skip-focused-tests",
     )
-
+    assert commands["guided Working Composition"] == (
+        "scripts/validate_working_composition.py",
+        "--skip-focused-tests",
+    )

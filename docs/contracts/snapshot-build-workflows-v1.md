@@ -740,3 +740,11 @@ Issue #35 does not implement:
 - Snapshot CLI/menu workflows.
 
 Those remain separate downstream concerns.
+
+## Upstream guided Working Composition boundary
+
+Issue #67 freezes audience-neutral curation before this Snapshot contract
+begins. Its Profile audience-rule projection is explanatory only: it creates no
+Audience Context and makes no item-level Snapshot inclusion/omission decision.
+Snapshot construction continues to require an exact immutable Composition plus
+the exact downstream Audience Context and build-plan authority defined here.

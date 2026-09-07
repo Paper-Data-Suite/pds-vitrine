@@ -95,6 +95,11 @@ from vitrine.workflow_views import (
     show_snapshot_plan,
     show_snapshot_series,
 )
+from vitrine.working_composition_cli import (
+    WORKING_COMPOSITION_CLI_COMMANDS,
+    configure_working_composition_parsers,
+    run_working_composition_command,
+)
 from vitrine.workspace import show_workspace
 
 
@@ -329,6 +334,7 @@ def configure_workflow_parsers(
     comp_build.add_argument("--expected-composition-pointer-revision", type=int)
     comp_build.add_argument("--note")
     _actor(comp_build)
+    configure_working_composition_parsers(compositions)
 
     audiences = _nested(subparsers, "audience", "Freeze exact Profile audience rules.")
     au_list = audiences.add_parser("list")
@@ -1174,6 +1180,12 @@ def run_workflow_command(
         )
         return 0
     if command == "composition":
+        if subcommand in WORKING_COMPOSITION_CLI_COMMANDS:
+            return run_working_composition_command(
+                args,
+                dependencies=dependencies,
+                output=output,
+            )
         if subcommand == "show":
             composition_view = show_composition(root, args.portfolio_id, args.revision)
             composition = composition_view.composition

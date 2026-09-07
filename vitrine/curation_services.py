@@ -147,6 +147,7 @@ CURATION_WORKFLOW_CODES: Final[frozenset[str]] = frozenset(
         "curation.composition_inconsistent",
         "curation.composition_revision_conflict",
         "curation.composition_pointer_conflict",
+        "curation.composition_preparation_mismatch",
         "curation.state_conflict",
     }
 )
@@ -315,6 +316,19 @@ class CurationMutationResult:
         object.__setattr__(self, "records", tuple(self.records))
         if self.disposition not in _RESULT_DISPOSITIONS:
             raise ValueError("unsupported curation mutation disposition.")
+
+
+@dataclass(frozen=True, slots=True)
+class WorkingCompositionSourceCurrentness:
+    """Bounded Core Publication observation used by guided Composition preparation."""
+
+    selection_id: str
+    candidate_id: str
+    publication_id: str
+    series_head_publication_id: str | None
+    observed_series_state: str
+    observed_withdrawal_state: str
+    current_use_state: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -610,12 +624,16 @@ def _section(context: _Context, section_id: str) -> ProfileSectionDefinition:
     return section
 
 
-def _current_source_state(workspace_root: str | Path, candidate: PortfolioCandidate) -> str:
+def _observe_working_composition_source(
+    workspace_root: str | Path,
+    *,
+    selection_id: str,
+    candidate: PortfolioCandidate,
+) -> WorkingCompositionSourceCurrentness:
     reference = candidate.source_endpoint.core_publication
+    publication_id = reference.publication_id
     try:
-        publication = get_canonical_publication_record(
-            workspace_root, reference.publication_id
-        )
+        publication = get_canonical_publication_record(workspace_root, publication_id)
         series = list_publication_record_set(
             workspace_root,
             publication.work,
@@ -628,18 +646,77 @@ def _current_source_state(workspace_root: str | Path, candidate: PortfolioCandid
             if item.supersedes_publication_id is not None
         }
         heads = tuple(item for item in series if item.publication_id not in superseded)
-        if len(heads) != 1:
-            return "unresolved"
+    except (RegistryServiceError, PublicationStorageError, OSError):
+        return WorkingCompositionSourceCurrentness(
+            selection_id=selection_id,
+            candidate_id=candidate.candidate_id,
+            publication_id=publication_id,
+            series_head_publication_id=None,
+            observed_series_state="unresolved",
+            observed_withdrawal_state="unresolved",
+            current_use_state="unresolved",
+        )
+    if len(heads) != 1:
+        return WorkingCompositionSourceCurrentness(
+            selection_id=selection_id,
+            candidate_id=candidate.candidate_id,
+            publication_id=publication_id,
+            series_head_publication_id=None,
+            observed_series_state="unresolved",
+            observed_withdrawal_state="unresolved",
+            current_use_state="unresolved",
+        )
+    head_publication_id = heads[0].publication_id
+    series_state = "current" if head_publication_id == publication_id else "historical"
+    try:
         withdrawal = get_canonical_publication_withdrawal(
-            workspace_root, publication.publication_id
+            workspace_root, publication_id
         )
     except (RegistryServiceError, PublicationStorageError, OSError):
-        return "unresolved"
-    if withdrawal is not None:
-        return "withdrawn"
-    if heads[0].publication_id != publication.publication_id:
-        return "historical"
-    return "current"
+        return WorkingCompositionSourceCurrentness(
+            selection_id=selection_id,
+            candidate_id=candidate.candidate_id,
+            publication_id=publication_id,
+            series_head_publication_id=head_publication_id,
+            observed_series_state=series_state,
+            observed_withdrawal_state="unresolved",
+            current_use_state="unresolved",
+        )
+    withdrawal_state = "withdrawn" if withdrawal is not None else "not_withdrawn"
+    current_use_state = "withdrawn" if withdrawal is not None else series_state
+    return WorkingCompositionSourceCurrentness(
+        selection_id=selection_id,
+        candidate_id=candidate.candidate_id,
+        publication_id=publication_id,
+        series_head_publication_id=head_publication_id,
+        observed_series_state=series_state,
+        observed_withdrawal_state=withdrawal_state,
+        current_use_state=current_use_state,
+    )
+
+
+def observe_working_composition_source(
+    workspace_root: str | Path,
+    *,
+    selection_id: str,
+    candidate: PortfolioCandidate,
+) -> WorkingCompositionSourceCurrentness:
+    """Read bounded canonical Core Publication currentness for one Selection."""
+    return _observe_working_composition_source(
+        workspace_root,
+        selection_id=selection_id,
+        candidate=candidate,
+    )
+
+
+def _current_source_state(
+    workspace_root: str | Path, candidate: PortfolioCandidate
+) -> str:
+    return _observe_working_composition_source(
+        workspace_root,
+        selection_id="source_state_probe",
+        candidate=candidate,
+    ).current_use_state
 
 
 def _require_current_source(workspace_root: str | Path, candidate: PortfolioCandidate) -> None:
@@ -2548,25 +2625,37 @@ def _composition_pointer(context: _Context) -> WorkingPortfolioCompositionPointe
     return heads[0] if heads else None
 
 
-def create_working_composition(
+@dataclass(frozen=True, slots=True)
+class WorkingCompositionDerivation:
+    """Exact transient semantic payload used by preview and Composition writes."""
+
+    state_revision: int
+    portfolio_id: str
+    portfolio_subject_id: str
+    profile_binding_id: str
+    profile_revision_id: str
+    profile_revision_number: int
+    observed_composition_pointer_revision: int | None
+    current_composition_revision: int | None
+    predicted_composition_revision: int
+    predecessor_composition_revision: int | None
+    predicted_composition_pointer_revision: int
+    disposition: str
+    selection_ids: tuple[str, ...]
+    placement_ids: tuple[str, ...]
+    arrangement_ids: tuple[str, ...]
+    included_rationale_ids: tuple[str, ...]
+    included_curation_revisions: tuple[CurationRevisionRef, ...]
+    applicable_review_decision_ids: tuple[str, ...]
+    related_profile_requirement_ids: tuple[str, ...]
+    unresolved_obligation_codes: tuple[str, ...]
+    coherence_state: str
+
+
+def _derive_working_composition(
     workspace_root: str | Path,
-    *,
-    portfolio_id: str,
-    created_by: ActorAttribution,
-    expected_state_revision: int,
-    expected_composition_pointer_revision: int | None,
-    authority_gate: CurationAuthorityGate,
-    composition_note: str | None = None,
-    clock: Clock = _clock,
-    id_factory: IdFactory = _id,
-) -> CurationMutationResult:
-    context = _load_context(workspace_root, portfolio_id, expected_state_revision)
-    authority = _authority(
-        authority_gate,
-        context,
-        created_by,
-        "compose_portfolio",
-    )
+    context: _Context,
+) -> WorkingCompositionDerivation:
     active_selections = context.curation.active_selections(
         portfolio_id=context.portfolio.portfolio_id,
         profile_binding_id=context.binding.profile_binding_id,
@@ -2587,7 +2676,10 @@ def create_working_composition(
                 "Prohibited section contains active Placements.",
                 stage="composition",
             )
-        if section.maximum_placements is not None and len(section_placements) > section.maximum_placements:
+        if (
+            section.maximum_placements is not None
+            and len(section_placements) > section.maximum_placements
+        ):
             raise CurationWorkflowError(
                 "curation.section_cardinality_exceeded",
                 "Section maximum Placement count is exceeded.",
@@ -2636,7 +2728,9 @@ def create_working_composition(
         and head.profile_binding_id == context.binding.profile_binding_id
     }
     for section in context.profile.sections:
-        count = sum(1 for item in active_placements if item.section_id == section.section_id)
+        count = sum(
+            1 for item in active_placements if item.section_id == section.section_id
+        )
         if count < section.minimum_placements:
             unresolved.add("section_minimum_missing")
         if section.reflection_requirement == "required":
@@ -2657,7 +2751,10 @@ def create_working_composition(
             continue
         if requirement.requirement_kind == "reflection":
             related_requirements.add(requirement.requirement_id)
-            if requirement.obligation == "required" and requirement.requirement_id not in current_reflections:
+            if (
+                requirement.obligation == "required"
+                and requirement.requirement_id not in current_reflections
+            ):
                 unresolved.add("reflection_required")
         elif requirement.requirement_kind == "approval":
             related_requirements.add(requirement.requirement_id)
@@ -2709,8 +2806,6 @@ def create_working_composition(
         if item.approval_requirement_id is not None
         and item.decision in {"approved", "acknowledged", "waived"}
     }
-    # Re-evaluate required approval obligations against only reviews of exact
-    # curation state included by this Composition.
     if any(
         item.obligation == "required"
         and item.requirement_kind == "approval"
@@ -2720,25 +2815,25 @@ def create_working_composition(
         unresolved.add("approval_required")
 
     pointer = _composition_pointer(context)
+    current_composition: WorkingPortfolioCompositionRevision | None = None
+    current_inventory: WorkingPortfolioCompositionInventory | None = None
+    expected_payload = (
+        tuple(selection_ids),
+        ordered_placement_ids,
+        tuple(item.arrangement_id for item in arrangements),
+        rationale_ids,
+        curation_refs,
+        review_ids,
+        tuple(sorted(related_requirements)),
+        tuple(sorted(unresolved)),
+    )
     if pointer is None:
-        if expected_composition_pointer_revision is not None:
-            raise CurationWorkflowError(
-                "curation.composition_pointer_conflict",
-                "Expected Composition pointer does not exist.",
-                stage="composition",
-            )
-        composition_revision = 1
+        current_revision = None
+        predicted_revision = 1
         predecessor_revision = None
-        pointer_id = id_factory("composition_pointer")
-        pointer_revision = 1
-        predecessor_pointer = None
+        predicted_pointer_revision = 1
+        disposition = "create_initial"
     else:
-        if expected_composition_pointer_revision != pointer.pointer_revision:
-            raise CurationWorkflowError(
-                "curation.composition_pointer_conflict",
-                "Composition pointer changed since caller observation.",
-                stage="composition",
-            )
         current_composition = context.curation.current_composition(
             context.portfolio.portfolio_id,
             context.binding.profile_binding_id,
@@ -2754,20 +2849,13 @@ def create_working_composition(
                 item
                 for item in context.curation.composition_inventories
                 if item.portfolio_id == current_composition.portfolio_id
-                and item.composition_revision == current_composition.composition_revision
+                and item.composition_revision
+                == current_composition.composition_revision
             ),
             None,
         )
-        expected_payload = (
-            tuple(selection_ids),
-            ordered_placement_ids,
-            tuple(item.arrangement_id for item in arrangements),
-            rationale_ids,
-            curation_refs,
-            review_ids,
-            tuple(sorted(related_requirements)),
-            tuple(sorted(unresolved)),
-        )
+        current_revision = current_composition.composition_revision
+        current_payload = None
         if current_inventory is not None:
             current_payload = (
                 current_composition.selection_ids,
@@ -2779,38 +2867,37 @@ def create_working_composition(
                 current_inventory.related_profile_requirement_ids,
                 current_inventory.unresolved_obligation_codes,
             )
-            if current_payload == expected_payload:
-                return CurationMutationResult(
-                    state_revision=context.state_revision,
-                    records=(current_composition, current_inventory, pointer),
-                    disposition="existing",
-                )
-        composition_revision = current_composition.composition_revision + 1
-        predecessor_revision = current_composition.composition_revision
-        pointer_id = pointer.composition_pointer_id
-        pointer_revision = pointer.pointer_revision + 1
-        predecessor_pointer = pointer.pointer_revision
+        if current_payload == expected_payload:
+            predicted_revision = current_composition.composition_revision
+            predecessor_revision = (
+                current_composition.predecessor_composition_revision
+            )
+            predicted_pointer_revision = pointer.pointer_revision
+            disposition = "reuse_exact_current"
+        else:
+            predicted_revision = current_composition.composition_revision + 1
+            predecessor_revision = current_composition.composition_revision
+            predicted_pointer_revision = pointer.pointer_revision + 1
+            disposition = "create_successor"
 
-    now = _now(clock)
-    composition = WorkingPortfolioCompositionRevision(
+    return WorkingCompositionDerivation(
+        state_revision=context.state_revision,
         portfolio_id=context.portfolio.portfolio_id,
         portfolio_subject_id=context.portfolio.portfolio_subject_id,
         profile_binding_id=context.binding.profile_binding_id,
-        profile_revision=context.binding.profile_revision,
-        composition_revision=composition_revision,
+        profile_revision_id=context.binding.profile_revision.portfolio_profile_id,
+        profile_revision_number=context.binding.profile_revision.profile_revision,
+        observed_composition_pointer_revision=(
+            None if pointer is None else pointer.pointer_revision
+        ),
+        current_composition_revision=current_revision,
+        predicted_composition_revision=predicted_revision,
+        predecessor_composition_revision=predecessor_revision,
+        predicted_composition_pointer_revision=predicted_pointer_revision,
+        disposition=disposition,
         selection_ids=tuple(selection_ids),
         placement_ids=ordered_placement_ids,
         arrangement_ids=tuple(item.arrangement_id for item in arrangements),
-        created_at=now,
-        created_by=created_by,
-        predecessor_composition_revision=predecessor_revision,
-        composition_note=composition_note,
-    )
-    inventory = WorkingPortfolioCompositionInventory(
-        portfolio_id=context.portfolio.portfolio_id,
-        composition_revision=composition_revision,
-        profile_binding_id=context.binding.profile_binding_id,
-        profile_revision=context.binding.profile_revision,
         included_rationale_ids=rationale_ids,
         included_curation_revisions=curation_refs,
         applicable_review_decision_ids=review_ids,
@@ -2819,19 +2906,201 @@ def create_working_composition(
         coherence_state=(
             "coherent_with_unresolved_obligations" if unresolved else "coherent"
         ),
+    )
+
+
+def derive_working_composition(
+    workspace_root: str | Path,
+    *,
+    portfolio_id: str,
+    expected_state_revision: int,
+) -> WorkingCompositionDerivation:
+    """Read one exact state and derive the canonical Composition payload."""
+    context = _load_context(workspace_root, portfolio_id, expected_state_revision)
+    return _derive_working_composition(workspace_root, context)
+
+
+def _working_composition_source_observations(
+    workspace_root: str | Path,
+    context: _Context,
+    derivation: WorkingCompositionDerivation,
+) -> tuple[WorkingCompositionSourceCurrentness, ...]:
+    selections = {
+        item.selection_id: item
+        for item in context.curation.active_selections(
+            portfolio_id=context.portfolio.portfolio_id,
+            profile_binding_id=context.binding.profile_binding_id,
+        )
+    }
+    observations: list[WorkingCompositionSourceCurrentness] = []
+    for selection_id in derivation.selection_ids:
+        selection = selections.get(selection_id)
+        if selection is None:
+            raise CurationWorkflowError(
+                "curation.composition_preparation_mismatch",
+                "Prepared Composition Selection is no longer active.",
+                stage="composition",
+            )
+        candidate = _candidate(context, selection.candidate_id)
+        observations.append(
+            _observe_working_composition_source(
+                workspace_root,
+                selection_id=selection.selection_id,
+                candidate=candidate,
+            )
+        )
+    return tuple(observations)
+
+def create_working_composition(
+    workspace_root: str | Path,
+    *,
+    portfolio_id: str,
+    created_by: ActorAttribution,
+    expected_state_revision: int,
+    expected_composition_pointer_revision: int | None,
+    authority_gate: CurationAuthorityGate,
+    composition_note: str | None = None,
+    expected_derivation: WorkingCompositionDerivation | None = None,
+    expected_source_observations: tuple[
+        WorkingCompositionSourceCurrentness, ...
+    ] | None = None,
+    clock: Clock = _clock,
+    id_factory: IdFactory = _id,
+) -> CurationMutationResult:
+    context = _load_context(workspace_root, portfolio_id, expected_state_revision)
+    prepared_guard = (
+        expected_derivation is not None or expected_source_observations is not None
+    )
+    if prepared_guard:
+        if expected_derivation is None or expected_source_observations is None:
+            raise CurationWorkflowError(
+                "curation.invalid_request",
+                "Prepared Composition guard requires derivation and source observations.",
+                stage="composition",
+            )
+        derivation = _derive_working_composition(workspace_root, context)
+        if derivation != expected_derivation:
+            raise CurationWorkflowError(
+                "curation.composition_preparation_mismatch",
+                "Current curation differs from the reviewed Composition preparation.",
+                stage="composition",
+            )
+        source_observations = _working_composition_source_observations(
+            workspace_root, context, derivation
+        )
+        if source_observations != expected_source_observations:
+            raise CurationWorkflowError(
+                "curation.composition_preparation_mismatch",
+                "Core Publication state differs from the reviewed Composition preparation.",
+                stage="composition",
+            )
+        authority = _authority(
+            authority_gate,
+            context,
+            created_by,
+            "compose_portfolio",
+        )
+    else:
+        authority = _authority(
+            authority_gate,
+            context,
+            created_by,
+            "compose_portfolio",
+        )
+        derivation = _derive_working_composition(workspace_root, context)
+    pointer = _composition_pointer(context)
+    if pointer is None:
+        if expected_composition_pointer_revision is not None:
+            raise CurationWorkflowError(
+                "curation.composition_pointer_conflict",
+                "Expected Composition pointer does not exist.",
+                stage="composition",
+            )
+    elif expected_composition_pointer_revision != pointer.pointer_revision:
+        raise CurationWorkflowError(
+            "curation.composition_pointer_conflict",
+            "Composition pointer changed since caller observation.",
+            stage="composition",
+        )
+
+    if derivation.disposition == "reuse_exact_current":
+        current_composition = context.curation.current_composition(
+            context.portfolio.portfolio_id,
+            context.binding.profile_binding_id,
+        )
+        current_inventory = (
+            None
+            if current_composition is None
+            else next(
+                (
+                    item
+                    for item in context.curation.composition_inventories
+                    if item.portfolio_id == current_composition.portfolio_id
+                    and item.composition_revision
+                    == current_composition.composition_revision
+                ),
+                None,
+            )
+        )
+        if current_composition is None or current_inventory is None or pointer is None:
+            raise CurationWorkflowError(
+                "curation.composition_pointer_conflict",
+                "Current Composition replay state is incomplete.",
+                stage="composition",
+            )
+        return CurationMutationResult(
+            state_revision=context.state_revision,
+            records=(current_composition, current_inventory, pointer),
+            disposition="existing",
+        )
+
+    now = _now(clock)
+    composition = WorkingPortfolioCompositionRevision(
+        portfolio_id=context.portfolio.portfolio_id,
+        portfolio_subject_id=context.portfolio.portfolio_subject_id,
+        profile_binding_id=context.binding.profile_binding_id,
+        profile_revision=context.binding.profile_revision,
+        composition_revision=derivation.predicted_composition_revision,
+        selection_ids=derivation.selection_ids,
+        placement_ids=derivation.placement_ids,
+        arrangement_ids=derivation.arrangement_ids,
+        created_at=now,
+        created_by=created_by,
+        predecessor_composition_revision=(
+            derivation.predecessor_composition_revision
+        ),
+        composition_note=composition_note,
+    )
+    inventory = WorkingPortfolioCompositionInventory(
+        portfolio_id=context.portfolio.portfolio_id,
+        composition_revision=derivation.predicted_composition_revision,
+        profile_binding_id=context.binding.profile_binding_id,
+        profile_revision=context.binding.profile_revision,
+        included_rationale_ids=derivation.included_rationale_ids,
+        included_curation_revisions=derivation.included_curation_revisions,
+        applicable_review_decision_ids=derivation.applicable_review_decision_ids,
+        related_profile_requirement_ids=derivation.related_profile_requirement_ids,
+        unresolved_obligation_codes=derivation.unresolved_obligation_codes,
+        coherence_state=derivation.coherence_state,
         created_at=now,
         created_by=created_by,
     )
     next_pointer = WorkingPortfolioCompositionPointerRevision(
-        composition_pointer_id=pointer_id,
-        pointer_revision=pointer_revision,
+        composition_pointer_id=(
+            id_factory("composition_pointer")
+            if pointer is None
+            else pointer.composition_pointer_id
+        ),
+        pointer_revision=derivation.predicted_composition_pointer_revision,
         portfolio_id=context.portfolio.portfolio_id,
         profile_binding_id=context.binding.profile_binding_id,
-        composition_revision=composition_revision,
+        composition_revision=derivation.predicted_composition_revision,
         pointed_at=now,
         pointed_by=created_by,
         authority_reference=authority.authority_reference or "",
-        predecessor_pointer_revision=predecessor_pointer,
+        predecessor_pointer_revision=(
+            None if pointer is None else pointer.pointer_revision
+        ),
     )
     return _validated_commit(
         workspace_root,
@@ -2848,9 +3117,13 @@ __all__ = [
     "CurationAuthorityRequest",
     "CurationMutationResult",
     "CurationWorkflowError",
+    "WorkingCompositionDerivation",
+    "WorkingCompositionSourceCurrentness",
     "create_annotation",
     "create_reflection",
     "create_working_composition",
+    "derive_working_composition",
+    "observe_working_composition_source",
     "decide_selection_proposal",
     "invalidate_selection",
     "place_selection",

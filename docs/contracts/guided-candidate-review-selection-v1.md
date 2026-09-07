@@ -301,3 +301,12 @@ python scripts/validate_candidate_review_selection.py
 The complete repository validator also runs the #66 validator, package-content
 guards, and an isolated Core+Vitrine guided-review wheel smoke with no sibling
 producer packages installed.
+
+## Handoff to guided Working Composition
+
+Issue #67 consumes the exact active Selection, Placement, Arrangement,
+Annotation, Reflection, Review, and Candidate provenance produced by this
+workflow. Opening Working Composition preparation does not rerun Candidate
+discovery, retarget Candidate Evaluation provenance, rank Selections, or invoke
+producer readers. Any curation correction remains an explicit #66 action before
+the teacher prepares again.

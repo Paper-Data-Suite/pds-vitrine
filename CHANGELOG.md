@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Guided Working Composition preparation over exact current curation,
+  with shared canonical derivation, explicit Profile/Arrangement ordering,
+  Requirement/source/Review/audience explanation, and deterministic
+  preparation fingerprints.
+- Fail-closed prepared Composition freeze with Vitrine state/pointer/Core
+  source replay guards, exact semantic reuse, teacher menu integration,
+  task-level prepare/freeze CLI, dedicated validation, package guards, and
+  isolated Core+Vitrine wheel smoke.
 - Guided Candidate review and Selection over the canonical Candidate Inbox,
   with explicit current-versus-curation Evaluation provenance, atomic fresh
   select/decline history, separate Placement, append-preserving withdrawal, and

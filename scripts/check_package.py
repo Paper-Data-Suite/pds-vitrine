@@ -98,6 +98,9 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/workflow_cli.py",
     "vitrine/workflow_context.py",
     "vitrine/workflow_views.py",
+    "vitrine/working_composition.py",
+    "vitrine/working_composition_menu.py",
+    "vitrine/working_composition_cli.py",
     "vitrine/workspace.py",
 }
 REQUIRED_SDIST_FILES = {
@@ -120,6 +123,7 @@ REQUIRED_SDIST_FILES = {
     "docs/contracts/candidate-discovery-evaluation-v1.md",
     "docs/contracts/candidate-inbox-v1.md",
     "docs/contracts/guided-candidate-review-selection-v1.md",
+    "docs/contracts/guided-working-composition-v1.md",
     "docs/contracts/create-portfolio-for-student-v1.md",
     "docs/contracts/curation-workflows-v1.md",
     "docs/contracts/snapshot-build-workflows-v1.md",
@@ -133,6 +137,7 @@ REQUIRED_SDIST_FILES = {
     "docs/development/candidate-discovery.md",
     "docs/development/candidate-inbox.md",
     "docs/development/guided-candidate-review-selection.md",
+    "docs/development/guided-working-composition.md",
     "docs/development/create-portfolio-for-student.md",
     "docs/development/curation-workflows.md",
     "docs/development/snapshot-build-workflows.md",
@@ -169,6 +174,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/smoke_test_candidate_wheel.py",
     "scripts/smoke_test_candidate_inbox_wheel.py",
     "scripts/smoke_test_candidate_review_selection_wheel.py",
+    "scripts/smoke_test_working_composition_wheel.py",
     "scripts/smoke_test_portfolio_setup_wheel.py",
     "scripts/smoke_test_curation_wheel.py",
     "scripts/smoke_test_snapshot_wheel.py",
@@ -196,6 +202,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/validate_candidate_discovery.py",
     "scripts/validate_candidate_inbox.py",
     "scripts/validate_candidate_review_selection.py",
+    "scripts/validate_working_composition.py",
     "scripts/validate_portfolio_setup.py",
     "scripts/validate_curation_workflows.py",
     "scripts/validate_snapshot_workflows.py",
@@ -279,6 +286,11 @@ REQUIRED_SDIST_FILES = {
     "tests/test_candidate_review_cli.py",
     "tests/test_candidate_review_acceptance_matrix.py",
     "tests/test_validate_candidate_review_selection.py",
+    "tests/test_working_composition.py",
+    "tests/test_working_composition_menu.py",
+    "tests/test_working_composition_cli.py",
+    "tests/test_working_composition_acceptance_matrix.py",
+    "tests/test_validate_working_composition.py",
     "tests/test_portfolio_setup_planner.py",
     "tests/test_portfolio_setup_atomic.py",
     "tests/test_portfolio_setup_menu.py",
@@ -324,6 +336,7 @@ REQUIRED_SDIST_FILES = {
     "docs/validation/issue-64-candidate-inbox-validation.md",
     "docs/validation/issue-65-create-portfolio-for-student-validation.md",
     "docs/validation/issue-66-guided-candidate-review-selection-validation.md",
+    "docs/validation/issue-67-guided-working-composition-validation.md",
 }
 
 

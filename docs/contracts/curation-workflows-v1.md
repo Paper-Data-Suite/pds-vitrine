@@ -284,3 +284,13 @@ clear the condition, and every mutation continues through the injected
 Application failures use stable `curation.*` codes through
 `CurationWorkflowError`. Diagnostics are bounded and must not include student
 work bodies, private producer material, manifest contents, or workstation paths.
+
+## Guided Working Composition preparation handoff
+
+Issue #67 adds a transient preparation/explanation layer over this canonical
+curation contract. `prepare_working_composition(...)` and canonical
+`create_working_composition(...)` share the same Composition derivation.
+Prepared freeze revalidates Vitrine state, the Composition pointer, bounded Core
+Publication currentness, and the deterministic preparation fingerprint before
+the canonical write. Preparation is not a new durable curation record and does
+not clear unresolved obligations.
