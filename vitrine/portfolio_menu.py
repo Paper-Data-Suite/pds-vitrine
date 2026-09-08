@@ -17,7 +17,6 @@ from vitrine.candidate_services import (
     discover_and_evaluate_candidates,
 )
 from vitrine.curation_services import (
-    create_working_composition,
     decide_selection_proposal,
     invalidate_selection,
     place_selection,
@@ -71,9 +70,9 @@ from vitrine.workflow_views import (
     list_snapshot_series,
     show_arrangement,
     show_candidate_detail,
-    show_composition,
     show_snapshot_series,
 )
+from vitrine.working_composition_menu import run_working_composition_menu
 
 _ChoiceValue = TypeVar("_ChoiceValue")
 
@@ -699,39 +698,15 @@ def _portfolio_context(
                 actor=actor,
             )
         elif choice == "5":
-            composition_observed = _require_observed_revision(root)
-            _write(output, "Working Composition", "")
-            composition_view = show_composition(root, portfolio_id)
-            if composition_view.composition is None:
-                _write(output, "No Working Composition has been frozen.")
-            else:
-                _write(
-                    output,
-                    f"Revision: {composition_view.composition.composition_revision}",
-                    f"Placements: {len(composition_view.composition.placement_ids)}",
-                    f"Unresolved: {', '.join(composition_view.inventory.unresolved_obligation_codes) if composition_view.inventory else 'inventory missing'}",
-                )
-            if (
-                _read(
-                    input_fn,
-                    "Type FREEZE to create an exact Working Composition, or Enter: ",
-                )
-                == "FREEZE"
-            ):
-                mutation_actor = actor or _actor(input_fn)
-                if mutation_actor is not None:
-                    result = create_working_composition(
-                        root,
-                        portfolio_id=portfolio_id,
-                        created_by=mutation_actor,
-                        expected_state_revision=composition_observed,
-                        expected_composition_pointer_revision=composition_view.pointer_revision,
-                        authority_gate=dependencies.curation_authority_gate,
-                    )
-                    _write(
-                        output,
-                        f"Working Composition frozen at state revision {result.state_revision}.",
-                    )
+            run_working_composition_menu(
+                portfolio_id=portfolio_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                workspace_root=root,
+                actor=actor,
+            )
         elif choice == "6":
             snapshot_observed = _require_observed_revision(root)
             _write(output, "Snapshot", "")

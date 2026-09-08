@@ -359,3 +359,45 @@ def test_portfolio_menu_surfaces_controlled_errors_and_clears(
     assert "controlled failure" in output.getvalue()
     assert "Traceback" not in output.getvalue()
     assert len(clears) >= 3
+
+def test_portfolio_working_composition_route_uses_guided_menu(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    summary = SimpleNamespace(
+        portfolio_id="portfolio_exact",
+        title_snapshot="Portfolio",
+        subject_display_label="Synthetic learner",
+        portfolio_subject_id="subject_exact",
+        profile_binding_id=None,
+        candidate_count=0,
+        active_selection_count=0,
+        current_composition_revision=None,
+        snapshot_series_count=0,
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "show_portfolio",
+        lambda _root, _id: SimpleNamespace(summary=summary),
+    )
+    routed: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        portfolio_menu,
+        "run_working_composition_menu",
+        lambda **kwargs: routed.append(kwargs),
+    )
+    raw_input = _inputs(["5", "", "B"])
+
+    portfolio_menu._portfolio_context(
+        root=tmp_path,
+        portfolio_id="portfolio_exact",
+        input_fn=lambda prompt: raw_input(prompt),  # type: ignore[operator]
+        output=io.StringIO(),
+        clear_fn=lambda: None,
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert len(routed) == 1
+    assert routed[0]["portfolio_id"] == "portfolio_exact"
+    assert routed[0]["workspace_root"] == tmp_path
+    assert routed[0]["actor"] == ACTOR
