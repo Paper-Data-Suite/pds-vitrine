@@ -41,6 +41,10 @@ from vitrine.curation_services import (
     select_candidate_directly,
     withdraw_selection,
 )
+from vitrine.current_portfolio_cli import (
+    configure_current_portfolio_build_export_parsers,
+    run_current_portfolio_build_export_command,
+)
 from vitrine.models import (
     ActorAttribution,
     CandidateSourceEndpoint,
@@ -143,6 +147,7 @@ def configure_workflow_parsers(
     p_create.add_argument("--title")
     p_create.add_argument("--description")
     _actor(p_create)
+    configure_current_portfolio_build_export_parsers(portfolios)
 
     p_setup = portfolios.add_parser(
         "create-for-student",
@@ -950,6 +955,10 @@ def run_workflow_command(
             print(
                 f"Portfolio: {portfolio_summary.portfolio_id}\nTitle: {portfolio_summary.title_snapshot or '(none)'}\nSubject: {portfolio_summary.portfolio_subject_id}\nProfile Binding: {portfolio_summary.profile_binding_id or '(none)'}\nCandidates: {portfolio_summary.candidate_count}\nActive Selections: {portfolio_summary.active_selection_count}\nCurrent Composition: {portfolio_summary.current_composition_revision or '(none)'}\nSnapshot Series: {portfolio_summary.snapshot_series_count}",
                 file=output,
+            )
+        elif subcommand == "build-export":
+            return run_current_portfolio_build_export_command(
+                args, dependencies=dependencies, output=output
             )
         elif subcommand == "create-for-student":
             _run_create_for_student(args, root=root, output=output)

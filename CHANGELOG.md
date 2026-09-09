@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Build and Export Current Portfolio task over the exact current Working
+  Composition, with exact audience-rule/Context/Series resolution, required
+  Review and obligation handling, and deterministic preparation fingerprints.
+- First-party portfolio materialization policy for exact Quillan/Concord
+  providers, ScoreForm/reference-only evidence, deterministic frozen Reflection
+  rendering, explicit audience omissions, verified immutable Edition custody,
+  and verified `directory_package` Export without current-pointer advancement.
+- Teacher Portfolio option 6 and direct `portfolio build-export` CLI sharing the
+  same orchestration, plus cross-workflow acceptance, dedicated validation,
+  package guards, and isolated Core+Vitrine installed-wheel Export smoke.
 - Guided Working Composition preparation over exact current curation,
   with shared canonical derivation, explicit Profile/Arrangement ordering,
   Requirement/source/Review/audience explanation, and deterministic

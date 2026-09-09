@@ -10,7 +10,6 @@ from pds_core.academic_catalog import PublicationCatalogQuery
 from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 from pds_core.workspace import resolve_workspace_root
 
-from vitrine.audience_services import create_audience_context, list_audience_contexts
 from vitrine.candidate_review_menu import run_candidate_review_menu
 from vitrine.candidate_services import (
     CandidateDiscoveryRequest,
@@ -24,13 +23,11 @@ from vitrine.curation_services import (
     replace_selection,
     withdraw_selection,
 )
-from vitrine.menu_types import ClearFunction, InputFunction
-from vitrine.models import (
-    ActorAttribution,
-    SnapshotBuildPlan,
-    SnapshotBuildRequest,
-    SnapshotSeries,
+from vitrine.current_portfolio_menu import (
+    run_current_portfolio_build_export_menu,
 )
+from vitrine.menu_types import ClearFunction, InputFunction
+from vitrine.models import ActorAttribution
 from vitrine.portfolio_services import (
     list_portfolios,
     observe_portfolio_state_revision,
@@ -48,29 +45,14 @@ from vitrine.profile_services import (
     migrate_portfolio_profile,
     observe_profile_state_revision,
 )
-from vitrine.snapshot_distribution import (
-    inspect_snapshot_custody,
-    verify_snapshot_edition,
-    verify_snapshot_export,
-)
-from vitrine.snapshot_planning import SnapshotPlanningRequest, prepare_snapshot_build
-from vitrine.snapshot_services import (
-    create_snapshot_series,
-    execute_snapshot_build_attempt,
-    request_snapshot_build,
-    seal_snapshot_build_attempt,
-    start_snapshot_build_attempt,
-)
 from vitrine.subject_menu import run_subject_menu
 from vitrine.workflow_context import VitrineWorkflowDependencies
 from vitrine.workflow_views import (
     CandidateDetail,
     list_active_selections,
     list_candidate_summaries,
-    list_snapshot_series,
     show_arrangement,
     show_candidate_detail,
-    show_snapshot_series,
 )
 from vitrine.working_composition_menu import run_working_composition_menu
 
@@ -599,7 +581,7 @@ def _portfolio_context(
             "3. Discover Candidates",
             "4. Review Candidates / Selections",
             "5. Working Composition",
-            "6. Snapshot",
+            "6. Build and Export Current Portfolio",
             "H. Help",
             "B. Back",
             "M. Main Menu",
@@ -708,198 +690,14 @@ def _portfolio_context(
                 actor=actor,
             )
         elif choice == "6":
-            snapshot_observed = _require_observed_revision(root)
-            _write(output, "Snapshot", "")
-            _write(
-                output,
-                "1. Snapshot Overview",
-                "2. Create Audience Context",
-                "3. Create Snapshot Series",
-                "4. Prepare Snapshot",
-                "5. Build Prepared Snapshot",
-                "6. View / Verify Edition",
-                "7. Verify Export",
-                "8. Snapshot Diagnostics",
+            run_current_portfolio_build_export_menu(
+                root=root,
+                portfolio_id=portfolio_id,
+                input_fn=input_fn,
+                output=output,
+                dependencies=dependencies,
+                actor=actor,
             )
-            series_values = list_snapshot_series(root, portfolio_id)
-            if not series_values:
-                _write(
-                    output,
-                    "No Snapshot Series. A Snapshot requires an exact Audience Context and frozen Composition.",
-                )
-            for series_item in series_values:
-                series_view = show_snapshot_series(root, series_item.snapshot_series_id)
-                _write(
-                    output,
-                    f"{series_item.snapshot_series_id} — {series_item.snapshot_purpose}",
-                    f"  Editions: {len(series_view.editions)}; current pointer: {series_view.current_edition.edition_number if series_view.current_edition else 'none'}",
-                )
-            snapshot_choice = _read(input_fn, "Snapshot action (Enter for overview): ")
-            mutation_actor = actor or (
-                _actor(input_fn) if snapshot_choice in {"2", "3", "4", "5"} else None
-            )
-            if snapshot_choice == "2" and mutation_actor is not None:
-                binding = get_portfolio_profile_binding(root, portfolio_id)
-                if binding is None:
-                    raise ValueError(
-                        "profile_binding_missing: bind an exact Profile first"
-                    )
-                revision = get_profile_revision(root, binding.profile_revision)
-                for index, audience_rule in enumerate(revision.audience_rules, 1):
-                    _write(
-                        output,
-                        f"{index}. {audience_rule.audience_class} — {audience_rule.purpose}",
-                        f"   {audience_rule.audience_rule_id}",
-                    )
-                chosen_rule = _numbered_choice(
-                    _read(input_fn, "Audience rule number: "), revision.audience_rules
-                )
-                if chosen_rule is None or isinstance(chosen_rule, NavigationChoice):
-                    _write(output, "That Audience rule number is not available.")
-                    _pause(input_fn)
-                    continue
-                if (
-                    _read(
-                        input_fn,
-                        "Type CREATE to freeze this Audience Context (not disclosure authorization): ",
-                    )
-                    == "CREATE"
-                ):
-                    audience_result = create_audience_context(
-                        root,
-                        portfolio_id=portfolio_id,
-                        audience_rule_id=chosen_rule.audience_rule_id,
-                        created_by=mutation_actor,
-                        expected_state_revision=snapshot_observed,
-                    )
-                    _write(
-                        output,
-                        f"Audience Context: {audience_result.context.audience_context_id}",
-                    )
-            elif snapshot_choice == "3" and mutation_actor is not None:
-                audiences = list_audience_contexts(root, portfolio_id=portfolio_id)
-                for index, audience_item in enumerate(audiences, 1):
-                    _write(
-                        output,
-                        f"{index}. {audience_item.audience_class} — "
-                        f"{audience_item.audience_context_id}",
-                    )
-                audience_context = _numbered_choice(
-                    _read(input_fn, "Audience Context number: "), audiences
-                )
-                if audience_context is None or isinstance(
-                    audience_context, NavigationChoice
-                ):
-                    _write(output, "That Audience Context number is not available.")
-                    _pause(input_fn)
-                    continue
-                series_result = create_snapshot_series(
-                    root,
-                    portfolio_id=portfolio_id,
-                    audience_context_id=audience_context.audience_context_id,
-                    snapshot_purpose=_read(input_fn, "Snapshot purpose: "),
-                    created_by=mutation_actor,
-                    expected_state_revision=snapshot_observed,
-                )
-                record = series_result.records[0]
-                if isinstance(record, SnapshotSeries):
-                    _write(output, f"Snapshot Series: {record.snapshot_series_id}")
-            elif snapshot_choice == "4" and mutation_actor is not None:
-                series_id = _read(input_fn, "Exact Snapshot Series ID: ")
-                composition_revision = int(
-                    _read(input_fn, "Exact Composition revision: ")
-                )
-                request_result = request_snapshot_build(
-                    root,
-                    snapshot_series_id=series_id,
-                    composition_revision=composition_revision,
-                    requested_by=mutation_actor,
-                    expected_state_revision=snapshot_observed,
-                )
-                request_record = request_result.records[0]
-                if not isinstance(request_record, SnapshotBuildRequest):
-                    raise RuntimeError(
-                        "Snapshot Request service returned an invalid record."
-                    )
-                plan_result = prepare_snapshot_build(
-                    root,
-                    SnapshotPlanningRequest(
-                        request_record.snapshot_build_request_id,
-                        mutation_actor,
-                        request_result.state_revision,
-                    ),
-                    provider=dependencies.snapshot_planning_provider,
-                )
-                plan_record = plan_result.records[0]
-                if not isinstance(plan_record, SnapshotBuildPlan):
-                    raise RuntimeError("Snapshot planning returned an invalid record.")
-                clear_fn()
-                _write(
-                    output,
-                    "Snapshot Prepared",
-                    f"Build Request ID: {request_record.snapshot_build_request_id}",
-                    f"Build Plan ID: {plan_record.snapshot_build_plan_id}",
-                    f"Entry plans: {len(plan_record.entry_plans)}",
-                    f"Export plans: {len(plan_record.export_plans)}",
-                    "Request != Plan; preparation has not built an Edition.",
-                )
-            elif snapshot_choice == "5" and mutation_actor is not None:
-                plan_id = _read(input_fn, "Exact immutable Build Plan ID: ")
-                if (
-                    _read(input_fn, "Type BUILD to execute this exact Plan: ")
-                    == "BUILD"
-                ):
-                    started = start_snapshot_build_attempt(
-                        root,
-                        snapshot_build_plan_id=plan_id,
-                        started_by=mutation_actor,
-                        expected_state_revision=snapshot_observed,
-                    )
-                    execution = execute_snapshot_build_attempt(
-                        root,
-                        snapshot_build_attempt_id=started.attempt.snapshot_build_attempt_id,
-                        expected_state_revision=started.state_revision,
-                        authority_gate=dependencies.snapshot_build_authority_gate,
-                        source_providers=dependencies.snapshot_source_providers,
-                        renderers=dependencies.snapshot_renderers,
-                    )
-                    sealed = seal_snapshot_build_attempt(
-                        root,
-                        execution=execution,
-                        expected_state_revision=execution.state_revision,
-                        sealed_by=mutation_actor,
-                    )
-                    _write(
-                        output,
-                        f"Sealed Edition: {sealed.edition.snapshot_series_id}:{sealed.edition.edition_number}",
-                    )
-            elif snapshot_choice == "6":
-                series_id = _read(input_fn, "Exact Snapshot Series ID: ")
-                edition_number = int(_read(input_fn, "Exact Edition number: "))
-                verified = verify_snapshot_edition(
-                    root, snapshot_series_id=series_id, edition_number=edition_number
-                )
-                _write(
-                    output,
-                    "Edition verification: verified",
-                    f"Entries: {len(verified.verified_entry_ids)}",
-                )
-            elif snapshot_choice == "7":
-                export_id = _read(input_fn, "Exact Export Artifact ID: ")
-                export_verified = verify_snapshot_export(
-                    root, snapshot_export_artifact_id=export_id
-                )
-                _write(
-                    output,
-                    "Export verification: verified",
-                    f"Files: {len(export_verified.verified_file_paths)}",
-                )
-            elif snapshot_choice == "8":
-                audit = inspect_snapshot_custody(root)
-                for custody_finding in audit.findings:
-                    _write(
-                        output, f"{custody_finding.code} — {custody_finding.summary}"
-                    )
         else:
             _write(output, "Please choose 1-6, H, B, M, or Q.")
         _pause(input_fn)
