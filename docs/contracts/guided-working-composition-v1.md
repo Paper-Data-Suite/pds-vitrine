@@ -255,7 +255,19 @@ freezing persisted curation state.
 
 ## Downstream handoff
 
-Issue #67 ends with exact Working Composition creation/reuse.
+Issue #67 ends with exact Working Composition creation/reuse. Issue #68
+consumes this handoff only when preparation reports:
 
-`AudienceContext`, Snapshot Request/Plan/Attempt, Edition, Export, disclosure
-authorization, and external delivery remain downstream responsibilities.
+```text
+reuse_exact_current
+```
+
+If guided preparation predicts `create_initial` or `create_successor`, or
+reports unplaced active Selections, Build and Export Current Portfolio stops
+before downstream writes and sends the teacher back to Working Composition.
+
+The downstream first-party bridge is documented in
+[Build and Export Current Portfolio v1](build-export-current-portfolio-v1.md).
+It creates/reuses the exact Audience Context and Snapshot Series, then
+composes the existing Snapshot Request/Plan/Attempt/Seal/Edition/Export
+services. Disclosure authorization and external delivery remain separate.

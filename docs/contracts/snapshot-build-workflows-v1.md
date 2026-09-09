@@ -748,3 +748,25 @@ begins. Its Profile audience-rule projection is explanatory only: it creates no
 Audience Context and makes no item-level Snapshot inclusion/omission decision.
 Snapshot construction continues to require an exact immutable Composition plus
 the exact downstream Audience Context and build-plan authority defined here.
+
+## First-party Current Portfolio orchestration
+
+Issue #68 adds a task layer over these canonical services; it does not replace
+or collapse them. The contract is
+`vitrine_build_export_current_portfolio_v1`. It requires #67
+`reuse_exact_current`, selects one exact Profile audience rule, resolves an
+exact Audience Context and Snapshot Series, freezes one deterministic Build
+Plan, then uses the existing Request/Attempt/materialization/seal/verification
+and directory Export services in order.
+
+The first-party task keeps ScoreForm assessment summaries `reference_only`,
+copies Quillan/Concord bytes only through an exact configured source provider,
+and may generate bytes only for exact frozen supported Portfolio Reflection
+revisions. Audience-prohibited content is an explicit planned omission; source
+or authorization failures are not silently converted into omissions.
+
+Successful Issue #68 build/export does not create a
+`SnapshotCurrentPointerRevision`. Promotion remains an explicit separate
+Snapshot operation. Export creation is also not disclosure authorization or
+delivery. See [Build and Export Current Portfolio v1]
+(build-export-current-portfolio-v1.md).

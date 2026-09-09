@@ -99,6 +99,8 @@ files = [
     "scripts/qualify_installed_producer_readers.py",
     "scripts/validate_candidate_discovery.py",
     "scripts/validate_candidate_inbox.py",
+    "scripts/validate_current_portfolio_build_export.py",
+    "scripts/smoke_test_current_portfolio_build_export_wheel.py",
     "scripts/validate_portfolio_setup.py",
     "scripts/validate_curation_workflows.py",
     "scripts/validate_snapshot_workflows.py",
