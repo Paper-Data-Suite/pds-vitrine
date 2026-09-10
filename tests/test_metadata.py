@@ -13,7 +13,7 @@ def test_package_identity_and_dependency_metadata() -> None:
     project = data["project"]
     assert project["name"] == "pds-vitrine"
     assert project["requires-python"] == ">=3.11"
-    assert project["dependencies"] == ["pds-core>=0.6,<0.7"]
+    assert project["dependencies"] == ["pds-core>=0.6.3,<0.7"]
     assert project["scripts"] == {"vitrine": "vitrine.cli:main"}
     assert __version__ == "0.2.0"
     assert importlib.metadata.version("pds-vitrine") == __version__

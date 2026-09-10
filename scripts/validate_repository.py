@@ -80,6 +80,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
             "--skip-focused-tests",
         ),
     ),
+    (
+        "Vitrine attention / next actions",
+        (
+            "scripts/validate_attention_next_actions.py",
+            "--skip-focused-tests",
+        ),
+    ),
     ("Snapshot workflows", ("scripts/validate_snapshot_workflows.py",)),
     ("improvement Portfolio", ("scripts/validate_improvement_portfolio.py",)),
     ("interface workflows", ("scripts/validate_interface_workflows.py",)),
@@ -354,6 +361,10 @@ def validate(
                 (
                     "Build and Export Current Portfolio",
                     "scripts/smoke_test_current_portfolio_build_export_wheel.py",
+                ),
+                (
+                    "Vitrine attention / next actions",
+                    "scripts/smoke_test_attention_next_actions_wheel.py",
                 ),
                 ("Snapshot", "scripts/smoke_test_snapshot_wheel.py"),
             )

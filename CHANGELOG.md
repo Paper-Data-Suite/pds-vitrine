@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Read-only `vitrine_attention_next_actions_v1` projection over Candidate,
+  curation, Working Composition, Snapshot recovery/integrity, omission,
+  and Export verification state with deterministic bounded summaries.
+- Direct `vitrine attention list` plus workspace and exact-Portfolio teacher
+  menu views sharing stable owner-action IDs without executing mutations.
+- Issue #69 acceptance matrix, contract validator, package guards, isolated
+  Core 0.6.3 + Vitrine wheel smoke, and current development Core floor
+  `pds-core>=0.6.3,<0.7` while preserving frozen v0.2.0 release evidence.
+
 - Build and Export Current Portfolio task over the exact current Working
   Composition, with exact audience-rule/Context/Series resolution, required
   Review and obligation handling, and deterministic preparation fingerprints.

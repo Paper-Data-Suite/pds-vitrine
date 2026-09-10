@@ -211,7 +211,7 @@ def _validate_no_durable_task_record() -> None:
 def _validate_core_only_runtime_dependency() -> None:
     payload = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     dependencies = tuple(payload["project"].get("dependencies", ()))
-    if dependencies != ("pds-core>=0.6,<0.7",):
+    if dependencies != ("pds-core>=0.6.3,<0.7",):
         raise RuntimeError(
             "Issue #68 must not add a hard runtime dependency beyond released Core"
         )

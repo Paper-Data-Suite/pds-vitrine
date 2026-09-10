@@ -132,3 +132,11 @@ python scripts/validate_candidate_inbox.py
 ```
 
 The complete repository validator also runs the Candidate inbox validator, package-content checks, and isolated Core+Vitrine Candidate inbox wheel smoke.
+
+## Issue #69 attention handoff
+
+The issue #69 `vitrine_attention_next_actions_v1` projection consumes Candidate
+Inbox currentness rather than reimplementing it. Candidate stale/unresolved state
+remains owned here. A current positive Candidate is attention-pending only until
+that exact current Evaluation has an explicit curation disposition; merely
+viewing the Inbox does not persist seen/read state and does not clear attention.

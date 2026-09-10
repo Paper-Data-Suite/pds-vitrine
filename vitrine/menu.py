@@ -15,6 +15,7 @@ from pds_core.menu_navigation import (
 )
 from pds_core.workspace import WorkspaceRootError
 
+from vitrine.attention_menu import run_attention_menu
 from vitrine.candidate_inbox_menu import run_candidate_inbox_menu
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.portfolio_menu import run_portfolio_menu
@@ -205,6 +206,7 @@ def run_menu(
                 "3. Workspace Settings",
                 "4. Portfolio Profiles",
                 "5. Candidate Inbox",
+                "6. Attention / Next Actions",
                 "H. Help",
                 "Q. Quit",
             )
@@ -261,8 +263,18 @@ def run_menu(
                     )
                 except ReturnToMainMenu:
                     continue
+            elif choice == "6":
+                run_attention_menu(
+                    output=stream,
+                    clear_fn=clear_fn,
+                    portfolio_id=None,
+                )
+                _pause(input_fn)
             else:
-                _write_lines(stream, "Please choose 1, 2, 3, 4, 5, H, or Q.")
+                _write_lines(
+                    stream,
+                    "Please choose 1, 2, 3, 4, 5, 6, H, or Q.",
+                )
                 _pause(input_fn)
     except (EOFError, KeyboardInterrupt, QuitPDS):
         return 0

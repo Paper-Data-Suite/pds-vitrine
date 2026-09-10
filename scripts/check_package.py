@@ -15,6 +15,9 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/_version.py",
     "vitrine/adapter_cli.py",
     "vitrine/artifact_diagnostics.py",
+    "vitrine/attention.py",
+    "vitrine/attention_cli.py",
+    "vitrine/attention_menu.py",
     "vitrine/audience_services.py",
     "vitrine/cli.py",
     "vitrine/compatibility_cli.py",
@@ -131,6 +134,7 @@ REQUIRED_SDIST_FILES = {
     "docs/contracts/guided-candidate-review-selection-v1.md",
     "docs/contracts/guided-working-composition-v1.md",
     "docs/contracts/build-export-current-portfolio-v1.md",
+    "docs/contracts/attention-next-actions-v1.md",
     "docs/contracts/create-portfolio-for-student-v1.md",
     "docs/contracts/curation-workflows-v1.md",
     "docs/contracts/snapshot-build-workflows-v1.md",
@@ -146,6 +150,7 @@ REQUIRED_SDIST_FILES = {
     "docs/development/guided-candidate-review-selection.md",
     "docs/development/guided-working-composition.md",
     "docs/development/build-export-current-portfolio.md",
+    "docs/development/attention-next-actions.md",
     "docs/development/create-portfolio-for-student.md",
     "docs/development/curation-workflows.md",
     "docs/development/snapshot-build-workflows.md",
@@ -184,6 +189,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/smoke_test_candidate_review_selection_wheel.py",
     "scripts/smoke_test_working_composition_wheel.py",
     "scripts/smoke_test_current_portfolio_build_export_wheel.py",
+    "scripts/smoke_test_attention_next_actions_wheel.py",
     "scripts/smoke_test_portfolio_setup_wheel.py",
     "scripts/smoke_test_curation_wheel.py",
     "scripts/smoke_test_snapshot_wheel.py",
@@ -213,6 +219,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/validate_candidate_review_selection.py",
     "scripts/validate_working_composition.py",
     "scripts/validate_current_portfolio_build_export.py",
+    "scripts/validate_attention_next_actions.py",
     "scripts/validate_portfolio_setup.py",
     "scripts/validate_curation_workflows.py",
     "scripts/validate_snapshot_workflows.py",
@@ -311,6 +318,12 @@ REQUIRED_SDIST_FILES = {
     "tests/test_current_portfolio_routing.py",
     "tests/test_current_portfolio_acceptance_matrix.py",
     "tests/test_validate_current_portfolio_build_export.py",
+    "tests/test_attention.py",
+    "tests/test_attention_snapshot.py",
+    "tests/test_attention_cli.py",
+    "tests/test_attention_menu.py",
+    "tests/test_attention_acceptance_matrix.py",
+    "tests/test_validate_attention_next_actions.py",
     "tests/test_portfolio_setup_planner.py",
     "tests/test_portfolio_setup_atomic.py",
     "tests/test_portfolio_setup_menu.py",
@@ -358,6 +371,7 @@ REQUIRED_SDIST_FILES = {
     "docs/validation/issue-66-guided-candidate-review-selection-validation.md",
     "docs/validation/issue-67-guided-working-composition-validation.md",
     "docs/validation/issue-68-build-export-current-portfolio-validation.md",
+    "docs/validation/issue-69-attention-next-actions-validation.md",
 }
 
 
@@ -374,7 +388,7 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
         )
     requirements = metadata.get_all("Requires-Dist", [])
     normalized = [item.replace(" ", "") for item in requirements]
-    if not any("pds-core<0.7,>=0.6" in item for item in normalized):
+    if not any("pds-core<0.7,>=0.6.3" in item for item in normalized):
         findings.append(f"missing Core dependency range: {requirements}")
     sibling_names = (
         "pds-scoreform",

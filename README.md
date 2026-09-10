@@ -31,6 +31,7 @@ audited v0.1.0 architecture and fixture foundation. The release contents provide
 - an executable representative improvement Portfolio slice spanning exact cross-class identity, Profile-governed Candidate discovery, explicit curation, student Reflection, immutable Composition, four-entry Snapshot/Export custody, and producer-source drift proof;
 - an executable representative showcase Portfolio slice preserving Concord-shaped Group, Author, Subject, contribution, Score-target, and collaborator-treatment semantics through a five-entry audience-safe Edition and reproducible directory Export;
 - Portfolio-centered direct command families and a low-density teacher menu, all backed by shared application services;
+- read-only Vitrine attention/next-action summaries across Candidate, curation, Working Composition, Snapshot recovery/integrity, omission, and Export verification state;
 - strict testing, typing, packaging, and cross-platform CI gates.
 
 The foundational runtime models cover Portfolio and Subject identity,
@@ -59,7 +60,7 @@ development fixture adapter
 != Candidate eligibility
 ```
 
-Vitrine still does not provide live ScoreForm, Quillan, or Concord ingestion.
+Current Unreleased development supports the audited released ScoreForm 0.11.0, Quillan 0.10.0, and Concord 0.3.0 live contracts without making those sibling packages Vitrine runtime dependencies.
 
 Issue #33 provides the first fixture-backed Core-to-Vitrine Candidate pipeline.
 It uses the Core catalog only for bounded discovery, reloads canonical
@@ -111,15 +112,15 @@ Vitrine-owned sealed bytes, not the original producer.
 
 ```text
 Python >=3.11
-pds-core>=0.6,<0.7
+pds-core>=0.6.3,<0.7
 ```
 
-Core v0.6.0 is distributed through its GitHub Release rather than PyPI. Install
+Core v0.6.3 is distributed through its GitHub Release rather than PyPI. Install
 the authenticated Core wheel first:
 
 ```powershell
-python scripts\verify_core_wheel.py .\pds_core-0.6.0-py3-none-any.whl
-python -m pip install .\pds_core-0.6.0-py3-none-any.whl
+python scripts\verify_core_wheel.py .\pds_core-0.6.3-py3-none-any.whl
+python -m pip install .\pds_core-0.6.3-py3-none-any.whl
 python -m pip install -e ".[dev]"
 python -m pip check
 ```
@@ -140,6 +141,7 @@ vitrine arrangement --help
 vitrine composition --help
 vitrine audience --help
 vitrine snapshot --help
+vitrine attention list [--portfolio-id PORTFOLIO_ID]
 vitrine adapters list
 vitrine adapters list --include-development-fixtures
 vitrine adapters show <adapter_id> --include-development-fixtures
@@ -155,8 +157,9 @@ Direct commands are noninteractive and preserve the same service, authority,
 and optimistic-concurrency boundaries. See
 [teacher-facing and direct workflows](docs/development/interface-workflows.md).
 
-Vitrine declares no `paper_data_suite.modules` routing entry point and no
-`paper_data_suite.publication_producers` entry point. It adds no runtime
+Vitrine declares no `paper_data_suite.modules` routing entry point, no
+`paper_data_suite.publication_producers` entry point, and no
+`paper_data_suite.module_operations` entry point yet. It adds no runtime
 dependency on ScoreForm, Quillan, Concord, Portia, or Meridian.
 
 ## Runtime model example
@@ -205,7 +208,7 @@ from vitrine.snapshot_distribution import (
 ## Validation
 
 ```powershell
-.\run_tests.ps1 -CoreWheel C:\path\to\pds_core-0.6.0-py3-none-any.whl
+.\run_tests.ps1 -CoreWheel C:\path\to\pds_core-0.6.3-py3-none-any.whl
 ```
 
 Cross-platform form:
@@ -217,7 +220,7 @@ python scripts/validate_repository.py --core-wheel <wheel>
 The complete gate authenticates Core; runs pytest, Ruff, strict Mypy, runtime and
 workflow validators including the narrow v0.2.0 release-contract gate; validates
 documentation and representative fixtures; builds distributions; checks
-Twine/package contents; runs the five narrow installed-wheel smokes once each;
+Twine/package contents; runs the installed-wheel smokes once each;
 runs the combined installed end-to-end acceptance exactly once; and verifies
 repository cleanliness.
 
@@ -257,11 +260,13 @@ Key entry points:
 - [Candidate discovery and evaluation](docs/contracts/candidate-discovery-evaluation-v1.md)
 - [Curation workflows](docs/contracts/curation-workflows-v1.md)
 - [Snapshot build workflows](docs/contracts/snapshot-build-workflows-v1.md)
+- [Attention and Next Actions](docs/contracts/attention-next-actions-v1.md)
 - [Runtime-model development](docs/development/runtime-models.md)
 - [Producer-adapter development](docs/development/producer-adapters.md)
 - [Candidate-discovery development](docs/development/candidate-discovery.md)
 - [Curation-workflow development](docs/development/curation-workflows.md)
 - [Snapshot-build development](docs/development/snapshot-build-workflows.md)
+- [Attention and Next Actions development](docs/development/attention-next-actions.md)
 - [Executable improvement Portfolio slice](docs/development/improvement-portfolio-vertical-slice.md)
 - [Executable showcase Portfolio slice](docs/development/showcase-portfolio-vertical-slice.md)
 - [Package foundation](docs/development/package-foundation.md)

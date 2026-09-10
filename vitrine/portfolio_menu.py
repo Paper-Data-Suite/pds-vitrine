@@ -10,6 +10,7 @@ from pds_core.academic_catalog import PublicationCatalogQuery
 from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 from pds_core.workspace import resolve_workspace_root
 
+from vitrine.attention_menu import run_attention_menu
 from vitrine.candidate_review_menu import run_candidate_review_menu
 from vitrine.candidate_services import (
     CandidateDiscoveryRequest,
@@ -582,6 +583,7 @@ def _portfolio_context(
             "4. Review Candidates / Selections",
             "5. Working Composition",
             "6. Build and Export Current Portfolio",
+            "7. Attention / Next Actions",
             "H. Help",
             "B. Back",
             "M. Main Menu",
@@ -698,8 +700,15 @@ def _portfolio_context(
                 dependencies=dependencies,
                 actor=actor,
             )
+        elif choice == "7":
+            run_attention_menu(
+                output=output,
+                clear_fn=clear_fn,
+                workspace_root=root,
+                portfolio_id=portfolio_id,
+            )
         else:
-            _write(output, "Please choose 1-6, H, B, M, or Q.")
+            _write(output, "Please choose 1-7, H, B, M, or Q.")
         _pause(input_fn)
 
 

@@ -271,3 +271,12 @@ The downstream first-party bridge is documented in
 It creates/reuses the exact Audience Context and Snapshot Series, then
 composes the existing Snapshot Request/Plan/Attempt/Seal/Edition/Export
 services. Disclosure authorization and external delivery remain separate.
+
+## Issue #69 attention handoff
+
+Issue #69 uses guided Working Composition preparation as the semantic authority
+for refresh disposition, structured Requirement status, Review follow-up,
+unplaced Selections, and unresolved obligation codes. `create_initial` and
+`create_successor` are attention-worthy refresh states; `reuse_exact_current` is
+not. Snapshot-plan acknowledgement never converts an unresolved Composition
+obligation into a satisfied obligation.

@@ -310,3 +310,11 @@ workflow. Opening Working Composition preparation does not rerun Candidate
 discovery, retarget Candidate Evaluation provenance, rank Selections, or invoke
 producer readers. Any curation correction remains an explicit #66 action before
 the teacher prepares again.
+
+## Issue #69 attention handoff
+
+Issue #69 observes this workflow's exact Proposal/Decision, Selection, condition,
+Placement, and Curation Review state to produce bounded next-action summaries.
+The attention layer does not execute Candidate decisions or curation mutations,
+and it does not reinterpret a Review of one exact target revision as approval of
+a successor revision.
