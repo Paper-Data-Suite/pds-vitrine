@@ -506,3 +506,13 @@ python scripts/smoke_test_current_portfolio_build_export_wheel.py \
 
 The complete repository gate wires both checks and must pass before issue #68 is
 closed.
+
+## Issue #69 attention handoff
+
+Issue #69 observes the canonical Build/Export history produced by this task. It
+resolves the current Series/Request/Plan chain explicitly and uses canonical
+`attempt_number` within the exact Plan rather than timestamps or opaque IDs.
+Historical failed Attempts superseded by a later sealed Attempt remain durable
+history but are not current teacher attention. Current sealed omissions and
+producer-independent Export verification remain visible without changing the
+Edition or advancing its current pointer.

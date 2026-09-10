@@ -770,3 +770,14 @@ Successful Issue #68 build/export does not create a
 Snapshot operation. Export creation is also not disclosure authorization or
 delivery. See [Build and Export Current Portfolio v1]
 (build-export-current-portfolio-v1.md).
+
+## Issue #69 attention handoff
+
+Issue #69 consumes Snapshot state/custody as a read-only diagnostic projection.
+Current Attempt selection follows explicit Series/Request/Plan predecessor heads
+and the unique greatest canonical `attempt_number` for that exact Plan. Custody
+findings are not all current attention: retained terminal failure is historical,
+while incomplete Attempt, durability uncertainty, current integrity findings,
+and exact current Export verification failures may require teacher follow-up.
+Unscoped orphan custody is workspace-level unless canonical state establishes an
+exact Portfolio owner.

@@ -126,7 +126,7 @@ def _validate_package_dependencies(root: Path, findings: list[str]) -> None:
         _fail(findings, "pyproject.toml project dependency block could not be located.")
         return
     dependency_block = pyproject[start:end].casefold()
-    if "pds-core>=0.6,<0.7" not in dependency_block:
+    if "pds-core>=0.6.3,<0.7" not in dependency_block:
         _fail(findings, "pyproject.toml is missing the expected Core dependency range.")
     for marker in FORBIDDEN_DEPENDENCY_MARKERS:
         if marker in dependency_block:

@@ -27,6 +27,7 @@ from vitrine.workflow_context import default_workflow_dependencies
 
 EXPECTED_VERSION = "0.2.0"
 EXPECTED_CORE_REQUIREMENT = "pds-core>=0.6,<0.7"
+CURRENT_DEVELOPMENT_CORE_REQUIREMENT = "pds-core>=0.6.3,<0.7"
 EXPECTED_CORE_WHEEL = "pds_core-0.6.0-py3-none-any.whl"
 EXPECTED_CORE_SHA256 = (
     "be28c061b38463ef59ebc328ed1aa443767fe7f2c626babb769c2d8e5932f308"
@@ -273,7 +274,7 @@ def validate(root: Path) -> tuple[str, ...]:
             findings.append(
                 f"unexpected Python requirement: {project.get('requires-python')!r}"
             )
-        if project.get("dependencies") != [EXPECTED_CORE_REQUIREMENT]:
+        if project.get("dependencies") != [CURRENT_DEVELOPMENT_CORE_REQUIREMENT]:
             findings.append(
                 f"unexpected runtime dependencies: {project.get('dependencies')!r}"
             )
