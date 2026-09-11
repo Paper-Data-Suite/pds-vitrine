@@ -372,12 +372,13 @@ def _validate_project_contract() -> None:
         if sibling in dependency_text:
             raise RuntimeError(f"attention added sibling runtime dependency: {sibling}")
     entry_points = project.get("entry-points", {})
-    if isinstance(entry_points, dict) and "paper_data_suite.module_operations" in entry_points:
-        raise RuntimeError("Core module-operations registration belongs to issue #70")
-    if "paper_data_suite.module_operations" in (
-        ROOT / "pyproject.toml"
-    ).read_text(encoding="utf-8"):
-        raise RuntimeError("Core module-operations entry point was added prematurely")
+    expected_operations = {
+        "vitrine": "vitrine.pds_operations:get_module_operations_profile"
+    }
+    if not isinstance(entry_points, dict) or entry_points.get(
+        "paper_data_suite.module_operations"
+    ) != expected_operations:
+        raise RuntimeError("Issue #70 Vitrine module-operations registration drifted")
     mypy_files = tuple(payload.get("tool", {}).get("mypy", {}).get("files", ()))
     for required in (
         "scripts/validate_attention_next_actions.py",

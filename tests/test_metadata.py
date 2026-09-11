@@ -20,11 +20,15 @@ def test_package_identity_and_dependency_metadata() -> None:
     assert VITRINE_MODULE_ID == "vitrine"
 
 
-def test_no_core_or_producer_entry_points_are_declared() -> None:
+def test_only_core_module_operations_entry_point_is_declared() -> None:
     data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
     project = data["project"]
 
-    assert "entry-points" not in project
+    assert project["entry-points"] == {
+        "paper_data_suite.module_operations": {
+            "vitrine": "vitrine.pds_operations:get_module_operations_profile"
+        }
+    }
     assert project["scripts"] == {"vitrine": "vitrine.cli:main"}
 
     dependency_sets = (
