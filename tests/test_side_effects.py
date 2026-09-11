@@ -10,7 +10,11 @@ def test_imports_and_static_commands_create_no_files(tmp_path: Path) -> None:
     env = os.environ.copy()
     env["PDS_WORKSPACE_ROOT"] = str(tmp_path / "workspace")
     commands = (
-        [sys.executable, "-c", "import vitrine, vitrine.cli, vitrine.menu"],
+        [
+            sys.executable,
+            "-c",
+            "import vitrine, vitrine.cli, vitrine.menu, vitrine.pds_operations",
+        ],
         [sys.executable, "-m", "vitrine", "--help"],
         [sys.executable, "-m", "vitrine", "--version"],
     )

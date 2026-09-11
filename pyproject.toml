@@ -27,6 +27,9 @@ classifiers = [
 [project.scripts]
 vitrine = "vitrine.cli:main"
 
+[project.entry-points."paper_data_suite.module_operations"]
+vitrine = "vitrine.pds_operations:get_module_operations_profile"
+
 [project.urls]
 Documentation = "https://github.com/Paper-Data-Suite/pds-vitrine/tree/main/docs"
 Repository = "https://github.com/Paper-Data-Suite/pds-vitrine"
@@ -103,9 +106,12 @@ files = [
     "scripts/smoke_test_current_portfolio_build_export_wheel.py",
     "scripts/validate_attention_next_actions.py",
     "scripts/smoke_test_attention_next_actions_wheel.py",
+    "scripts/smoke_test_operations_wheel.py",
+    "scripts/validate_suite_operations_integration.py",
     "scripts/validate_portfolio_setup.py",
     "scripts/validate_curation_workflows.py",
     "scripts/validate_snapshot_workflows.py",
+    "scripts/validate_workspace_relocation.py",
     "scripts/validate_improvement_portfolio.py",
     "scripts/validate_showcase_portfolio.py",
     "scripts/validate_interface_workflows.py",

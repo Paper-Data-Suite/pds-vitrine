@@ -18,6 +18,8 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/attention.py",
     "vitrine/attention_cli.py",
     "vitrine/attention_menu.py",
+    "vitrine/operations_provider.py",
+    "vitrine/pds_operations.py",
     "vitrine/audience_services.py",
     "vitrine/cli.py",
     "vitrine/compatibility_cli.py",
@@ -135,6 +137,7 @@ REQUIRED_SDIST_FILES = {
     "docs/contracts/guided-working-composition-v1.md",
     "docs/contracts/build-export-current-portfolio-v1.md",
     "docs/contracts/attention-next-actions-v1.md",
+    "docs/contracts/suite-operations-integration-v1.md",
     "docs/contracts/create-portfolio-for-student-v1.md",
     "docs/contracts/curation-workflows-v1.md",
     "docs/contracts/snapshot-build-workflows-v1.md",
@@ -151,6 +154,7 @@ REQUIRED_SDIST_FILES = {
     "docs/development/guided-working-composition.md",
     "docs/development/build-export-current-portfolio.md",
     "docs/development/attention-next-actions.md",
+    "docs/development/suite-operations-integration.md",
     "docs/development/create-portfolio-for-student.md",
     "docs/development/curation-workflows.md",
     "docs/development/snapshot-build-workflows.md",
@@ -190,6 +194,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/smoke_test_working_composition_wheel.py",
     "scripts/smoke_test_current_portfolio_build_export_wheel.py",
     "scripts/smoke_test_attention_next_actions_wheel.py",
+    "scripts/smoke_test_operations_wheel.py",
     "scripts/smoke_test_portfolio_setup_wheel.py",
     "scripts/smoke_test_curation_wheel.py",
     "scripts/smoke_test_snapshot_wheel.py",
@@ -220,9 +225,11 @@ REQUIRED_SDIST_FILES = {
     "scripts/validate_working_composition.py",
     "scripts/validate_current_portfolio_build_export.py",
     "scripts/validate_attention_next_actions.py",
+    "scripts/validate_suite_operations_integration.py",
     "scripts/validate_portfolio_setup.py",
     "scripts/validate_curation_workflows.py",
     "scripts/validate_snapshot_workflows.py",
+    "scripts/validate_workspace_relocation.py",
     "scripts/validate_improvement_portfolio.py",
     "scripts/validate_interface_workflows.py",
     "scripts/validate_showcase_portfolio.py",
@@ -324,6 +331,9 @@ REQUIRED_SDIST_FILES = {
     "tests/test_attention_menu.py",
     "tests/test_attention_acceptance_matrix.py",
     "tests/test_validate_attention_next_actions.py",
+    "tests/test_pds_operations.py",
+    "tests/test_operations_package_contract.py",
+    "tests/test_validate_suite_operations_integration.py",
     "tests/test_portfolio_setup_planner.py",
     "tests/test_portfolio_setup_atomic.py",
     "tests/test_portfolio_setup_menu.py",
@@ -343,6 +353,7 @@ REQUIRED_SDIST_FILES = {
     "tests/test_snapshot_sealing.py",
     "tests/test_snapshot_services.py",
     "tests/test_validate_snapshot_workflows.py",
+    "tests/test_validate_workspace_relocation.py",
     "tests/test_improvement_portfolio_vertical_slice.py",
     "tests/test_portfolio_menu.py",
     "tests/test_portfolio_services.py",
@@ -372,6 +383,7 @@ REQUIRED_SDIST_FILES = {
     "docs/validation/issue-67-guided-working-composition-validation.md",
     "docs/validation/issue-68-build-export-current-portfolio-validation.md",
     "docs/validation/issue-69-attention-next-actions-validation.md",
+    "docs/validation/issue-70-suite-operations-integration-validation.md",
 }
 
 
@@ -470,6 +482,13 @@ def validate_wheel(path: Path) -> list[str]:
             entries = archive.read(entry_names[0]).decode("utf-8")
             if "vitrine = vitrine.cli:main" not in entries:
                 findings.append("missing vitrine console entry point")
+            if "[paper_data_suite.module_operations]" not in entries:
+                findings.append("missing Core module-operations entry-point group")
+            if (
+                "vitrine = vitrine.pds_operations:get_module_operations_profile"
+                not in entries
+            ):
+                findings.append("missing Vitrine module-operations entry point")
             if "paper_data_suite.modules" in entries:
                 findings.append("routing entry point must not be declared")
             if "paper_data_suite.publication_producers" in entries:
