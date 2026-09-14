@@ -894,6 +894,12 @@ def copy_planned_source_to_staging(
 
     filesystem_result: SnapshotSourceResult | None = None
     if isinstance(resolved, SnapshotAuthorizedSourceBytesResult):
+        if artifact.source_locator is not None:
+            raise SnapshotMaterializationError(
+                "snapshot.source_integrity_failed",
+                "Authorized source-byte acquisition requires locatorless planned Artifact provenance.",
+                stage="source_resolution",
+            )
         materialized_media_type = _authorized_source_media_type(
             entry=entry,
             resolved=resolved,
