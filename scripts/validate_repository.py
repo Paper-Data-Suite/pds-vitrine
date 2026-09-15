@@ -95,6 +95,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "issue #71 installed acceptance infrastructure",
+        (
+            "scripts/validate_live_installed_acceptance.py",
+            "--skip-focused-tests",
+        ),
+    ),
+    (
         "Vitrine workspace relocation",
         ("scripts/validate_workspace_relocation.py",),
     ),

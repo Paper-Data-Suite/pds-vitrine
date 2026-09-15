@@ -144,3 +144,90 @@ jobs:
       - name: Run complete repository validation
         shell: pwsh
         run: python scripts/validate_repository.py --core-wheel "$env:PDS_CORE_WHEEL"
+
+  live_installed_acceptance:
+    name: Live producer installed acceptance (${{ matrix.os }}, Python ${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.11"
+          - os: windows-latest
+            python: "3.14"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Configure issue #71 artifact paths
+        shell: pwsh
+        run: |
+          $releaseDirectory = Join-Path $env:RUNNER_TEMP "issue71-release-wheels"
+          $wheelhouse = Join-Path $env:RUNNER_TEMP "issue71-wheelhouse"
+          $vitrineDist = Join-Path $env:RUNNER_TEMP "issue71-vitrine-dist"
+          New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
+          New-Item -ItemType Directory -Force -Path $wheelhouse | Out-Null
+          New-Item -ItemType Directory -Force -Path $vitrineDist | Out-Null
+
+          "ISSUE71_RELEASE_DIR=$releaseDirectory" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ISSUE71_WHEELHOUSE=$wheelhouse" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ISSUE71_VITRINE_DIST=$vitrineDist" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ISSUE71_CORE_WHEEL=$(Join-Path $releaseDirectory 'pds_core-0.6.3-py3-none-any.whl')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ISSUE71_SCOREFORM_WHEEL=$(Join-Path $releaseDirectory 'scoreform-0.11.0-py3-none-any.whl')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ISSUE71_QUILLAN_WHEEL=$(Join-Path $releaseDirectory 'quillan-0.10.0-py3-none-any.whl')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ISSUE71_CONCORD_WHEEL=$(Join-Path $releaseDirectory 'pds_concord-0.3.0-py3-none-any.whl')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Download exact released PDS wheels
+        shell: pwsh
+        run: |
+          Invoke-WebRequest `
+            -Uri "https://github.com/Paper-Data-Suite/pds-core/releases/download/v0.6.3/pds_core-0.6.3-py3-none-any.whl" `
+            -OutFile $env:ISSUE71_CORE_WHEEL `
+            -ErrorAction Stop
+          Invoke-WebRequest `
+            -Uri "https://github.com/Paper-Data-Suite/pds-scoreform/releases/download/v0.11.0/scoreform-0.11.0-py3-none-any.whl" `
+            -OutFile $env:ISSUE71_SCOREFORM_WHEEL `
+            -ErrorAction Stop
+          Invoke-WebRequest `
+            -Uri "https://github.com/Paper-Data-Suite/pds-quillan/releases/download/v0.10.0/quillan-0.10.0-py3-none-any.whl" `
+            -OutFile $env:ISSUE71_QUILLAN_WHEEL `
+            -ErrorAction Stop
+          Invoke-WebRequest `
+            -Uri "https://github.com/Paper-Data-Suite/pds-concord/releases/download/v0.3.0/pds_concord-0.3.0-py3-none-any.whl" `
+            -OutFile $env:ISSUE71_CONCORD_WHEEL `
+            -ErrorAction Stop
+
+      - name: Prepare endpoint-local offline wheelhouse
+        shell: pwsh
+        run: |
+          python -m pip wheel `
+            --wheel-dir "$env:ISSUE71_WHEELHOUSE" `
+            --find-links "$env:ISSUE71_RELEASE_DIR" `
+            "$env:ISSUE71_CORE_WHEEL" `
+            "$env:ISSUE71_SCOREFORM_WHEEL" `
+            "$env:ISSUE71_QUILLAN_WHEEL" `
+            "$env:ISSUE71_CONCORD_WHEEL"
+
+      - name: Build candidate Vitrine wheel
+        shell: pwsh
+        run: |
+          python -m pip install build
+          python -m build --wheel --outdir "$env:ISSUE71_VITRINE_DIST"
+          $wheels = @(Get-ChildItem -LiteralPath "$env:ISSUE71_VITRINE_DIST" -Filter "pds_vitrine-0.2.0-*.whl")
+          if ($wheels.Count -ne 1) {
+            throw "Expected exactly one pds-vitrine 0.2.0 wheel."
+          }
+          "ISSUE71_VITRINE_WHEEL=$($wheels[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Run authoritative issue #71 live installed acceptance
+        shell: pwsh
+        run: |
+          python scripts/qualify_installed_live_portfolio.py `
+            --vitrine-wheel "$env:ISSUE71_VITRINE_WHEEL" `
+            --wheel-dir "$env:ISSUE71_WHEELHOUSE"
