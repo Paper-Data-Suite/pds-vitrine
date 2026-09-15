@@ -894,11 +894,21 @@ def collect_snapshot_state_issues(state: SnapshotState) -> tuple[ValidationIssue
                         materialization_provenance_record.snapshot_materialization_provenance_id,
                     )
                 )
-            if materialization_provenance_record.source_stability_result != "verified":
+            source_artifact = materialization.source_artifact
+            expected_stability_result = (
+                "not_applicable"
+                if source_artifact is not None
+                and source_artifact.source_locator is None
+                else "verified"
+            )
+            if (
+                materialization_provenance_record.source_stability_result
+                != expected_stability_result
+            ):
                 issues.append(
                     _issue(
                         "snapshot.materialization_stability_unverified",
-                        "Copied-source materialization must preserve verified source stability.",
+                        "Copied-source materialization stability must match its frozen source-access contract.",
                         materialization_provenance_record.record_type,
                         materialization_provenance_record.snapshot_materialization_provenance_id,
                     )

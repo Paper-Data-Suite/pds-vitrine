@@ -10,6 +10,10 @@ from vitrine.models import (
     Portfolio,
     PortfolioProfileBinding,
     ProfileRevisionRef,
+    SnapshotEditionRef,
+    SnapshotMaterializationProvenance,
+    SnapshotMaterializationRecord,
+    SourceArtifactReference,
     WorkingPortfolioCompositionInventory,
     WorkingPortfolioCompositionRevision,
 )
@@ -261,3 +265,94 @@ def test_portable_casefold_path_collision_is_rejected_by_snapshot_state() -> Non
 
     codes = {issue.code for issue in collect_snapshot_state_issues(project_snapshot_state(records))}
     assert "snapshot.plan_path_collision" in codes
+
+
+def _copied_materialization_stability_codes(
+    *, source_locator: str | None, source_stability_result: str
+) -> set[str]:
+    digest = DigestReference(value="a" * 64)
+    edition = SnapshotEditionRef(
+        snapshot_series_id="snapshot_series_stability",
+        edition_number=1,
+    )
+    source_artifact = SourceArtifactReference(
+        artifact_id="artifact_stability",
+        artifact_kind="original_student_work",
+        representation_kind="student_work",
+        media_type="text/plain",
+        source_locator=source_locator,
+        native_revision=1,
+        source_digest=digest,
+        byte_size=4,
+        language="en",
+        accessibility_relationship=None,
+    )
+    materialization = SnapshotMaterializationRecord(
+        materialization_id="materialization_stability",
+        snapshot_edition=edition,
+        materialization_kind="copied_source",
+        candidate_id="candidate_stability",
+        selection_id="selection_stability",
+        placement_id=None,
+        source_artifact=source_artifact,
+        source_digest=digest,
+        output_digest=digest,
+        byte_size=4,
+        materialized_at=NOW,
+        materialized_by=ACTOR,
+    )
+    provenance = SnapshotMaterializationProvenance(
+        snapshot_materialization_provenance_id="provenance_stability",
+        materialization_id=materialization.materialization_id,
+        snapshot_edition=edition,
+        entry_plan_id="entry_plan_stability",
+        source_provider_id="source_provider_stability",
+        source_provider_version="1",
+        renderer_id=None,
+        renderer_version=None,
+        renderer_contract_version=None,
+        input_references=(),
+        producer_source_digest_claim=digest,
+        source_stability_result=source_stability_result,
+        configuration_digest=None,
+        template_digest=None,
+        verification_result="verified",
+        recorded_at=NOW,
+        recorded_by=ACTOR,
+    )
+    return {
+        issue.code
+        for issue in collect_snapshot_state_issues(
+            project_snapshot_state((materialization, provenance))
+        )
+    }
+
+
+def test_locatorless_copied_source_accepts_not_applicable_stability() -> None:
+    codes = _copied_materialization_stability_codes(
+        source_locator=None,
+        source_stability_result="not_applicable",
+    )
+
+    assert "snapshot.materialization_stability_unverified" not in codes
+
+
+def test_copied_source_stability_must_match_frozen_locator_contract() -> None:
+    assert "snapshot.materialization_stability_unverified" not in (
+        _copied_materialization_stability_codes(
+            source_locator="approved/work.txt",
+            source_stability_result="verified",
+        )
+    )
+    assert "snapshot.materialization_stability_unverified" in (
+        _copied_materialization_stability_codes(
+            source_locator="approved/work.txt",
+            source_stability_result="not_applicable",
+        )
+    )
+    assert "snapshot.materialization_stability_unverified" in (
+        _copied_materialization_stability_codes(
+            source_locator=None,
+            source_stability_result="verified",
+        )
+    )

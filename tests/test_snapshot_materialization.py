@@ -462,6 +462,27 @@ def test_authorized_immutable_bytes_need_no_source_locator_or_filesystem_resolut
     assert provider.confirm_calls == 0
 
 
+def test_authorized_source_bytes_reject_locatorful_plan(tmp_path: Path) -> None:
+    payload = b"producer-authorized exact bytes\n"
+    plan = _plan(payload)
+    attempt = _attempt(plan)
+    staging = create_snapshot_staging(tmp_path, attempt.snapshot_build_attempt_id)
+
+    with pytest.raises(SnapshotMaterializationError) as captured:
+        copy_planned_source_to_staging(
+            plan=plan,
+            attempt=attempt,
+            entry_plan_id="entry_plan_work",
+            staging=staging,
+            authority_gate=_AuthorityGate("allowed"),
+            source_providers=SnapshotSourceProviderRegistry(
+                (_AuthorizedBytesProvider(payload),)
+            ),
+        )
+    assert captured.value.code == "snapshot.source_integrity_failed"
+    assert not any(staging.content_root.rglob("*"))
+
+
 def test_authorized_source_bytes_require_exact_media_type(tmp_path: Path) -> None:
     payload = b"producer-authorized exact bytes\n"
     plan = _plan_without_source_locator(payload)
