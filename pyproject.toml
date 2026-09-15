@@ -126,6 +126,8 @@ files = [
     "scripts/live_installed_acceptance_support.py",
     "scripts/live_installed_acceptance_portfolio.py",
     "scripts/live_installed_acceptance_negative.py",
+    "scripts/live_installed_acceptance_custody.py",
+    "scripts/live_installed_acceptance_verifier.py",
     "scripts/live_installed_acceptance_scenario.py",
     "scripts/qualify_installed_live_portfolio.py",
     "scripts/validate_live_installed_acceptance.py",

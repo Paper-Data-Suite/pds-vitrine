@@ -54,3 +54,16 @@ def test_slice_4a_negative_matrix_file_is_present() -> None:
 
 def test_slice_4a_negative_matrix_static_contract_passes() -> None:
     validator._validate_negative_matrix_scenario()
+
+
+def test_slice_4b_custody_verifier_files_are_present() -> None:
+    root = Path(validator.ROOT)
+    for relative in (
+        "scripts/live_installed_acceptance_custody.py",
+        "scripts/live_installed_acceptance_verifier.py",
+    ):
+        assert (root / relative).is_file()
+
+
+def test_slice_4b_custody_verifier_static_contract_passes() -> None:
+    validator._validate_custody_verifier_scenario()

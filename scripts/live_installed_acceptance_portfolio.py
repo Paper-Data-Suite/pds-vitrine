@@ -95,6 +95,12 @@ class CuratedPortfolio:
 class BuiltPortfolio:
     snapshot_series_id: str
     edition_number: int
+    state_revision: int
+    snapshot_export_artifact_id: str
+    edition_manifest_sha256: str
+    edition_logical_inventory_sha256: str
+    export_directory_inventory_sha256: str
+    export_path: Path
     materialization_counts: dict[str, int]
     copied_artifact_kinds: tuple[str, ...]
     curation_authorization_requests: int
@@ -624,6 +630,14 @@ def build_representative_snapshot(
     return BuiltPortfolio(
         snapshot_series_id=result.snapshot_series_id,
         edition_number=result.edition_number,
+        state_revision=result.state_revision,
+        snapshot_export_artifact_id=result.snapshot_export_artifact_id,
+        edition_manifest_sha256=result.edition_manifest_sha256,
+        edition_logical_inventory_sha256=result.edition_logical_inventory_sha256,
+        export_directory_inventory_sha256=(
+            result.export_directory_inventory_sha256
+        ),
+        export_path=result.export_path,
         materialization_counts=dict(sorted(actual_counts.items())),
         copied_artifact_kinds=copied_artifact_kinds,
         curation_authorization_requests=len(curation_gate.requests),

@@ -100,3 +100,9 @@ Slice 4A is not the full #71 gate. The remaining work adds Export tamper,
 historical reload, producer-independent verification, and post-seal custody cases.
 Only after those pass on the supported CI endpoints may `FULL_ACCEPTANCE_READY`
 become true.
+
+## Slice 4B custody/verifier boundary
+
+Slice 4B keeps runtime policy unchanged and adds the remaining installed custody proofs behind `CUSTODY_VERIFIER_SLICE_READY`. A healthy sealed/exported Snapshot is reverified through the production distribution services, its export copy is tampered on an isolated clone and must fail `snapshot_distribution.verification_failed` while the sealed Edition remains valid, and the exact post-export state revision is reloaded after a later Current Pointer commit to prove historical identity/digests.
+
+A second cloned workspace then has all three producer work roots removed. Edition and Export verification must still succeed from sealed Vitrine custody. The outer qualifier passes that clone plus a bounded digest/identity request to a Core+Vitrine-only environment, which independently verifies the historical state, Edition, and Export without ScoreForm, Quillan, or Concord installed or imported. `FULL_ACCEPTANCE_READY` remains false until the combined final scenario and CI/package wiring are qualified.

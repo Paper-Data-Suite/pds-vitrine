@@ -1,4 +1,4 @@
-"""Run Vitrine issue #71 installed healthy-path acceptance through Slice 3."""
+"""Run Vitrine issue #71 installed acceptance through Slice 4B."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
+    from scripts.live_installed_acceptance_custody import run_custody_verification
     from scripts.live_installed_acceptance_negative import run_negative_matrix
     from scripts.live_installed_acceptance_portfolio import (
         build_representative_snapshot,
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
         prepare_core_identity_sources,
     )
 else:
+    from live_installed_acceptance_custody import run_custody_verification
     from live_installed_acceptance_negative import run_negative_matrix
     from live_installed_acceptance_portfolio import (
         build_representative_snapshot,
@@ -154,7 +156,14 @@ def _stage(label: str, action: Callable[[], _T]) -> _T:
     return result
 
 
-def _mode(*, portfolio_snapshot: bool, negative_matrix: bool) -> str:
+def _mode(
+    *,
+    portfolio_snapshot: bool,
+    negative_matrix: bool,
+    custody_verifier: bool,
+) -> str:
+    if custody_verifier:
+        return "slice4b_custody_verifier_acceptance"
     if negative_matrix:
         return "slice4a_negative_matrix_acceptance"
     if portfolio_snapshot:
@@ -169,6 +178,7 @@ def run(
     work_root: Path,
     portfolio_snapshot: bool = False,
     negative_matrix: bool = False,
+    custody_verifier: bool = False,
 ) -> dict[str, object]:
     repository = repository.resolve(strict=True)
     workspace = workspace.resolve()
@@ -227,6 +237,7 @@ def run(
         "mode": _mode(
             portfolio_snapshot=portfolio_snapshot,
             negative_matrix=negative_matrix,
+            custody_verifier=custody_verifier,
         ),
         "producer_publications": sorted(item.module_id for item in publications),
         "explicit_subject_class_links": 3,
@@ -235,7 +246,7 @@ def run(
         "fixture_registry_used": False,
         "full_acceptance_ready": False,
     }
-    if not portfolio_snapshot and not negative_matrix:
+    if not portfolio_snapshot and not negative_matrix and not custody_verifier:
         return summary
 
     curated, curation_gate = _stage(
@@ -307,6 +318,25 @@ def run(
             built.snapshot_build_authorization_requests
         ),
     }
+    if custody_verifier:
+        custody = _stage(
+            "Vitrine sealed custody, tamper, historical reload, and source disappearance",
+            lambda: run_custody_verification(
+                workspace,
+                work_root=work_root,
+                publications=publications,
+                built=built,
+            ),
+        )
+        summary["custody_verifier"] = {
+            "tamper_failure_code": custody.tamper_failure_code,
+            "tamper_failure_stage": custody.tamper_failure_stage,
+            "tampered_edition_preserved": custody.tampered_edition_preserved,
+            "historical_reload_exact": custody.historical_reload_exact,
+            "producer_source_roots_removed": custody.producer_source_roots_removed,
+            "post_seal_edition_verified": custody.post_seal_edition_verified,
+            "post_seal_export_verified": custody.post_seal_export_verified,
+        }
     return summary
 
 
@@ -318,6 +348,7 @@ def main(argv: list[str] | None = None) -> int:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--portfolio-snapshot", action="store_true")
     mode.add_argument("--negative-matrix", action="store_true")
+    mode.add_argument("--custody-verifier", action="store_true")
     args = parser.parse_args(argv)
     try:
         summary = run(
@@ -326,6 +357,7 @@ def main(argv: list[str] | None = None) -> int:
             work_root=args.work_root,
             portfolio_snapshot=args.portfolio_snapshot,
             negative_matrix=args.negative_matrix,
+            custody_verifier=args.custody_verifier,
         )
     except ScenarioStageError as error:
         print(
@@ -334,6 +366,7 @@ def main(argv: list[str] | None = None) -> int:
                     "mode": _mode(
                         portfolio_snapshot=args.portfolio_snapshot,
                         negative_matrix=args.negative_matrix,
+                        custody_verifier=args.custody_verifier,
                     ),
                     "status": "failed",
                     "error_stage": error.stage,
@@ -352,6 +385,7 @@ def main(argv: list[str] | None = None) -> int:
                     "mode": _mode(
                         portfolio_snapshot=args.portfolio_snapshot,
                         negative_matrix=args.negative_matrix,
+                        custody_verifier=args.custody_verifier,
                     ),
                     "status": "failed",
                     "error_stage": "scenario_preflight",

@@ -17,6 +17,7 @@ try:
         CI_ENDPOINTS,
         CONCORD_CONTRACT,
         CURATED_SNAPSHOT_SLICE_READY,
+        CUSTODY_VERIFIER_SLICE_READY,
         EXPECTED_VITRINE_RUNTIME_DEPENDENCY,
         FIXTURE_PRODUCER_IDS,
         FULL_ACCEPTANCE_READY,
@@ -36,6 +37,7 @@ except ModuleNotFoundError:  # direct script execution from scripts/
         CI_ENDPOINTS,
         CONCORD_CONTRACT,
         CURATED_SNAPSHOT_SLICE_READY,
+        CUSTODY_VERIFIER_SLICE_READY,
         EXPECTED_VITRINE_RUNTIME_DEPENDENCY,
         FIXTURE_PRODUCER_IDS,
         FULL_ACCEPTANCE_READY,
@@ -179,6 +181,8 @@ def _validate_project_contract() -> None:
         "scripts/live_installed_acceptance_support.py",
         "scripts/live_installed_acceptance_portfolio.py",
         "scripts/live_installed_acceptance_negative.py",
+        "scripts/live_installed_acceptance_custody.py",
+        "scripts/live_installed_acceptance_verifier.py",
         "scripts/live_installed_acceptance_scenario.py",
         "scripts/qualify_installed_live_portfolio.py",
         "scripts/validate_live_installed_acceptance.py",
@@ -204,9 +208,12 @@ def _validate_outer_harness() -> None:
         "--candidate-discovery-only",
         "--portfolio-snapshot-only",
         "--negative-matrix-only",
+        "--custody-verifier-only",
         "live_installed_acceptance_support.py",
         "live_installed_acceptance_portfolio.py",
         "live_installed_acceptance_negative.py",
+        "live_installed_acceptance_custody.py",
+        "live_installed_acceptance_verifier.py",
         "live_installed_acceptance_scenario.py",
     )
     source = path.read_text(encoding="utf-8")
@@ -416,6 +423,65 @@ def _validate_negative_matrix_scenario() -> None:
         raise RuntimeError("Slice 4A scenario must not render raw failure text")
 
 
+def _validate_custody_verifier_scenario() -> None:
+    custody = ROOT / "scripts" / "live_installed_acceptance_custody.py"
+    verifier = ROOT / "scripts" / "live_installed_acceptance_verifier.py"
+    scenario = ROOT / "scripts" / "live_installed_acceptance_scenario.py"
+    qualifier = ROOT / "scripts" / "qualify_installed_live_portfolio.py"
+    _require_text(
+        custody,
+        "verify_snapshot_edition",
+        "verify_snapshot_export",
+        "load_state_records",
+        "advance_snapshot_current_pointer",
+        "snapshot_distribution.verification_failed",
+        "module_work_dir",
+        "shutil.rmtree",
+        "sealed-verifier-workspace",
+        "sealed-verifier-request.json",
+    )
+    _require_text(
+        verifier,
+        "verify_snapshot_edition",
+        "verify_snapshot_export",
+        "load_state_records",
+        "importlib.util.find_spec",
+        '"producer_distributions_installed": False',
+        '"producer_modules_imported": False',
+    )
+    roots = _import_roots(verifier)
+    if {"scoreform", "quillan", "concord"}.intersection(roots):
+        raise RuntimeError("Slice 4B isolated verifier must not import producer packages")
+    _require_text(
+        scenario,
+        "run_custody_verification",
+        "slice4b_custody_verifier_acceptance",
+        "Vitrine sealed custody, tamper, historical reload, and source disappearance",
+        "--custody-verifier",
+    )
+    _require_text(
+        qualifier,
+        "--custody-verifier-only",
+        "CUSTODY_VERIFIER_SLICE_READY",
+        "live_installed_acceptance_verifier.py",
+        "PASS issue #71 Slice 4B custody, tamper, historical, and producer-independent verification acceptance",
+    )
+    combined = (
+        custody.read_text(encoding="utf-8")
+        + "\n"
+        + verifier.read_text(encoding="utf-8")
+        + "\n"
+        + scenario.read_text(encoding="utf-8")
+    )
+    for fixture_id in FIXTURE_PRODUCER_IDS:
+        if fixture_id in combined:
+            raise RuntimeError(
+                f"Slice 4B custody/verifier contains forbidden fixture identity: {fixture_id}"
+            )
+    if "str(error)" in scenario.read_text(encoding="utf-8"):
+        raise RuntimeError("Slice 4B scenario must not render raw failure text")
+
+
 def _validate_slice_guard() -> None:
     if not CANDIDATE_DISCOVERY_SLICE_READY:
         raise RuntimeError("Slice 2 Candidate discovery scenario is not enabled")
@@ -423,10 +489,12 @@ def _validate_slice_guard() -> None:
         raise RuntimeError("Slice 3 curated Snapshot scenario is not enabled")
     if not NEGATIVE_MATRIX_SLICE_READY:
         raise RuntimeError("Slice 4A negative matrix scenario is not enabled")
+    if not CUSTODY_VERIFIER_SLICE_READY:
+        raise RuntimeError("Slice 4B custody/verifier scenario is not enabled")
     if FULL_ACCEPTANCE_READY:
         raise RuntimeError(
-            "Slice 4A unexpectedly claims full #71 acceptance; historical, tamper, "
-            "producer-independent, and post-seal custody coverage must land first"
+            "Slice 4B unexpectedly claims full #71 acceptance; final combined scenario "
+            "and CI/package wiring must be qualified before completion"
         )
 
 
@@ -440,6 +508,7 @@ def validate(*, run_focused_tests: bool) -> None:
     _validate_candidate_scenario()
     _validate_curated_snapshot_scenario()
     _validate_negative_matrix_scenario()
+    _validate_custody_verifier_scenario()
     _validate_slice_guard()
     if run_focused_tests:
         subprocess.run(
@@ -458,7 +527,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"Issue #71 validation failed: {error}", file=sys.stderr)
         return 1
-    print("PASS issue #71 live installed acceptance Slice 4A validation")
+    print("PASS issue #71 live installed acceptance Slice 4B validation")
     return 0
 
 

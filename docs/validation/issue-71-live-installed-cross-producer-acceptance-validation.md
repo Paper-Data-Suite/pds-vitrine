@@ -111,3 +111,18 @@ The qualifier first repeats both Slice 1 isolation preflights, reruns the accept
 ## Deliberate non-claim
 
 Slice 3 does **not** claim issue #71 completion. It qualifies the healthy Portfolio/Snapshot path but does not yet qualify the drift/denial/removal/tamper/historical/producer-independent/post-seal cases. A full invocation without a slice flag still fails closed. CI heavy-gate wiring and final package-check inclusion remain deferred until the authoritative full scenario is present, preventing a partial slice from appearing as a green #71 completion gate.
+
+## Slice 4B delivered contract
+
+Slice 4B adds the remaining custody/tamper/historical/producer-independent proof while preserving `FULL_ACCEPTANCE_READY = False`. The heavy gate must demonstrate that export tampering is detected, an exact persisted state revision can be reloaded after it becomes historical, sealed custody remains verifiable after all three producer work roots disappear, and a separately installed Core+Vitrine verifier reproduces the exact Edition/Export digests without producer distributions or imports.
+
+Run the slice gate with:
+
+```powershell
+python .\scripts\qualify_installed_live_portfolio.py `
+  --vitrine-wheel .\dist\pds_vitrine-0.2.0-py3-none-any.whl `
+  --wheel-dir "$HOME\Downloads" `
+  --custody-verifier-only
+```
+
+The expected terminal marker is `PASS issue #71 Slice 4B custody, tamper, historical, and producer-independent verification acceptance`. Final combined orchestration and the required Ubuntu/Python 3.11 + Windows/Python 3.14 CI wiring remain a later completion gate.

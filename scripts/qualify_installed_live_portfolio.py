@@ -25,6 +25,7 @@ if TYPE_CHECKING:
         AUDITED_RELEASE_WHEELS,
         CANDIDATE_DISCOVERY_SLICE_READY,
         CURATED_SNAPSHOT_SLICE_READY,
+        CUSTODY_VERIFIER_SLICE_READY,
         FULL_ACCEPTANCE_READY,
         NEGATIVE_MATRIX_SLICE_READY,
         WheelSpec,
@@ -35,6 +36,7 @@ else:
         AUDITED_RELEASE_WHEELS,
         CANDIDATE_DISCOVERY_SLICE_READY,
         CURATED_SNAPSHOT_SLICE_READY,
+        CUSTODY_VERIFIER_SLICE_READY,
         FULL_ACCEPTANCE_READY,
         NEGATIVE_MATRIX_SLICE_READY,
         WheelSpec,
@@ -164,7 +166,7 @@ def _run_preflights(
     work_root: Path,
     vitrine_wheel: Path,
     release_wheels: tuple[Path, ...],
-) -> tuple[Path, Path]:
+) -> tuple[Path, Path, Path]:
     env = _clean_env()
     runner_root = work_root / "runner"
     runner_root.mkdir()
@@ -179,6 +181,12 @@ def _run_preflights(
     )
     _copy_runner_file(
         repository, runner_root, "live_installed_acceptance_negative.py"
+    )
+    _copy_runner_file(
+        repository, runner_root, "live_installed_acceptance_custody.py"
+    )
+    _copy_runner_file(
+        repository, runner_root, "live_installed_acceptance_verifier.py"
     )
     _copy_runner_file(
         repository, runner_root, "live_installed_acceptance_scenario.py"
@@ -229,7 +237,7 @@ def _run_preflights(
         cwd=runner_root,
         env=env,
     )
-    return live_python, runner_root
+    return live_python, verifier_python, runner_root
 
 
 def _run_candidate_discovery_slice(
@@ -306,6 +314,46 @@ def _run_negative_matrix_slice(
     )
 
 
+def _run_custody_verifier_slice(
+    *,
+    live_python: Path,
+    verifier_python: Path,
+    runner_root: Path,
+    repository: Path,
+    work_root: Path,
+) -> None:
+    scenario = runner_root / "live_installed_acceptance_scenario.py"
+    scenario_work = work_root / "scenario-work"
+    _run(
+        [
+            str(live_python),
+            str(scenario),
+            "--workspace",
+            str(work_root / "live-workspace"),
+            "--repository",
+            str(repository),
+            "--work-root",
+            str(scenario_work),
+            "--custody-verifier",
+        ],
+        cwd=runner_root,
+        env=_clean_env(),
+    )
+    verifier = runner_root / "live_installed_acceptance_verifier.py"
+    _run(
+        [
+            str(verifier_python),
+            str(verifier),
+            "--workspace",
+            str(scenario_work / "sealed-verifier-workspace"),
+            "--request",
+            str(scenario_work / "sealed-verifier-request.json"),
+        ],
+        cwd=runner_root,
+        env=_clean_env(),
+    )
+
+
 def qualify(
     *,
     repository: Path,
@@ -315,6 +363,7 @@ def qualify(
     candidate_discovery_only: bool,
     portfolio_snapshot_only: bool,
     negative_matrix_only: bool,
+    custody_verifier_only: bool,
 ) -> None:
     validate_contract_constants()
     repository = repository.resolve(strict=True)
@@ -329,7 +378,7 @@ def qualify(
             raise LiveInstalledQualificationError(
                 "temporary qualification root must be outside repository"
             )
-        live_python, runner_root = _run_preflights(
+        live_python, verifier_python, runner_root = _run_preflights(
             repository=repository,
             work_root=work_root,
             vitrine_wheel=candidate,
@@ -368,6 +417,18 @@ def qualify(
                 repository=repository,
                 work_root=work_root,
             )
+        elif custody_verifier_only:
+            if not CUSTODY_VERIFIER_SLICE_READY:
+                raise LiveInstalledQualificationError(
+                    "Slice 4B custody/verifier scenario is not enabled"
+                )
+            _run_custody_verifier_slice(
+                live_python=live_python,
+                verifier_python=verifier_python,
+                runner_root=runner_root,
+                repository=repository,
+                work_root=work_root,
+            )
 
     print("PASS installed exact-wheel isolation preflight", flush=True)
     print("PASS producer-independent verifier isolation preflight", flush=True)
@@ -392,10 +453,16 @@ def qualify(
             flush=True,
         )
         return
+    if custody_verifier_only:
+        print(
+            "PASS issue #71 Slice 4B custody, tamper, historical, and producer-independent verification acceptance",
+            flush=True,
+        )
+        return
     if not FULL_ACCEPTANCE_READY:
         raise LiveInstalledQualificationError(
-            "full issue #71 scenario is not enabled yet; use --negative-matrix-only "
-            "for the Slice 4A qualification"
+            "full issue #71 scenario is not enabled yet; use --custody-verifier-only "
+            "for the Slice 4B qualification"
         )
     raise LiveInstalledQualificationError(
         "full issue #71 scenario flag was enabled without a scenario implementation"
@@ -412,6 +479,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--candidate-discovery-only", action="store_true")
     mode.add_argument("--portfolio-snapshot-only", action="store_true")
     mode.add_argument("--negative-matrix-only", action="store_true")
+    mode.add_argument("--custody-verifier-only", action="store_true")
     args = parser.parse_args(argv)
     try:
         qualify(
@@ -422,6 +490,7 @@ def main(argv: list[str] | None = None) -> int:
             candidate_discovery_only=args.candidate_discovery_only,
             portfolio_snapshot_only=args.portfolio_snapshot_only,
             negative_matrix_only=args.negative_matrix_only,
+            custody_verifier_only=args.custody_verifier_only,
         )
         return 0
     except (

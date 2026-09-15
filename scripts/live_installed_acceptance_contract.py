@@ -14,12 +14,13 @@ ACCEPTANCE_IDENTITY: Final[str] = "vitrine_live_installed_cross_producer_accepta
 ISSUE_NUMBER: Final[int] = 71
 BASELINE_COMMIT: Final[str] = "c481ecd3f4c04fe31b8ee350a5a4b5c56f7c45aa"
 
-# Slice 4A adds currentness, source-drift/removal, and authorization failures to the
-# accepted healthy path. Full acceptance remains guarded until custody/tamper and
-# producer-independent historical verification land.
+# Slice 4B adds custody tamper, exact historical reload, post-seal producer-source
+# disappearance, and a producer-independent Core+Vitrine verifier. Full acceptance
+# remains guarded until the final combined/CI wiring slice is qualified.
 CANDIDATE_DISCOVERY_SLICE_READY: Final[bool] = True
 CURATED_SNAPSHOT_SLICE_READY: Final[bool] = True
 NEGATIVE_MATRIX_SLICE_READY: Final[bool] = True
+CUSTODY_VERIFIER_SLICE_READY: Final[bool] = True
 FULL_ACCEPTANCE_READY: Final[bool] = False
 
 
@@ -159,6 +160,8 @@ REQUIRED_ACCEPTANCE_FILES: Final[tuple[str, ...]] = (
     "scripts/live_installed_acceptance_support.py",
     "scripts/live_installed_acceptance_portfolio.py",
     "scripts/live_installed_acceptance_negative.py",
+    "scripts/live_installed_acceptance_custody.py",
+    "scripts/live_installed_acceptance_verifier.py",
     "scripts/live_installed_acceptance_scenario.py",
     "scripts/qualify_installed_live_portfolio.py",
     "scripts/validate_live_installed_acceptance.py",
@@ -220,6 +223,7 @@ __all__ = [
     "BASELINE_COMMIT",
     "CANDIDATE_DISCOVERY_SLICE_READY",
     "CURATED_SNAPSHOT_SLICE_READY",
+    "CUSTODY_VERIFIER_SLICE_READY",
     "CI_ENDPOINTS",
     "CONCORD_CONTRACT",
     "CORE_WHEEL",
