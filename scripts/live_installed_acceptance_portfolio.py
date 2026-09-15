@@ -12,14 +12,24 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from live_installed_acceptance_support import (
-    MAIN_STUDENT_ID,
-    NOW,
-    DeterministicIds,
-    LivePortfolioContext,
-    ProducerPublication,
-)
+if TYPE_CHECKING:
+    from scripts.live_installed_acceptance_support import (
+        MAIN_STUDENT_ID,
+        NOW,
+        DeterministicIds,
+        LivePortfolioContext,
+        ProducerPublication,
+    )
+else:
+    from live_installed_acceptance_support import (
+        MAIN_STUDENT_ID,
+        NOW,
+        DeterministicIds,
+        LivePortfolioContext,
+        ProducerPublication,
+    )
 
 from vitrine.concord_artifact_context import (
     build_canonical_concord_artifact_source_context_resolver,

@@ -14,11 +14,12 @@ ACCEPTANCE_IDENTITY: Final[str] = "vitrine_live_installed_cross_producer_accepta
 ISSUE_NUMBER: Final[int] = 71
 BASELINE_COMMIT: Final[str] = "c481ecd3f4c04fe31b8ee350a5a4b5c56f7c45aa"
 
-# Slice 3 qualifies the healthy path through explicit curation and a sealed/exported
-# Current Portfolio Snapshot. The full scenario must flip FULL_ACCEPTANCE_READY only
-# after the negative, drift, tamper, historical, and producer-independent cases land.
+# Slice 4A adds currentness, source-drift/removal, and authorization failures to the
+# accepted healthy path. Full acceptance remains guarded until custody/tamper and
+# producer-independent historical verification land.
 CANDIDATE_DISCOVERY_SLICE_READY: Final[bool] = True
 CURATED_SNAPSHOT_SLICE_READY: Final[bool] = True
+NEGATIVE_MATRIX_SLICE_READY: Final[bool] = True
 FULL_ACCEPTANCE_READY: Final[bool] = False
 
 
@@ -157,6 +158,7 @@ REQUIRED_ACCEPTANCE_FILES: Final[tuple[str, ...]] = (
     "scripts/live_installed_acceptance_probe.py",
     "scripts/live_installed_acceptance_support.py",
     "scripts/live_installed_acceptance_portfolio.py",
+    "scripts/live_installed_acceptance_negative.py",
     "scripts/live_installed_acceptance_scenario.py",
     "scripts/qualify_installed_live_portfolio.py",
     "scripts/validate_live_installed_acceptance.py",
@@ -228,6 +230,7 @@ __all__ = [
     "HEAVY_SCENARIO_FAMILIES",
     "ISSUE_NUMBER",
     "LIVE_PRODUCERS",
+    "NEGATIVE_MATRIX_SLICE_READY",
     "ProducerAcceptanceContract",
     "QUILLAN_CONTRACT",
     "REQUIRED_ACCEPTANCE_FILES",

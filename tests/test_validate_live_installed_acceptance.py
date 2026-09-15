@@ -45,3 +45,12 @@ def test_slice_3_curated_snapshot_file_is_present() -> None:
 
 def test_slice_3_curated_snapshot_static_contract_passes() -> None:
     validator._validate_curated_snapshot_scenario()
+
+
+def test_slice_4a_negative_matrix_file_is_present() -> None:
+    root = Path(validator.ROOT)
+    assert (root / "scripts/live_installed_acceptance_negative.py").is_file()
+
+
+def test_slice_4a_negative_matrix_static_contract_passes() -> None:
+    validator._validate_negative_matrix_scenario()

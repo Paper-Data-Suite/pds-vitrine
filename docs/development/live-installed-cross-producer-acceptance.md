@@ -71,6 +71,32 @@ The local wheelhouse must contain the four exact audited PDS release wheels plus
 compatible binary wheels for ordinary third-party dependencies. No network access
 is used by the qualifier.
 
+## Slice 4A negative/currentness boundary
+
+Slice 4A keeps the healthy Slice 3 contract frozen and adds isolated destructive
+qualification on cloned synthetic workspaces. ScoreForm creates a real producer
+revision 2 and explicitly supersedes the exact original Core Publication; Vitrine
+must report the selected original Candidate as stale with
+`candidate_inbox.publication_superseded` while preserving its original source
+Publication identity. Quillan freezes an immutable Snapshot Plan before its
+manifest-bound review source changes; execution of that old Plan must fail rather
+than reread a successor or rewrite the Plan. Concord freezes the same kind of Plan
+before the exact retained scan source named by its historical Artifact disappears;
+execution must fail without substituting another source.
+
+Authorization failures are independent cases. Denied and unresolved Candidate
+source-read decisions must produce bounded findings without Candidate persistence.
+Denied producer Artifact authority occurs only after an immutable Plan exists and
+must stop materialization before any Snapshot Edition is sealed. Each destructive
+case runs on its own workspace clone so no mutation can satisfy another case.
+
+Run Slice 4A with `--negative-matrix-only`. `FULL_ACCEPTANCE_READY` remains false;
+Export tamper, historical reload, producer-independent verification, and post-seal
+custody remain for the final slice.
+
 ## Remaining full-issue work
 
-Slice 3 is not the full #71 gate. The remaining work adds the required currentness/source drift, denial, exact-source removal, Export tamper, historical reload, producer-independent verification, and post-seal custody cases. Only after those pass on the supported CI endpoints may `FULL_ACCEPTANCE_READY` become true.
+Slice 4A is not the full #71 gate. The remaining work adds Export tamper,
+historical reload, producer-independent verification, and post-seal custody cases.
+Only after those pass on the supported CI endpoints may `FULL_ACCEPTANCE_READY`
+become true.

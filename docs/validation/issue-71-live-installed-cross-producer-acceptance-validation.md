@@ -60,6 +60,29 @@ The installed output remains low-density and must not print student writing,
 feedback text, private notes, manifest bodies, source bytes, or producer-native
 paths.
 
+## Slice 4A delivered contract
+
+Slice 4A adds the pre-custody negative families while preserving the exact Slice 3
+healthy scenario. It uses only installed release producer APIs plus intentional
+mutation/removal of the exact producer source bytes under test.
+
+- ScoreForm appends a real third attempt, generates producer revision 2, and
+  explicitly supersedes the original Publication. The selected old Candidate is
+  then read through the production Candidate inbox and must be stale without
+  retargeting its persisted Evaluation.
+- Quillan freezes the canonical Snapshot Build Plan before changing the exact
+  manifest-bound review source. Execution must fail with materialization integrity
+  failure, preserve the Plan, and create no Edition.
+- Concord freezes a Plan before deleting the one retained scan source referenced
+  by the represented Artifact. Execution must fail closed with no alternate source
+  and no Edition.
+- Separate pre-Candidate clones exercise denied and unresolved source-read
+  authority, and a curated clone exercises denied producer Artifact authority.
+  None may cross the persistence/materialization boundary its gate protects.
+
+The heavy Slice 4A entry point is `--negative-matrix-only`. Full ticket acceptance
+remains disabled.
+
 ## Focused validation
 
 Run:

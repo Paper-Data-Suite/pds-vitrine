@@ -11,6 +11,7 @@ from scripts.live_installed_acceptance_contract import (
     FULL_ACCEPTANCE_READY,
     HEAVY_SCENARIO_FAMILIES,
     LIVE_PRODUCERS,
+    NEGATIVE_MATRIX_SLICE_READY,
     QUILLAN_CONTRACT,
     SCOREFORM_CONTRACT,
     validate_contract_constants,
@@ -67,7 +68,8 @@ def test_issue_71_heavy_acceptance_inventory_and_ci_endpoints_are_explicit() -> 
     assert CI_ENDPOINTS == (("ubuntu-latest", "3.11"), ("windows-latest", "3.14"))
 
 
-def test_slice_3_enables_curated_snapshot_acceptance_without_claiming_full_ticket() -> None:
+def test_slice_4a_enables_negative_matrix_without_claiming_full_ticket() -> None:
     assert CANDIDATE_DISCOVERY_SLICE_READY is True
     assert CURATED_SNAPSHOT_SLICE_READY is True
+    assert NEGATIVE_MATRIX_SLICE_READY is True
     assert FULL_ACCEPTANCE_READY is False

@@ -18,15 +18,28 @@ import tempfile
 import venv
 from importlib import metadata
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from live_installed_acceptance_contract import (
-    AUDITED_RELEASE_WHEELS,
-    CANDIDATE_DISCOVERY_SLICE_READY,
-    CURATED_SNAPSHOT_SLICE_READY,
-    FULL_ACCEPTANCE_READY,
-    WheelSpec,
-    validate_contract_constants,
-)
+if TYPE_CHECKING:
+    from scripts.live_installed_acceptance_contract import (
+        AUDITED_RELEASE_WHEELS,
+        CANDIDATE_DISCOVERY_SLICE_READY,
+        CURATED_SNAPSHOT_SLICE_READY,
+        FULL_ACCEPTANCE_READY,
+        NEGATIVE_MATRIX_SLICE_READY,
+        WheelSpec,
+        validate_contract_constants,
+    )
+else:
+    from live_installed_acceptance_contract import (
+        AUDITED_RELEASE_WHEELS,
+        CANDIDATE_DISCOVERY_SLICE_READY,
+        CURATED_SNAPSHOT_SLICE_READY,
+        FULL_ACCEPTANCE_READY,
+        NEGATIVE_MATRIX_SLICE_READY,
+        WheelSpec,
+        validate_contract_constants,
+    )
 
 
 class LiveInstalledQualificationError(RuntimeError):
@@ -165,6 +178,9 @@ def _run_preflights(
         repository, runner_root, "live_installed_acceptance_portfolio.py"
     )
     _copy_runner_file(
+        repository, runner_root, "live_installed_acceptance_negative.py"
+    )
+    _copy_runner_file(
         repository, runner_root, "live_installed_acceptance_scenario.py"
     )
 
@@ -265,6 +281,31 @@ def _run_curated_snapshot_slice(
         env=_clean_env(),
     )
 
+def _run_negative_matrix_slice(
+    *,
+    live_python: Path,
+    runner_root: Path,
+    repository: Path,
+    work_root: Path,
+) -> None:
+    scenario = runner_root / "live_installed_acceptance_scenario.py"
+    _run(
+        [
+            str(live_python),
+            str(scenario),
+            "--workspace",
+            str(work_root / "live-workspace"),
+            "--repository",
+            str(repository),
+            "--work-root",
+            str(work_root / "scenario-work"),
+            "--negative-matrix",
+        ],
+        cwd=runner_root,
+        env=_clean_env(),
+    )
+
+
 def qualify(
     *,
     repository: Path,
@@ -273,6 +314,7 @@ def qualify(
     preflight_only: bool,
     candidate_discovery_only: bool,
     portfolio_snapshot_only: bool,
+    negative_matrix_only: bool,
 ) -> None:
     validate_contract_constants()
     repository = repository.resolve(strict=True)
@@ -315,6 +357,17 @@ def qualify(
                 repository=repository,
                 work_root=work_root,
             )
+        elif negative_matrix_only:
+            if not NEGATIVE_MATRIX_SLICE_READY:
+                raise LiveInstalledQualificationError(
+                    "Slice 4A negative matrix scenario is not enabled"
+                )
+            _run_negative_matrix_slice(
+                live_python=live_python,
+                runner_root=runner_root,
+                repository=repository,
+                work_root=work_root,
+            )
 
     print("PASS installed exact-wheel isolation preflight", flush=True)
     print("PASS producer-independent verifier isolation preflight", flush=True)
@@ -333,10 +386,16 @@ def qualify(
             flush=True,
         )
         return
+    if negative_matrix_only:
+        print(
+            "PASS issue #71 Slice 4A currentness, drift, removal, and authorization acceptance",
+            flush=True,
+        )
+        return
     if not FULL_ACCEPTANCE_READY:
         raise LiveInstalledQualificationError(
-            "full issue #71 scenario is not enabled yet; use --portfolio-snapshot-only "
-            "for the healthy-path Slice 3 qualification"
+            "full issue #71 scenario is not enabled yet; use --negative-matrix-only "
+            "for the Slice 4A qualification"
         )
     raise LiveInstalledQualificationError(
         "full issue #71 scenario flag was enabled without a scenario implementation"
@@ -352,6 +411,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--preflight-only", action="store_true")
     mode.add_argument("--candidate-discovery-only", action="store_true")
     mode.add_argument("--portfolio-snapshot-only", action="store_true")
+    mode.add_argument("--negative-matrix-only", action="store_true")
     args = parser.parse_args(argv)
     try:
         qualify(
@@ -361,6 +421,7 @@ def main(argv: list[str] | None = None) -> int:
             preflight_only=args.preflight_only,
             candidate_discovery_only=args.candidate_discovery_only,
             portfolio_snapshot_only=args.portfolio_snapshot_only,
+            negative_matrix_only=args.negative_matrix_only,
         )
         return 0
     except (

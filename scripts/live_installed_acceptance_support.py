@@ -25,6 +25,7 @@ from pds_core.class_metadata import (
 )
 from pds_core.classes import write_class_roster
 from pds_core.publication_compatibility import build_publication_producer_registry
+from pds_core.publication_records import PublicationCapability
 from pds_core.rosters import create_roster
 from pds_core.standards import (
     StandardDefinition,
@@ -37,6 +38,8 @@ from pds_core.workspace import ensure_workspace_root
 from vitrine.candidate_services import (
     CandidateDiscoveryRequest,
     CandidateDiscoveryResult,
+    SourceReadAuthorizationDecision,
+    SourceReadAuthorizationRequest,
     discover_and_evaluate_candidates,
 )
 from vitrine.models import (
@@ -50,10 +53,6 @@ from vitrine.portfolio_setup import (
     plan_create_portfolio_for_student,
 )
 from vitrine.producer_adapters import build_adapter_registry
-from vitrine.producer_reader_services import (
-    SourceReadAuthorizationDecision,
-    SourceReadAuthorizationRequest,
-)
 from vitrine.starter_profiles import install_starter_profile
 from vitrine.storage import load_current_state
 from vitrine.subject_services import (
@@ -1107,7 +1106,7 @@ def discover_live_candidates(
 
     for publication in publications:
         state_revision = load_current_state(workspace).state_revision
-        required_capabilities: tuple[str, ...]
+        required_capabilities: tuple[PublicationCapability, ...]
         if publication.module_id == "scoreform":
             required_capabilities = ("multiple_attempts", "points", "question_evidence")
         elif publication.module_id == "quillan":

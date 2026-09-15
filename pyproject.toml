@@ -125,6 +125,7 @@ files = [
     "scripts/live_installed_acceptance_probe.py",
     "scripts/live_installed_acceptance_support.py",
     "scripts/live_installed_acceptance_portfolio.py",
+    "scripts/live_installed_acceptance_negative.py",
     "scripts/live_installed_acceptance_scenario.py",
     "scripts/qualify_installed_live_portfolio.py",
     "scripts/validate_live_installed_acceptance.py",
@@ -133,3 +134,7 @@ files = [
 [[tool.mypy.overrides]]
 module = ["pds_core", "pds_core.*"]
 follow_untyped_imports = true
+
+[[tool.mypy.overrides]]
+module = ["scoreform", "scoreform.*", "quillan", "quillan.*", "concord", "concord.*", "pypdfium2"]
+ignore_missing_imports = true

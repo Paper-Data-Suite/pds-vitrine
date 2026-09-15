@@ -7,26 +7,45 @@ import importlib
 import json
 import os
 import re
+import shutil
 import sys
 from collections.abc import Callable
 from importlib import metadata
 from pathlib import Path
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
-from live_installed_acceptance_portfolio import (
-    build_representative_snapshot,
-    curate_representative_portfolio,
-)
-from live_installed_acceptance_support import (
-    DeterministicIds,
-    build_concord_publication,
-    build_quillan_publication,
-    build_scoreform_publication,
-    discover_live_candidates,
-    install_improvement_portfolio,
-    low_density_json,
-    prepare_core_identity_sources,
-)
+if TYPE_CHECKING:
+    from scripts.live_installed_acceptance_negative import run_negative_matrix
+    from scripts.live_installed_acceptance_portfolio import (
+        build_representative_snapshot,
+        curate_representative_portfolio,
+    )
+    from scripts.live_installed_acceptance_support import (
+        DeterministicIds,
+        build_concord_publication,
+        build_quillan_publication,
+        build_scoreform_publication,
+        discover_live_candidates,
+        install_improvement_portfolio,
+        low_density_json,
+        prepare_core_identity_sources,
+    )
+else:
+    from live_installed_acceptance_negative import run_negative_matrix
+    from live_installed_acceptance_portfolio import (
+        build_representative_snapshot,
+        curate_representative_portfolio,
+    )
+    from live_installed_acceptance_support import (
+        DeterministicIds,
+        build_concord_publication,
+        build_quillan_publication,
+        build_scoreform_publication,
+        discover_live_candidates,
+        install_improvement_portfolio,
+        low_density_json,
+        prepare_core_identity_sources,
+    )
 
 from vitrine.current_portfolio_execution import CurrentPortfolioExecutionError
 
@@ -135,12 +154,21 @@ def _stage(label: str, action: Callable[[], _T]) -> _T:
     return result
 
 
+def _mode(*, portfolio_snapshot: bool, negative_matrix: bool) -> str:
+    if negative_matrix:
+        return "slice4a_negative_matrix_acceptance"
+    if portfolio_snapshot:
+        return "slice3_curated_snapshot_acceptance"
+    return "slice2_live_candidate_acceptance"
+
+
 def run(
     *,
     workspace: Path,
     repository: Path,
     work_root: Path,
     portfolio_snapshot: bool = False,
+    negative_matrix: bool = False,
 ) -> dict[str, object]:
     repository = repository.resolve(strict=True)
     workspace = workspace.resolve()
@@ -179,6 +207,13 @@ def run(
         "Vitrine Starter Improvement Portfolio and explicit Subject links",
         lambda: install_improvement_portfolio(workspace, ids=ids),
     )
+    authorization_base_workspace: Path | None = None
+    if negative_matrix:
+        authorization_base_workspace = work_root / "negative-authorization-base"
+        if authorization_base_workspace.exists():
+            raise RuntimeError("negative authorization base must begin absent")
+        shutil.copytree(workspace, authorization_base_workspace)
+
     candidate_summary, gate = _stage(
         "Vitrine live Candidate discovery",
         lambda: discover_live_candidates(
@@ -189,10 +224,9 @@ def run(
         ),
     )
     summary: dict[str, object] = {
-        "mode": (
-            "slice3_curated_snapshot_acceptance"
-            if portfolio_snapshot
-            else "slice2_live_candidate_acceptance"
+        "mode": _mode(
+            portfolio_snapshot=portfolio_snapshot,
+            negative_matrix=negative_matrix,
         ),
         "producer_publications": sorted(item.module_id for item in publications),
         "explicit_subject_class_links": 3,
@@ -201,7 +235,7 @@ def run(
         "fixture_registry_used": False,
         "full_acceptance_ready": False,
     }
-    if not portfolio_snapshot:
+    if not portfolio_snapshot and not negative_matrix:
         return summary
 
     curated, curation_gate = _stage(
@@ -212,6 +246,35 @@ def run(
             ids=ids,
         ),
     )
+    if negative_matrix:
+        if authorization_base_workspace is None:
+            raise RuntimeError("negative authorization base is unavailable")
+        negative = _stage(
+            "Vitrine live currentness, source drift/removal, and authorization failures",
+            lambda: run_negative_matrix(
+                authorization_base_workspace=authorization_base_workspace,
+                curated_workspace=workspace,
+                work_root=work_root,
+                portfolio=portfolio,
+                publications=publications,
+            ),
+        )
+        summary["negative_matrix"] = {
+            "scoreform_old_publication_preserved": (
+                negative.scoreform_old_publication_preserved
+            ),
+            "scoreform_stale_reason": negative.scoreform_stale_reason,
+            "quillan_failure_code": negative.quillan_failure_code,
+            "concord_failure_code": negative.concord_failure_code,
+            "source_authorization_findings": (
+                negative.source_authorization_findings
+            ),
+            "artifact_authorization_failure_code": (
+                negative.artifact_authorization_failure_code
+            ),
+        }
+        return summary
+
     built = _stage(
         "Vitrine authorized Snapshot build, seal, verify, and Export",
         lambda: build_representative_snapshot(
@@ -252,7 +315,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--repository", type=Path, required=True)
     parser.add_argument("--work-root", type=Path, required=True)
-    parser.add_argument("--portfolio-snapshot", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--portfolio-snapshot", action="store_true")
+    mode.add_argument("--negative-matrix", action="store_true")
     args = parser.parse_args(argv)
     try:
         summary = run(
@@ -260,15 +325,15 @@ def main(argv: list[str] | None = None) -> int:
             repository=args.repository,
             work_root=args.work_root,
             portfolio_snapshot=args.portfolio_snapshot,
+            negative_matrix=args.negative_matrix,
         )
     except ScenarioStageError as error:
         print(
             json.dumps(
                 {
-                    "mode": (
-                        "slice3_curated_snapshot_acceptance"
-                        if args.portfolio_snapshot
-                        else "slice2_live_candidate_acceptance"
+                    "mode": _mode(
+                        portfolio_snapshot=args.portfolio_snapshot,
+                        negative_matrix=args.negative_matrix,
                     ),
                     "status": "failed",
                     "error_stage": error.stage,
@@ -284,10 +349,9 @@ def main(argv: list[str] | None = None) -> int:
         print(
             json.dumps(
                 {
-                    "mode": (
-                        "slice3_curated_snapshot_acceptance"
-                        if args.portfolio_snapshot
-                        else "slice2_live_candidate_acceptance"
+                    "mode": _mode(
+                        portfolio_snapshot=args.portfolio_snapshot,
+                        negative_matrix=args.negative_matrix,
                     ),
                     "status": "failed",
                     "error_stage": "scenario_preflight",

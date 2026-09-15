@@ -22,13 +22,14 @@ try:
         FULL_ACCEPTANCE_READY,
         HEAVY_SCENARIO_FAMILIES,
         LIVE_PRODUCERS,
+        NEGATIVE_MATRIX_SLICE_READY,
         QUILLAN_CONTRACT,
         REQUIRED_ACCEPTANCE_FILES,
         SCOREFORM_CONTRACT,
         validate_contract_constants,
     )
 except ModuleNotFoundError:  # direct script execution from scripts/
-    from live_installed_acceptance_contract import (
+    from live_installed_acceptance_contract import (  # type: ignore[import-not-found, no-redef]
         ACCEPTANCE_IDENTITY,
         AUDITED_RELEASE_WHEELS,
         CANDIDATE_DISCOVERY_SLICE_READY,
@@ -40,6 +41,7 @@ except ModuleNotFoundError:  # direct script execution from scripts/
         FULL_ACCEPTANCE_READY,
         HEAVY_SCENARIO_FAMILIES,
         LIVE_PRODUCERS,
+        NEGATIVE_MATRIX_SLICE_READY,
         QUILLAN_CONTRACT,
         REQUIRED_ACCEPTANCE_FILES,
         SCOREFORM_CONTRACT,
@@ -176,6 +178,7 @@ def _validate_project_contract() -> None:
         "scripts/live_installed_acceptance_probe.py",
         "scripts/live_installed_acceptance_support.py",
         "scripts/live_installed_acceptance_portfolio.py",
+        "scripts/live_installed_acceptance_negative.py",
         "scripts/live_installed_acceptance_scenario.py",
         "scripts/qualify_installed_live_portfolio.py",
         "scripts/validate_live_installed_acceptance.py",
@@ -200,8 +203,10 @@ def _validate_outer_harness() -> None:
         "--preflight-only",
         "--candidate-discovery-only",
         "--portfolio-snapshot-only",
+        "--negative-matrix-only",
         "live_installed_acceptance_support.py",
         "live_installed_acceptance_portfolio.py",
+        "live_installed_acceptance_negative.py",
         "live_installed_acceptance_scenario.py",
     )
     source = path.read_text(encoding="utf-8")
@@ -354,15 +359,74 @@ def _validate_curated_snapshot_scenario() -> None:
         raise RuntimeError("Slice 3 scenario must not render raw failure text")
 
 
+def _validate_negative_matrix_scenario() -> None:
+    negative = ROOT / "scripts" / "live_installed_acceptance_negative.py"
+    scenario = ROOT / "scripts" / "live_installed_acceptance_scenario.py"
+    qualifier = ROOT / "scripts" / "qualify_installed_live_portfolio.py"
+    _require_text(
+        negative,
+        "supersede_scoreform_academic_results",
+        "candidate_inbox.publication_superseded",
+        "execute_prepared_current_portfolio_plan",
+        "execute_current_portfolio_build_export",
+        "review_record_path",
+        "retained_source_relative_path",
+        'outcome="denied"',
+        'outcome="unresolved"',
+        "current_portfolio_build.materialization_failed",
+        "current_portfolio_build.producer_artifact_authorization_denied",
+        "SnapshotEdition",
+    )
+    _require_text(
+        scenario,
+        "run_negative_matrix",
+        "slice4a_negative_matrix_acceptance",
+        "Vitrine live currentness, source drift/removal, and authorization failures",
+        "--negative-matrix",
+    )
+    _require_text(
+        qualifier,
+        "--negative-matrix-only",
+        "NEGATIVE_MATRIX_SLICE_READY",
+        "PASS issue #71 Slice 4A currentness, drift, removal, and authorization acceptance",
+    )
+    combined = negative.read_text(encoding="utf-8") + "\n" + scenario.read_text(
+        encoding="utf-8"
+    )
+    forbidden = (
+        "build_development_fixture_producer_registry",
+        "build_development_fixture_adapter_registry",
+        "fixtures/producer-adapters",
+        "fixtures\\producer-adapters",
+        "best_attempt",
+        "latest_attempt",
+    )
+    for marker in forbidden:
+        if marker in combined:
+            raise RuntimeError(
+                "Slice 4A negative matrix contains forbidden fixture/heuristic marker: "
+                f"{marker}"
+            )
+    for fixture_id in FIXTURE_PRODUCER_IDS:
+        if fixture_id in combined:
+            raise RuntimeError(
+                f"Slice 4A negative matrix contains forbidden fixture identity: {fixture_id}"
+            )
+    if "str(error)" in scenario.read_text(encoding="utf-8"):
+        raise RuntimeError("Slice 4A scenario must not render raw failure text")
+
+
 def _validate_slice_guard() -> None:
     if not CANDIDATE_DISCOVERY_SLICE_READY:
         raise RuntimeError("Slice 2 Candidate discovery scenario is not enabled")
     if not CURATED_SNAPSHOT_SLICE_READY:
         raise RuntimeError("Slice 3 curated Snapshot scenario is not enabled")
+    if not NEGATIVE_MATRIX_SLICE_READY:
+        raise RuntimeError("Slice 4A negative matrix scenario is not enabled")
     if FULL_ACCEPTANCE_READY:
         raise RuntimeError(
-            "Slice 3 unexpectedly claims full #71 acceptance; negative/drift, "
-            "historical, tamper, and producer-independent coverage must land first"
+            "Slice 4A unexpectedly claims full #71 acceptance; historical, tamper, "
+            "producer-independent, and post-seal custody coverage must land first"
         )
 
 
@@ -375,6 +439,7 @@ def validate(*, run_focused_tests: bool) -> None:
     _validate_probe()
     _validate_candidate_scenario()
     _validate_curated_snapshot_scenario()
+    _validate_negative_matrix_scenario()
     _validate_slice_guard()
     if run_focused_tests:
         subprocess.run(
@@ -393,7 +458,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"Issue #71 validation failed: {error}", file=sys.stderr)
         return 1
-    print("PASS issue #71 live installed acceptance Slice 3 validation")
+    print("PASS issue #71 live installed acceptance Slice 4A validation")
     return 0
 
 
