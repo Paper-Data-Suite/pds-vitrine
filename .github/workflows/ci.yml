@@ -206,8 +206,8 @@ jobs:
       - name: Prepare endpoint-local offline wheelhouse
         shell: pwsh
         run: |
-          python -m pip download `
-            --dest "$env:ISSUE71_WHEELHOUSE" `
+          python -m pip wheel `
+            --wheel-dir "$env:ISSUE71_WHEELHOUSE" `
             --find-links "$env:ISSUE71_RELEASE_DIR" `
             "$env:ISSUE71_CORE_WHEEL" `
             "$env:ISSUE71_SCOREFORM_WHEEL" `

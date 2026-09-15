@@ -500,7 +500,7 @@ def _validate_ci_wiring() -> None:
         "pds-scoreform/releases/download/v0.11.0/scoreform-0.11.0-py3-none-any.whl",
         "pds-quillan/releases/download/v0.10.0/quillan-0.10.0-py3-none-any.whl",
         "pds-concord/releases/download/v0.3.0/pds_concord-0.3.0-py3-none-any.whl",
-        "python -m pip download",
+        "python -m pip wheel",
         "python -m build --wheel",
         "scripts/qualify_installed_live_portfolio.py",
         "--vitrine-wheel",
