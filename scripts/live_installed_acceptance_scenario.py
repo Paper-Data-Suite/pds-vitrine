@@ -1,4 +1,4 @@
-"""Run Vitrine issue #71 installed acceptance through Slice 4B."""
+"""Run Vitrine issue #71 installed cross-producer acceptance scenarios."""
 
 from __future__ import annotations
 
@@ -244,7 +244,7 @@ def run(
         "source_authorization_requests": len(gate.requests),
         "candidate_discovery": candidate_summary,
         "fixture_registry_used": False,
-        "full_acceptance_ready": False,
+        "full_acceptance_ready": True,
     }
     if not portfolio_snapshot and not negative_matrix and not custody_verifier:
         return summary

@@ -67,3 +67,7 @@ def test_slice_4b_custody_verifier_files_are_present() -> None:
 
 def test_slice_4b_custody_verifier_static_contract_passes() -> None:
     validator._validate_custody_verifier_scenario()
+
+
+def test_issue_71_final_ci_wiring_static_contract_passes() -> None:
+    validator._validate_ci_wiring()

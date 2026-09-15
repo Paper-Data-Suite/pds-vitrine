@@ -69,9 +69,9 @@ def test_issue_71_heavy_acceptance_inventory_and_ci_endpoints_are_explicit() -> 
     assert CI_ENDPOINTS == (("ubuntu-latest", "3.11"), ("windows-latest", "3.14"))
 
 
-def test_slice_4b_enables_custody_verifier_without_claiming_full_ticket() -> None:
+def test_issue_71_full_acceptance_is_enabled_after_all_slice_gates() -> None:
     assert CANDIDATE_DISCOVERY_SLICE_READY is True
     assert CURATED_SNAPSHOT_SLICE_READY is True
     assert NEGATIVE_MATRIX_SLICE_READY is True
     assert CUSTODY_VERIFIER_SLICE_READY is True
-    assert FULL_ACCEPTANCE_READY is False
+    assert FULL_ACCEPTANCE_READY is True

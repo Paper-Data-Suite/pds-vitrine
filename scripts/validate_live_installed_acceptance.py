@@ -209,6 +209,9 @@ def _validate_outer_harness() -> None:
         "--portfolio-snapshot-only",
         "--negative-matrix-only",
         "--custody-verifier-only",
+        "full-negative",
+        "full-custody",
+        "PASS issue #71 full live installed cross-producer acceptance",
         "live_installed_acceptance_support.py",
         "live_installed_acceptance_portfolio.py",
         "live_installed_acceptance_negative.py",
@@ -275,7 +278,7 @@ def _validate_candidate_scenario() -> None:
         "install_improvement_portfolio",
         "discover_live_candidates",
         '"fixture_registry_used": False',
-        '"full_acceptance_ready": False',
+        '"full_acceptance_ready": True',
     )
     combined = support.read_text(encoding="utf-8") + "\n" + scenario.read_text(encoding="utf-8")
     if 'CONCORD_STANDARD_ID = "synthetic:COLLAB.ACCEPT.1"' in combined:
@@ -482,6 +485,42 @@ def _validate_custody_verifier_scenario() -> None:
         raise RuntimeError("Slice 4B scenario must not render raw failure text")
 
 
+
+def _validate_ci_wiring() -> None:
+    path = ROOT / ".github" / "workflows" / "ci.yml"
+    _require_text(
+        path,
+        "live_installed_acceptance:",
+        "Live producer installed acceptance",
+        "- os: ubuntu-latest",
+        'python: "3.11"',
+        "- os: windows-latest",
+        'python: "3.14"',
+        "pds-core/releases/download/v0.6.3/pds_core-0.6.3-py3-none-any.whl",
+        "pds-scoreform/releases/download/v0.11.0/scoreform-0.11.0-py3-none-any.whl",
+        "pds-quillan/releases/download/v0.10.0/quillan-0.10.0-py3-none-any.whl",
+        "pds-concord/releases/download/v0.3.0/pds_concord-0.3.0-py3-none-any.whl",
+        "python -m pip download",
+        "python -m build --wheel",
+        "scripts/qualify_installed_live_portfolio.py",
+        "--vitrine-wheel",
+        "--wheel-dir",
+    )
+    source = path.read_text(encoding="utf-8")
+    _, job = source.split("  live_installed_acceptance:", 1)
+    for slice_flag in (
+        "--preflight-only",
+        "--candidate-discovery-only",
+        "--portfolio-snapshot-only",
+        "--negative-matrix-only",
+        "--custody-verifier-only",
+    ):
+        if slice_flag in job:
+            raise RuntimeError(
+                "issue #71 CI must run the authoritative no-flag gate, not "
+                f"the focused slice mode {slice_flag}"
+            )
+
 def _validate_slice_guard() -> None:
     if not CANDIDATE_DISCOVERY_SLICE_READY:
         raise RuntimeError("Slice 2 Candidate discovery scenario is not enabled")
@@ -491,10 +530,9 @@ def _validate_slice_guard() -> None:
         raise RuntimeError("Slice 4A negative matrix scenario is not enabled")
     if not CUSTODY_VERIFIER_SLICE_READY:
         raise RuntimeError("Slice 4B custody/verifier scenario is not enabled")
-    if FULL_ACCEPTANCE_READY:
+    if not FULL_ACCEPTANCE_READY:
         raise RuntimeError(
-            "Slice 4B unexpectedly claims full #71 acceptance; final combined scenario "
-            "and CI/package wiring must be qualified before completion"
+            "final issue #71 full acceptance gate is not enabled"
         )
 
 
@@ -509,6 +547,7 @@ def validate(*, run_focused_tests: bool) -> None:
     _validate_curated_snapshot_scenario()
     _validate_negative_matrix_scenario()
     _validate_custody_verifier_scenario()
+    _validate_ci_wiring()
     _validate_slice_guard()
     if run_focused_tests:
         subprocess.run(
@@ -527,7 +566,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"Issue #71 validation failed: {error}", file=sys.stderr)
         return 1
-    print("PASS issue #71 live installed acceptance Slice 4B validation")
+    print("PASS issue #71 final live installed acceptance validation")
     return 0
 
 

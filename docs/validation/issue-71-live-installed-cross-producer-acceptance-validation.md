@@ -126,3 +126,20 @@ python .\scripts\qualify_installed_live_portfolio.py `
 ```
 
 The expected terminal marker is `PASS issue #71 Slice 4B custody, tamper, historical, and producer-independent verification acceptance`. Final combined orchestration and the required Ubuntu/Python 3.11 + Windows/Python 3.14 CI wiring remain a later completion gate.
+
+
+## Final issue #71 completion qualification
+
+The completion gate composes rather than replaces the accepted slice evidence. `FULL_ACCEPTANCE_READY` is true only after the healthy installed path, the currentness/drift/removal/authorization matrix, export-tamper detection, exact historical reload, post-seal producer disappearance, and Core+Vitrine-only verification are all present behind the same exact-wheel harness.
+
+Run the final heavy acceptance without a slice selector:
+
+```powershell
+python .\scripts\qualify_installed_live_portfolio.py `
+  --vitrine-wheel .\dist\pds_vitrine-0.2.0-py3-none-any.whl `
+  --wheel-dir "$HOME\Downloads"
+```
+
+Success ends with `PASS issue #71 full live installed cross-producer acceptance`.
+
+The lightweight validator also freezes the dedicated GitHub Actions job and its endpoint matrix: Ubuntu/Python 3.11 and Windows/Python 3.14. The CI job downloads the exact Core 0.6.3, ScoreForm 0.11.0, Quillan 0.10.0, and Concord 0.3.0 release wheels, prepares an endpoint-local offline wheelhouse, builds Vitrine 0.2.0 from the checked-out branch, and runs the same authoritative no-flag qualifier. Normal Vitrine runtime dependency policy remains Core-only.

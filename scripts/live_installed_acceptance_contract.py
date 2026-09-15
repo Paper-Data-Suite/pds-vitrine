@@ -14,14 +14,14 @@ ACCEPTANCE_IDENTITY: Final[str] = "vitrine_live_installed_cross_producer_accepta
 ISSUE_NUMBER: Final[int] = 71
 BASELINE_COMMIT: Final[str] = "c481ecd3f4c04fe31b8ee350a5a4b5c56f7c45aa"
 
-# Slice 4B adds custody tamper, exact historical reload, post-seal producer-source
-# disappearance, and a producer-independent Core+Vitrine verifier. Full acceptance
-# remains guarded until the final combined/CI wiring slice is qualified.
+# Slices 1-4B are individually qualified. The final gate composes the accepted
+# negative matrix and healthy sealed-custody path, then repeats producer-independent
+# verification. Supported CI runs that same no-flag gate on both frozen endpoints.
 CANDIDATE_DISCOVERY_SLICE_READY: Final[bool] = True
 CURATED_SNAPSHOT_SLICE_READY: Final[bool] = True
 NEGATIVE_MATRIX_SLICE_READY: Final[bool] = True
 CUSTODY_VERIFIER_SLICE_READY: Final[bool] = True
-FULL_ACCEPTANCE_READY: Final[bool] = False
+FULL_ACCEPTANCE_READY: Final[bool] = True
 
 
 @dataclass(frozen=True, slots=True)

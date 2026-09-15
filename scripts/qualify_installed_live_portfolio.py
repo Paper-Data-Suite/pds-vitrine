@@ -1,9 +1,8 @@
-"""Outer exact-wheel qualification harness for Vitrine issue #71.
+"""Authoritative exact-wheel installed qualification for Vitrine issue #71.
 
-Slice 1 authenticates exact release artifacts and isolated installations. Slice 2
-adds real released-producer native setup through live Vitrine Candidate discovery.
-Slice 3 adds explicit curation plus authorized Snapshot seal/verify/export. The
-negative, drift, historical, and producer-independent matrix remains guarded.
+Slice-specific modes remain available for focused diagnosis. With no slice flag,
+the harness composes the accepted destructive negative matrix with a separate
+healthy seal/export/custody run and a Core+Vitrine-only historical verifier.
 """
 
 from __future__ import annotations
@@ -429,6 +428,24 @@ def qualify(
                 repository=repository,
                 work_root=work_root,
             )
+        elif not preflight_only:
+            if not FULL_ACCEPTANCE_READY:
+                raise LiveInstalledQualificationError(
+                    "full issue #71 acceptance is not enabled"
+                )
+            _run_negative_matrix_slice(
+                live_python=live_python,
+                runner_root=runner_root,
+                repository=repository,
+                work_root=work_root / "full-negative",
+            )
+            _run_custody_verifier_slice(
+                live_python=live_python,
+                verifier_python=verifier_python,
+                runner_root=runner_root,
+                repository=repository,
+                work_root=work_root / "full-custody",
+            )
 
     print("PASS installed exact-wheel isolation preflight", flush=True)
     print("PASS producer-independent verifier isolation preflight", flush=True)
@@ -461,11 +478,11 @@ def qualify(
         return
     if not FULL_ACCEPTANCE_READY:
         raise LiveInstalledQualificationError(
-            "full issue #71 scenario is not enabled yet; use --custody-verifier-only "
-            "for the Slice 4B qualification"
+            "full issue #71 acceptance is not enabled"
         )
-    raise LiveInstalledQualificationError(
-        "full issue #71 scenario flag was enabled without a scenario implementation"
+    print(
+        "PASS issue #71 full live installed cross-producer acceptance",
+        flush=True,
     )
 
 

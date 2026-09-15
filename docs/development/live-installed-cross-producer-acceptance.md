@@ -106,3 +106,20 @@ become true.
 Slice 4B keeps runtime policy unchanged and adds the remaining installed custody proofs behind `CUSTODY_VERIFIER_SLICE_READY`. A healthy sealed/exported Snapshot is reverified through the production distribution services, its export copy is tampered on an isolated clone and must fail `snapshot_distribution.verification_failed` while the sealed Edition remains valid, and the exact post-export state revision is reloaded after a later Current Pointer commit to prove historical identity/digests.
 
 A second cloned workspace then has all three producer work roots removed. Edition and Export verification must still succeed from sealed Vitrine custody. The outer qualifier passes that clone plus a bounded digest/identity request to a Core+Vitrine-only environment, which independently verifies the historical state, Edition, and Export without ScoreForm, Quillan, or Concord installed or imported. `FULL_ACCEPTANCE_READY` remains false until the combined final scenario and CI/package wiring are qualified.
+
+
+## Final issue #71 authoritative gate
+
+After Slices 1 through 4B are individually qualified, `FULL_ACCEPTANCE_READY` is enabled. The no-flag qualifier is the authoritative issue #71 gate. It authenticates the exact frozen release wheels, repeats both isolation preflights, runs the destructive currentness/drift/removal/authorization matrix in one fresh workspace, and runs the healthy curation/seal/export/custody path in a separate fresh workspace before invoking the Core+Vitrine-only verifier.
+
+The final local invocation is:
+
+```powershell
+python .\scripts\qualify_installed_live_portfolio.py `
+  --vitrine-wheel .\dist\pds_vitrine-0.2.0-py3-none-any.whl `
+  --wheel-dir "$HOME\Downloads"
+```
+
+The expected terminal marker is `PASS issue #71 full live installed cross-producer acceptance`.
+
+Supported CI contains a dedicated `live_installed_acceptance` matrix for Ubuntu/Python 3.11 and Windows/Python 3.14. Each endpoint downloads the four exact GitHub Release wheels, prepares its own third-party wheelhouse, builds the branch Vitrine 0.2.0 wheel, and invokes the same no-flag qualifier. The qualifier itself remains offline after that wheelhouse is prepared and continues to authenticate the four frozen PDS wheel filenames and SHA-256 values before installation.
