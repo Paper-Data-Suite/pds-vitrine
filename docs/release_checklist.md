@@ -1,9 +1,7 @@
-# Vitrine Release Checklist
+# Vitrine v0.3.0 Release Checklist
 
-This checklist separates release preparation from release publication. A green
-release-preparation pull request is necessary but does not mean a release exists.
-
-The v0.2.0 release process has four phases:
+This checklist is the authoritative four-phase ceremony for issue #72 / umbrella #56.
+A green release-preparation branch does not mean a release exists.
 
 ```text
 1. release-preparation branch and PR qualification
@@ -12,193 +10,181 @@ The v0.2.0 release process has four phases:
 4. fresh-download post-release verification
 ```
 
-Issue #40 and umbrella #26 remain open through phase 4.
+Issue #72 and #56 remain open through Phase 4.
 
-## Fixed v0.2.0 qualification input
+## Fixed qualification inputs
 
-Authenticate this Core wheel before every authoritative Vitrine v0.2.0 qualification:
+Authenticate the exact frozen PDS release artifacts:
 
 ```text
-pds_core-0.6.0-py3-none-any.whl
-SHA-256:
-be28c061b38463ef59ebc328ed1aa443767fe7f2c626babb769c2d8e5932f308
+pds_core-0.6.3-py3-none-any.whl
+98d7596ce0eed26e4d56a17bbbbd644db3014259b56a45783a173fe8237af5e5
+
+scoreform-0.11.0-py3-none-any.whl
+8248c6a1cc8254b5f9df46440131d524f80da8662a0dc7864fdc982e501b4c44
+
+quillan-0.10.0-py3-none-any.whl
+5dd4ed62b8bf39f7e11e6538d1c094929c6428dba81b254fe80d03c60d5114e9
+
+pds_concord-0.3.0-py3-none-any.whl
+dd827f7059c91c79bd69b6190b3c673d6b3bbc02bc25fa666286bbf5883c5e12
 ```
 
-Do not substitute a locally rebuilt Core wheel.
+Do not substitute locally rebuilt same-version PDS artifacts for authoritative
+release qualification.
 
 ---
 
 ## Phase 1 — Release-preparation branch and PR
 
-### 1A. Branch starting state
+### Starting state
 
-- [ ] Branch is `40-v0-2-0-implementation-audit-release`.
-- [ ] Starting `main` commit is recorded.
-- [ ] Local branch starts from reconciled `origin/main`.
-- [ ] Working tree is clean before release-preparation edits.
-- [ ] Exact Core 0.6.0 wheel is present and authenticated.
-- [ ] Complete pre-change repository baseline passes.
-- [ ] Baseline timing summary is saved in the issue/PR evidence.
+- [ ] Branch is `72-v0-3-0-privacy-provenance-usability-release-audit`.
+- [ ] Starting `main` commit is `d9ff8ed95215c6b89e4286a6da0085a84620c37a`.
+- [ ] Starting tree is `0ad98deb513ca8a4661f68237f8b7e050ab04bae`.
+- [ ] Branch starts from reconciled post-#71 `main`.
+- [ ] Pre-change/early-slice evidence is recorded on #72.
 
-Authoritative baseline command:
+### Architecture/privacy/provenance/usability audit
 
-```powershell
-python scripts\validate_repository.py `
-  --core-wheel "$coreWheel"
-```
+- [ ] ADR 0001 through ADR 0009 are explicitly dispositioned.
+- [ ] #57 through #71 each have implementation evidence, teacher consequence,
+  privacy/provenance implication, known limitation, and release status.
+- [ ] Source-read authorization is before protected producer source content I/O.
+- [ ] Quillan/Concord Artifact authorization remains separate from source-read auth.
+- [ ] Candidate eligibility does not imply Selection authority.
+- [ ] Selection does not imply Snapshot-build or disclosure authority.
+- [ ] Audience Context does not imply recipient identity/relationship/consent.
+- [ ] Local Export is never described as delivery.
+- [ ] Suppression/negative state does not leak through rows/counts/facets/attention.
+- [ ] Diagnostics remain minimum-necessary and path/content safe.
+- [ ] Suite operations do not gain Vitrine record/policy authority.
+- [ ] Repository/release evidence is synthetic-only and contains no private records.
 
-Do not use `--allow-dirty` for the clean pre-change baseline.
+### Release identity and package boundary
 
-Recorded issue #40 baseline on 2026-08-17:
+- [ ] `vitrine/_version.py` is `0.3.0`.
+- [ ] Package checker expects `0.3.0`.
+- [ ] `vitrine.__version__`, installed metadata, CLI, wheel, and sdist agree.
+- [ ] Python remains `>=3.11`.
+- [ ] Runtime dependency remains `pds-core>=0.6.3,<0.7`.
+- [ ] Console remains `vitrine = vitrine.cli:main`.
+- [ ] `paper_data_suite.module_operations` exposes only the Vitrine provider.
+- [ ] `paper_data_suite.modules` remains undeclared.
+- [ ] `paper_data_suite.publication_producers` remains undeclared.
+- [ ] No unconditional ScoreForm/Quillan/Concord/Portia/Meridian dependency is added.
 
-```text
-PASS installed E2E end-to-end acceptance
-installed-wheel acceptance: end-to-end: 126.621s
-TOTAL: 706.117s
-PASS complete repository validation
-```
+### #71 promoted-candidate acceptance
 
-### 1B. Architecture/release audit
+- [ ] The #71 acceptance contract expects `pds-vitrine 0.3.0`.
+- [ ] Hosted live-acceptance CI builds exactly one `pds_vitrine-0.3.0-*.whl`.
+- [ ] Exact producer filenames/hashes remain unchanged.
+- [ ] Offline installation boundary remains unchanged.
+- [ ] Fixture/live non-masquerading remains unchanged.
+- [ ] Negative matrix remains unchanged.
+- [ ] Custody/tamper/historical/source-disappearance proofs remain unchanged.
+- [ ] Core+Vitrine-only verifier remains unchanged.
 
-- [ ] ADRs 0001–0009 are dispositioned against executable v0.2 evidence.
-- [ ] PF-AUD-001 through PF-AUD-012 are reconciled using the preserved findings register.
-- [ ] Every #26 exit condition has implementation evidence.
-- [ ] No unresolved release blocker or major finding remains.
-- [ ] Fixture/live producer boundary remains explicit.
-- [ ] Identity, provenance, persistence/concurrency, privacy, and Snapshot custody are audited.
-- [ ] Intentionally deferred v0.3/later surfaces remain unclaimed.
+### Release records
 
-### 1C. Release identity preparation
+- [ ] `docs/v0.3.0-release-audit.md` is complete with final dispositions.
+- [ ] `docs/v0.3.0-release-compatibility.md` is current.
+- [ ] `RELEASE_NOTES_v0.3.0.md` is reviewed.
+- [ ] `CHANGELOG.md` contains a dated `0.3.0` section and fresh `Unreleased`.
+- [ ] `README.md`, `docs/README.md`, and `Security.md` are current.
+- [ ] Historical v0.2.0 release records remain intact.
+- [ ] `MANIFEST.in` and package checks include the v0.3.0 release records.
 
-- [ ] Single source version is promoted from `0.2.0.dev0` to `0.2.0`.
-- [ ] Package checker expects release version `0.2.0`.
-- [ ] `vitrine.__version__`, installed metadata, CLI, wheel, and sdist identities agree.
-- [ ] Core requirement remains `pds-core>=0.6,<0.7`.
-- [ ] Console script remains `vitrine = vitrine.cli:main`.
-- [ ] No `paper_data_suite.modules` entry point is added.
-- [ ] No `paper_data_suite.publication_producers` entry point is added.
-- [ ] No sibling PDS runtime dependency is added.
-- [ ] Narrow release-compatibility checks are added without duplicating full pytest/E2E.
+### Focused branch validation
 
-### 1D. Documentation/release records
-
-- [ ] `docs/v0.2.0-release-audit.md` is current.
-- [ ] `docs/v0.2.0-release-compatibility.md` is current.
-- [ ] `docs/release_checklist.md` is current.
-- [ ] `Security.md` reflects actual v0.2 behavior and limitations.
-- [ ] `README.md` and `docs/README.md` reflect release-preparation state accurately.
-- [ ] CHANGELOG has a dated `0.2.0` section and a new `Unreleased` section.
-- [ ] `RELEASE_NOTES_v0.2.0.md` or equivalent reviewed release notes exist.
-- [ ] Release notes do not claim live ScoreForm/Quillan/Concord integration.
-
-### 1E. Focused validation while branch is dirty
-
-Use focused checks after each slice. `--allow-dirty` is permitted only when running the
-complete validator against intentional uncommitted issue #40 edits.
-
-At minimum before PR preparation:
+Run focused checks after each logical slice:
 
 ```powershell
-python -m pytest
+python -m pytest `
+  tests/test_metadata.py `
+  tests/test_validate_release_contract.py `
+  tests/test_live_installed_acceptance_contract.py `
+  tests/test_validate_live_installed_acceptance.py
+
+python .\scripts\validate_release_contract.py
+python .\scripts\validate_live_installed_acceptance.py
+python .\scripts\check_documentation.py
 python -m ruff check .
 python -m mypy
-python scripts\check_documentation.py
 git diff --check
-git status --short
 ```
 
-### 1F. Complete release-preparation qualification
+### Build and exact live-installed branch qualification
 
-Run exactly one complete repository qualification:
+Build a candidate wheel from the branch:
 
 ```powershell
-python scripts\validate_repository.py `
-  --core-wheel "$coreWheel" `
+Remove-Item build, dist, pds_vitrine.egg-info -Recurse -Force -ErrorAction SilentlyContinue
+python -m build
+python -m twine check dist\*
+python .\scripts\check_package.py dist\*.whl dist\*.tar.gz
+```
+
+Prepare the local wheelhouse exactly as required by #71, then run:
+
+```powershell
+python .\scripts\qualify_installed_live_portfolio.py `
+  --vitrine-wheel .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
+  --wheel-dir "$HOME\Downloads"
+```
+
+Require the terminal marker:
+
+```text
+PASS issue #71 full live installed cross-producer acceptance
+```
+
+Then run the complete repository gate with the authenticated Core wheel:
+
+```powershell
+python .\scripts\validate_repository.py `
+  --core-wheel "$HOME\Downloads\pds_core-0.6.3-py3-none-any.whl" `
   --allow-dirty
 ```
 
-Require:
-
-```text
-PASS complete repository validation
-```
-
-Confirm the topology still contains:
-
-```text
-full pytest once
-five narrow installed-wheel smokes once each
-installed end-to-end acceptance once
-```
-
-- [ ] Complete validator passes.
-- [ ] Timing summary shows no unexplained material regression.
-- [ ] Validation leaves working-tree status unchanged.
+- [ ] Complete repository validation passes.
+- [ ] Live-installed acceptance passes with the promoted candidate.
 - [ ] `git diff --check` passes.
-- [ ] Complete diff receives independent architectural/code audit.
+- [ ] Validation does not introduce unintended working-tree changes.
+- [ ] Hosted CI is green on its complete matrices.
+- [ ] Independent diff/audit review finds no unresolved blocker/major issue.
 
-### 1G. Pull request
-
-The release-preparation PR must reference, not close, the release issues:
-
-```text
-Refs #40
-Refs #26
-```
-
-Do **not** use `Closes #40` or `Closes #26` in this PR.
-
-- [ ] PR contains only intended Vitrine changes.
-- [ ] No built `dist/` artifacts are committed.
-- [ ] Hosted CI is green on Ubuntu/Windows × Python 3.11–3.14 through the established matrix topology.
-- [ ] No unresolved review/change request remains.
-- [ ] PR is squash-merged before final tag/release work.
+The Phase 1 PR references #72/#56; it does not close them.
 
 ---
 
 ## Phase 2 — Post-merge exact-main qualification
 
-After the release-preparation PR is merged:
+After the release-preparation PR is squash-merged:
 
 - [ ] Fetch/prune and reconcile local `main`.
 - [ ] Working tree is clean.
 - [ ] Local `main == origin/main`.
 - [ ] Exact release commit SHA is recorded.
 - [ ] Exact release tree SHA is recorded.
-- [ ] Core 0.6.0 wheel is re-authenticated.
-- [ ] Complete validator is run **without** `--allow-dirty`.
+- [ ] Re-authenticate all four fixed PDS qualification artifacts.
+- [ ] Run complete repository validation without `--allow-dirty`.
+- [ ] Build the wheel/sdist exactly once from that exact clean commit.
+- [ ] `twine check` and `scripts/check_package.py` pass.
+- [ ] Run the full #71 live-installed acceptance against that exact final wheel.
+- [ ] Record wheel and sdist SHA-256 values.
+- [ ] Create `SHA256SUMS.txt` for exactly the intended release assets.
+- [ ] Do not rebuild after recording hashes unless all downstream evidence is reset.
 
-```powershell
-python scripts\validate_repository.py `
-  --core-wheel "$coreWheel"
+Expected final artifact names:
+
+```text
+pds_vitrine-0.3.0-py3-none-any.whl
+pds_vitrine-0.3.0.tar.gz
+SHA256SUMS.txt
 ```
 
-- [ ] `PASS complete repository validation` is observed on exact release `main`.
-- [ ] Any post-merge correction goes through a new PR and restarts this phase.
-
-### Build exact final artifacts
-
-From that exact clean commit:
-
-```powershell
-Remove-Item build, dist, pds_vitrine.egg-info -Recurse -Force -ErrorAction SilentlyContinue
-python -m build
-python -m twine check dist\*
-python scripts\check_package.py dist\*.whl dist\*.tar.gz
-```
-
-- [ ] Exactly one wheel exists.
-- [ ] Exactly one sdist exists.
-- [ ] Wheel filename/version is `0.2.0`.
-- [ ] Sdist filename/version is `0.2.0`.
-- [ ] Package-content check passes.
-- [ ] Final exact wheel passes installed qualification with authenticated Core 0.6.0.
-- [ ] Wheel SHA-256 is recorded.
-- [ ] Sdist SHA-256 is recorded.
-- [ ] `SHA256SUMS.txt` contains exactly the intended release-asset hashes.
-
-Do not rebuild after recording hashes unless all downstream records are regenerated from
-the new bytes.
+Any post-merge correction goes through a new PR and restarts Phase 2.
 
 ---
 
@@ -206,86 +192,79 @@ the new bytes.
 
 Only after Phase 2 is green:
 
-- [ ] Create immutable tag `v0.2.0` at the exact qualified release commit.
-- [ ] Confirm the tag resolves to that exact commit before publication.
+- [ ] Create immutable tag `v0.3.0` at the exact qualified release commit.
+- [ ] Confirm the tag resolves to that commit.
 - [ ] Do not move/rewrite the tag after publication.
-- [ ] Create GitHub Release `pds-vitrine v0.2.0`.
-- [ ] Attach only the exact verified assets:
+- [ ] Create GitHub Release `pds-vitrine v0.3.0`.
+- [ ] Attach only the exact Phase 2 wheel, sdist, and `SHA256SUMS.txt`.
+- [ ] Publish reviewed `RELEASE_NOTES_v0.3.0.md` content.
+- [ ] Do not claim production institutional authorization or external delivery.
+- [ ] Do not publish to PyPI/package index without separate explicit authorization.
 
-```text
-pds_vitrine-0.2.0-py3-none-any.whl
-pds_vitrine-0.2.0.tar.gz
-SHA256SUMS.txt
-```
-
-- [ ] Published release notes accurately describe the fixture-only producer boundary.
-- [ ] Release notes identify Core 0.6 compatibility.
-- [ ] Release notes do not claim production authorization, recipient delivery, regulated workflow, or live producer integration.
-- [ ] No PyPI/package-index publication occurs without separate explicit authorization.
-
-Issue #40 remains open.
+Issue #72 remains open.
 
 ---
 
 ## Phase 4 — Fresh-download release verification
 
-Download the **published GitHub Release assets** into a fresh location. Do not substitute
-local `dist/` files.
+Download the **published GitHub Release assets** to a fresh location; do not substitute
+local `dist/` bytes.
 
-- [ ] Downloaded wheel SHA-256 matches the Phase 2 value.
-- [ ] Downloaded sdist SHA-256 matches the Phase 2 value.
-- [ ] `SHA256SUMS.txt` matches both assets.
-- [ ] Fresh virtual environment contains no editable Vitrine install.
-- [ ] Authenticated Core 0.6.0 wheel is installed.
-- [ ] Downloaded Vitrine wheel is installed noneditably.
+- [ ] Downloaded wheel hash matches Phase 2.
+- [ ] Downloaded sdist hash matches Phase 2.
+- [ ] `SHA256SUMS.txt` matches both.
+- [ ] Fresh environment contains no editable Vitrine checkout.
+- [ ] Install authenticated Core 0.6.3.
+- [ ] Install downloaded Vitrine wheel noneditably.
 - [ ] `python -m pip check` passes.
-- [ ] `importlib.metadata.version("pds-vitrine") == "0.2.0"`.
-- [ ] `vitrine.__version__ == "0.2.0"`.
-- [ ] `vitrine --version` reports `0.2.0`.
-- [ ] `python -m vitrine --version` reports `0.2.0`.
-- [ ] Vitrine and Core import from the fresh environment's `site-packages`.
-- [ ] No sibling producer package is required.
-- [ ] Help/import remain side-effect-free.
-- [ ] Ordinary workflow dependencies remain fail-closed.
-- [ ] Fixture/live non-masquerading checks pass.
-- [ ] #39 installed end-to-end acceptance passes against the downloaded wheel.
-- [ ] Installed Vitrine/Core package inventories remain unchanged after acceptance.
+- [ ] `importlib.metadata.version("pds-vitrine") == "0.3.0"`.
+- [ ] `vitrine.__version__ == "0.3.0"`.
+- [ ] `vitrine --version` and `python -m vitrine --version` report `0.3.0`.
+- [ ] Core/Vitrine imports resolve from the fresh environment.
+- [ ] No sibling producer is required for ordinary Core+Vitrine install/use.
+- [ ] Module-operations provider discovery works from the downloaded wheel.
+- [ ] Package-content checks pass against downloaded artifacts.
+- [ ] Fresh exact producer wheels are independently authenticated/downloaded.
+- [ ] The authoritative no-flag #71 live-installed acceptance passes against the
+  downloaded Vitrine wheel.
+- [ ] Sealed Core+Vitrine-only verification still works.
+- [ ] No release verification step mutates package/source inventories unexpectedly.
 
-Only after these checks pass:
+Only after all checks pass:
 
-- [ ] Record final release commit/tree, asset hashes, and GitHub Release URL on #40.
-- [ ] Close #40.
-- [ ] Confirm every #26 sub-issue is complete.
-- [ ] Close #26.
-- [ ] Close the v0.2.0 milestone.
+- [ ] Record release commit/tree, artifact hashes, and GitHub Release URL on #72.
+- [ ] Record final audit verdict.
+- [ ] Close #72.
+- [ ] Confirm all #56 sub-issues are complete.
+- [ ] Close #56 / v0.3.0 milestone.
 
 ---
 
 ## Stop rules
 
-Do not publish or close the release if any of these occurs:
+Do not publish or close the release for:
 
 ```text
-ADR/contract contradiction
+accepted ADR / frozen contract contradiction
 unresolved blocker or major audit finding
-Core wheel authentication mismatch
-package metadata/version mismatch
+artifact authentication mismatch
+version/metadata/package mismatch
 sibling runtime dependency
 fixture/live producer masquerading
-permissive default workflow dependencies
+source read before authorization
+producer-private path/API fallback
 Candidate -> Selection implication
-Selection -> disclosure implication
-cross-class name/bare-ID identity inference
+Selection -> Snapshot/disclosure implication
+suppression/privacy leakage
+diagnostic protected-content/path leakage
 Group/Author/Subject/contribution/Score-target collapse
-max/newest current-state inference where an explicit pointer is required
-Snapshot digest/custody inconsistency
-issued history following source drift
-actual Showcase Export privacy failure
-working-tree mutation caused by validation
-supported CI cell failure
+Snapshot/Export custody or digest inconsistency
+Export described/treated as delivery
+suite operations gaining Vitrine policy/record authority
+working-tree mutation caused by qualification
+supported CI failure
 release artifact hash mismatch
 fresh downloaded release failure
 ```
 
-A feature intentionally assigned to a later milestone is not itself a release blocker
-unless current code or documentation falsely claims that feature is implemented.
+A deliberately later feature is not itself a blocker unless v0.3.0 falsely claims it.

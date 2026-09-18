@@ -1,4 +1,4 @@
-"""Validate the frozen pds-vitrine v0.2.0 release identity and scope boundary."""
+"""Validate the pds-vitrine v0.3.0 release identity and scope boundary."""
 
 from __future__ import annotations
 
@@ -25,14 +25,19 @@ from vitrine.snapshot_materialization import SnapshotBuildAuthorityRequest
 from vitrine.snapshot_planning import UnconfiguredSnapshotPlanningProvider
 from vitrine.workflow_context import default_workflow_dependencies
 
-EXPECTED_VERSION = "0.2.0"
-EXPECTED_CORE_REQUIREMENT = "pds-core>=0.6,<0.7"
+EXPECTED_VERSION = "0.3.0"
+EXPECTED_CORE_REQUIREMENT = "pds-core>=0.6.3,<0.7"
 CURRENT_DEVELOPMENT_CORE_REQUIREMENT = "pds-core>=0.6.3,<0.7"
-EXPECTED_CORE_WHEEL = "pds_core-0.6.0-py3-none-any.whl"
+EXPECTED_CORE_WHEEL = "pds_core-0.6.3-py3-none-any.whl"
 EXPECTED_CORE_SHA256 = (
-    "be28c061b38463ef59ebc328ed1aa443767fe7f2c626babb769c2d8e5932f308"
+    "98d7596ce0eed26e4d56a17bbbbd644db3014259b56a45783a173fe8237af5e5"
 )
 EXPECTED_CONSOLE_SCRIPT = {"vitrine": "vitrine.cli:main"}
+EXPECTED_OPERATIONS_ENTRY_POINTS = {
+    "paper_data_suite.module_operations": {
+        "vitrine": "vitrine.pds_operations:get_module_operations_profile"
+    }
+}
 EXPECTED_FIXTURE_PRODUCER_IDS = (
     "vitrine_concord_fixture",
     "vitrine_quillan_fixture",
@@ -280,6 +285,10 @@ def validate(root: Path) -> tuple[str, ...]:
             )
         if project.get("scripts") != EXPECTED_CONSOLE_SCRIPT:
             findings.append(f"unexpected console scripts: {project.get('scripts')!r}")
+        if project.get("entry-points") != EXPECTED_OPERATIONS_ENTRY_POINTS:
+            findings.append(
+                f"unexpected Core operations entry points: {project.get('entry-points')!r}"
+            )
 
     for group in FORBIDDEN_ENTRY_POINT_GROUPS:
         if group in pyproject_text:
@@ -293,49 +302,114 @@ def validate(root: Path) -> tuple[str, ...]:
 
     changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
     unreleased_marker = "## Unreleased"
-    release_marker = "## 0.2.0 - 2026-08-17"
+    release_marker = "## 0.3.0 - 2026-09-17"
+    historical_release_marker = "## 0.2.0 - 2026-08-17"
     if unreleased_marker not in changelog:
         findings.append("CHANGELOG Unreleased section is missing")
     if release_marker not in changelog:
-        findings.append("CHANGELOG v0.2.0 release section is missing")
+        findings.append("CHANGELOG v0.3.0 release section is missing")
     elif changelog.index(unreleased_marker) > changelog.index(release_marker):
-        findings.append("CHANGELOG Unreleased section must precede v0.2.0")
+        findings.append("CHANGELOG Unreleased section must precede v0.3.0")
+    if historical_release_marker not in changelog:
+        findings.append("historical CHANGELOG v0.2.0 section is missing")
 
-    release_notes = (root / "RELEASE_NOTES_v0.2.0.md").read_text(encoding="utf-8")
+    release_notes = (root / "RELEASE_NOTES_v0.3.0.md").read_text(encoding="utf-8")
     required_release_note_markers = (
-        "pds-vitrine v0.2.0",
+        "pds-vitrine v0.3.0",
         EXPECTED_CORE_REQUIREMENT,
         EXPECTED_CORE_WHEEL,
         EXPECTED_CORE_SHA256,
-        "vitrine_scoreform_fixture",
-        "vitrine_quillan_fixture",
-        "vitrine_concord_fixture",
-        "not live producer integrations",
-        "Improvement and Showcase",
+        "ScoreForm 0.11.0",
+        "Quillan 0.10.0",
+        "Concord 0.3.0",
+        "paper_data_suite.module_operations",
+        "Candidate eligibility != Selection authority",
+        "local Export != external delivery",
     )
     for marker in required_release_note_markers:
         if marker not in release_notes:
             findings.append(f"release notes missing required marker: {marker}")
 
-    compatibility = (root / "docs/v0.2.0-release-compatibility.md").read_text(
+    compatibility = (root / "docs/v0.3.0-release-compatibility.md").read_text(
         encoding="utf-8"
     )
     for marker in (
-        "- **Release source version:** `0.2.0`",
+        "- **Release source version:** `0.3.0`",
         EXPECTED_CORE_REQUIREMENT,
         EXPECTED_CORE_WHEEL,
         EXPECTED_CORE_SHA256,
+        "ScoreForm 0.11.0",
+        "Quillan 0.10.0",
+        "Concord 0.3.0",
+        "paper_data_suite.module_operations",
         "Improvement Portfolio",
         "Showcase Portfolio",
-        "Parent/Guardian Conference Portfolio",
-        "Regulated Portfolio",
+        "local directory_package Export != delivery",
     ):
         if marker not in compatibility:
             findings.append(f"release compatibility document missing marker: {marker}")
 
+    release_audit = (root / "docs/v0.3.0-release-audit.md").read_text(
+        encoding="utf-8"
+    )
+    for marker in (
+        "# Vitrine v0.3.0 Release Audit",
+        "**Audit phase:** release preparation",
+        "`audit_in_progress`",
+        "ADR 0001",
+        "ADR 0009",
+        "#57",
+        "#71",
+        "**IN PROGRESS**",
+    ):
+        if marker not in release_audit:
+            findings.append(f"release audit document missing marker: {marker}")
+
+    release_checklist = (root / "docs/release_checklist.md").read_text(
+        encoding="utf-8"
+    )
+    for marker in (
+        "Vitrine v0.3.0 Release Checklist",
+        "post-merge exact-main qualification",
+        "fresh-download post-release verification",
+        "pds_vitrine-0.3.0-py3-none-any.whl",
+        "PASS issue #71 full live installed cross-producer acceptance",
+    ):
+        if marker not in release_checklist:
+            findings.append(f"release checklist missing marker: {marker}")
+
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    if "paper_data_suite.module_operations" not in readme:
+        findings.append("README does not describe the Core module-operations provider")
+    if "no `paper_data_suite.module_operations` entry point yet" in readme:
+        findings.append("README still claims the operations entry point is unavailable")
+
+    security = (root / "Security.md").read_text(encoding="utf-8")
+    for marker in (
+        "ScoreForm 0.11.0",
+        "source-read authorization != producer Artifact authorization",
+        "local Export != external delivery",
+    ):
+        if marker not in security:
+            findings.append(f"Security.md missing v0.3 boundary marker: {marker}")
+
+    docs_index = (root / "docs/README.md").read_text(encoding="utf-8")
+    for marker in (
+        "v0.3.0 release audit",
+        "v0.3.0-release-audit.md",
+        "issue #71",
+    ):
+        if marker not in docs_index:
+            findings.append(f"docs/README.md missing v0.3 marker: {marker}")
+
+    manifest = (root / "MANIFEST.in").read_text(encoding="utf-8")
+    for marker in ("RELEASE_NOTES_v0.2.0.md", "RELEASE_NOTES_v0.3.0.md"):
+        if marker not in manifest:
+            findings.append(f"MANIFEST.in missing release note: {marker}")
+
     package_checker = (root / "scripts/check_package.py").read_text(encoding="utf-8")
-    if 'metadata.get("Version") != "0.2.0"' not in package_checker:
-        findings.append("package checker does not require distribution version 0.2.0")
+    if 'metadata.get("Version") != "0.3.0"' not in package_checker:
+        findings.append("package checker does not require distribution version 0.3.0")
 
     repository_validator = (root / "scripts/validate_repository.py").read_text(
         encoding="utf-8"
@@ -356,7 +430,7 @@ def main() -> int:
     if findings:
         print("\n".join(findings), file=sys.stderr)
         return 1
-    print("PASS v0.2.0 release contract validation")
+    print("PASS v0.3.0 release contract validation")
     return 0
 
 

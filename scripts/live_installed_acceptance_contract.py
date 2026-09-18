@@ -13,6 +13,7 @@ from typing import Final, Literal
 ACCEPTANCE_IDENTITY: Final[str] = "vitrine_live_installed_cross_producer_acceptance_v1"
 ISSUE_NUMBER: Final[int] = 71
 BASELINE_COMMIT: Final[str] = "c481ecd3f4c04fe31b8ee350a5a4b5c56f7c45aa"
+EXPECTED_VITRINE_VERSION: Final[str] = "0.3.0"
 
 # Slices 1-4B are individually qualified. The final gate composes the accepted
 # negative matrix and healthy sealed-custody path, then repeats producer-independent
@@ -186,6 +187,9 @@ HEAVY_SCENARIO_FAMILIES: Final[tuple[str, ...]] = (
 def validate_contract_constants() -> None:
     """Fail if duplicated contract metadata becomes internally inconsistent."""
 
+    if EXPECTED_VITRINE_VERSION != "0.3.0":
+        raise RuntimeError("issue #72 Vitrine release-candidate version drifted")
+
     filenames = tuple(item.filename for item in AUDITED_RELEASE_WHEELS)
     distributions = tuple(item.distribution_name for item in AUDITED_RELEASE_WHEELS)
     if len(set(filenames)) != len(filenames):
@@ -228,6 +232,7 @@ __all__ = [
     "CONCORD_CONTRACT",
     "CORE_WHEEL",
     "EXPECTED_VITRINE_RUNTIME_DEPENDENCY",
+    "EXPECTED_VITRINE_VERSION",
     "FIXTURE_PRODUCER_IDS",
     "FORBIDDEN_RUNTIME_DISTRIBUTIONS",
     "FULL_ACCEPTANCE_READY",

@@ -25,6 +25,7 @@ if TYPE_CHECKING:
         CANDIDATE_DISCOVERY_SLICE_READY,
         CURATED_SNAPSHOT_SLICE_READY,
         CUSTODY_VERIFIER_SLICE_READY,
+        EXPECTED_VITRINE_VERSION,
         FULL_ACCEPTANCE_READY,
         NEGATIVE_MATRIX_SLICE_READY,
         WheelSpec,
@@ -36,6 +37,7 @@ else:
         CANDIDATE_DISCOVERY_SLICE_READY,
         CURATED_SNAPSHOT_SLICE_READY,
         CUSTODY_VERIFIER_SLICE_READY,
+        EXPECTED_VITRINE_VERSION,
         FULL_ACCEPTANCE_READY,
         NEGATIVE_MATRIX_SLICE_READY,
         WheelSpec,
@@ -101,9 +103,10 @@ def _authenticate_vitrine_wheel(path: Path) -> tuple[Path, str]:
         raise LiveInstalledQualificationError(
             f"candidate wheel is not pds-vitrine: {resolved.name}"
         )
-    if version != "0.2.0":
+    if version != EXPECTED_VITRINE_VERSION:
         raise LiveInstalledQualificationError(
-            f"issue #71 must not promote Vitrine version; found {version}"
+            "candidate Vitrine version mismatch: "
+            f"expected {EXPECTED_VITRINE_VERSION}, found {version}"
         )
     return resolved, _sha256(resolved)
 
@@ -171,6 +174,9 @@ def _run_preflights(
     runner_root.mkdir()
     probe = _copy_runner_file(
         repository, runner_root, "live_installed_acceptance_probe.py"
+    )
+    _copy_runner_file(
+        repository, runner_root, "live_installed_acceptance_contract.py"
     )
     _copy_runner_file(
         repository, runner_root, "live_installed_acceptance_support.py"

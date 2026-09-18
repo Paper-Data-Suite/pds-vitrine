@@ -118,11 +118,14 @@ REQUIRED_SDIST_FILES = {
     "CHANGELOG.md",
     "MANIFEST.in",
     "RELEASE_NOTES_v0.2.0.md",
+    "RELEASE_NOTES_v0.3.0.md",
     "README.md",
     "Security.md",
     "docs/release_checklist.md",
     "docs/v0.2.0-release-audit.md",
+    "docs/v0.3.0-release-audit.md",
     "docs/v0.2.0-release-compatibility.md",
+    "docs/v0.3.0-release-compatibility.md",
     "docs/contracts/foundational-runtime-models-v1.md",
     "docs/contracts/canonical-storage-v1.md",
     "docs/contracts/portfolio-subject-workflows-v1.md",
@@ -392,7 +395,7 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
     metadata = email.message_from_bytes(metadata_bytes)
     if metadata.get("Name") != "pds-vitrine":
         findings.append(f"unexpected distribution name: {metadata.get('Name')}")
-    if metadata.get("Version") != "0.2.0":
+    if metadata.get("Version") != "0.3.0":
         findings.append(f"unexpected version: {metadata.get('Version')}")
     if metadata.get("Requires-Python") != ">=3.11":
         findings.append(
