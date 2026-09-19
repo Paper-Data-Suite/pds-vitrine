@@ -18,7 +18,7 @@ The qualification contract freezes:
 - all eight required heavy scenario families;
 - Vitrine's unchanged Core-only runtime dependency.
 
-The outer qualifier authenticates local release wheels, verifies the candidate remains Vitrine 0.2.0, creates a fresh live environment, installs the exact composition noneditably without package-index resolution, clears `PYTHONPATH`, checks dependency consistency, and executes an installed-origin/live-registry probe outside the repository. It also creates a second Core+Vitrine-only environment and proves that no producer distribution or module is present there.
+The outer qualifier authenticates local release wheels and creates a fresh live environment, installs the exact composition noneditably without package-index resolution, clears `PYTHONPATH`, checks dependency consistency, and executes an installed-origin/live-registry probe outside the repository. Issue #71 originally froze the candidate at Vitrine 0.2.0; issue #72 promotes only that candidate-version expectation to Vitrine 0.3.0. The qualifier also creates a second Core+Vitrine-only environment and proves that no producer distribution or module is present there.
 
 ## Slice 1 qualification
 
@@ -101,7 +101,7 @@ Then run the installed Slice 3 gate using the already prepared local wheelhouse:
 
 ```powershell
 python .\scripts\qualify_installed_live_portfolio.py `
-  --vitrine-wheel .\dist\pds_vitrine-0.2.0-py3-none-any.whl `
+  --vitrine-wheel .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
   --wheel-dir "$HOME\Downloads" `
   --portfolio-snapshot-only
 ```
@@ -120,7 +120,7 @@ Run the slice gate with:
 
 ```powershell
 python .\scripts\qualify_installed_live_portfolio.py `
-  --vitrine-wheel .\dist\pds_vitrine-0.2.0-py3-none-any.whl `
+  --vitrine-wheel .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
   --wheel-dir "$HOME\Downloads" `
   --custody-verifier-only
 ```
@@ -136,10 +136,10 @@ Run the final heavy acceptance without a slice selector:
 
 ```powershell
 python .\scripts\qualify_installed_live_portfolio.py `
-  --vitrine-wheel .\dist\pds_vitrine-0.2.0-py3-none-any.whl `
+  --vitrine-wheel .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
   --wheel-dir "$HOME\Downloads"
 ```
 
 Success ends with `PASS issue #71 full live installed cross-producer acceptance`.
 
-The lightweight validator also freezes the dedicated GitHub Actions job and its endpoint matrix: Ubuntu/Python 3.11 and Windows/Python 3.14. The CI job downloads the exact Core 0.6.3, ScoreForm 0.11.0, Quillan 0.10.0, and Concord 0.3.0 release wheels, prepares an endpoint-local offline wheelhouse, builds Vitrine 0.2.0 from the checked-out branch, and runs the same authoritative no-flag qualifier. Normal Vitrine runtime dependency policy remains Core-only.
+The lightweight validator also freezes the dedicated GitHub Actions job and its endpoint matrix: Ubuntu/Python 3.11 and Windows/Python 3.14. The CI job downloads the exact Core 0.6.3, ScoreForm 0.11.0, Quillan 0.10.0, and Concord 0.3.0 release wheels, prepares an endpoint-local offline wheelhouse, builds Vitrine 0.3.0 from the checked-out branch, and runs the same authoritative no-flag qualifier. Normal Vitrine runtime dependency policy remains Core-only.

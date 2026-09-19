@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+No changes yet.
+
+## 0.3.0 - 2026-09-17
+
 ### Added
 
 - Read-only `vitrine_attention_next_actions_v1` projection over Candidate,

@@ -29,6 +29,15 @@ def test_slice_2_installed_scenario_files_are_present() -> None:
 def test_slice_2_scenario_static_contract_passes() -> None:
     validator._validate_candidate_scenario()
 
+
+def test_slice_2_scenario_uses_shared_vitrine_release_candidate_version() -> None:
+    scenario = (
+        Path(validator.ROOT) / "scripts" / "live_installed_acceptance_scenario.py"
+    ).read_text(encoding="utf-8")
+    assert '"pds-vitrine": EXPECTED_VITRINE_VERSION' in scenario
+    assert '"pds-vitrine": "0.2.0"' not in scenario
+
+
 def test_slice_2_concord_standard_identity_is_path_safe() -> None:
     support = (Path(validator.ROOT) / "scripts" / "live_installed_acceptance_support.py").read_text(
         encoding="utf-8"

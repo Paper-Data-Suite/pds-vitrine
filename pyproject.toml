@@ -131,6 +131,7 @@ files = [
     "scripts/live_installed_acceptance_scenario.py",
     "scripts/qualify_installed_live_portfolio.py",
     "scripts/validate_live_installed_acceptance.py",
+    "scripts/validate_v030_release_audit.py",
 ]
 
 [[tool.mypy.overrides]]

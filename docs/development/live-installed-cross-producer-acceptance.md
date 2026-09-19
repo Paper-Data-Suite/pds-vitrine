@@ -6,7 +6,7 @@ Issue #71 adds Vitrine's authoritative installed acceptance for the released Sco
 
 The acceptance identity is `vitrine_live_installed_cross_producer_acceptance_v1`. The dependency artifacts are fixed to PDS Core 0.6.3, ScoreForm 0.11.0, Quillan 0.10.0, and Concord 0.3.0. The qualifier consumes local wheels and authenticates each filename and SHA-256 digest before installation. It never resolves a floating `latest` release or substitutes a same-version PDS artifact from another source.
 
-Vitrine is built from the issue branch and installed noneditably. Issue #71 does not promote Vitrine's package version and does not add ScoreForm, Quillan, or Concord to Vitrine's runtime dependencies.
+Vitrine is built from the current release branch and installed noneditably. Issue #71 originally froze the pre-release Vitrine candidate at 0.2.0; issue #72 promotes only that candidate expectation to 0.3.0 while preserving the same producer/runtime acceptance semantics. ScoreForm, Quillan, and Concord remain absent from Vitrine's unconditional runtime dependencies.
 
 ## Isolation topology
 
@@ -62,7 +62,7 @@ Run Slice 3 after the exact-wheel preflight succeeds:
 
 ```powershell
 python .\scripts\qualify_installed_live_portfolio.py `
-  --vitrine-wheel .\dist\pds_vitrine-0.2.0-py3-none-any.whl `
+  --vitrine-wheel .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
   --wheel-dir "$HOME\Downloads" `
   --portfolio-snapshot-only
 ```
@@ -116,10 +116,10 @@ The final local invocation is:
 
 ```powershell
 python .\scripts\qualify_installed_live_portfolio.py `
-  --vitrine-wheel .\dist\pds_vitrine-0.2.0-py3-none-any.whl `
+  --vitrine-wheel .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
   --wheel-dir "$HOME\Downloads"
 ```
 
 The expected terminal marker is `PASS issue #71 full live installed cross-producer acceptance`.
 
-Supported CI contains a dedicated `live_installed_acceptance` matrix for Ubuntu/Python 3.11 and Windows/Python 3.14. Each endpoint downloads the four exact GitHub Release wheels, prepares its own third-party wheelhouse, builds the branch Vitrine 0.2.0 wheel, and invokes the same no-flag qualifier. The qualifier itself remains offline after that wheelhouse is prepared and continues to authenticate the four frozen PDS wheel filenames and SHA-256 values before installation.
+Supported CI contains a dedicated `live_installed_acceptance` matrix for Ubuntu/Python 3.11 and Windows/Python 3.14. Each endpoint downloads the four exact GitHub Release wheels, prepares its own third-party wheelhouse, builds the branch Vitrine 0.3.0 wheel, and invokes the same no-flag qualifier. The qualifier itself remains offline after that wheelhouse is prepared and continues to authenticate the four frozen PDS wheel filenames and SHA-256 values before installation.

@@ -19,6 +19,7 @@ try:
         CURATED_SNAPSHOT_SLICE_READY,
         CUSTODY_VERIFIER_SLICE_READY,
         EXPECTED_VITRINE_RUNTIME_DEPENDENCY,
+        EXPECTED_VITRINE_VERSION,
         FIXTURE_PRODUCER_IDS,
         FULL_ACCEPTANCE_READY,
         HEAVY_SCENARIO_FAMILIES,
@@ -39,6 +40,7 @@ except ModuleNotFoundError:  # direct script execution from scripts/
         CURATED_SNAPSHOT_SLICE_READY,
         CUSTODY_VERIFIER_SLICE_READY,
         EXPECTED_VITRINE_RUNTIME_DEPENDENCY,
+        EXPECTED_VITRINE_VERSION,
         FIXTURE_PRODUCER_IDS,
         FULL_ACCEPTANCE_READY,
         HEAVY_SCENARIO_FAMILIES,
@@ -106,6 +108,8 @@ def _validate_frozen_contract() -> None:
     validate_contract_constants()
     if ACCEPTANCE_IDENTITY != "vitrine_live_installed_cross_producer_acceptance_v1":
         raise RuntimeError("issue #71 acceptance identity drifted")
+    if EXPECTED_VITRINE_VERSION != "0.3.0":
+        raise RuntimeError("issue #72 Vitrine release-candidate version drifted")
     frozen = {
         spec.distribution_name: (spec.version, spec.filename, spec.sha256)
         for spec in AUDITED_RELEASE_WHEELS
@@ -204,6 +208,7 @@ def _validate_outer_harness() -> None:
         "live-venv",
         "sealed-verifier-venv",
         "PASS exact release wheel authentication",
+        "EXPECTED_VITRINE_VERSION",
         "--preflight-only",
         "--candidate-discovery-only",
         "--portfolio-snapshot-only",
@@ -212,6 +217,7 @@ def _validate_outer_harness() -> None:
         "full-negative",
         "full-custody",
         "PASS issue #71 full live installed cross-producer acceptance",
+        "live_installed_acceptance_contract.py",
         "live_installed_acceptance_support.py",
         "live_installed_acceptance_portfolio.py",
         "live_installed_acceptance_negative.py",
@@ -277,6 +283,8 @@ def _validate_candidate_scenario() -> None:
         "build_concord_publication",
         "install_improvement_portfolio",
         "discover_live_candidates",
+        "EXPECTED_VITRINE_VERSION",
+        '"pds-vitrine": EXPECTED_VITRINE_VERSION',
         '"fixture_registry_used": False',
         '"full_acceptance_ready": True',
     )
@@ -285,7 +293,12 @@ def _validate_candidate_scenario() -> None:
         raise RuntimeError(
             "Slice 2 Concord standard identity must satisfy the Core path-safe identifier contract"
         )
-    if "str(error)" in scenario.read_text(encoding="utf-8"):
+    scenario_text = scenario.read_text(encoding="utf-8")
+    if '"pds-vitrine": "0.2.0"' in scenario_text:
+        raise RuntimeError(
+            "installed scenario retained the pre-promotion Vitrine 0.2.0 literal"
+        )
+    if "str(error)" in scenario_text:
         raise RuntimeError("Slice 2 scenario must not render raw producer failure text")
     forbidden = (
         "build_development_fixture_producer_registry",
@@ -500,6 +513,8 @@ def _validate_ci_wiring() -> None:
         "pds-scoreform/releases/download/v0.11.0/scoreform-0.11.0-py3-none-any.whl",
         "pds-quillan/releases/download/v0.10.0/quillan-0.10.0-py3-none-any.whl",
         "pds-concord/releases/download/v0.3.0/pds_concord-0.3.0-py3-none-any.whl",
+        f"pds_vitrine-{EXPECTED_VITRINE_VERSION}-*.whl",
+        f"Expected exactly one pds-vitrine {EXPECTED_VITRINE_VERSION} wheel.",
         "python -m pip wheel",
         "python -m build --wheel",
         "scripts/qualify_installed_live_portfolio.py",

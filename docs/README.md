@@ -1,11 +1,18 @@
 # Vitrine Documentation
 
-Vitrine completed its audited v0.1.0 foundation with a
-`ready_for_implementation` verdict and has completed the v0.2.0 runtime
-implementation through installed end-to-end acceptance. Issue #40 has promoted
-the source release identity to `0.2.0`; qualification, publication, and fresh-download
-verification remain pending. Documents distinguish accepted architecture, exact
-runtime contracts, validated fixtures, release-audit evidence, and deferred workflows.
+Vitrine has completed the merged v0.3.0 implementation through issue #71 and is now
+in issue #72 release audit/preparation. The source release identity is promoted to
+`0.3.0` during this work, but publication and fresh-download verification remain
+separate release phases.
+
+The v0.3 implementation consumes exact released ScoreForm, Quillan, and Concord
+contracts through public producer boundaries, adds guided teacher Portfolio workflows,
+immutable local Snapshot/Export custody, bounded attention, and Core module-operations
+integration while preserving Vitrine's privacy/provenance/authority boundaries.
+
+Documents distinguish accepted architecture, exact runtime contracts, development
+fixtures, live installed acceptance, release-audit evidence, and intentionally deferred
+production authorization/delivery surfaces.
 
 ## Runtime implementation
 
@@ -44,26 +51,41 @@ runtime contracts, validated fixtures, release-audit evidence, and deferred work
 - [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, packaging, and CI.
 - [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
 
-Producer-adapter configuration and projections remain transient. Issue #33
-consumes them through a fixture-backed Core discovery/Evaluation service, issue
-#34 consumes positive Candidates through explicit byte-free curation, and issue
-#35 consumes one exact immutable Composition through explicit Snapshot
-construction.
+Live adapter declarations and producer projections remain transient. Current production
+Candidate discovery consumes Core-governed canonical Publications only after exact
+compatibility and source-read authorization, then invokes installed public producer
+readers. Quillan/Concord copied Artifact bytes use separate producer Artifact
+authorization; ScoreForm Snapshot evidence remains `reference_only`.
 
-Development fixture adapters, Snapshot fixture providers, and fixture renderers
-are not installed producer integrations. Candidate, Selection, curation
-approval, Snapshot build authority, disclosure authorization, and external
-Issuance remain distinct.
+Development fixture adapters and fixture renderers remain explicit opt-in test
+infrastructure. They are not installed producer integrations and cannot satisfy the
+released live support keys. Issue #71 separately authenticates exact released
+Core/ScoreForm/Quillan/Concord wheels and qualifies the complete live workflow,
+negative matrix, immutable custody, historical reload, and Core+Vitrine-only sealed
+verification.
 
-## v0.2.0 release audit
+Candidate, Selection, curation approval, Snapshot build authority, disclosure
+authorization, and external delivery remain distinct.
 
-- [v0.2.0 release notes](../RELEASE_NOTES_v0.2.0.md) — reviewed release notes and explicit deferred/live-integration boundary.
-- [v0.2.0 release audit](v0.2.0-release-audit.md) — ADR conformance, preserved v0.1 findings, #26 exit conditions, privacy/persistence/Snapshot audit, and release-preparation verdict.
-- [v0.2.0 release compatibility boundary](v0.2.0-release-compatibility.md) — frozen target package/runtime contract, fixture/live producer boundary, fail-closed defaults, and deferred scope.
-- [Release checklist](release_checklist.md) — separate release-preparation PR, exact-main qualification, immutable GitHub Release publication, and fresh-download verification phases.
+## v0.3.0 release audit
 
-These documents describe release preparation until an authenticated `v0.2.0` tag and
-GitHub Release are actually published and independently reverified.
+- [v0.3.0 release notes](../RELEASE_NOTES_v0.3.0.md) — teacher-facing release value,
+  exact compatibility anchors, and explicit authorization/delivery boundaries.
+- [v0.3.0 release audit](v0.3.0-release-audit.md) — issue #72 audit ledger and final
+  privacy/provenance/usability/architecture/package disposition.
+- [v0.3.0 release compatibility boundary](v0.3.0-release-compatibility.md) — frozen
+  package, released producer, authority, custody, and suite-operations boundaries.
+- [Release checklist](release_checklist.md) — four-phase release preparation,
+  exact-main qualification, immutable publication, and fresh-download verification.
+
+Historical v0.2.0 records remain preserved:
+
+- [v0.2.0 release notes](../RELEASE_NOTES_v0.2.0.md)
+- [v0.2.0 release audit](v0.2.0-release-audit.md)
+- [v0.2.0 release compatibility boundary](v0.2.0-release-compatibility.md)
+
+During issue #72 these documents describe a release candidate until the exact
+`v0.3.0` tag/GitHub Release is published and independently reverified.
 
 ## Foundation research
 
@@ -157,6 +179,8 @@ fixtures/representative-portfolios/
 - [Issue #68 Build and Export Current Portfolio validation](validation/issue-68-build-export-current-portfolio-validation.md) — cross-workflow acceptance matrix, contract validator, package guards, isolated Core+Vitrine byte-bearing Export smoke, and complete repository qualification.
 - [Issue #69 Attention and Next Actions validation](validation/issue-69-attention-next-actions-validation.md) — cross-workflow acceptance matrix, contract validator, package/current-release guards, isolated Core+Vitrine attention smoke, and complete repository qualification.
 - [Issue #70 Suite Operations Integration validation](validation/issue-70-suite-operations-integration-validation.md) â€” Core provider/readiness/attention contract, class-scope boundary, opaque workspace relocation, package guards, isolated Core+Vitrine operations smoke, and complete repository qualification.
+
+- [Issue #71 live installed cross-producer acceptance validation](validation/issue-71-live-installed-cross-producer-acceptance-validation.md) — exact released-wheel authentication, live producer/Candidate/curation/Snapshot acceptance, negative currentness/authorization matrix, custody/tamper/historical verification, and producer-independent sealed verification.
 
 ## Authority
 

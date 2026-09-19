@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
+    from scripts.live_installed_acceptance_contract import EXPECTED_VITRINE_VERSION
     from scripts.live_installed_acceptance_custody import run_custody_verification
     from scripts.live_installed_acceptance_negative import run_negative_matrix
     from scripts.live_installed_acceptance_portfolio import (
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
         prepare_core_identity_sources,
     )
 else:
+    from live_installed_acceptance_contract import EXPECTED_VITRINE_VERSION
     from live_installed_acceptance_custody import run_custody_verification
     from live_installed_acceptance_negative import run_negative_matrix
     from live_installed_acceptance_portfolio import (
@@ -56,7 +58,7 @@ EXPECTED_VERSIONS = {
     "scoreform": "0.11.0",
     "quillan": "0.10.0",
     "pds-concord": "0.3.0",
-    "pds-vitrine": "0.2.0",
+    "pds-vitrine": EXPECTED_VITRINE_VERSION,
 }
 
 _T = TypeVar("_T")

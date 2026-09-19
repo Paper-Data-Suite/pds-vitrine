@@ -219,9 +219,9 @@ jobs:
         run: |
           python -m pip install build
           python -m build --wheel --outdir "$env:ISSUE71_VITRINE_DIST"
-          $wheels = @(Get-ChildItem -LiteralPath "$env:ISSUE71_VITRINE_DIST" -Filter "pds_vitrine-0.2.0-*.whl")
+          $wheels = @(Get-ChildItem -LiteralPath "$env:ISSUE71_VITRINE_DIST" -Filter "pds_vitrine-0.3.0-*.whl")
           if ($wheels.Count -ne 1) {
-            throw "Expected exactly one pds-vitrine 0.2.0 wheel."
+            throw "Expected exactly one pds-vitrine 0.3.0 wheel."
           }
           "ISSUE71_VITRINE_WHEEL=$($wheels[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 

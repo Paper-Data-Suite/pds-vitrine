@@ -8,6 +8,7 @@ from scripts.live_installed_acceptance_contract import (
     CONCORD_CONTRACT,
     CURATED_SNAPSHOT_SLICE_READY,
     CUSTODY_VERIFIER_SLICE_READY,
+    EXPECTED_VITRINE_VERSION,
     FIXTURE_PRODUCER_IDS,
     FULL_ACCEPTANCE_READY,
     HEAVY_SCENARIO_FAMILIES,
@@ -22,6 +23,7 @@ from scripts.live_installed_acceptance_contract import (
 def test_issue_71_exact_release_artifacts_are_frozen() -> None:
     validate_contract_constants()
     assert ACCEPTANCE_IDENTITY == "vitrine_live_installed_cross_producer_acceptance_v1"
+    assert EXPECTED_VITRINE_VERSION == "0.3.0"
     assert [item.distribution_name for item in AUDITED_RELEASE_WHEELS] == [
         "pds-core",
         "scoreform",

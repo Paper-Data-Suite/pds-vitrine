@@ -5,108 +5,60 @@ provenance, and producing purpose-specific, immutable portfolio snapshots.
 
 ## Current status
 
-Vitrine v0.2.0 defines the first executable runtime release built on the
-audited v0.1.0 architecture and fixture foundation. The release contents provide:
+Vitrine is in **v0.3.0 release preparation**. The merged implementation consumes
+released ScoreForm 0.11.0, Quillan 0.10.0, and Concord 0.3.0 evidence through public
+producer boundaries while keeping `pds-core>=0.6.3,<0.7` as Vitrine's only
+unconditional runtime dependency.
 
-- the installable `pds-vitrine` distribution and `vitrine` command;
-- released Core 0.6 workspace integration;
-- immutable foundational runtime models;
-- exact mapping and canonical JSON conversion;
-- deterministic cross-record validation;
-- canonical synthetic improvement and showcase record graphs;
-- workspace-scoped canonical JSON persistence with guarded state revisions;
-- strict historical/current loading and deterministic storage diagnostics;
-- a rebuildable nonauthoritative SQLite catalog;
-- Portfolio Subject creation, exact cross-class linking, correction, merge, and split workflows;
-- versioned improvement/showcase Profile services with explicit activation, Binding, overlays, and migration;
-- an exact producer projection adapter boundary with deterministic conflict detection;
-- explicit ScoreForm-, Quillan-, and Concord-shaped development fixture adapters;
-- non-mutating `vitrine adapters` diagnostics that hide fixtures by default;
-- fixture-backed Core catalog discovery, canonical verification, authorization-gated producer reading, and guarded Candidate Evaluation/Candidate persistence;
-- explicit Proposal/Decision/Selection provenance, append-preserving Selection and Placement lifecycle, complete section Arrangements, and conflict-aware current pointers;
-- revisioned curator Annotation, student Reflection, exact Curation Review Decisions, Selection replacement/withdrawal history, and immutable byte-free Working Portfolio Composition revisions;
-- immutable Snapshot Series/Request/Plan/Attempt workflows with exact source-provider and deterministic renderer boundaries;
-- guarded Snapshot staging, Series build locks, independent source/output hashing, explicit Omissions, deterministic Manifests, Seals, and immutable Editions;
-- producer-independent Edition verification, independently verified directory Export Artifacts, explicit current-Edition pointers, and explicit recovery inspection;
-- an executable representative improvement Portfolio slice spanning exact cross-class identity, Profile-governed Candidate discovery, explicit curation, student Reflection, immutable Composition, four-entry Snapshot/Export custody, and producer-source drift proof;
-- an executable representative showcase Portfolio slice preserving Concord-shaped Group, Author, Subject, contribution, Score-target, and collaborator-treatment semantics through a five-entry audience-safe Edition and reproducible directory Export;
-- Portfolio-centered direct command families and a low-density teacher menu, all backed by shared application services;
-- read-only Vitrine attention/next-action summaries across Candidate, curation, Working Composition, Snapshot recovery/integrity, omission, and Export verification state;
-- strict testing, typing, packaging, and cross-platform CI gates.
+The source release identity is `0.3.0` during issue #72 preparation. That does not
+mean a `v0.3.0` GitHub Release has already been published; exact-main qualification,
+artifact hashing/publication, and fresh-download verification remain separate gates.
 
-The foundational runtime models cover Portfolio and Subject identity,
-class-qualified Subject links, Profile revisions and Bindings, source provenance,
-Candidate Evaluations, Candidates, Selections, Placements, Arrangements,
-Composition Revisions, Audience Contexts, and foundational Snapshot metadata.
-Issue #34 adds richer curation workflow/history records without changing the
-frozen #28 Selection, Placement, Arrangement, Composition, or graph wire shapes.
-Issue #35 likewise reuses the frozen #28 Snapshot Materialization, Entry,
-Omission, Manifest, Seal, and Edition wire shapes while adding immutable build
-history and executable byte custody.
+The v0.3.0 teacher-local workflow provides:
 
-Vitrine persists its own canonical metadata beneath `<workspace>/vitrine/`.
-Snapshot bytes are separately guarded beneath `<workspace>/vitrine/snapshots/`.
-Producer adapters remain transient and side-effect free. Candidate discovery,
-working-Portfolio curation, and Snapshot construction use explicit application
-services and guarded persistence.
+- exact Core-backed Portfolio Subject identity and cross-class linking;
+- packaged Improvement and Showcase starter Profiles;
+- released ScoreForm/Quillan/Concord Candidate discovery through exact semantic
+  adapter support and authorization-gated public producer readers;
+- a suppression-safe Candidate inbox and bounded compatibility/readiness diagnostics;
+- guided Create Portfolio for Student setup;
+- explicit Candidate review, Selection, Placement, Annotation, Reflection, and
+  Curation Review workflows;
+- exact Working Portfolio Composition preparation/freeze;
+- authorized immutable Snapshot Edition construction and verified local
+  `directory_package` Export;
+- bounded Vitrine attention/next-action summaries; and
+- Core `paper_data_suite.module_operations` integration for suite
+  doctor/launcher/backup/attention workflows.
 
-Issue #32's producer adapters are development fixtures only:
+Development fixture producers/adapters remain explicit opt-in test infrastructure and
+cannot masquerade as the released live integrations.
+
+The authority boundaries remain deliberate:
 
 ```text
-development fixture adapter
-!= installed producer integration
-!= producer publication support
-!= source authorization
-!= Candidate eligibility
+Candidate != Selection
+Selection != Placement
+actor attribution != authorization
+Selection != Snapshot build authority
+Snapshot build authority != disclosure authorization
+Audience Context != recipient identity / relationship / consent
+local Export != external delivery
 ```
 
-Current Unreleased development supports the audited released ScoreForm 0.11.0, Quillan 0.10.0, and Concord 0.3.0 live contracts without making those sibling packages Vitrine runtime dependencies.
+ScoreForm attempts remain separate attempts; Vitrine does not choose the latest,
+highest, best, official, Grade-bearing, or proficiency-bearing attempt. Quillan and
+Concord copied Artifact bytes require a separate producer Artifact authorization.
+ScoreForm Snapshot evidence remains `reference_only`.
 
-Issue #33 provides the first fixture-backed Core-to-Vitrine Candidate pipeline.
-It uses the Core catalog only for bounded discovery, reloads canonical
-Publication and registration state, requires explicit source-read authorization,
-verifies exact manifest bytes, resolves exact Portfolio Subject relationships,
-and persists immutable Evaluations/Candidates.
+Vitrine persists its own canonical metadata beneath `<workspace>/vitrine/` and guards
+Snapshot custody beneath `<workspace>/vitrine/snapshots/`. Sealed Edition and Export
+verification is producer-independent after custody is established.
 
-Issue #34 consumes those positive Candidates through explicit byte-free
-curation:
-
-```text
-Candidate
-  -> Proposal
-  -> Decision
-  -> Selection
-  -> Placement
-  -> Arrangement
-  -> Annotation / Reflection / Review
-  -> Working Portfolio Composition Revision
-```
-
-Candidate eligibility does not imply Selection. Selection does not imply grading
-policy or disclosure permission. Reflection does not establish proficiency or
-prove improvement. Composition contains no producer bytes and is not a Snapshot.
-
-Issue #35 consumes exactly one immutable Composition plus its exact Inventory and
-Audience Context:
-
-```text
-exact Composition
-  -> Snapshot Build Request
-  -> immutable Plan
-  -> Attempt
-  -> exact source copy / deterministic render
-  -> Entries / explicit Omissions
-  -> deterministic internal Manifest
-  -> Seal
-  -> immutable Edition
-  -> verified directory Export Artifact
-```
-
-The Plan never silently follows a successor Candidate, Publication, producer
-revision, Placement, Reflection, or Composition. Snapshot build authority permits
-local custody only and is not recipient/disclosure authorization. Historical
-Edition and Export verification require only Vitrine canonical state and
-Vitrine-owned sealed bytes, not the original producer.
+Vitrine v0.3.0 does not implement production institutional authentication,
+recipient/guardian verification, consent management, production
+redaction/de-identification, disclosure authorization, secure delivery, public
+hosting, or external submission.
 
 ## Requirements and installation
 
@@ -157,10 +109,11 @@ Direct commands are noninteractive and preserve the same service, authority,
 and optimistic-concurrency boundaries. See
 [teacher-facing and direct workflows](docs/development/interface-workflows.md).
 
-Vitrine declares no `paper_data_suite.modules` routing entry point, no
-`paper_data_suite.publication_producers` entry point, and no
-`paper_data_suite.module_operations` entry point yet. It adds no runtime
-dependency on ScoreForm, Quillan, Concord, Portia, or Meridian.
+Vitrine declares no `paper_data_suite.modules` routing entry point and no
+`paper_data_suite.publication_producers` entry point. It declares the Core
+`paper_data_suite.module_operations` provider
+`vitrine = vitrine.pds_operations:get_module_operations_profile` and adds no
+runtime dependency on ScoreForm, Quillan, Concord, Portia, or Meridian.
 
 ## Runtime model example
 
