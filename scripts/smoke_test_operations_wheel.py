@@ -76,7 +76,7 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         )
         _run([str(python), "-m", "pip", "check"], cwd=work, env=env)
         version_output = _run([str(vitrine_script), "--version"], cwd=work, env=env)
-        if "0.2.0" not in version_output:
+        if "0.3.0" not in version_output:
             raise RuntimeError(
                 "installed vitrine console script returned wrong version"
             )
@@ -104,7 +104,7 @@ implicit_workspace = Path(sys.argv[1])
 explicit_workspace = Path(sys.argv[2])
 
 assert importlib.metadata.version("pds-core") == "0.6.3"
-assert importlib.metadata.version("pds-vitrine") == "0.2.0"
+assert importlib.metadata.version("pds-vitrine") == "0.3.0"
 assert MODULE_OPERATIONS_CONTRACT_VERSION == "1"
 assert MODULE_OPERATIONS_ENTRY_POINT_GROUP == "paper_data_suite.module_operations"
 assert not implicit_workspace.exists()

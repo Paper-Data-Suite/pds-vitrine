@@ -30,3 +30,11 @@ def test_operations_validation_scripts_are_static_analysis_targets() -> None:
     assert "scripts/smoke_test_operations_wheel.py" in mypy_files
     assert "scripts/validate_workspace_relocation.py" in mypy_files
     assert "scripts/validate_suite_operations_integration.py" in mypy_files
+
+def test_operations_wheel_smoke_targets_v030_release_identity() -> None:
+    smoke = Path("scripts/smoke_test_operations_wheel.py").read_text(
+        encoding="utf-8"
+    )
+    assert 'if "0.3.0" not in version_output:' in smoke
+    assert 'importlib.metadata.version("pds-vitrine") == "0.3.0"' in smoke
+    assert '"0.2.0"' not in smoke
