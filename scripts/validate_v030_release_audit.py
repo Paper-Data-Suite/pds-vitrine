@@ -1,4 +1,4 @@
-"""Validate the substantive Vitrine v0.3.0 release-audit boundary.
+"""Validate the final Vitrine v0.3.0 release-audit boundary.
 
 This is intentionally a lightweight release-audit guard. It freezes the accepted
 privacy/provenance/usability conclusions and checks representative executable/source
@@ -14,8 +14,19 @@ from typing import Final
 
 ROOT = Path(__file__).resolve().parents[1]
 
-EXPECTED_AUDIT_STATE: Final[str] = (
-    "substantive_audit_complete_release_qualification_pending"
+EXPECTED_AUDIT_STATE: Final[str] = "released_verified"
+EXPECTED_RELEASE_VERDICT: Final[str] = "RELEASED — VERIFIED"
+EXPECTED_RELEASE_COMMIT: Final[str] = "27d28933c645cea1d57b5504362e8798eacee8fe"
+EXPECTED_RELEASE_TREE: Final[str] = "9c6081f07a4e72098e1c8c7e0897f8ab87cb6710"
+EXPECTED_TAG_OBJECT: Final[str] = "547527b083fcb0b302f1870906ab4434462f4f74"
+EXPECTED_WHEEL_SHA256: Final[str] = (
+    "69d2d1ea8a90b5d25c813da3c852232a0e0a9e7094e2b4d217f22662022596b8"
+)
+EXPECTED_SDIST_SHA256: Final[str] = (
+    "e93ee5d9e8d706c29923b3ee8e38b37574873d5f2dd87e3dcd9e67e4713389b9"
+)
+EXPECTED_SUMS_SHA256: Final[str] = (
+    "cb62552f07cee5540b25d8d9392106f915ddbdfcbf7d9b9ae7fa57ef1f2b54e5"
 )
 
 ADR_FILES: Final[tuple[tuple[str, str], ...]] = (
@@ -30,7 +41,7 @@ ADR_FILES: Final[tuple[tuple[str, str], ...]] = (
     ("ADR 0009", "docs/decisions/0009-regulated-portfolio-and-compliance-profiles.md"),
 )
 
-MILESTONE_ISSUES: Final[tuple[int, ...]] = tuple(range(57, 72))
+MILESTONE_ISSUES: Final[tuple[int, ...]] = tuple(range(57, 73))
 
 
 def _require_text(path: Path, *markers: str) -> None:
@@ -99,6 +110,20 @@ def _validate_release_audit_document() -> None:
     _require_text(
         audit,
         f"- **Current audit state:** `{EXPECTED_AUDIT_STATE}`",
+        f"- **Final release verdict:** `{EXPECTED_RELEASE_VERDICT}`",
+        "## Final release qualification evidence",
+        EXPECTED_RELEASE_COMMIT,
+        EXPECTED_RELEASE_TREE,
+        EXPECTED_TAG_OBJECT,
+        EXPECTED_WHEEL_SHA256,
+        EXPECTED_SDIST_SHA256,
+        EXPECTED_SUMS_SHA256,
+        "https://github.com/Paper-Data-Suite/pds-vitrine/releases/tag/v0.3.0",
+        "run 35408261553",
+        "run 35410424003",
+        "run 35417419399",
+        "PASS producer-independent verifier isolation preflight",
+        "PASS issue #71 full live installed cross-producer acceptance",
         "## ADR conformance matrix",
         "## Milestone workstream ledger",
         "## Privacy audit",
@@ -115,6 +140,10 @@ def _validate_release_audit_document() -> None:
     text = audit.read_text(encoding="utf-8")
     if "AUDIT PENDING" in text:
         raise RuntimeError("v0.3.0 audit ledger still contains AUDIT PENDING")
+    if "**IN PROGRESS**" in text:
+        raise RuntimeError("v0.3.0 audit ledger still contains IN PROGRESS")
+    if "- **Final release verdict:** pending" in text:
+        raise RuntimeError("v0.3.0 audit ledger still has a pending final verdict")
     for issue in MILESTONE_ISSUES:
         if f"| #{issue} |" not in text:
             raise RuntimeError(f"v0.3.0 audit ledger missing milestone issue #{issue}")
@@ -245,7 +274,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, RuntimeError, ValueError) as error:
         print(f"v0.3.0 substantive release audit validation failed: {error}")
         return 1
-    print("PASS v0.3.0 substantive privacy/provenance/usability audit validation")
+    print("PASS v0.3.0 final privacy/provenance/usability/release audit validation")
     return 0
 
 

@@ -354,13 +354,21 @@ def validate(root: Path) -> tuple[str, ...]:
     )
     for marker in (
         "# Vitrine v0.3.0 Release Audit",
-        "**Audit phase:** release preparation",
-        "`substantive_audit_complete_release_qualification_pending`",
+        "**Audit phase:** released",
+        "`released_verified`",
+        "**Final release verdict:** `RELEASED — VERIFIED`",
+        "27d28933c645cea1d57b5504362e8798eacee8fe",
+        "9c6081f07a4e72098e1c8c7e0897f8ab87cb6710",
+        "547527b083fcb0b302f1870906ab4434462f4f74",
+        "69d2d1ea8a90b5d25c813da3c852232a0e0a9e7094e2b4d217f22662022596b8",
+        "e93ee5d9e8d706c29923b3ee8e38b37574873d5f2dd87e3dcd9e67e4713389b9",
+        "cb62552f07cee5540b25d8d9392106f915ddbdfcbf7d9b9ae7fa57ef1f2b54e5",
+        "https://github.com/Paper-Data-Suite/pds-vitrine/releases/tag/v0.3.0",
         "ADR 0001",
         "ADR 0009",
         "#57",
-        "#71",
-        "**IN PROGRESS**",
+        "#72",
+        "**RELEASED — VERIFIED**",
     ):
         if marker not in release_audit:
             findings.append(f"release audit document missing marker: {marker}")
