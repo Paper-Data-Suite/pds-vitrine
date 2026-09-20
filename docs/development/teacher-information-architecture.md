@@ -43,6 +43,32 @@ The exact class-qualified link remains visible in the ordinary overview because
 that relationship is meaningful teacher context and is the identity behavior the
 Portfolio Subject model is designed to make explicit.
 
+## Candidate Inbox
+
+Slice 2 adds `TeacherCandidateDetail` and `TeacherCandidateSection` as transient
+display projections over the existing `CandidateInboxDetail`.
+
+The normal teacher surface is deliberately smaller than the canonical detail:
+
+```text
+CandidateInboxDetail
+-> TeacherCandidateDetail
+-> Candidate Evidence
+   -> T. Technical details / provenance
+```
+
+Do not reimplement Candidate current-Evaluation resolution, staleness,
+eligibility, attention, or Selection observation in the presentation module.
+Those semantics remain owned by `vitrine.candidate_inbox`.
+
+Eligible section display names are looked up by exact section ID on the exact
+Profile Revision already carried by the Inbox detail. Do not infer roles from
+labels and do not retarget eligibility.
+
+The direct Candidate Inbox CLI remains an exact technical interface in this
+slice. Issue #95 is changing the guided teacher information hierarchy, not
+removing diagnostic detail from noninteractive tooling.
+
 ## Extension rule
 
 Future #95 slices should extend `teacher_presentation.py` or adjacent transient
@@ -62,11 +88,20 @@ derivation while implementing this presentation issue; those belong to #96-#103.
 
 ## Focused validation
 
-Run after Slice 1:
+Run after Slice 2:
 
 ```powershell
-python -m pytest -q tests/test_teacher_presentation.py tests/test_portfolio_menu.py
-python -m ruff check vitrine/teacher_presentation.py vitrine/portfolio_menu.py tests/test_teacher_presentation.py tests/test_portfolio_menu.py
+python -m pytest -q `
+  tests/test_teacher_presentation.py `
+  tests/test_portfolio_menu.py `
+  tests/test_candidate_inbox_menu.py
+
+python -m ruff check `
+  vitrine/teacher_presentation.py `
+  vitrine/candidate_inbox_menu.py `
+  tests/test_teacher_presentation.py `
+  tests/test_candidate_inbox_menu.py
+
 python -m mypy
 python scripts/check_documentation.py
 git diff --check

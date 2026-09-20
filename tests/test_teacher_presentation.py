@@ -3,12 +3,15 @@ from __future__ import annotations
 import io
 from pathlib import Path
 from types import SimpleNamespace
+from typing import cast
 
 import pytest
 
 from vitrine import portfolio_menu, teacher_presentation
+from vitrine.candidate_inbox import CandidateInboxDetail
 from vitrine.teacher_presentation import (
     TEACHER_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
+    TeacherCandidateDetail,
     TeacherPortfolioOverview,
     TeacherSubjectLink,
 )
@@ -163,6 +166,59 @@ def test_portfolio_technical_details_preserve_exact_provenance() -> None:
     assert "Subject Link ID: link_baseline" in rendered
     assert "Resolution: resolvable" in rendered
     assert "Snapshot Series: 1" in rendered
+
+
+def test_teacher_candidate_projection_uses_profile_section_labels_without_replacing_ids() -> None:
+    item = SimpleNamespace(
+        entry_id="candidate:candidate_exact",
+        candidate_id="candidate_exact",
+        current_evaluation_id="evaluation_exact",
+        portfolio_id="portfolio_exact",
+        portfolio_label="Improvement Portfolio",
+        portfolio_subject_id="subject_exact",
+        subject_label="Jordan Rivera",
+        profile_binding_id="binding_exact",
+        portfolio_profile_id="profile_exact",
+        profile_revision=1,
+        profile_label="Starter Improvement Portfolio",
+        profile_purpose="improvement",
+        source_display_label="Argument Paragraph — First Draft",
+        evaluation_outcome="eligible",
+        candidate_condition="ready_for_consideration",
+        stale_state="current",
+        attention_needed=False,
+        selected_state="unselected",
+        eligible_section_ids=("baseline", "supporting_feedback"),
+    )
+    profile_revision = SimpleNamespace(
+        sections=(
+            SimpleNamespace(section_id="baseline", label="Baseline Evidence"),
+            SimpleNamespace(
+                section_id="supporting_feedback",
+                label="Supporting Feedback",
+            ),
+        )
+    )
+    detail = cast(
+        CandidateInboxDetail,
+        SimpleNamespace(item=item, profile_revision=profile_revision),
+    )
+
+    view = teacher_presentation.build_teacher_candidate_detail(detail)
+
+    assert isinstance(view, TeacherCandidateDetail)
+    assert view.evidence_label == "Argument Paragraph — First Draft"
+    assert tuple(x.label for x in view.eligible_sections) == (
+        "Baseline Evidence",
+        "Supporting Feedback",
+    )
+    assert tuple(x.section_id for x in view.eligible_sections) == (
+        "baseline",
+        "supporting_feedback",
+    )
+    assert view.candidate_id == "candidate_exact"
+    assert view.current_evaluation_id == "evaluation_exact"
+    assert view.profile_binding_id == "binding_exact"
 
 
 def test_teacher_term_is_display_only_humanization() -> None:

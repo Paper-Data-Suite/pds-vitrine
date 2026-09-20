@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from vitrine.candidate_inbox import CandidateInboxDetail
 from vitrine.portfolio_services import show_portfolio
 from vitrine.profile_services import (
     get_portfolio_profile_binding,
@@ -33,6 +34,40 @@ class TeacherSubjectLink:
     display_name: str | None
     status: str
     current_resolution: str
+
+
+@dataclass(frozen=True, slots=True)
+class TeacherCandidateSection:
+    'One exact eligible Profile section plus its display label.'
+
+    section_id: str
+    label: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class TeacherCandidateDetail:
+    'Teacher-first projection over one exact Candidate Inbox detail.'
+
+    contract_version: str
+    entry_id: str
+    candidate_id: str | None
+    current_evaluation_id: str | None
+    portfolio_id: str
+    portfolio_label: str
+    portfolio_subject_id: str
+    subject_label: str
+    profile_binding_id: str
+    portfolio_profile_id: str
+    profile_revision: int
+    profile_label: str
+    profile_purpose: str
+    evidence_label: str
+    evaluation_outcome: str | None
+    candidate_condition: str | None
+    currentness: str | None
+    attention_needed: bool
+    selected_state: str
+    eligible_sections: tuple[TeacherCandidateSection, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +98,46 @@ def teacher_term(value: str | None) -> str:
     if value is None:
         return "Unavailable"
     return value.replace("_", " ").strip().title()
+
+
+def build_teacher_candidate_detail(
+    detail: CandidateInboxDetail,
+) -> TeacherCandidateDetail:
+    'Project one exact Inbox detail without changing Candidate semantics.'
+
+    item = detail.item
+    section_labels = {
+        section.section_id: section.label for section in detail.profile_revision.sections
+    }
+    eligible_sections = tuple(
+        TeacherCandidateSection(
+            section_id=section_id,
+            label=section_labels.get(section_id),
+        )
+        for section_id in item.eligible_section_ids
+    )
+    return TeacherCandidateDetail(
+        contract_version=TEACHER_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
+        entry_id=item.entry_id,
+        candidate_id=item.candidate_id,
+        current_evaluation_id=item.current_evaluation_id,
+        portfolio_id=item.portfolio_id,
+        portfolio_label=item.portfolio_label,
+        portfolio_subject_id=item.portfolio_subject_id,
+        subject_label=item.subject_label,
+        profile_binding_id=item.profile_binding_id,
+        portfolio_profile_id=item.portfolio_profile_id,
+        profile_revision=item.profile_revision,
+        profile_label=item.profile_label,
+        profile_purpose=item.profile_purpose,
+        evidence_label=item.source_display_label,
+        evaluation_outcome=item.evaluation_outcome,
+        candidate_condition=item.candidate_condition,
+        currentness=item.stale_state,
+        attention_needed=item.attention_needed,
+        selected_state=item.selected_state,
+        eligible_sections=eligible_sections,
+    )
 
 
 def build_teacher_portfolio_overview(
@@ -124,8 +199,11 @@ def build_teacher_portfolio_overview(
 
 __all__ = [
     "TEACHER_INFORMATION_ARCHITECTURE_CONTRACT_VERSION",
+    "TeacherCandidateDetail",
+    "TeacherCandidateSection",
     "TeacherPortfolioOverview",
     "TeacherSubjectLink",
+    "build_teacher_candidate_detail",
     "build_teacher_portfolio_overview",
     "teacher_term",
 ]

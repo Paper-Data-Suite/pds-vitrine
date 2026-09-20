@@ -87,13 +87,48 @@ def test_candidate_inbox_menu_lists_and_inspects_read_only(
     )
     rendered = output.getvalue()
     assert "2 matching entries" in rendered
-    assert "Candidate Inbox Detail" in rendered
+    assert "Candidate Evidence" in rendered
+    assert "Portfolio fit" in rendered
+    assert "Eligible for:" in rendered
+    assert "Profile:" in rendered
+    assert "Currentness:" in rendered
+    assert "Selection:" in rendered
+    assert "T. Technical details / provenance" in rendered
+    assert "Core Publication:" not in rendered
+    assert "Producer module: vitrine_scoreform_fixture" not in rendered
+    assert "Profile Binding:" not in rendered
+    assert "Evaluator contract:" not in rendered
+    assert "Current-pointer history: 1:" not in rendered
+    assert "does not discover, select, place, replace," in rendered
+    assert "Type PROPOSE" not in rendered
+    assert "Type SELECT" not in rendered
+    assert "Type DISCOVER" not in rendered
+    assert load_current_state(setup.workspace).state_revision == before
+
+
+def test_candidate_inbox_menu_technical_details_preserve_bounded_provenance(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    setup = build_candidate_fixture_workspace(tmp_path)
+    _discover(setup)
+    monkeypatch.setenv("PDS_WORKSPACE_ROOT", str(setup.workspace))
+    before = load_current_state(setup.workspace).state_revision
+    output = io.StringIO()
+    run_candidate_inbox_menu(
+        input_fn=scripted_input(["1", "t", "", "", "b"]),
+        output=output,
+        clear_fn=lambda: None,
+    )
+    rendered = output.getvalue()
+    assert "Candidate Technical Details / Provenance" in rendered
     assert "Core Publication:" in rendered
     assert "Producer module: vitrine_scoreform_fixture" in rendered
     assert "Profile Binding:" in rendered
     assert "Evaluator contract:" in rendered
     assert "Current-pointer history: 1:" in rendered
-    assert "does not discover, select, place, replace," in rendered
+    assert "Reader contract:" in rendered
+    assert "Projection contract:" in rendered
     assert "Type PROPOSE" not in rendered
     assert "Type SELECT" not in rendered
     assert "Type DISCOVER" not in rendered

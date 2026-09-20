@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #95 Slice 2 teacher-first Candidate Inbox detail with an explicit
+  Technical Details / Provenance drill-down, preserving the existing exact
+  Candidate read model, privacy boundary, and read-only semantics.
+- `TeacherCandidateDetail` and `TeacherCandidateSection` presentation
+  projections with exact-ID-to-display-label Profile section mapping.
 - Issue #95 teacher information-architecture foundation with a transient
   `vitrine_teacher_information_architecture_v1` presentation projection,
   teacher-first Portfolio overview, explicit Subject-detail navigation, and

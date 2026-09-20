@@ -3,7 +3,7 @@
 - **Issue:** #95
 - **Branch:** `95-teacher-information-architecture-provenance-drilldown`
 - **Contract:** `vitrine_teacher_information_architecture_v1`
-- **Status:** Slice 1 foundation
+- **Status:** Slice 2 — Portfolio and Candidate Inbox presentation
 
 ## Purpose
 
@@ -114,6 +114,43 @@ identifiers already available from canonical state.
 
 Subject management is no longer entered implicitly after viewing the Portfolio
 Overview. The teacher must explicitly choose `View / manage Subject details`.
+
+## Slice 2 Candidate Inbox projection
+
+The teacher Candidate Inbox now separates the ordinary decision-facing detail
+from the exact bounded provenance already available in
+`CandidateInboxDetail`.
+
+The default teacher detail presents:
+
+- recognizable evidence label already present in canonical Candidate state;
+- Portfolio and student display context;
+- Profile label and revision;
+- Profile purpose;
+- Evaluation eligibility;
+- eligible Profile sections using their existing human labels;
+- Candidate condition/status;
+- current/stale/unresolved state in teacher language;
+- attention signal;
+- Selection state.
+
+The default detail does not lead with Entry, Candidate, Evaluation, Profile
+Binding, Publication, producer source, Artifact, contract, reason-code, or
+pointer-history identifiers.
+
+`T. Technical details / provenance` exposes the existing bounded exact detail,
+including those identifiers, contracts, availability observations, Evaluation
+history, and current-pointer history. This is a presentation split only.
+Candidate currentness, staleness, eligibility, attention, and Selection state
+continue to come from `vitrine_candidate_inbox_v1`.
+
+Section labels are resolved only by exact `eligible_section_ids` against the
+already-bound exact Profile Revision. A label never replaces the section ID as
+authority. Missing labels fall back to the exact section ID rather than
+fabricating meaning.
+
+Issue #96 still owns richer evidence naming, representation differentiation,
+Profile-role guidance, and evidence preview.
 
 ## Privacy and provenance boundaries
 

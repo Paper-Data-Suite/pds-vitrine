@@ -34,6 +34,18 @@ Retained `ineligible` and `unresolved` Evaluation-only heads remain visible with
 
 Every non-ready Candidate condition maps through `CANDIDATE_INBOX_CONDITION_ATTENTION_CODES`. Adding a future condition requires updating that mapping and validator coverage. Attention is workflow routing only; do not add Grade, proficiency, mastery, growth, quality, or ranking semantics.
 
+## Teacher detail hierarchy
+
+Issue #95 keeps this service unchanged and changes only the guided menu
+presentation. `vitrine.teacher_presentation.build_teacher_candidate_detail(...)`
+maps the exact Inbox detail into a transient teacher view. The compact detail
+must not become a second Candidate-state algorithm.
+
+The exact bounded detail remains reachable through
+`T. Technical details / provenance`. Opening either view remains read-only and
+must not invoke producer registries, readers, authorization gates, or Artifact
+providers.
+
 ## Portfolio workflow
 
 The existing Portfolio Discover / Review Candidates screen may still run explicit `discover_and_evaluate_candidates(...)` after teacher confirmation. Persisted review must then render through the shared service with `CandidateInboxQuery(portfolio_id=portfolio_id, limit=100)`. Curation remains a separate explicit action.
