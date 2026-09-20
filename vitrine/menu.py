@@ -268,8 +268,8 @@ def run_menu(
                     output=stream,
                     clear_fn=clear_fn,
                     portfolio_id=None,
+                    input_fn=input_fn,
                 )
-                _pause(input_fn)
             else:
                 _write_lines(
                     stream,

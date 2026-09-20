@@ -970,7 +970,9 @@ def _portfolio_context(
                 clear_fn=clear_fn,
                 workspace_root=root,
                 portfolio_id=portfolio_id,
+                input_fn=input_fn,
             )
+            continue
         else:
             _write(output, "Please choose 1-7, H, B, M, or Q.")
         _pause(input_fn)

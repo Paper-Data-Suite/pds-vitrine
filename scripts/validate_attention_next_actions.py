@@ -531,6 +531,9 @@ def validate(*, run_focused_tests: bool = True) -> None:
     _require_text(
         menu_path,
         "evaluate_vitrine_attention(",
+        "Technical Details / Provenance",
+        "_render_teacher_attention(",
+        "_render_attention_technical_details(",
         "Action ID:",
         "open_candidate_inbox",
         "verify_snapshot_export",

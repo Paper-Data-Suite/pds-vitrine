@@ -42,7 +42,7 @@ def _report(portfolio_id: str | None) -> VitrineAttentionReport:
                 count_unit="selections",
                 attention_class="workflow",
                 portfolio_id=portfolio_id,
-                reason_codes=(),
+                reason_codes=("working_composition.selection_unplaced",),
                 next_action=VitrineNextActionRef(
                     action_id="open_candidate_review",
                     portfolio_id=portfolio_id,
@@ -77,8 +77,61 @@ def test_attention_menu_renders_bounded_next_action_without_mutation(
     )
 
     rendered = output.getvalue()
-    assert "Selection needs placement: 1 selections" in rendered
+    assert "Attention / Next Actions — Current Portfolio" in rendered
+    assert "Selection needs placement: 1 selection" in rendered
     assert "Next action: Review Candidates / Selections" in rendered
+    assert "Evaluation:" not in rendered
+    assert "Observed state revision:" not in rendered
+    assert "Code:" not in rendered
+    assert "Class:" not in rendered
+    assert "Reasons:" not in rendered
+    assert "Action ID:" not in rendered
+    assert "portfolio_exact" not in rendered
+    assert "open_candidate_review" not in rendered
+
+
+def test_attention_menu_technical_details_preserve_exact_projection(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str | None] = []
+    monkeypatch.setattr(
+        attention_menu,
+        "resolve_workspace_root",
+        lambda _root: tmp_path,
+    )
+
+    def evaluate(_root: Path, query: object) -> VitrineAttentionReport:
+        portfolio_id = getattr(query, "portfolio_id")
+        calls.append(portfolio_id)
+        return _report(portfolio_id)
+
+    monkeypatch.setattr(
+        attention_menu,
+        "evaluate_vitrine_attention",
+        evaluate,
+    )
+    output = io.StringIO()
+
+    attention_menu.run_attention_menu(
+        output=output,
+        clear_fn=lambda: None,
+        workspace_root=tmp_path,
+        portfolio_id="portfolio_exact",
+        input_fn=_inputs(["T", ""]),
+    )
+
+    rendered = output.getvalue()
+    assert calls == ["portfolio_exact"]
+    assert "Technical Details / Provenance" in rendered
+    assert "Contract: vitrine_attention_next_actions_v1" in rendered
+    assert "Evaluation: evaluated" in rendered
+    assert "Observed state revision: 9" in rendered
+    assert "Portfolio ID: portfolio_exact" in rendered
+    assert "Code: vitrine_selection_unplaced" in rendered
+    assert "Class: workflow" in rendered
+    assert "Count unit: selections" in rendered
+    assert "Reasons: working_composition.selection_unplaced" in rendered
     assert "Action ID: open_candidate_review" in rendered
 
 
@@ -94,7 +147,7 @@ def test_main_menu_option_six_routes_workspace_attention(
     output = io.StringIO()
 
     result = menu.run_menu(
-        input_fn=_inputs(["6", "", "Q"]),
+        input_fn=_inputs(["6", "Q"]),
         output=output,
         clear_fn=lambda: None,
     )
@@ -102,6 +155,7 @@ def test_main_menu_option_six_routes_workspace_attention(
     assert result == 0
     assert len(routed) == 1
     assert routed[0]["portfolio_id"] is None
+    assert routed[0]["input_fn"] is not None
 
 
 def test_portfolio_option_seven_routes_exact_portfolio_attention(
@@ -130,7 +184,7 @@ def test_portfolio_option_seven_routes_exact_portfolio_attention(
         "run_attention_menu",
         lambda **kwargs: routed.append(kwargs),
     )
-    raw_input = _inputs(["7", "", "B"])
+    raw_input = _inputs(["7", "B"])
 
     portfolio_menu._portfolio_context(
         root=tmp_path,
@@ -145,3 +199,4 @@ def test_portfolio_option_seven_routes_exact_portfolio_attention(
     assert len(routed) == 1
     assert routed[0]["workspace_root"] == tmp_path
     assert routed[0]["portfolio_id"] == "portfolio_exact"
+    assert routed[0]["input_fn"] is raw_input

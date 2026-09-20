@@ -3,7 +3,7 @@
 - **Issue:** #95
 - **Branch:** `95-teacher-information-architecture-provenance-drilldown`
 - **Contract:** `vitrine_teacher_information_architecture_v1`
-- **Status:** Slice 6 — teacher-first Portfolio context and Profile Binding presentation
+- **Status:** Slice 7 — current teacher surfaces use teacher-first presentation with explicit provenance
 
 ## Purpose
 
@@ -290,6 +290,36 @@ preview. This slice does not change applicability, migration analysis, binding
 or migration authority, observed-state concurrency, Profile semantics, or
 persistence.
 
+## Slice 7 Attention / Next Actions presentation
+
+The guided Attention surface now presents the existing #69 teacher meaning
+without exposing its projection machinery as the default interface.
+
+Primary presentation contains:
+
+- the fixed bounded attention label;
+- the count with a teacher-readable count unit;
+- the existing owner-action label;
+- bounded notice text where present.
+
+It does not print the exact `evaluation`, observed Vitrine state revision,
+attention code/class, exact count-unit token, Portfolio ID, reason codes, or
+owner `Action ID` as primary content.
+
+`T. Technical details / provenance` exposes that complete bounded #69 projection
+state, including the contract identity and exact action reference. The same
+already-evaluated `VitrineAttentionReport` is used for both presentations; the
+technical drill-down does not trigger another attention evaluation.
+
+The direct/noninteractive attention CLI remains intentionally exact and
+technical.
+
+This slice does not change the #69 attention taxonomy, aggregation,
+currentness/completion semantics, counts, notices, owner-action routing meaning,
+Portfolio scoping, Snapshot interpretation, or read-only guarantees. Issue #103
+continues to own changes to what constitutes completed/unfinished Portfolio
+work.
+
 ## Privacy and provenance boundaries
 
 Viewing the presentation projection or its technical drill-down must not:
@@ -304,5 +334,6 @@ Viewing the presentation projection or its technical drill-down must not:
 - build a Snapshot;
 - authorize or deliver disclosure.
 
-Later #95 slices extend this same hierarchy to remaining Profile/context and
-Attention surfaces without changing their canonical authority.
+Slices 1-7 now cover the current teacher surfaces owned by #95. Issue closure
+still requires the complete acceptance/repository/package audit; later sibling
+issues must preserve this hierarchy without changing canonical authority.

@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #95 Slice 7 teacher-first Attention / Next Actions presentation with
+  exact #69 evaluation/state/code/class/reason/action provenance behind
+  Technical Details / Provenance and unchanged attention semantics.
 - Issue #95 Slice 6 teacher-first Portfolio selection/context and Profile
   Binding presentation, with exact IDs and migration lineage retained behind
   Technical Details / Provenance and exact bind/migrate authority unchanged.

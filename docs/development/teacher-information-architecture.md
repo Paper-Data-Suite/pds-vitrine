@@ -151,6 +151,27 @@ the exact Profile ID only for disambiguation; selection still returns the exact
 Do not infer section names from IDs. Use canonical `ProfileSectionDefinition`
 labels and purposes already present in the exact Profile Revision.
 
+## Attention / Next Actions
+
+Slice 7 applies the hierarchy to the #69 read-only attention report:
+
+```text
+VitrineAttentionReport
+-> teacher summary label/count + owner-action label
+-> Technical Details / Provenance
+-> unchanged direct CLI exact output
+```
+
+Do not rederive or translate the attention taxonomy in the presentation layer.
+The fixed summary label and next-action route already come from #69.
+
+Technical inspection must reuse the exact report already evaluated for the
+teacher screen. It must not trigger another evaluation, execute the action, or
+write acknowledgement/seen state.
+
+Issue #103 owns future semantic changes to attention completion. #95 only changes
+which existing fields are primary versus technical presentation.
+
 ## Extension rule
 
 Future #95 slices should extend `teacher_presentation.py` or adjacent transient
@@ -170,19 +191,23 @@ derivation while implementing this presentation issue; those belong to #96-#103.
 
 ## Focused validation
 
-Run after Slice 6:
+Run after Slice 7:
 
 ```powershell
 python -m pytest -q `
-  tests/test_portfolio_menu.py `
-  tests/test_teacher_presentation.py `
-  tests/test_profile_services.py
+  tests/test_attention_menu.py `
+  tests/test_attention_cli.py `
+  tests/test_attention_acceptance_matrix.py `
+  tests/test_validate_attention_next_actions.py
+
+python scripts/validate_attention_next_actions.py
 
 python -m ruff check `
-  vitrine/teacher_presentation.py `
+  vitrine/attention_menu.py `
+  vitrine/menu.py `
   vitrine/portfolio_menu.py `
-  tests/test_teacher_presentation.py `
-  tests/test_portfolio_menu.py
+  tests/test_attention_menu.py `
+  scripts/validate_attention_next_actions.py
 
 python -m mypy
 python scripts/check_documentation.py

@@ -64,6 +64,11 @@ complete canonical `SnapshotBuildPlan` record. The ordinary planning provider
 is unconfigured and fails closed. Preparation persists Request and Plan as
 separate records; building later executes one exact immutable Plan.
 
+Attention / Next Actions uses fixed teacher-readable labels/counts and owner
+workflow names by default. Stable attention codes, reason codes, action IDs, and
+the observed state revision remain available through Technical Details /
+Provenance; the direct attention CLI remains exact.
+
 The semantic boundaries remain visible:
 
 ```text

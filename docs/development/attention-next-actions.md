@@ -182,9 +182,15 @@ action.
 Main menu option 6 shows workspace attention.
 Portfolio option 7 shows the exact Portfolio scope.
 
-The menu displays fixed owner-action labels and stable action IDs. It returns to
-the caller after one current projection; existing workflow surfaces still own
-all mutations and confirmations.
+The guided menu displays fixed teacher-facing summary labels/counts and
+human-readable owner-action labels. Stable codes, classes, reason codes, exact
+Portfolio scope, observed state revision, and action IDs are secondary and
+available through `Technical Details / Provenance`.
+
+The technical view must render the same already-evaluated
+`VitrineAttentionReport`; do not reevaluate simply because the teacher opens
+provenance. The direct CLI remains exact and technical. Existing workflow
+surfaces still own all mutations and confirmations.
 
 ## Core module-operations handoff
 
