@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from vitrine.candidate_inbox import CandidateInboxDetail
+from vitrine.models import PortfolioProfileBinding, PortfolioProfileRevision
 from vitrine.portfolio_services import show_portfolio
 from vitrine.profile_services import (
     get_portfolio_profile_binding,
@@ -68,6 +69,34 @@ class TeacherCandidateDetail:
     attention_needed: bool
     selected_state: str
     eligible_sections: tuple[TeacherCandidateSection, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class TeacherProfileSection:
+    """One exact Profile section plus its human-readable presentation."""
+
+    section_id: str
+    label: str
+    purpose: str
+    obligation: str
+
+
+@dataclass(frozen=True, slots=True)
+class TeacherProfileBinding:
+    """Teacher-first projection over one exact active Profile Binding."""
+
+    contract_version: str
+    portfolio_id: str
+    profile_binding_id: str
+    portfolio_profile_id: str
+    profile_revision: int
+    profile_label: str
+    purpose_kind: str
+    predecessor_binding_id: str | None
+    binding_reason: str | None
+    bound_at: str
+    sections: tuple[TeacherProfileSection, ...]
+    audience_rule_count: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,6 +169,40 @@ def build_teacher_candidate_detail(
     )
 
 
+def build_teacher_profile_binding(
+    binding: PortfolioProfileBinding,
+    revision: PortfolioProfileRevision,
+) -> TeacherProfileBinding:
+    """Project one exact Binding/Revision pair without changing authority."""
+
+    if binding.profile_revision != revision.reference:
+        raise ValueError(
+            "profile_binding_revision_mismatch: exact Binding and Revision differ"
+        )
+    return TeacherProfileBinding(
+        contract_version=TEACHER_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
+        portfolio_id=binding.portfolio_id,
+        profile_binding_id=binding.profile_binding_id,
+        portfolio_profile_id=binding.profile_revision.portfolio_profile_id,
+        profile_revision=binding.profile_revision.profile_revision,
+        profile_label=revision.label,
+        purpose_kind=revision.purpose_kind,
+        predecessor_binding_id=binding.predecessor_binding_id,
+        binding_reason=binding.binding_reason,
+        bound_at=binding.bound_at.isoformat(),
+        sections=tuple(
+            TeacherProfileSection(
+                section_id=section.section_id,
+                label=section.label,
+                purpose=section.purpose,
+                obligation=section.obligation,
+            )
+            for section in revision.sections
+        ),
+        audience_rule_count=len(revision.audience_rules),
+    )
+
+
 def build_teacher_portfolio_overview(
     workspace_root: str | Path,
     portfolio_id: str,
@@ -202,8 +265,11 @@ __all__ = [
     "TeacherCandidateDetail",
     "TeacherCandidateSection",
     "TeacherPortfolioOverview",
+    "TeacherProfileBinding",
+    "TeacherProfileSection",
     "TeacherSubjectLink",
     "build_teacher_candidate_detail",
+    "build_teacher_profile_binding",
     "build_teacher_portfolio_overview",
     "teacher_term",
 ]

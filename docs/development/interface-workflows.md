@@ -10,7 +10,8 @@ context and current workflow meaning; opaque canonical identifiers remain
 available through explicit Technical Details / Provenance views and remain the
 actual authority for exact operations.
 
-The teacher path selects a current Subject by label and exact ID, then progresses
+The teacher path selects a current Subject and Portfolio through recognizable
+teacher-facing labels while retaining exact IDs as authority, then progresses
 through Portfolio creation, exact Profile Binding or explicit migration after an
 impact preview, configured Candidate discovery and provenance review, Selection
 Proposal/Decision or Direct Selection, lifecycle changes, Placement and Arrangement, Working
@@ -74,8 +75,9 @@ Edition verification != Export verification
 sealed Edition != current-Edition pointer
 ```
 
-Candidate review shows decision-relevant provenance, relationship assertions,
-availability, conditions, exact IDs, and eligible sections without displaying
+Candidate review shows decision-relevant Portfolio context, availability,
+conditions, and eligible sections by default; exact bounded provenance remains
+available through Technical Details / Provenance without displaying
 raw producer bodies. Candidate condition state and evaluation reason codes are
 reported separately; evaluation diagnostics are never relabeled as unresolved
 conditions. Condition acknowledgement is explicit and is not described

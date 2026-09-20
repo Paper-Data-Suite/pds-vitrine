@@ -7,8 +7,9 @@ from types import SimpleNamespace
 import pytest
 from pds_core.menu_navigation import QuitPDS, ReturnToMainMenu
 
-from vitrine import portfolio_menu
+from vitrine import portfolio_menu, teacher_presentation
 from vitrine.models import ActorAttribution
+from vitrine.teacher_presentation import TeacherProfileBinding
 from vitrine.workflow_context import default_workflow_dependencies
 
 ACTOR = ActorAttribution(
@@ -180,17 +181,108 @@ def test_portfolio_subject_route_uses_exact_subject_id(
     assert routed[0]["workspace_root"] == tmp_path
 
 
+def test_portfolio_choice_prioritizes_recognizable_context_without_id(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    summary = SimpleNamespace(
+        portfolio_id="portfolio_exact",
+        title_snapshot="Improvement Portfolio",
+        subject_display_label="Jordan Rivera",
+    )
+    monkeypatch.setattr(portfolio_menu, "list_portfolios", lambda _: (summary,))
+    output = io.StringIO()
+
+    selected = portfolio_menu._choose_portfolio(
+        root=tmp_path,
+        input_fn=_inputs(["1"]),  # type: ignore[arg-type]
+        output=output,
+        clear_fn=lambda: None,
+    )
+
+    rendered = output.getvalue()
+    assert selected == "portfolio_exact"
+    assert "Jordan Rivera — Improvement Portfolio" in rendered
+    assert "portfolio_exact" not in rendered
+
+
+def test_profile_binding_default_is_teacher_first_and_technical_is_exact() -> None:
+    view = TeacherProfileBinding(
+        contract_version="vitrine_teacher_information_architecture_v1",
+        portfolio_id="portfolio_exact",
+        profile_binding_id="binding_exact",
+        portfolio_profile_id="profile_exact",
+        profile_revision=2,
+        profile_label="Starter Improvement Portfolio",
+        purpose_kind="improvement",
+        predecessor_binding_id="binding_previous",
+        binding_reason="teacher_selected",
+        bound_at="2026-09-20T12:00:00+00:00",
+        sections=(
+            teacher_presentation.TeacherProfileSection(
+                section_id="baseline",
+                label="Baseline Evidence",
+                purpose="Establish a starting point.",
+                obligation="required",
+            ),
+        ),
+        audience_rule_count=2,
+    )
+    default = io.StringIO()
+    technical = io.StringIO()
+
+    portfolio_menu._render_teacher_profile_binding(default, view)
+    portfolio_menu._render_teacher_profile_revision(default, view)
+    portfolio_menu._render_profile_binding_technical_details(
+        technical,
+        view,
+        (),
+    )
+
+    primary = default.getvalue()
+    provenance = technical.getvalue()
+    assert "Profile: Starter Improvement Portfolio" in primary
+    assert "Purpose: Improvement" in primary
+    assert "Revision: 2" in primary
+    assert "Baseline Evidence — Required" in primary
+    assert "binding_exact" not in primary
+    assert "profile_exact" not in primary
+    assert "baseline" not in primary
+
+    assert "Technical Details / Provenance" in provenance
+    assert "Portfolio ID: portfolio_exact" in provenance
+    assert "Profile Binding ID: binding_exact" in provenance
+    assert "Profile ID: profile_exact" in provenance
+    assert "Baseline Evidence: baseline" in provenance
+
+
 def test_existing_profile_binding_is_inspectable_without_automatic_migration(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     reference = SimpleNamespace(portfolio_profile_id="profile", profile_revision=1)
     binding = SimpleNamespace(
-        profile_binding_id="binding_current", profile_revision=reference
+        portfolio_id="portfolio_exact",
+        profile_binding_id="binding_current",
+        profile_revision=reference,
+        predecessor_binding_id=None,
+        binding_reason="teacher_selected",
+        bound_at=SimpleNamespace(
+            isoformat=lambda: "2026-09-20T12:00:00+00:00"
+        ),
     )
     revision = SimpleNamespace(
+        reference=reference,
         label="Current Profile",
         purpose_kind="growth",
-        sections=(SimpleNamespace(section_id="reflection"),),
+        sections=(
+            SimpleNamespace(
+                section_id="reflection",
+                label="Reflection",
+                purpose="Explain the evidence.",
+                obligation="required",
+            ),
+        ),
+        audience_rules=(),
     )
     monkeypatch.setattr(
         portfolio_menu, "get_portfolio_profile_binding", lambda *_: binding
@@ -223,7 +315,25 @@ def test_profile_migration_preserves_exact_observed_revision(
         portfolio_menu,
         "get_portfolio_profile_binding",
         lambda *_: SimpleNamespace(
-            profile_binding_id="binding_current", profile_revision=current
+            portfolio_id="portfolio_exact",
+            profile_binding_id="binding_current",
+            profile_revision=current,
+            predecessor_binding_id=None,
+            binding_reason="teacher_selected",
+            bound_at=SimpleNamespace(
+                isoformat=lambda: "2026-09-20T12:00:00+00:00"
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "get_profile_revision",
+        lambda *_: SimpleNamespace(
+            reference=current,
+            label="Current",
+            purpose_kind="improvement",
+            sections=(),
+            audience_rules=(),
         ),
     )
     monkeypatch.setattr(portfolio_menu, "observe_profile_state_revision", lambda _: 17)
@@ -231,8 +341,16 @@ def test_profile_migration_preserves_exact_observed_revision(
         portfolio_menu,
         "list_bindable_profile_revisions",
         lambda _: (
-            SimpleNamespace(label="Current", reference=current),
-            SimpleNamespace(label="Target", reference=target),
+            SimpleNamespace(
+                label="Current",
+                purpose_kind="improvement",
+                reference=current,
+            ),
+            SimpleNamespace(
+                label="Target",
+                purpose_kind="improvement",
+                reference=target,
+            ),
         ),
     )
     impact = SimpleNamespace(added=(), removed=(), replaced=(), materially_changed=())

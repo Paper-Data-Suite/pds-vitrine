@@ -3,7 +3,7 @@
 - **Issue:** #95
 - **Branch:** `95-teacher-information-architecture-provenance-drilldown`
 - **Contract:** `vitrine_teacher_information_architecture_v1`
-- **Status:** Slice 5 — teacher-first Portfolio through Build / Export preparation presentation
+- **Status:** Slice 6 — teacher-first Portfolio context and Profile Binding presentation
 
 ## Purpose
 
@@ -257,6 +257,38 @@ satisfaction, obligation acknowledgement, materialization, omission, Reflection
 rendering, fingerprints, authority, Snapshot execution, verification, Export,
 recovery, or current-pointer behavior. Student-facing rendering and post-build
 Edition management remain #101 and #102.
+
+## Slice 6 Portfolio context and Profile Binding presentation
+
+Portfolio open/list surfaces now use recognizable Portfolio/student display
+context without printing the opaque Portfolio ID as the ordinary subtitle. The
+numbered choice still returns the exact canonical `portfolio_id`.
+
+Profile Binding now presents the active Profile as:
+
+```text
+Profile: <human-readable label>
+Purpose: <human-readable purpose>
+Revision: <number>
+```
+
+and the ordinary Profile inspection uses canonical section labels, purposes, and
+obligations rather than section IDs.
+
+`T. Technical details / provenance` exposes the exact Portfolio ID, Profile
+Binding ID, Profile ID/revision, predecessor Binding, binding timestamp/reason,
+exact section IDs, and exact migration provenance. Human-readable labels remain
+display-only.
+
+Bindable Profile Revision choices use label, purpose, and revision by default.
+If two exact Profiles have the same display tuple, the exact Profile ID appears
+only as the necessary disambiguator. The numbered choice still carries the exact
+`ProfileRevisionRef` into the unchanged bind/migrate services.
+
+Profile migration impact remains the existing exact consequential mutation
+preview. This slice does not change applicability, migration analysis, binding
+or migration authority, observed-state concurrency, Profile semantics, or
+persistence.
 
 ## Privacy and provenance boundaries
 

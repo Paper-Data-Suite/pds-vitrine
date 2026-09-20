@@ -13,6 +13,7 @@ from vitrine.teacher_presentation import (
     TEACHER_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
     TeacherCandidateDetail,
     TeacherPortfolioOverview,
+    TeacherProfileBinding,
     TeacherSubjectLink,
 )
 
@@ -219,6 +220,51 @@ def test_teacher_candidate_projection_uses_profile_section_labels_without_replac
     assert view.candidate_id == "candidate_exact"
     assert view.current_evaluation_id == "evaluation_exact"
     assert view.profile_binding_id == "binding_exact"
+
+
+def test_teacher_profile_binding_projection_preserves_exact_authority() -> None:
+    reference = SimpleNamespace(
+        portfolio_profile_id="profile_exact",
+        profile_revision=2,
+    )
+    binding = SimpleNamespace(
+        portfolio_id="portfolio_exact",
+        profile_binding_id="binding_exact",
+        profile_revision=reference,
+        predecessor_binding_id="binding_previous",
+        binding_reason="teacher_selected",
+        bound_at=SimpleNamespace(
+            isoformat=lambda: "2026-09-20T12:00:00+00:00"
+        ),
+    )
+    revision = SimpleNamespace(
+        reference=reference,
+        label="Starter Improvement Portfolio",
+        purpose_kind="improvement",
+        sections=(
+            SimpleNamespace(
+                section_id="baseline",
+                label="Baseline Evidence",
+                purpose="Establish a starting point.",
+                obligation="required",
+            ),
+        ),
+        audience_rules=(SimpleNamespace(),),
+    )
+
+    view = teacher_presentation.build_teacher_profile_binding(
+        binding,  # type: ignore[arg-type]
+        revision,  # type: ignore[arg-type]
+    )
+
+    assert isinstance(view, TeacherProfileBinding)
+    assert view.profile_label == "Starter Improvement Portfolio"
+    assert view.purpose_kind == "improvement"
+    assert view.profile_revision == 2
+    assert view.sections[0].label == "Baseline Evidence"
+    assert view.profile_binding_id == "binding_exact"
+    assert view.portfolio_profile_id == "profile_exact"
+    assert view.sections[0].section_id == "baseline"
 
 
 def test_teacher_term_is_display_only_humanization() -> None:

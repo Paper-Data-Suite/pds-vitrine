@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #95 Slice 6 teacher-first Portfolio selection/context and Profile
+  Binding presentation, with exact IDs and migration lineage retained behind
+  Technical Details / Provenance and exact bind/migrate authority unchanged.
 - Issue #95 Slice 5 teacher-first Build / Export preparation with the exact
   #68 preparation retained for direct CLI and explicit Technical Details /
   Provenance, without changing prepared execution or Snapshot semantics.

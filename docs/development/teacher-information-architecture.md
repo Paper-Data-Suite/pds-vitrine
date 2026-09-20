@@ -129,6 +129,28 @@ human labels make exact disambiguation necessary.
 Opening provenance must not reprepare, acquire source bytes, request authority,
 or write Snapshot state.
 
+## Portfolio context and Profile Binding
+
+Slice 6 extends the transient presentation boundary to active Profile Binding:
+
+```text
+PortfolioProfileBinding + exact PortfolioProfileRevision
+-> TeacherProfileBinding
+-> teacher-first Profile view
+-> Technical Details / Provenance
+-> unchanged bind/migrate services
+```
+
+Portfolio list/open choices remove the opaque Portfolio ID from ordinary
+presentation while retaining the selected exact `portfolio_id` as authority.
+
+Bindable revision labels are presentation only. Duplicate display tuples expose
+the exact Profile ID only for disambiguation; selection still returns the exact
+`ProfileRevisionSummary.reference`.
+
+Do not infer section names from IDs. Use canonical `ProfileSectionDefinition`
+labels and purposes already present in the exact Profile Revision.
+
 ## Extension rule
 
 Future #95 slices should extend `teacher_presentation.py` or adjacent transient
@@ -148,22 +170,19 @@ derivation while implementing this presentation issue; those belong to #96-#103.
 
 ## Focused validation
 
-Run after Slice 5:
+Run after Slice 6:
 
 ```powershell
 python -m pytest -q `
-  tests/test_current_portfolio_surface.py `
-  tests/test_current_portfolio_menu.py `
-  tests/test_current_portfolio_cli.py `
-  tests/test_teacher_presentation.py
-
-python scripts/validate_current_portfolio_build_export.py
+  tests/test_portfolio_menu.py `
+  tests/test_teacher_presentation.py `
+  tests/test_profile_services.py
 
 python -m ruff check `
-  vitrine/current_portfolio_surface.py `
-  vitrine/current_portfolio_menu.py `
-  tests/test_current_portfolio_surface.py `
-  tests/test_current_portfolio_menu.py
+  vitrine/teacher_presentation.py `
+  vitrine/portfolio_menu.py `
+  tests/test_teacher_presentation.py `
+  tests/test_portfolio_menu.py
 
 python -m mypy
 python scripts/check_documentation.py
