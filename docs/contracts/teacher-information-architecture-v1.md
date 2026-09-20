@@ -3,7 +3,7 @@
 - **Issue:** #95
 - **Branch:** `95-teacher-information-architecture-provenance-drilldown`
 - **Contract:** `vitrine_teacher_information_architecture_v1`
-- **Status:** Slice 2 — Portfolio and Candidate Inbox presentation
+- **Status:** Slice 3 — Portfolio, Candidate Inbox, and guided Candidate Review presentation
 
 ## Purpose
 
@@ -151,6 +151,34 @@ fabricating meaning.
 
 Issue #96 still owns richer evidence naming, representation differentiation,
 Profile-role guidance, and evidence preview.
+
+## Slice 3 guided Candidate Review presentation
+
+Guided Candidate Review now reuses the teacher Candidate projection for its
+ordinary review context. The default review screen presents evidence, student,
+Portfolio, Profile, eligibility/status/currentness, attention, Selection state,
+and human-readable eligible Portfolio sections before any technical identity.
+
+The exact prior review projection remains available through
+`T. Technical details / provenance`, including Entry/Candidate/Profile Binding,
+current-versus-curation Evaluation IDs, Core Publication/producer/Artifact
+identity, exact section IDs, Arrangement pointer revisions, Proposal IDs, and
+Selection/Evaluation/Placement IDs.
+
+Ordinary numbered section, Profile-requirement, active-Selection, and pending-
+Proposal choices no longer require the teacher to read opaque IDs. The chosen
+objects still carry their exact canonical IDs into the unchanged #66 planners
+and executors.
+
+Consequential mutation confirmation screens may continue to show the exact
+frozen identifiers, state revisions, and Arrangement-pointer observations that
+the teacher is explicitly about to confirm. Hiding those values is not required
+when they are directly relevant to replay/concurrency safety.
+
+This slice does not alter Candidate eligibility, available sections, section
+capacity, Proposal/Selection/Placement validity, curation authority, or action
+planning. Issue #97 owns domain-correct Selection/Placement choice behavior and
+Issue #98 owns broader transition/confirmation mechanics.
 
 ## Privacy and provenance boundaries
 

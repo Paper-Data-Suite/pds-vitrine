@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #95 Slice 3 teacher-first guided Candidate Review list/detail and
+  ordinary numbered choices, with the former exact review projection preserved
+  behind Technical Details / Provenance and unchanged #66 planners/executors.
 - Issue #95 Slice 2 teacher-first Candidate Inbox detail with an explicit
   Technical Details / Provenance drill-down, preserving the existing exact
   Candidate read model, privacy boundary, and read-only semantics.

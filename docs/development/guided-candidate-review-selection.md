@@ -184,6 +184,29 @@ The Portfolio menu routes option 4 to `run_candidate_review_menu(...)`:
 Keep those actions separate. The guided menu should call `candidate_review.py`
 planners/executors rather than constructing canonical curation records directly.
 
+## Teacher information architecture
+
+Issue #95 changes only `candidate_review_menu.py` presentation. The canonical
+read/planning path remains:
+
+```text
+Candidate Inbox
+-> CandidateReviewDetail
+-> teacher presentation
+-> exact #66 planner/executor
+```
+
+The default detail should reuse `build_teacher_candidate_detail(...)` rather
+than reformatting opaque Inbox identity as teacher context. The exact #66 detail
+is retained behind `T. Technical details / provenance`.
+
+For ordinary numbered choices, show section/Profile-requirement/Selection/
+Proposal labels and status where available. The selected object, not the
+displayed string, supplies the exact canonical ID to the planner.
+
+Do not remove exact replay/concurrency observations from a final mutation
+confirmation when those observations are material to the guarded action.
+
 ## Direct CLI
 
 The task-level commands are registered under `candidate` by

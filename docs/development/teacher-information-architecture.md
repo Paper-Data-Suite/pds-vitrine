@@ -69,6 +69,24 @@ The direct Candidate Inbox CLI remains an exact technical interface in this
 slice. Issue #95 is changing the guided teacher information hierarchy, not
 removing diagnostic detail from noninteractive tooling.
 
+## Guided Candidate Review
+
+Slice 3 applies the same split to the interactive #66 review surface:
+
+```text
+CandidateReviewDetail
+-> TeacherCandidateDetail for primary context
+-> exact review detail for Technical Details / Provenance
+-> unchanged planners/executors for actions
+```
+
+The list and ordinary numbered pickers humanize stable state and prefer labels.
+They must still pass the original exact objects/IDs into the existing planning
+functions.
+
+Final mutation reviews are a distinct layer: exact frozen IDs/revisions may
+remain visible when they are part of the transaction the teacher is confirming.
+
 ## Extension rule
 
 Future #95 slices should extend `teacher_presentation.py` or adjacent transient
@@ -88,19 +106,20 @@ derivation while implementing this presentation issue; those belong to #96-#103.
 
 ## Focused validation
 
-Run after Slice 2:
+Run after Slice 3:
 
 ```powershell
 python -m pytest -q `
   tests/test_teacher_presentation.py `
-  tests/test_portfolio_menu.py `
-  tests/test_candidate_inbox_menu.py
+  tests/test_candidate_inbox_menu.py `
+  tests/test_candidate_review_menu.py `
+  tests/test_candidate_review.py
+
+python scripts/validate_candidate_review_selection.py
 
 python -m ruff check `
-  vitrine/teacher_presentation.py `
-  vitrine/candidate_inbox_menu.py `
-  tests/test_teacher_presentation.py `
-  tests/test_candidate_inbox_menu.py
+  vitrine/candidate_review_menu.py `
+  tests/test_candidate_review_menu.py
 
 python -m mypy
 python scripts/check_documentation.py
