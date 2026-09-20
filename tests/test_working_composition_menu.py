@@ -89,6 +89,16 @@ def _preparation(
         presentation_class="student_portfolio",
         retention_policy_reference=None,
     )
+    selection = SimpleNamespace(
+        selection_id="selection_exact",
+        candidate_id="candidate_exact",
+        candidate_display_snapshot="Exact Work",
+        candidate_condition_state="ready_for_consideration",
+        unresolved_condition_codes=(),
+        placement_ids=("placement_exact",),
+        section_ids=("baseline",),
+        is_placed=True,
+    )
     payload = SimpleNamespace(
         selection_ids=("selection_exact",),
         placement_ids=("placement_exact",),
@@ -118,7 +128,7 @@ def _preparation(
         disposition=disposition,
         payload=payload,
         sections=(section,),
-        selections=(),
+        selections=(selection,),
         unplaced_selection_ids=(),
         requirements=(requirement,),
         source_observations=(source,),
@@ -158,9 +168,11 @@ def test_guided_menu_prepares_read_only_and_renders_exact_section_order(
 
     assert prepared == [(tmp_path, "portfolio_exact", None)]
     text = output.getvalue()
-    assert "1. Baseline (baseline)" in text
-    assert "Placement placement_exact; Selection selection_exact" in text
+    assert "1. Baseline — Required" in text
     assert "Exact Work" in text
+    assert "Placement placement_exact" not in text
+    assert "Selection selection_exact" not in text
+    assert "arrangement_exact" not in text
 
 
 def test_guided_menu_freezes_the_exact_reviewed_preparation(
@@ -271,9 +283,98 @@ def test_guided_menu_shows_audience_constraints_without_creating_context(
     )
 
     text = output.getvalue()
-    assert "student (student_review)" in text
+    assert "- Student" in text
+    assert "student_review" not in text
     assert "does not create an Audience Context" in text
     assert "does not authorize disclosure or build a Snapshot" in text
+
+
+def test_preparation_technical_details_preserve_exact_provenance() -> None:
+    output = io.StringIO()
+
+    working_composition_menu._render_preparation_technical_details(
+        output,
+        _preparation(),
+    )
+
+    text = output.getvalue()
+    assert "Working Composition Technical Details / Provenance" in text
+    assert "Portfolio ID: portfolio_exact" in text
+    assert "Profile Binding ID: binding_exact" in text
+    assert "Selection IDs: selection_exact" in text
+    assert "Placement IDs: placement_exact" in text
+    assert "Arrangement IDs: arrangement_exact" in text
+    assert "Baseline (baseline)" in text
+    assert "Placement placement_exact; Selection selection_exact" in text
+    assert "Baseline evidence (baseline_rule)" in text
+    assert "Publication publication_exact" in text
+    assert "student (student_review)" in text
+
+
+def test_frozen_composition_default_hides_exact_identity_but_technical_preserves_it() -> None:
+    composition = SimpleNamespace(
+        composition_revision=2,
+        profile_binding_id="binding_exact",
+        profile_revision=SimpleNamespace(
+            portfolio_profile_id="profile_exact",
+            profile_revision=1,
+        ),
+        predecessor_composition_revision=1,
+        created_by=ACTOR,
+        created_at=SimpleNamespace(
+            isoformat=lambda: "2026-09-07T00:00:00+00:00"
+        ),
+        composition_note="Teacher note",
+        selection_ids=("selection_exact",),
+        placement_ids=("placement_exact",),
+        arrangement_ids=("arrangement_exact",),
+    )
+    inventory = SimpleNamespace(
+        coherence_state="coherent",
+        unresolved_obligation_codes=(),
+        included_rationale_ids=("rationale_exact",),
+        included_curation_revisions=(),
+        applicable_review_decision_ids=("review_exact",),
+        related_profile_requirement_ids=("baseline_rule",),
+    )
+    view = SimpleNamespace(
+        composition=composition,
+        inventory=inventory,
+        pointer_revision=3,
+    )
+
+    default = io.StringIO()
+    working_composition_menu._render_composition_view(
+        default,
+        view,
+        heading="Current frozen Working Composition",
+    )
+    rendered = default.getvalue()
+    assert "Revision: 2" in rendered
+    assert "Selections included: 1" in rendered
+    assert "Coherence: Coherent" in rendered
+    assert "binding_exact" not in rendered
+    assert "selection_exact" not in rendered
+    assert "placement_exact" not in rendered
+    assert "arrangement_exact" not in rendered
+    assert "review_exact" not in rendered
+    assert "baseline_rule" not in rendered
+
+    technical = io.StringIO()
+    working_composition_menu._render_composition_technical_details(
+        technical,
+        view,
+        heading="Current frozen Working Composition",
+    )
+    exact = technical.getvalue()
+    assert "Technical Details / Provenance" in exact
+    assert "Profile Binding: binding_exact" in exact
+    assert "Selection IDs: selection_exact" in exact
+    assert "Placement IDs: placement_exact" in exact
+    assert "Arrangement IDs: arrangement_exact" in exact
+    assert "Composition pointer revision: 3" in exact
+    assert "Applicable Review Decision IDs: review_exact" in exact
+    assert "Related Profile Requirement IDs: baseline_rule" in exact
 
 
 def test_guided_menu_reads_exact_historical_composition_revision(
@@ -325,5 +426,7 @@ def test_guided_menu_reads_exact_historical_composition_revision(
     )
 
     assert 2 in requested
-    assert "Working Composition revision 2" in output.getvalue()
-    assert "Revision: 2" in output.getvalue()
+    rendered = output.getvalue()
+    assert "Working Composition revision 2" in rendered
+    assert "Revision: 2" in rendered
+    assert "Profile Binding:" not in rendered

@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #95 Slice 4 teacher-first Working Composition inspection/preparation
+  panels with explicit Technical Details / Provenance, while keeping the exact
+  freeze preview and all #67 preparation/replay/freeze semantics unchanged.
 - Issue #95 Slice 3 teacher-first guided Candidate Review list/detail and
   ordinary numbered choices, with the former exact review projection preserved
   behind Technical Details / Provenance and unchanged #66 planners/executors.

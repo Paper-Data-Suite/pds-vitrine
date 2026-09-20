@@ -87,6 +87,26 @@ functions.
 Final mutation reviews are a distinct layer: exact frozen IDs/revisions may
 remain visible when they are part of the transaction the teacher is confirming.
 
+## Working Composition
+
+Slice 4 applies the hierarchy directly to the interactive #67 menu without
+introducing another state projection:
+
+```text
+WorkingCompositionPreparation / CompositionView
+-> teacher-first renderers
+-> Technical Details / Provenance renderers
+-> unchanged exact freeze preview
+-> unchanged freeze executor
+```
+
+Use labels and stable humanized tokens already carried by the exact preparation.
+Do not rederive Composition semantics or fetch a second curation truth.
+
+The exact freeze preview is deliberately exempt from low-density hiding because
+its identities, revisions, delta, and fingerprint are the reviewed transaction
+guard.
+
 ## Extension rule
 
 Future #95 slices should extend `teacher_presentation.py` or adjacent transient
@@ -106,20 +126,19 @@ derivation while implementing this presentation issue; those belong to #96-#103.
 
 ## Focused validation
 
-Run after Slice 3:
+Run after Slice 4:
 
 ```powershell
 python -m pytest -q `
-  tests/test_teacher_presentation.py `
-  tests/test_candidate_inbox_menu.py `
-  tests/test_candidate_review_menu.py `
-  tests/test_candidate_review.py
+  tests/test_working_composition_menu.py `
+  tests/test_working_composition.py `
+  tests/test_teacher_presentation.py
 
-python scripts/validate_candidate_review_selection.py
+python scripts/validate_working_composition.py
 
 python -m ruff check `
-  vitrine/candidate_review_menu.py `
-  tests/test_candidate_review_menu.py
+  vitrine/working_composition_menu.py `
+  tests/test_working_composition_menu.py
 
 python -m mypy
 python scripts/check_documentation.py

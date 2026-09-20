@@ -205,6 +205,25 @@ create a duplicate successor revision or advance the Vitrine state.
 
 A note-only change does not create a semantic successor Composition.
 
+## Teacher presentation hierarchy
+
+Issue #95 adds a teacher-first presentation layer over this unchanged contract.
+
+Ordinary current/historical Composition and preparation views prefer
+human-readable section/evidence/Requirement/Review/audience context. Exact
+Profile Binding, Selection, Placement, Arrangement, Publication, Review,
+Requirement, pointer, and fingerprint provenance remains available through
+`Technical details / provenance`.
+
+The exact freeze preview remains intentionally exact because its frozen
+identities/revisions/fingerprint are part of the replay/concurrency evidence the
+teacher is about to confirm.
+
+Presentation labels and humanized status tokens never become derivation,
+matching, ordering, replay, authority, or persistence inputs. The original
+`WorkingCompositionPreparation` object is still passed unchanged to
+`freeze_prepared_working_composition(...)`.
+
 ## Teacher workflow
 
 Portfolio option 5 routes through the guided Working Composition menu.

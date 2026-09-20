@@ -3,7 +3,7 @@
 - **Issue:** #95
 - **Branch:** `95-teacher-information-architecture-provenance-drilldown`
 - **Contract:** `vitrine_teacher_information_architecture_v1`
-- **Status:** Slice 3 — Portfolio, Candidate Inbox, and guided Candidate Review presentation
+- **Status:** Slice 4 — teacher-first Portfolio, Candidate, Review, and Working Composition presentation
 
 ## Purpose
 
@@ -179,6 +179,40 @@ This slice does not alter Candidate eligibility, available sections, section
 capacity, Proposal/Selection/Placement validity, curation authority, or action
 planning. Issue #97 owns domain-correct Selection/Placement choice behavior and
 Issue #98 owns broader transition/confirmation mechanics.
+
+## Slice 4 Working Composition presentation
+
+Guided Working Composition now separates ordinary teacher review from exact
+Composition/provenance detail without changing the #67 preparation or freeze
+contracts.
+
+Default current/historical Composition views show revision, date/note, counts,
+coherence, unresolved obligations, Review count, and related Requirement count.
+Profile Binding IDs, exact Selection/Placement/Arrangement IDs, pointer
+revisions, rationale IDs, curation revision identities, Review Decision IDs,
+and Requirement IDs move to `Technical details / provenance`.
+
+Preparation panels likewise prefer:
+
+- Profile section labels, purposes, obligations, capacity, and evidence titles;
+- human-readable Requirement status;
+- evidence-oriented source currentness;
+- Review decision/follow-up meaning;
+- human-readable audience constraints.
+
+A preparation-level Technical Details / Provenance view preserves the exact
+Portfolio/Subject/Profile identity, state/pointer revisions, preparation
+fingerprint, semantic payload IDs, section/Arrangement/Placement provenance,
+Requirement IDs/scope, Publication currentness identities, Review targets, and
+Audience-rule IDs.
+
+The `Exact freeze preview` intentionally remains exact. Its IDs, revisions,
+fingerprint, and current-versus-prepared delta are replay/concurrency evidence
+for the consequential freeze the teacher is explicitly confirming.
+
+No Composition derivation, Requirement evaluation, ordering, source-currentness,
+Review applicability, audience rule, fingerprint, authority, or persistence
+semantics change in this slice.
 
 ## Privacy and provenance boundaries
 
