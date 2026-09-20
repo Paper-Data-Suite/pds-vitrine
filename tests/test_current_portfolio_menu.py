@@ -156,7 +156,7 @@ def test_menu_requires_exact_context_series_and_obligation_acknowledgement(
         fake_prepare,
     )
     monkeypatch.setattr(
-        "vitrine.current_portfolio_menu.print_current_portfolio_preparation",
+        "vitrine.current_portfolio_menu.print_teacher_current_portfolio_preparation",
         lambda *args, **kwargs: None,
     )
 
@@ -212,6 +212,64 @@ def test_menu_requires_exact_context_series_and_obligation_acknowledgement(
     assert "not disclosure permission or delivery" in text
 
 
+def test_menu_can_open_exact_preparation_provenance_before_confirmation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    preparation = _preparation()
+    shown: list[str] = []
+    executed: list[object] = []
+
+    monkeypatch.setattr(
+        "vitrine.current_portfolio_menu.prepare_working_composition",
+        lambda *args, **kwargs: _working(),
+    )
+    monkeypatch.setattr(
+        "vitrine.current_portfolio_menu.prepare_current_portfolio_build",
+        lambda *args, **kwargs: preparation,
+    )
+    monkeypatch.setattr(
+        "vitrine.current_portfolio_menu.print_teacher_current_portfolio_preparation",
+        lambda *args, **kwargs: shown.append("teacher"),
+    )
+    monkeypatch.setattr(
+        "vitrine.current_portfolio_menu.print_current_portfolio_technical_details",
+        lambda *args, **kwargs: shown.append("technical"),
+    )
+    monkeypatch.setattr(
+        "vitrine.current_portfolio_menu.execute_prepared_current_portfolio_build",
+        lambda *args, **kwargs: (
+            executed.append(args[1]),
+            SimpleNamespace(
+                snapshot_series_id="series_1",
+                edition_number=1,
+                snapshot_export_artifact_id="export_1",
+                export_disposition="created",
+                export_path=tmp_path / "export",
+            ),
+        )[1],
+    )
+
+    output = StringIO()
+    run_current_portfolio_build_export_menu(
+        root=tmp_path,
+        portfolio_id="portfolio_1",
+        input_fn=_input(
+            [
+                "1",
+                "T",
+                "BUILD AND EXPORT CURRENT PORTFOLIO",
+                "teacher_1",
+            ]
+        ),
+        output=output,
+        dependencies=_dependencies(),
+    )
+
+    assert shown == ["teacher", "technical"]
+    assert executed == [preparation]
+
+
 def test_menu_declined_final_confirmation_performs_no_write(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -225,7 +283,7 @@ def test_menu_declined_final_confirmation_performs_no_write(
         lambda *args, **kwargs: _preparation(),
     )
     monkeypatch.setattr(
-        "vitrine.current_portfolio_menu.print_current_portfolio_preparation",
+        "vitrine.current_portfolio_menu.print_teacher_current_portfolio_preparation",
         lambda *args, **kwargs: None,
     )
     monkeypatch.setattr(

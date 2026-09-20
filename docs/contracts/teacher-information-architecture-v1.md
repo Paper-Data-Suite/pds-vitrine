@@ -3,7 +3,7 @@
 - **Issue:** #95
 - **Branch:** `95-teacher-information-architecture-provenance-drilldown`
 - **Contract:** `vitrine_teacher_information_architecture_v1`
-- **Status:** Slice 4 — teacher-first Portfolio, Candidate, Review, and Working Composition presentation
+- **Status:** Slice 5 — teacher-first Portfolio through Build / Export preparation presentation
 
 ## Purpose
 
@@ -214,6 +214,50 @@ No Composition derivation, Requirement evaluation, ordering, source-currentness,
 Review applicability, audience rule, fingerprint, authority, or persistence
 semantics change in this slice.
 
+## Slice 5 Build / Export preparation presentation
+
+The guided Build and Export Current Portfolio workflow now uses a dedicated
+teacher preparation renderer while preserving the existing exact shared
+preparation renderer for the direct CLI and technical inspection.
+
+The default guided preparation emphasizes:
+
+- build readiness and current Working Composition revision;
+- audience class, purpose, presentation, and content constraints;
+- create/reuse/choice-required Audience Context and Snapshot Series state;
+- required Review satisfaction;
+- unresolved obligation meaning and acknowledgement state;
+- ordered Portfolio items using existing safe display labels;
+- source currentness, content class, materialization/omission meaning, and
+  whether an item contributes a file to the Export;
+- frozen Reflection generation status;
+- directory Export included/excluded counts;
+- warnings and blocking issues in teacher-readable language.
+
+The default does not lead with preparation fingerprints, state revisions,
+Portfolio/Profile IDs, Audience Context IDs, Snapshot Series IDs,
+Placement/Selection/Candidate/Evaluation/Publication IDs, provider identities,
+target paths, renderer/contract IDs, Export Plan IDs, entry-plan IDs, or
+configuration hashes.
+
+At the existing final-confirmation boundary, `T` opens
+`Technical Details / Provenance` using the unchanged exact preparation surface.
+The same exact `CurrentPortfolioBuildPreparation` remains the object passed to
+execution. A blocked preparation also permits technical inspection before the
+workflow returns.
+
+The direct/noninteractive CLI intentionally remains exact and technical.
+
+Audience Rule choice uses class/purpose labels by default. When two rules have
+the same human-readable class/purpose pair, the exact Rule ID is shown only as
+the necessary disambiguator; the selected object remains the authority.
+
+This slice does not alter #68 Audience Context/Series matching, Review
+satisfaction, obligation acknowledgement, materialization, omission, Reflection
+rendering, fingerprints, authority, Snapshot execution, verification, Export,
+recovery, or current-pointer behavior. Student-facing rendering and post-build
+Edition management remain #101 and #102.
+
 ## Privacy and provenance boundaries
 
 Viewing the presentation projection or its technical drill-down must not:
@@ -228,6 +272,5 @@ Viewing the presentation projection or its technical drill-down must not:
 - build a Snapshot;
 - authorize or deliver disclosure.
 
-Later #95 slices extend this same hierarchy to Candidate, Candidate Review,
-Working Composition, build/export, and Attention surfaces without changing their
-canonical authority.
+Later #95 slices extend this same hierarchy to remaining Profile/context and
+Attention surfaces without changing their canonical authority.

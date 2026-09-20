@@ -15,9 +15,13 @@ from vitrine.current_portfolio_execution import (
     CurrentPortfolioExecutionError,
     execute_prepared_current_portfolio_build,
 )
-from vitrine.current_portfolio_surface import print_current_portfolio_preparation
+from vitrine.current_portfolio_surface import (
+    print_current_portfolio_technical_details,
+    print_teacher_current_portfolio_preparation,
+)
 from vitrine.menu_types import InputFunction
 from vitrine.models import ActorAttribution
+from vitrine.teacher_presentation import teacher_term
 from vitrine.workflow_context import VitrineWorkflowDependencies
 from vitrine.working_composition import prepare_working_composition
 
@@ -176,7 +180,7 @@ def _acknowledge_obligations(
         return preparation
     _write(output, "", "These Composition obligations remain unresolved:")
     for code in unresolved:
-        _write(output, f"- {code}")
+        _write(output, f"- {teacher_term(code)}")
     _write(
         output,
         "",
@@ -288,14 +292,25 @@ def run_current_portfolio_build_export_menu(
             "Choose one exact Audience Rule from the bound Profile Revision.",
             "The Audience Rule constrains content; it does not identify a recipient.",
         )
+        rule_label_counts: dict[tuple[str, str], int] = {}
+        for audience_rule in working.audience_rules:
+            key = (audience_rule.audience_class, audience_rule.purpose)
+            rule_label_counts[key] = rule_label_counts.get(key, 0) + 1
+
+        def render_rule(value: object) -> str:
+            audience_class = str(getattr(value, "audience_class"))
+            purpose = str(getattr(value, "purpose"))
+            label = f"{teacher_term(audience_class)} — {teacher_term(purpose)}"
+            if rule_label_counts[(audience_class, purpose)] > 1:
+                return f"{label} — {getattr(value, 'audience_rule_id')}"
+            return label
+
         rule = _choose(
             working.audience_rules,
             input_fn=input_fn,
             output=output,
             label="Audience Rule",
-            render=lambda value: (
-                f"{value.audience_rule_id} — {value.audience_class} / {value.purpose}"
-            ),
+            render=render_rule,
         )
         if rule is None:
             return
@@ -334,7 +349,7 @@ def run_current_portfolio_build_export_menu(
         preparation = acknowledged_preparation
 
         _write(output, "")
-        print_current_portfolio_preparation(preparation, output=output)
+        print_teacher_current_portfolio_preparation(preparation, output=output)
         if not preparation.ready_for_plan_execution:
             _write(
                 output,
@@ -342,7 +357,20 @@ def run_current_portfolio_build_export_menu(
                 "This preparation is blocked. Nothing was written.",
                 "Correct Working Composition, Review, source, or Reflection state",
                 "shown above, then prepare again.",
+                "T. Technical details / provenance",
             )
+            if (
+                _read(
+                    input_fn,
+                    "T for technical details or Enter to finish: ",
+                ).casefold()
+                == "t"
+            ):
+                _write(output, "")
+                print_current_portfolio_technical_details(
+                    preparation,
+                    output=output,
+                )
             return
 
         _write(
@@ -354,13 +382,25 @@ def run_current_portfolio_build_export_menu(
             "and create/verify a local directory Export.",
             "It will not advance the current Edition pointer or deliver the Export.",
         )
-        if (
-            _read(
+        confirmation = _read(
+            input_fn,
+            (
+                "Type T for Technical Details / Provenance, or "
+                "BUILD AND EXPORT CURRENT PORTFOLIO to continue: "
+            ),
+        )
+        if confirmation.casefold() == "t":
+            _write(output, "")
+            print_current_portfolio_technical_details(
+                preparation,
+                output=output,
+            )
+            _write(output, "", "Final confirmation")
+            confirmation = _read(
                 input_fn,
                 "Type BUILD AND EXPORT CURRENT PORTFOLIO to continue: ",
             )
-            != "BUILD AND EXPORT CURRENT PORTFOLIO"
-        ):
+        if confirmation != "BUILD AND EXPORT CURRENT PORTFOLIO":
             _write(output, "Build/export cancelled. Nothing was written.")
             return
         mutation_actor = actor or _actor(input_fn)

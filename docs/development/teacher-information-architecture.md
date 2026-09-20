@@ -107,6 +107,28 @@ The exact freeze preview is deliberately exempt from low-density hiding because
 its identities, revisions, delta, and fingerprint are the reviewed transaction
 guard.
 
+## Build / Export Current Portfolio
+
+Slice 5 preserves #68's shared exact surface for CLI/audit and adds a guided
+teacher renderer beside it:
+
+```text
+CurrentPortfolioBuildPreparation
+-> teacher renderer for ordinary guided review
+-> exact renderer for Technical Details / Provenance and direct CLI
+-> unchanged exact prepared execution
+```
+
+Use only human-readable values already present in the exact preparation.
+`CurrentPortfolioPlannedItem.display_label` is an allowed safe label; richer
+producer naming remains #96.
+
+Audience Rule IDs may appear in ordinary choice presentation only when duplicate
+human labels make exact disambiguation necessary.
+
+Opening provenance must not reprepare, acquire source bytes, request authority,
+or write Snapshot state.
+
 ## Extension rule
 
 Future #95 slices should extend `teacher_presentation.py` or adjacent transient
@@ -126,19 +148,22 @@ derivation while implementing this presentation issue; those belong to #96-#103.
 
 ## Focused validation
 
-Run after Slice 4:
+Run after Slice 5:
 
 ```powershell
 python -m pytest -q `
-  tests/test_working_composition_menu.py `
-  tests/test_working_composition.py `
+  tests/test_current_portfolio_surface.py `
+  tests/test_current_portfolio_menu.py `
+  tests/test_current_portfolio_cli.py `
   tests/test_teacher_presentation.py
 
-python scripts/validate_working_composition.py
+python scripts/validate_current_portfolio_build_export.py
 
 python -m ruff check `
-  vitrine/working_composition_menu.py `
-  tests/test_working_composition_menu.py
+  vitrine/current_portfolio_surface.py `
+  vitrine/current_portfolio_menu.py `
+  tests/test_current_portfolio_surface.py `
+  tests/test_current_portfolio_menu.py
 
 python -m mypy
 python scripts/check_documentation.py

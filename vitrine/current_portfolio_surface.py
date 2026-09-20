@@ -1,4 +1,4 @@
-"""Shared teacher-facing presentation for Current Portfolio build preparation."""
+"""Exact and teacher-facing presentation for Current Portfolio build preparation."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from typing import TextIO
 
 from vitrine.current_portfolio_build import CurrentPortfolioBuildPreparation
+from vitrine.teacher_presentation import teacher_term
 
 
 def _joined(values: Iterable[str]) -> str:
@@ -227,6 +228,178 @@ def current_portfolio_preparation_lines(
     return tuple(lines)
 
 
+def _teacher_joined(values: Iterable[str]) -> str:
+    items = tuple(values)
+    return ", ".join(teacher_term(value) for value in items) if items else "None"
+
+
+def _resolution_status(disposition: str) -> str:
+    if disposition == "create":
+        return "Create new"
+    if disposition == "reuse":
+        return "Reuse existing"
+    if disposition == "requires_choice":
+        return "Exact choice required"
+    return teacher_term(disposition)
+
+
+def _materialization_status(
+    materialization_kind: str,
+    provider_disposition: str,
+    permitted_omission_reason: str | None,
+) -> str:
+    if permitted_omission_reason is not None:
+        return f"Omit — {teacher_term(permitted_omission_reason)}"
+    if materialization_kind == "copied_source":
+        return "Include authorized source file"
+    if materialization_kind == "generated_vitrine":
+        return "Generate from frozen Vitrine content"
+    if materialization_kind == "reference_only":
+        if provider_disposition == "reference_only_by_producer_contract":
+            return "Reference only — producer provides no portable file"
+        return "Reference only — no exact file provider"
+    return teacher_term(materialization_kind)
+
+
+def teacher_current_portfolio_preparation_lines(
+    preparation: CurrentPortfolioBuildPreparation,
+) -> tuple[str, ...]:
+    """Render decision-facing build context without changing exact policy."""
+
+    rule = preparation.selected_audience_rule
+    context = preparation.audience_context
+    series = preparation.snapshot_series
+    ready = preparation.ready_for_plan_execution
+    lines: list[str] = [
+        "Build and Export Current Portfolio",
+        "",
+        (
+            "Build readiness: Ready to build and export"
+            if ready
+            else f"Build readiness: Blocked — {len(preparation.blocking_reasons)} issue(s)"
+        ),
+        (
+            "Working Composition: "
+            f"revision {preparation.current_composition_revision}"
+            if preparation.current_composition_revision is not None
+            else "Working Composition: not frozen"
+        ),
+        "",
+        "Audience",
+        f"  Audience: {teacher_term(rule.audience_class)}",
+        f"  Purpose: {teacher_term(rule.purpose)}",
+        f"  Presentation: {teacher_term(rule.presentation_class)}",
+        f"  Allowed content: {_teacher_joined(rule.allowed_content_classes)}",
+        f"  Prohibited content: {_teacher_joined(rule.prohibited_content_classes)}",
+        f"  Required review: {_teacher_joined(rule.required_review_classes)}",
+        "  This rule constrains content; it is not recipient or disclosure authority.",
+        "",
+        f"Audience setup: {_resolution_status(context.disposition)}",
+        f"Snapshot series: {_resolution_status(series.disposition)}",
+    ]
+    if series.resolution_deferred_for_audience_context:
+        lines.append("Snapshot series choice follows the exact Audience Context choice.")
+
+    lines.extend(("", "Required Reviews"))
+    if preparation.required_reviews:
+        for review in preparation.required_reviews:
+            state = "Satisfied" if review.satisfied else "Missing"
+            lines.append(f"  {teacher_term(review.review_class)}: {state}")
+    else:
+        lines.append("  None required")
+    if preparation.missing_required_review_classes:
+        lines.append(
+            "  Missing: "
+            f"{_teacher_joined(preparation.missing_required_review_classes)}"
+        )
+
+    lines.extend(("", "Composition obligations"))
+    if not preparation.unresolved_obligation_codes:
+        lines.append("  No unresolved obligations")
+    else:
+        acknowledged = set(preparation.acknowledged_obligation_codes)
+        for code in preparation.unresolved_obligation_codes:
+            suffix = (
+                " — acknowledged for this build"
+                if code in acknowledged
+                else " — acknowledgement required"
+            )
+            lines.append(f"  {teacher_term(code)}{suffix}")
+        lines.append(
+            "  Acknowledgement preserves unresolved state; it does not satisfy it."
+        )
+
+    lines.extend(("", "Portfolio items"))
+    if not preparation.planned_items and not preparation.generated_reflections:
+        lines.append("  None")
+    for plan in preparation.planned_items:
+        lines.extend(
+            (
+                (
+                    f"  {plan.plan_position}. {plan.section_label} — "
+                    f"{plan.display_label}"
+                ),
+                f"    Content: {teacher_term(plan.content_class)}",
+                f"    Source: {teacher_term(plan.source_current_use_state)}",
+                "    Build handling: "
+                f"{_materialization_status(plan.materialization_kind, plan.provider_disposition, plan.permitted_omission_reason)}",
+                f"    Export file: {'Yes' if plan.export_file else 'No'}",
+            )
+        )
+    for reflection in preparation.generated_reflections:
+        section = reflection.section_label or "Portfolio"
+        lines.extend(
+            (
+                f"  {reflection.plan_position}. {section} — Reflection",
+                "    Build handling: Generate from exact frozen Reflection",
+                f"    Status: {'Ready' if reflection.supported else 'Needs attention'}",
+                f"    Export file: {'Yes' if reflection.export_file else 'No'}",
+            )
+        )
+
+    export = preparation.directory_export
+    lines.extend(
+        (
+            "",
+            "Directory Export",
+            f"  Format: {teacher_term(export.export_format)}",
+            f"  Included items: {len(export.included_entry_plan_ids)}",
+            f"  Excluded items: {len(export.excluded_entry_plan_ids)}",
+            "",
+            f"Warnings: {_teacher_joined(preparation.warnings)}",
+            f"Blocking issues: {_teacher_joined(preparation.blocking_reasons)}",
+            "",
+            "Verification is not disclosure permission.",
+            "Export creation is not delivery or sending.",
+        )
+    )
+    return tuple(lines)
+
+
+def print_teacher_current_portfolio_preparation(
+    preparation: CurrentPortfolioBuildPreparation,
+    *,
+    output: TextIO,
+) -> None:
+    """Print the low-density guided teacher preparation view."""
+
+    for line in teacher_current_portfolio_preparation_lines(preparation):
+        print(line, file=output)
+
+
+def print_current_portfolio_technical_details(
+    preparation: CurrentPortfolioBuildPreparation,
+    *,
+    output: TextIO,
+) -> None:
+    """Print the existing exact preparation as explicit technical provenance."""
+
+    print("Technical Details / Provenance", file=output)
+    print("", file=output)
+    for line in current_portfolio_preparation_lines(preparation):
+        print(line, file=output)
+
+
 def print_current_portfolio_preparation(
     preparation: CurrentPortfolioBuildPreparation,
     *,
@@ -239,4 +412,7 @@ def print_current_portfolio_preparation(
 __all__ = [
     "current_portfolio_preparation_lines",
     "print_current_portfolio_preparation",
+    "print_current_portfolio_technical_details",
+    "print_teacher_current_portfolio_preparation",
+    "teacher_current_portfolio_preparation_lines",
 ]

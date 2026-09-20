@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #95 Slice 5 teacher-first Build / Export preparation with the exact
+  #68 preparation retained for direct CLI and explicit Technical Details /
+  Provenance, without changing prepared execution or Snapshot semantics.
 - Issue #95 Slice 4 teacher-first Working Composition inspection/preparation
   panels with explicit Technical Details / Provenance, while keeping the exact
   freeze preview and all #67 preparation/replay/freeze semantics unchanged.
