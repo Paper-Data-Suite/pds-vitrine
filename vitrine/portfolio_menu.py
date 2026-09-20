@@ -47,6 +47,11 @@ from vitrine.profile_services import (
     observe_profile_state_revision,
 )
 from vitrine.subject_menu import run_subject_menu
+from vitrine.teacher_presentation import (
+    TeacherPortfolioOverview,
+    build_teacher_portfolio_overview,
+    teacher_term,
+)
 from vitrine.workflow_context import VitrineWorkflowDependencies
 from vitrine.workflow_views import (
     CandidateDetail,
@@ -154,20 +159,163 @@ def _choose_portfolio(
     return selected.portfolio_id
 
 
-def _overview(root: Path, portfolio_id: str, output: TextIO) -> None:
-    x = show_portfolio(root, portfolio_id).summary
+def _portfolio_heading(view: TeacherPortfolioOverview) -> str:
+    purpose = (
+        None
+        if view.purpose_kind is None
+        else f"{teacher_term(view.purpose_kind)} Portfolio"
+    )
+    portfolio_label = view.title or purpose or "Portfolio"
+    if (
+        view.subject_label
+        and view.subject_label.casefold() not in portfolio_label.casefold()
+    ):
+        return f"{view.subject_label} — {portfolio_label}"
+    return portfolio_label
+
+
+def _render_teacher_portfolio_overview(
+    output: TextIO,
+    view: TeacherPortfolioOverview,
+) -> None:
     _write(
         output,
         "Portfolio Overview",
         "",
-        f"Portfolio ID: {x.portfolio_id}",
-        f"Subject: {x.subject_display_label or x.portfolio_subject_id}",
-        f"Profile Binding: {x.profile_binding_id or 'not bound'}",
-        f"Candidates: {x.candidate_count}",
-        f"Active Selections: {x.active_selection_count}",
-        f"Working Composition: {x.current_composition_revision or 'not frozen'}",
-        f"Snapshot Series: {x.snapshot_series_count}",
+        _portfolio_heading(view),
+        f"Student: {view.subject_label or 'Unavailable'}",
+        "Purpose: "
+        + (
+            teacher_term(view.purpose_kind)
+            if view.purpose_kind is not None
+            else "Unavailable"
+        ),
+        f"Profile: {view.profile_label or 'Not bound'}",
     )
+    if view.profile_revision is not None:
+        _write(output, f"Profile revision: {view.profile_revision}")
+
+    _write(output, "", "Student / class links")
+    if not view.subject_links:
+        _write(output, "- No current class links.")
+    for link in view.subject_links:
+        _write(
+            output,
+            f"- {link.school_year} / {link.class_id} / ID {link.student_id}",
+        )
+
+    composition = (
+        "not frozen"
+        if view.current_composition_revision is None
+        else f"revision {view.current_composition_revision}"
+    )
+    _write(
+        output,
+        "",
+        "Portfolio state",
+        f"Evidence Candidates: {view.candidate_count}",
+        f"Active Selections: {view.active_selection_count}",
+        f"Working Composition: {composition}",
+        f"Current Portfolio Editions: {view.current_edition_count}",
+    )
+
+
+def _render_portfolio_technical_details(
+    output: TextIO,
+    view: TeacherPortfolioOverview,
+) -> None:
+    _write(
+        output,
+        "Technical Details / Provenance",
+        "",
+        "Vitrine identity",
+        f"Portfolio ID: {view.portfolio_id}",
+        f"Portfolio Subject ID: {view.portfolio_subject_id}",
+        "",
+        "Profile provenance",
+        f"Profile Binding ID: {view.profile_binding_id or '(none)'}",
+        f"Profile ID: {view.portfolio_profile_id or '(none)'}",
+        "Profile revision: "
+        + (
+            str(view.profile_revision)
+            if view.profile_revision is not None
+            else "(none)"
+        ),
+        "",
+        "Subject link provenance",
+    )
+    if not view.subject_links:
+        _write(output, "- No current Subject links.")
+    for link in view.subject_links:
+        _write(
+            output,
+            f"- Subject Link ID: {link.subject_link_id}",
+            f"  Class-qualified student: {link.school_year} / "
+            f"{link.class_id} / {link.student_id}",
+            f"  Status: {link.status}",
+            f"  Resolution: {link.current_resolution}",
+        )
+    _write(
+        output,
+        "",
+        "State summary",
+        f"Candidate count: {view.candidate_count}",
+        f"Active Selection count: {view.active_selection_count}",
+        "Working Composition revision: "
+        + (
+            str(view.current_composition_revision)
+            if view.current_composition_revision is not None
+            else "(none)"
+        ),
+        f"Snapshot Series: {view.snapshot_series_count}",
+        f"Current Edition count: {view.current_edition_count}",
+        "",
+        "These identifiers are diagnostic/provenance context. Human-readable",
+        "labels are display-only and do not replace canonical authority.",
+    )
+
+
+def _overview_workflow(
+    *,
+    root: Path,
+    portfolio_id: str,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> None:
+    while True:
+        view = build_teacher_portfolio_overview(root, portfolio_id)
+        clear_fn()
+        _render_teacher_portfolio_overview(output, view)
+        _write(
+            output,
+            "",
+            "1. View / manage Subject details",
+            "T. Technical details / provenance",
+            "B. Back",
+            "M. Main Menu",
+            "Q. Quit",
+        )
+        choice = _read(input_fn, "Choice: ")
+        if choice.casefold() == "t":
+            clear_fn()
+            _render_portfolio_technical_details(output, view)
+            _pause(input_fn)
+            continue
+        navigation = _navigation(choice)
+        if navigation is not None:
+            return
+        if choice == "1":
+            run_subject_menu(
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                portfolio_subject_id=view.portfolio_subject_id,
+                workspace_root=root,
+            )
+            continue
+        _write(output, "Please choose 1, T, B, M, or Q.")
+        _pause(input_fn)
 
 
 def _profile_context(input_fn: InputFunction) -> ProfileBindingContext:
@@ -577,7 +725,7 @@ def _portfolio_context(
             output,
             f"Portfolio — {detail.summary.title_snapshot or detail.summary.subject_display_label or portfolio_id}",
             "",
-            "1. Overview / Subject Links",
+            "1. Portfolio Overview",
             "2. Profile Binding",
             "3. Discover Candidates",
             "4. Review Candidates / Selections",
@@ -606,14 +754,12 @@ def _portfolio_context(
             return
         clear_fn()
         if choice == "1":
-            _overview(root, portfolio_id, output)
-            _pause(input_fn)
-            run_subject_menu(
+            _overview_workflow(
+                root=root,
+                portfolio_id=portfolio_id,
                 input_fn=input_fn,
                 output=output,
                 clear_fn=clear_fn,
-                portfolio_subject_id=detail.summary.portfolio_subject_id,
-                workspace_root=root,
             )
             continue
         elif choice == "2":

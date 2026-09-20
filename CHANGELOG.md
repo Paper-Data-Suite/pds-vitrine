@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-No changes yet.
+### Added
+
+- Issue #95 teacher information-architecture foundation with a transient
+  `vitrine_teacher_information_architecture_v1` presentation projection,
+  teacher-first Portfolio overview, explicit Subject-detail navigation, and
+  Technical Details / Provenance drill-down that preserves exact authority.
 
 ## 0.3.0 - 2026-09-17
 

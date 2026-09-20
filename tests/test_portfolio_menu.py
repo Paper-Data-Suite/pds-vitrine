@@ -137,13 +137,34 @@ def test_portfolio_subject_route_uses_exact_subject_id(
     monkeypatch.setattr(
         portfolio_menu, "show_portfolio", lambda *_: SimpleNamespace(summary=summary)
     )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "build_teacher_portfolio_overview",
+        lambda *_: SimpleNamespace(
+            portfolio_id="portfolio_exact",
+            portfolio_subject_id="subject_exact",
+            title="Portfolio",
+            subject_label="Synthetic learner",
+            profile_binding_id=None,
+            portfolio_profile_id=None,
+            profile_revision=None,
+            profile_label=None,
+            purpose_kind=None,
+            subject_links=(),
+            candidate_count=0,
+            active_selection_count=0,
+            current_composition_revision=None,
+            snapshot_series_count=0,
+            current_edition_count=0,
+        ),
+    )
     routed: list[object] = []
     monkeypatch.setattr(
         portfolio_menu,
         "run_subject_menu",
         lambda **kwargs: routed.append(kwargs),
     )
-    raw_input = _inputs(["1", "", "B"])
+    raw_input = _inputs(["1", "1", "B", "B"])
 
     portfolio_menu._portfolio_context(
         root=tmp_path,

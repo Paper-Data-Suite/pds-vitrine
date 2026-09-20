@@ -4,6 +4,12 @@ Vitrine exposes one application layer through two terminal interfaces. Bare
 `vitrine` (or `vitrine menu`) starts the low-density teacher menu. Complete
 commands are noninteractive and never prompt for omitted values.
 
+Issue #95 adds an explicit teacher-presentation layer above those shared
+services. Ordinary teacher screens should prioritize human-readable instructional
+context and current workflow meaning; opaque canonical identifiers remain
+available through explicit Technical Details / Provenance views and remain the
+actual authority for exact operations.
+
 The teacher path selects a current Subject by label and exact ID, then progresses
 through Portfolio creation, exact Profile Binding or explicit migration after an
 impact preview, configured Candidate discovery and provenance review, Selection
