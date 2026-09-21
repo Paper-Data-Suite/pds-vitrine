@@ -673,14 +673,24 @@ assert "action=verify_snapshot_export" in output.getvalue()
 assert load_current_state(workspace).state_revision == post_build_revision
 
 menu_output = StringIO()
+menu_inputs = iter(("T", ""))
 run_attention_menu(
     output=menu_output,
     clear_fn=lambda: None,
     workspace_root=workspace,
     portfolio_id=portfolio.portfolio_id,
+    input_fn=lambda _prompt: next(menu_inputs),
 )
-assert "Attention / Next Actions" in menu_output.getvalue()
-assert "Action ID: verify_snapshot_export" in menu_output.getvalue()
+menu_text = menu_output.getvalue()
+teacher_text, technical_text = menu_text.split(
+    "Technical Details / Provenance",
+    maxsplit=1,
+)
+assert "Attention / Next Actions" in teacher_text
+assert "Next action: Snapshot Export verification" in teacher_text
+assert "Action ID:" not in teacher_text
+assert "verify_snapshot_export" not in teacher_text
+assert "Action ID: verify_snapshot_export" in technical_text
 assert load_current_state(workspace).state_revision == post_build_revision
 
 parser = cli.build_parser()
