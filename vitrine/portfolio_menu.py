@@ -11,9 +11,14 @@ from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 from pds_core.workspace import resolve_workspace_root
 
 from vitrine.attention_menu import run_attention_menu
+from vitrine.candidate_discovery_presentation import (
+    CandidateDiscoverySummary,
+    build_candidate_discovery_summary,
+)
 from vitrine.candidate_review_menu import run_candidate_review_menu
 from vitrine.candidate_services import (
     CandidateDiscoveryRequest,
+    CandidateDiscoveryResult,
     discover_and_evaluate_candidates,
 )
 from vitrine.curation_services import (
@@ -239,6 +244,176 @@ def _render_teacher_portfolio_overview(
         f"Working Composition: {composition}",
         f"Current Portfolio Editions: {view.current_edition_count}",
     )
+
+
+def _render_discovery_preflight(
+    output: TextIO,
+    view: TeacherPortfolioOverview,
+) -> None:
+    profile = view.profile_label or "Not bound"
+    if view.profile_revision is not None:
+        profile = f"{profile} — revision {view.profile_revision}"
+    portfolio = (
+        view.title
+        or (
+            f"{teacher_term(view.purpose_kind)} Portfolio"
+            if view.purpose_kind is not None
+            else "Portfolio"
+        )
+    )
+    _write(
+        output,
+        "Discover Portfolio Evidence",
+        "",
+        f"Portfolio: {portfolio}",
+        f"Student: {view.subject_label or 'Unavailable'}",
+        f"Profile: {profile}",
+        "",
+        "Vitrine will search current published evidence available for this student",
+        "and evaluate it against the Portfolio's bound Profile.",
+        "",
+        "Discovery may create or update Candidate/Evaluation state.",
+        "",
+        "Discovery does not:",
+        "- select work for the Portfolio;",
+        "- place evidence into a Portfolio section;",
+        "- approve evidence;",
+        "- build a Portfolio Edition.",
+        "",
+        "Optional catalog filters can be entered after confirmation.",
+    )
+
+
+def _render_discovery_summary(
+    output: TextIO,
+    summary: CandidateDiscoverySummary,
+) -> None:
+    _write(
+        output,
+        "Candidate discovery complete.",
+        "",
+        f"Publications considered: {summary.publications_considered}",
+        f"Evidence evaluated: {summary.evidence_items_evaluated}",
+        f"New Candidates: {summary.new_candidates}",
+        f"Already known: {summary.already_known_candidates}",
+        f"Not eligible: {summary.ineligible_evidence}",
+        f"Needs review / unresolved: {summary.unresolved_evidence}",
+        f"Source / discovery problems: {summary.source_problem_count}",
+    )
+    if summary.module_participation:
+        _write(output, "", "Evaluated sources")
+        for item in summary.module_participation:
+            noun = "evidence item" if item.evidence_items == 1 else "evidence items"
+            _write(output, f"- {item.label}: {item.evidence_items} {noun}")
+    _write(
+        output,
+        "",
+        "No work was selected or placed in a Portfolio section.",
+        "Next: Review Candidates",
+    )
+
+
+def _render_discovery_technical_details(
+    output: TextIO,
+    discovery: CandidateDiscoveryResult,
+) -> None:
+    _write(
+        output,
+        "Candidate Discovery Technical Details / Provenance",
+        "",
+        "Proposed Publications: "
+        + (", ".join(discovery.proposed_publication_ids) or "(none)"),
+        "Committed state revision: "
+        + (
+            str(discovery.committed_state_revision)
+            if discovery.committed_state_revision is not None
+            else "(none)"
+        ),
+        f"Findings: {len(discovery.findings)}",
+    )
+    if not discovery.findings:
+        _write(output, "- (none)")
+        return
+    for index, finding in enumerate(discovery.findings, 1):
+        _write(
+            output,
+            f"{index}. {finding.code}",
+            f"   Stage: {finding.stage}",
+            "   Publication: "
+            f"{finding.proposed_publication_id or '(not established)'}",
+            "   Diagnostics: "
+            + (", ".join(finding.diagnostic_codes) or "(none)"),
+        )
+
+
+def _candidate_discovery_workflow(
+    *,
+    root: Path,
+    portfolio_id: str,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+    dependencies: VitrineWorkflowDependencies,
+    actor: ActorAttribution | None,
+) -> None:
+    view = build_teacher_portfolio_overview(root, portfolio_id)
+    clear_fn()
+    _render_discovery_preflight(output, view)
+    if (
+        _read(
+            input_fn,
+            "Type DISCOVER to continue, or Enter to cancel: ",
+        )
+        != "DISCOVER"
+    ):
+        return
+
+    discovery_observed = _require_observed_revision(root)
+    mutation_actor = actor or _actor(input_fn)
+    if mutation_actor is None:
+        return
+
+    discovery = discover_and_evaluate_candidates(
+        root,
+        CandidateDiscoveryRequest(
+            portfolio_id=portfolio_id,
+            requesting_actor=mutation_actor,
+            requested_purpose=_read(input_fn, "Purpose: ")
+            or "teacher_review",
+            catalog_query=PublicationCatalogQuery(
+                school_year=_read(
+                    input_fn,
+                    "School year filter (optional): ",
+                )
+                or None,
+                class_id=_read(input_fn, "Class ID filter (optional): ")
+                or None,
+                module_id=_read(input_fn, "Module ID filter (optional): ")
+                or None,
+                work_id=_read(input_fn, "Work ID filter (optional): ")
+                or None,
+                state="current",
+                limit=100,
+            ),
+            expected_state_revision=discovery_observed,
+        ),
+        producer_registry=dependencies.producer_registry,
+        adapter_registry=dependencies.adapter_registry,
+        authorization_gate=dependencies.source_read_authorization_gate,
+    )
+    summary = build_candidate_discovery_summary(discovery)
+
+    clear_fn()
+    _render_discovery_summary(output, summary)
+    _write(output, "", "T. Technical discovery details")
+    choice = _read(
+        input_fn,
+        "T for technical details or Enter to return: ",
+    )
+    if choice.casefold() == "t":
+        clear_fn()
+        _render_discovery_technical_details(output, discovery)
+        _pause(input_fn)
 
 
 def _render_portfolio_technical_details(
@@ -903,52 +1078,16 @@ def _portfolio_context(
                 actor=actor,
             )
         elif choice == "3":
-            _write(output, "Discover Candidates", "")
-            if (
-                _read(
-                    input_fn,
-                    "Type DISCOVER to query configured Candidate sources, or Enter to cancel: ",
-                )
-                == "DISCOVER"
-            ):
-                discovery_observed = _require_observed_revision(root)
-                mutation_actor = actor or _actor(input_fn)
-                if mutation_actor is not None:
-                    discovery = discover_and_evaluate_candidates(
-                        root,
-                        CandidateDiscoveryRequest(
-                            portfolio_id=portfolio_id,
-                            requesting_actor=mutation_actor,
-                            requested_purpose=_read(input_fn, "Purpose: ")
-                            or "teacher_review",
-                            catalog_query=PublicationCatalogQuery(
-                                school_year=_read(
-                                    input_fn, "School year filter (optional): "
-                                )
-                                or None,
-                                class_id=_read(input_fn, "Class ID filter (optional): ")
-                                or None,
-                                module_id=_read(
-                                    input_fn, "Module ID filter (optional): "
-                                )
-                                or None,
-                                work_id=_read(input_fn, "Work ID filter (optional): ")
-                                or None,
-                                state="current",
-                                limit=100,
-                            ),
-                            expected_state_revision=discovery_observed,
-                        ),
-                        producer_registry=dependencies.producer_registry,
-                        adapter_registry=dependencies.adapter_registry,
-                        authorization_gate=dependencies.source_read_authorization_gate,
-                    )
-                    for finding in discovery.findings:
-                        _write(output, f"{finding.code} — stage {finding.stage}")
-                    _write(
-                        output,
-                        "Candidate discovery completed. Review is a separate persisted-state step.",
-                    )
+            _candidate_discovery_workflow(
+                root=root,
+                portfolio_id=portfolio_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                actor=actor,
+            )
+            continue
         elif choice == "4":
             run_candidate_review_menu(
                 portfolio_id=portfolio_id,

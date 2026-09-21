@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 5 adds an instructional Candidate-discovery preflight and
+  `vitrine_candidate_discovery_presentation_v1` completion summary with exact
+  run counts, safe producer-family participation, explicit no-Selection/
+  no-Placement language, and opt-in technical finding provenance.
 - Issue #96 Slice 4 makes `Ready to consider` require
   `selected_state="unselected"`, excluding actively selected and historical-only
   Candidates while preserving the separate Already selected/history workflows.
