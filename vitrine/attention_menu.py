@@ -26,6 +26,21 @@ _ACTION_LABELS: Final[dict[str, str]] = {
     "verify_snapshot_export": "Snapshot Export verification",
 }
 
+_SINGULAR_COUNT_UNITS: Final[dict[str, str]] = {
+    "candidates": "candidate",
+    "candidate_entries": "candidate entry",
+    "selection_proposals": "selection proposal",
+    "selections": "selection",
+    "profile_requirements": "profile requirement",
+    "curation_reviews": "curation review",
+    "portfolios": "portfolio",
+    "obligation_codes": "obligation",
+    "snapshot_builds": "snapshot build",
+    "snapshot_findings": "snapshot finding",
+    "snapshot_omissions": "snapshot omission",
+    "snapshot_exports": "snapshot export",
+}
+
 
 def _write(output: TextIO, *lines: str) -> None:
     for line in lines:
@@ -34,8 +49,8 @@ def _write(output: TextIO, *lines: str) -> None:
 
 def _teacher_count(summary: VitrineAttentionSummary) -> str:
     unit = summary.count_unit.replace("_", " ")
-    if summary.count == 1 and unit.endswith("s"):
-        unit = unit[:-1]
+    if summary.count == 1:
+        unit = _SINGULAR_COUNT_UNITS.get(summary.count_unit, unit)
     return f"{summary.count} {unit}"
 
 

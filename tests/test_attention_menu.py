@@ -90,6 +90,41 @@ def test_attention_menu_renders_bounded_next_action_without_mutation(
     assert "open_candidate_review" not in rendered
 
 
+@pytest.mark.parametrize(
+    ("count_unit", "expected"),
+    (
+        ("candidates", "1 candidate"),
+        ("candidate_entries", "1 candidate entry"),
+        ("selection_proposals", "1 selection proposal"),
+        ("selections", "1 selection"),
+        ("profile_requirements", "1 profile requirement"),
+        ("curation_reviews", "1 curation review"),
+        ("portfolios", "1 portfolio"),
+        ("obligation_codes", "1 obligation"),
+        ("snapshot_builds", "1 snapshot build"),
+        ("snapshot_findings", "1 snapshot finding"),
+        ("snapshot_omissions", "1 snapshot omission"),
+        ("snapshot_exports", "1 snapshot export"),
+    ),
+)
+def test_attention_teacher_count_uses_registered_singular_labels(
+    count_unit: str,
+    expected: str,
+) -> None:
+    summary = VitrineAttentionSummary(
+        code="vitrine_test_count",
+        label="Synthetic",
+        count=1,
+        count_unit=count_unit,
+        attention_class="workflow",
+        portfolio_id=None,
+        reason_codes=(),
+        next_action=None,
+    )
+
+    assert attention_menu._teacher_count(summary) == expected
+
+
 def test_attention_menu_technical_details_preserve_exact_projection(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
