@@ -331,6 +331,32 @@ display names.
 Deferred-media copied sources use suffix-neutral paths until the authorized
 producer result supplies one exact permitted concrete media type.
 
+## Teacher presentation hierarchy
+
+Issue #95 adds a guided teacher renderer over this unchanged preparation
+contract.
+
+The guided menu presents audience meaning, readiness, Reviews, obligations,
+ordered item labels, currentness, materialization/omission behavior, Reflection
+generation, and Export partition counts before implementation identity.
+
+The existing exact preparation renderer remains authoritative for direct CLI and
+Technical Details / Provenance inspection. It continues to expose the exact
+preparation fingerprint, state/pointer revisions, canonical identities,
+Context/Series matches, item provenance, provider/renderer commitments, paths,
+contracts, Export plan partition, and hashes.
+
+`T` at the guided final-confirmation boundary opens that exact technical view.
+Execution still receives the same exact reviewed
+`CurrentPortfolioBuildPreparation`; presentation text is never an execution
+input.
+
+Human-readable Audience Rule labels do not replace Rule IDs. If duplicate
+class/purpose labels make a choice ambiguous, the guided menu shows the exact
+Rule ID as the necessary disambiguator.
+
+The task-level CLI remains intentionally exact and technical.
+
 ## Prepared execution
 
 `execute_prepared_current_portfolio_plan(...)` revalidates one exact reviewed

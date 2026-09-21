@@ -22,6 +22,11 @@ from vitrine.candidate_inbox import (
 )
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import CandidateSourceEndpoint
+from vitrine.teacher_presentation import (
+    TeacherCandidateDetail,
+    build_teacher_candidate_detail,
+    teacher_term,
+)
 
 
 @dataclass(slots=True)
@@ -180,12 +185,74 @@ def _endpoint(detail: CandidateInboxDetail) -> CandidateSourceEndpoint | None:
     return None
 
 
+def _teacher_currentness(value: str | None) -> str:
+    if value == "current":
+        return "Current"
+    if value == "stale":
+        return "Stale — governing context has changed"
+    if value == "unresolved":
+        return "Currentness needs review"
+    return "Unavailable"
+
+
+def _teacher_selection(value: str) -> str:
+    if value == "selected":
+        return "Selected"
+    if value == "historical_only":
+        return "Previously selected; not active now"
+    return "Not selected"
+
+
+def _eligible_sections(view: TeacherCandidateDetail) -> str:
+    if not view.eligible_sections:
+        return "No eligible Portfolio sections listed"
+    return ", ".join(
+        section.label or section.section_id for section in view.eligible_sections
+    )
+
+
 def _render_detail(output: TextIO, detail: CandidateInboxDetail) -> None:
+    view = build_teacher_candidate_detail(detail)
+    status = (
+        teacher_term(view.candidate_condition)
+        if view.candidate_condition is not None
+        else teacher_term(view.evaluation_outcome)
+    )
+    attention = (
+        "Needs attention"
+        if view.attention_needed
+        else "No current attention signal"
+    )
+    _write(
+        output,
+        "Candidate Evidence",
+        "",
+        view.evidence_label,
+        "",
+        f"Portfolio: {view.portfolio_label}",
+        f"Student: {view.subject_label}",
+        f"Profile: {view.profile_label} — revision {view.profile_revision}",
+        f"Portfolio purpose: {teacher_term(view.profile_purpose)}",
+        "",
+        "Portfolio fit",
+        f"Eligibility: {teacher_term(view.evaluation_outcome)}",
+        f"Eligible for: {_eligible_sections(view)}",
+        f"Status: {status}",
+        f"Currentness: {_teacher_currentness(view.currentness)}",
+        f"Attention: {attention}",
+        f"Selection: {_teacher_selection(view.selected_state)}",
+        "",
+        "Reviewing this entry does not discover, select, place, replace,",
+        "approve, disclose, or otherwise mutate Portfolio state.",
+    )
+
+
+def _render_technical_detail(output: TextIO, detail: CandidateInboxDetail) -> None:
     item = detail.item
     endpoint = _endpoint(detail)
     _write(
         output,
-        "Candidate Inbox Detail",
+        "Candidate Technical Details / Provenance",
         "",
         item.source_display_label,
         f"Entry: {item.entry_id}",
@@ -288,6 +355,37 @@ def _render_detail(output: TextIO, detail: CandidateInboxDetail) -> None:
     )
 
 
+def _candidate_detail_menu(
+    detail: CandidateInboxDetail,
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> None:
+    while True:
+        clear_fn()
+        _render_detail(output, detail)
+        _write(output, "", "T. Technical details / provenance")
+        print_navigation_options(file=output)
+        choice = _read(
+            input_fn,
+            "T for technical details or navigation choice (Enter to return): ",
+        )
+        if not choice or _nav(choice) is NavigationChoice.BACK:
+            return
+        if choice.casefold() == "t":
+            clear_fn()
+            _render_technical_detail(output, detail)
+            _pause(input_fn)
+            continue
+        if choice.casefold() == "h":
+            clear_fn()
+            _show_help(output, input_fn)
+            continue
+        _write(output, "That Candidate detail choice is not available.")
+        _pause(input_fn)
+
+
 def run_candidate_inbox_menu(
     *,
     input_fn: InputFunction = input,
@@ -378,8 +476,12 @@ def run_candidate_inbox_menu(
             except CandidateInboxError as error:
                 _write(output, f"{error.code}: {error}")
             else:
-                _render_detail(output, detail)
-            _pause(input_fn)
+                _candidate_detail_menu(
+                    detail,
+                    input_fn=input_fn,
+                    output=output,
+                    clear_fn=clear_fn,
+                )
             continue
         _write(output, "That Candidate inbox choice is not available.")
         _pause(input_fn)

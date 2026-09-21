@@ -4,7 +4,36 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-No changes yet.
+### Added
+
+- Issue #95 Slice 8 closure qualification: A-J acceptance matrix, dedicated
+  validator, package/repository wiring, isolated installed-wheel presentation
+  smoke, duplicate Portfolio-label disambiguation, and teacher-first successful
+  Build / Export result provenance.
+- Issue #95 Slice 7 teacher-first Attention / Next Actions presentation with
+  exact #69 evaluation/state/code/class/reason/action provenance behind
+  Technical Details / Provenance and unchanged attention semantics.
+- Issue #95 Slice 6 teacher-first Portfolio selection/context and Profile
+  Binding presentation, with exact IDs and migration lineage retained behind
+  Technical Details / Provenance and exact bind/migrate authority unchanged.
+- Issue #95 Slice 5 teacher-first Build / Export preparation with the exact
+  #68 preparation retained for direct CLI and explicit Technical Details /
+  Provenance, without changing prepared execution or Snapshot semantics.
+- Issue #95 Slice 4 teacher-first Working Composition inspection/preparation
+  panels with explicit Technical Details / Provenance, while keeping the exact
+  freeze preview and all #67 preparation/replay/freeze semantics unchanged.
+- Issue #95 Slice 3 teacher-first guided Candidate Review list/detail and
+  ordinary numbered choices, with the former exact review projection preserved
+  behind Technical Details / Provenance and unchanged #66 planners/executors.
+- Issue #95 Slice 2 teacher-first Candidate Inbox detail with an explicit
+  Technical Details / Provenance drill-down, preserving the existing exact
+  Candidate read model, privacy boundary, and read-only semantics.
+- `TeacherCandidateDetail` and `TeacherCandidateSection` presentation
+  projections with exact-ID-to-display-label Profile section mapping.
+- Issue #95 teacher information-architecture foundation with a transient
+  `vitrine_teacher_information_architecture_v1` presentation projection,
+  teacher-first Portfolio overview, explicit Subject-detail navigation, and
+  Technical Details / Provenance drill-down that preserves exact authority.
 
 ## 0.3.0 - 2026-09-17
 

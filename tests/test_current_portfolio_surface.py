@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from vitrine.current_portfolio_surface import current_portfolio_preparation_lines
+from vitrine.current_portfolio_surface import (
+    current_portfolio_preparation_lines,
+    teacher_current_portfolio_preparation_lines,
+)
 
 
 def _preparation() -> SimpleNamespace:
@@ -34,6 +37,7 @@ def _preparation() -> SimpleNamespace:
         media_type="text/plain",
         export_file=True,
         permitted_omission_reason=None,
+        display_label="Argument Paragraph — Revised Draft",
         explanation="Exact authorized producer Artifact bytes.",
     )
     reflection = SimpleNamespace(
@@ -113,7 +117,49 @@ def _preparation() -> SimpleNamespace:
         ),
         warnings=("historical_source",),
         blocking_reasons=(),
+        ready_for_plan_execution=True,
     )
+
+
+def test_teacher_preparation_view_prioritizes_build_meaning() -> None:
+    text = "\n".join(teacher_current_portfolio_preparation_lines(_preparation()))
+
+    assert "Build readiness: Ready to build and export" in text
+    assert "Audience: Family" in text
+    assert "Purpose: Showcase" in text
+    assert "Teacher Review: Satisfied" in text
+    assert "Follow Up Needed — acknowledged for this build" in text
+    assert "Growth — Argument Paragraph — Revised Draft" in text
+    assert "Source: Historical" in text
+    assert "Build handling: Include authorized source file" in text
+    assert "Growth — Reflection" in text
+    assert "Included items: 2" in text
+    assert "Excluded items: 1" in text
+
+    for exact_value in (
+        "a" * 64,
+        "portfolio_1",
+        "subject_1",
+        "binding_1",
+        "profile_1",
+        "audience_rule_1",
+        "audience_context_1",
+        "snapshot_series_1",
+        "placement_1",
+        "selection_1",
+        "candidate_1",
+        "evaluation_1",
+        "publication_1",
+        "quillan_provider",
+        "reflection_1",
+        "reflection_requirement_1",
+        "export_plan_1",
+        "entry_1",
+        "entry_2",
+        "entry_3",
+        "b" * 64,
+    ):
+        assert exact_value not in text
 
 
 def test_shared_preparation_view_exposes_exact_policy_and_distinctions() -> None:

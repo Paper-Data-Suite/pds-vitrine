@@ -112,6 +112,17 @@ documented contribution != authorship
 Group Score target != individual Score target
 ```
 
+## Teacher presentation
+
+Issue #95 layers a teacher-first presentation over this unchanged read model.
+The guided Inbox detail shows instructional context first and places the exact
+bounded provenance described above behind `T. Technical details / provenance`.
+
+This does not change `vitrine_candidate_inbox_v1`, Candidate currentness,
+staleness, attention, Selection observation, or suppression behavior. The
+technical drill-down is still constrained by this contract's privacy boundary
+and does not authorize producer reads or additional disclosure.
+
 ## Interfaces
 
 Direct CLI:

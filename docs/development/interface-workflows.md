@@ -4,7 +4,14 @@ Vitrine exposes one application layer through two terminal interfaces. Bare
 `vitrine` (or `vitrine menu`) starts the low-density teacher menu. Complete
 commands are noninteractive and never prompt for omitted values.
 
-The teacher path selects a current Subject by label and exact ID, then progresses
+Issue #95 adds an explicit teacher-presentation layer above those shared
+services. Ordinary teacher screens should prioritize human-readable instructional
+context and current workflow meaning; opaque canonical identifiers remain
+available through explicit Technical Details / Provenance views and remain the
+actual authority for exact operations.
+
+The teacher path selects a current Subject and Portfolio through recognizable
+teacher-facing labels while retaining exact IDs as authority, then progresses
 through Portfolio creation, exact Profile Binding or explicit migration after an
 impact preview, configured Candidate discovery and provenance review, Selection
 Proposal/Decision or Direct Selection, lifecycle changes, Placement and Arrangement, Working
@@ -57,6 +64,11 @@ complete canonical `SnapshotBuildPlan` record. The ordinary planning provider
 is unconfigured and fails closed. Preparation persists Request and Plan as
 separate records; building later executes one exact immutable Plan.
 
+Attention / Next Actions uses fixed teacher-readable labels/counts and owner
+workflow names by default. Stable attention codes, reason codes, action IDs, and
+the observed state revision remain available through Technical Details /
+Provenance; the direct attention CLI remains exact.
+
 The semantic boundaries remain visible:
 
 ```text
@@ -68,8 +80,9 @@ Edition verification != Export verification
 sealed Edition != current-Edition pointer
 ```
 
-Candidate review shows decision-relevant provenance, relationship assertions,
-availability, conditions, exact IDs, and eligible sections without displaying
+Candidate review shows decision-relevant Portfolio context, availability,
+conditions, and eligible sections by default; exact bounded provenance remains
+available through Technical Details / Provenance without displaying
 raw producer bodies. Candidate condition state and evaluation reason codes are
 reported separately; evaluation diagnostics are never relabeled as unresolved
 conditions. Condition acknowledgement is explicit and is not described

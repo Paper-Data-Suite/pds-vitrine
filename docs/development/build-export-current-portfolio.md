@@ -202,6 +202,37 @@ vitrine/current_portfolio_surface.py
 to explain the exact reviewed preparation. Keep policy explanation shared rather
 than reimplementing materialization semantics in each presentation layer.
 
+## Teacher information architecture
+
+Issue #95 splits presentation without splitting policy:
+
+```text
+CurrentPortfolioBuildPreparation
+-> teacher_current_portfolio_preparation_lines(...) for the guided menu
+-> current_portfolio_preparation_lines(...) for exact CLI/provenance
+-> unchanged prepared executor
+```
+
+The teacher renderer may humanize stable tokens and use `display_label` already
+carried by each exact planned item. It must not invent assignment/evidence names
+from IDs or reread producer state.
+
+Keep provider IDs, source/curation IDs, contracts, paths, hashes, and
+fingerprints in the exact renderer. The guided menu exposes that exact renderer
+through `T. Technical Details / Provenance` at the existing confirmation
+boundary.
+
+Do not rebuild a preparation after the teacher opens technical details. The
+same preparation object must remain the reviewed/executed authority.
+
+The direct CLI continues to use the exact renderer.
+
+After successful execution, the guided result likewise presents completion,
+Edition number, Export disposition/location, and non-delivery/current-pointer
+boundaries first. Exact Snapshot Series and Export Artifact identifiers are
+available through `T. Technical details / provenance`. This one-shot drill-down
+does not implement the completed-Edition management workflow owned by issue #102.
+
 ## Teacher menu
 
 Portfolio option 6 delegates to:

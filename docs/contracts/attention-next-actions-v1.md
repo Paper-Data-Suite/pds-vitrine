@@ -458,8 +458,15 @@ vitrine attention list --portfolio-id PORTFOLIO_ID
 The teacher menu exposes workspace attention as main option 6 and exact
 Portfolio attention as Portfolio option 7.
 
-These surfaces share `evaluate_vitrine_attention()` and display stable action
-IDs. They do not execute those actions.
+These surfaces share `evaluate_vitrine_attention()`. Under issue #95 the guided
+teacher view presents the fixed summary label/count and a human-readable owner
+action label first. `evaluation`, observed state revision, stable attention
+code/class, count unit, exact Portfolio scope, reason codes, and stable action ID
+remain available through `Technical Details / Provenance`.
+
+Opening technical details reuses the same exact `VitrineAttentionReport`; it
+does not reevaluate state and does not execute the owner action. The direct CLI
+remains intentionally exact and continues to display stable codes/action IDs.
 
 ## Explicit non-goals
 

@@ -112,6 +112,25 @@ Review projections do not expose raw manifests, student work bodies, answer
 keys, feedback bodies, private teacher notes, private producer paths,
 authorization-provider prose, or absolute workspace paths.
 
+## Teacher presentation hierarchy
+
+Issue #95 adds a presentation split over this unchanged orchestration contract.
+
+The default guided review screen uses human-readable Candidate, Profile, and
+section context. Exact Entry/Candidate/Profile Binding/Evaluation/Publication/
+producer/Artifact/Proposal/Selection/Placement/Arrangement identifiers remain
+available in an explicit Technical Details / Provenance view.
+
+Numbered teacher choices may display labels rather than IDs because the selected
+objects continue to carry the exact canonical IDs into the existing planners.
+Display labels never become matching or mutation authority.
+
+Exact frozen identifiers/revisions may remain visible on final mutation
+confirmation screens when they are directly relevant to the action's replay,
+concurrency, or provenance semantics.
+
+No #66 read, planning, validation, authority, or persistence rule changes.
+
 ## Current Evaluation versus curation provenance
 
 The Candidate Inbox current-Evaluation pointer and immutable Candidate curation

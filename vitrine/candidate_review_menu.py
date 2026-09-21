@@ -42,6 +42,10 @@ from vitrine.candidate_review import (
 from vitrine.curation_services import CurationWorkflowError
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import ActorAttribution, CurationTargetRef
+from vitrine.teacher_presentation import (
+    build_teacher_candidate_detail,
+    teacher_term,
+)
 from vitrine.workflow_context import VitrineWorkflowDependencies
 
 _ChoiceValue = TypeVar("_ChoiceValue")
@@ -141,14 +145,36 @@ def _mutation_actor(
     )
 
 
+def _teacher_currentness(value: str | None) -> str:
+    if value == "current":
+        return "Current"
+    if value == "stale":
+        return "Stale — governing context changed"
+    if value == "unresolved":
+        return "Currentness needs review"
+    return "Unavailable"
+
+
+def _teacher_selection(value: str) -> str:
+    if value == "selected":
+        return "Selected"
+    if value == "historical_only":
+        return "Previously selected"
+    return "Not selected"
+
+
 def _item_line(item: CandidateInboxItem) -> str:
-    outcome = item.evaluation_outcome or "unavailable"
-    condition = item.candidate_condition or "no_candidate"
-    currentness = item.stale_state or "unavailable"
-    attention = " | ATTENTION" if item.attention_needed else ""
+    outcome = teacher_term(item.evaluation_outcome)
+    condition = (
+        teacher_term(item.candidate_condition)
+        if item.candidate_condition is not None
+        else "Evaluation only"
+    )
+    attention = " — NEEDS ATTENTION" if item.attention_needed else ""
     return (
-        f"{item.source_display_label} | {outcome} | {condition} | "
-        f"{currentness} | {item.selected_state}{attention}"
+        f"{item.source_display_label} — {outcome}; {condition}; "
+        f"{_teacher_currentness(item.stale_state)}; "
+        f"{_teacher_selection(item.selected_state)}{attention}"
     )
 
 
@@ -198,12 +224,113 @@ def _history_entries(
     return tuple(values)
 
 
+def _section_capacity(section: CandidateReviewSectionSummary) -> str:
+    count = section.active_placement_count
+    placed = f"{count} placed"
+    if section.maximum_placements is None:
+        return f"{placed}; no maximum"
+    return f"{placed}; limit {section.maximum_placements}"
+
+
+def _section_labels(
+    detail: CandidateReviewDetail,
+    section_ids: Sequence[str],
+) -> str:
+    labels = {section.section_id: section.label for section in detail.sections}
+    return ", ".join(labels.get(section_id, section_id) for section_id in section_ids)
+
+
 def _render_detail(output: TextIO, detail: CandidateReviewDetail) -> None:
+    view = build_teacher_candidate_detail(detail.inbox_detail)
+    status = (
+        teacher_term(view.candidate_condition)
+        if view.candidate_condition is not None
+        else "Evaluation only"
+    )
+    attention = (
+        "Needs attention"
+        if view.attention_needed
+        else "No current attention signal"
+    )
+    _write(
+        output,
+        "Candidate Review",
+        "",
+        view.evidence_label,
+        "",
+        f"Student: {view.subject_label}",
+        f"Portfolio: {view.portfolio_label}",
+        f"Profile: {view.profile_label} — revision {view.profile_revision}",
+        f"Portfolio purpose: {teacher_term(view.profile_purpose)}",
+        "",
+        "Review status",
+        f"Eligibility: {teacher_term(view.evaluation_outcome)}",
+        f"Status: {status}",
+        f"Currentness: {_teacher_currentness(view.currentness)}",
+        f"Attention: {attention}",
+        f"Selection: {_teacher_selection(view.selected_state)}",
+        "",
+    )
+    if detail.current_evaluation_differs_from_curation_provenance:
+        _write(
+            output,
+            "Evaluation note: this evidence has a newer review evaluation than",
+            "the evaluation attached to existing curation. Existing curation",
+            "remains tied to its original evaluation.",
+            "",
+        )
+    if detail.sections:
+        _write(output, "Eligible Portfolio sections")
+        for index, section in enumerate(detail.sections, 1):
+            _write(
+                output,
+                f"{index}. {section.label} — "
+                f"{teacher_term(section.obligation)}; "
+                f"{_section_capacity(section)}",
+            )
+        _write(output, "")
+    if detail.proposals:
+        pending = sum(1 for proposal in detail.proposals if proposal.undecided)
+        _write(
+            output,
+            f"Selection proposals: {len(detail.proposals)} total; "
+            f"{pending} awaiting decision",
+        )
+    if detail.selections:
+        active = sum(
+            1 for selection in detail.selections
+            if selection.lifecycle_state == "activated"
+        )
+        _write(
+            output,
+            f"Selection history: {len(detail.selections)} record(s); "
+            f"{active} active",
+        )
+    if detail.placements:
+        active_placements = sum(
+            1 for placement in detail.placements
+            if placement.lifecycle_state == "activated"
+        )
+        _write(output, f"Active placements: {active_placements}")
+    if detail.proposals or detail.selections or detail.placements:
+        _write(output, "")
+    if not detail.selectable:
+        _write(
+            output,
+            "This is an Evaluation-only inbox entry. It is reviewable but not selectable.",
+            "No Candidate or rejected Selection Decision will be fabricated.",
+        )
+
+
+def _render_technical_detail(
+    output: TextIO,
+    detail: CandidateReviewDetail,
+) -> None:
     item = detail.inbox_detail.item
     source = detail.source
     _write(
         output,
-        "Candidate Review",
+        "Candidate Review Technical Details / Provenance",
         "",
         f"Source: {item.source_display_label}",
         f"Entry ID: {item.entry_id}",
@@ -304,8 +431,8 @@ def _choose_sections(
     for index, section in enumerate(sections, 1):
         _write(
             output,
-            f"{index}. {section.label} ({section.section_id}) — "
-            f"active {section.active_placement_count}",
+            f"{index}. {section.label} — "
+            f"{_section_capacity(section)}",
         )
     raw = _read(input_fn, prompt)
     chosen = _numbered_many(raw, sections)
@@ -328,8 +455,8 @@ def _choose_profile_requirements(
     for index, requirement in enumerate(requirements, 1):
         _write(
             output,
-            f"{index}. {requirement.title} ({requirement.requirement_id}) — "
-            f"{requirement.requirement_kind}",
+            f"{index}. {requirement.title} — "
+            f"{teacher_term(requirement.requirement_kind)}",
         )
     raw = _read(
         input_fn,
@@ -451,10 +578,11 @@ def _choose_active_selection(
         _write(output, "No active Selection is available.")
         return None
     for index, selection in enumerate(selections, 1):
+        placement_count = len(selection.active_placement_ids)
         _write(
             output,
-            f"{index}. {selection.selection_id} — Evaluation "
-            f"{selection.candidate_evaluation_id}",
+            f"{index}. Active Selection — "
+            f"{placement_count} active placement(s)",
         )
     selected = _numbered_choice(_read(input_fn, "Active Selection number: "), selections)
     if selected is None or isinstance(selected, NavigationChoice):
@@ -1299,7 +1427,19 @@ def _review_entry(
     clear_fn()
     _render_detail(output, detail)
     if not detail.selectable:
-        _pause(input_fn)
+        _write(
+            output,
+            "",
+            "T. Technical details / provenance",
+            "B. Back",
+        )
+        action = _read(
+            input_fn,
+            "T for technical details or Enter/B to return: ",
+        )
+        if action.casefold() == "t":
+            clear_fn()
+            _render_technical_detail(output, detail)
         return
     active = tuple(
         item for item in detail.selections if item.lifecycle_state == "activated"
@@ -1314,6 +1454,7 @@ def _review_entry(
             "5. Withdraw Selection",
             "6. Replace Selection",
             "7. View complete history",
+            "T. Technical details / provenance",
             "B. Back",
         )
         action = _read(input_fn, "Action: ")
@@ -1376,6 +1517,9 @@ def _review_entry(
             )
         elif action == "7":
             _render_history(output, detail)
+        elif action.casefold() == "t":
+            clear_fn()
+            _render_technical_detail(output, detail)
         return
 
     pending = tuple(proposal for proposal in detail.proposals if proposal.undecided)
@@ -1385,6 +1529,7 @@ def _review_entry(
         "2. Decline this proposed use",
         "3. Decide an existing Proposal",
         "4. View complete history",
+        "T. Technical details / provenance",
         "B. Not now",
     )
     action = _read(input_fn, "Action: ")
@@ -1419,9 +1564,8 @@ def _review_entry(
         for index, proposal_item in enumerate(pending, 1):
             _write(
                 output,
-                f"{index}. {proposal_item.selection_proposal_id} — "
-                f"{proposal_item.proposal_origin} — sections "
-                f"{', '.join(proposal_item.proposed_section_ids)}",
+                f"{index}. {teacher_term(proposal_item.proposal_origin)} proposal — "
+                f"{_section_labels(detail, proposal_item.proposed_section_ids)}",
             )
         chosen_proposal = _numbered_choice(
             _read(input_fn, "Proposal number: "),
@@ -1445,6 +1589,9 @@ def _review_entry(
         )
     elif action == "4":
         _render_history(output, detail)
+    elif action.casefold() == "t":
+        clear_fn()
+        _render_technical_detail(output, detail)
 
 
 def run_candidate_review_menu(

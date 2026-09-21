@@ -51,6 +51,11 @@ def _item(
         attention_needed=False,
         attention_reason_codes=(),
         selected_state=selected_state,
+        eligible_section_ids=(
+            ("section_one", "section_two")
+            if candidate_id is not None
+            else ()
+        ),
     )
 
 
@@ -91,8 +96,15 @@ def _detail(
         section_label="Section One",
         lifecycle_state="activated",
     )
+    profile_sections = (
+        SimpleNamespace(section_id="section_one", label="Section One"),
+        SimpleNamespace(section_id="section_two", label="Section Two"),
+    )
     return SimpleNamespace(
-        inbox_detail=SimpleNamespace(item=value),
+        inbox_detail=SimpleNamespace(
+            item=value,
+            profile_revision=SimpleNamespace(sections=profile_sections),
+        ),
         selectable=value.candidate_id is not None,
         current_review_evaluation_id="evaluation_current",
         curation_provenance_evaluation_id=(
@@ -114,6 +126,45 @@ def _detail(
         reviews=(),
         profile_requirements=(),
     )
+
+
+def test_guided_review_detail_is_teacher_first_with_explicit_technical_view() -> None:
+    detail = _detail()
+    output = io.StringIO()
+
+    candidate_review_menu._render_detail(output, detail)
+
+    rendered = output.getvalue()
+    assert "Candidate Review" in rendered
+    assert "Synthetic evidence" in rendered
+    assert "Student: Student" in rendered
+    assert "Portfolio: Portfolio" in rendered
+    assert "Eligible Portfolio sections" in rendered
+    assert "Section One — Optional; 0 placed; no maximum" in rendered
+    assert "Entry ID: entry_exact" not in rendered
+    assert "Candidate ID: candidate_exact" not in rendered
+    assert "Profile Binding: binding_exact" not in rendered
+    assert "evaluation_current" not in rendered
+    assert "arrangement pointer" not in rendered
+
+    technical = io.StringIO()
+    candidate_review_menu._render_technical_detail(technical, detail)
+    exact = technical.getvalue()
+    assert "Candidate Review Technical Details / Provenance" in exact
+    assert "Entry ID: entry_exact" in exact
+    assert "Candidate ID: candidate_exact" in exact
+    assert "Profile Binding: binding_exact" in exact
+    assert "Current review Evaluation: evaluation_current" in exact
+    assert "arrangement pointer 4" in exact
+
+
+def test_guided_review_list_humanizes_state_tokens() -> None:
+    rendered = candidate_review_menu._item_line(_item())
+
+    assert "Synthetic evidence" in rendered
+    assert "Ready For Consideration" in rendered
+    assert "Not selected" in rendered
+    assert "ready_for_consideration" not in rendered
 
 
 def test_guided_menu_fresh_select_uses_numbered_section_and_shared_orchestration(

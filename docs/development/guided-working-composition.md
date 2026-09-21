@@ -126,6 +126,22 @@ FREEZE COMPOSITION
 
 Teacher confirmation does not clear unresolved obligations.
 
+## Teacher information architecture
+
+Issue #95 changes only the interactive menu rendering. It does not alter
+`prepare_working_composition(...)`, shared derivation, or prepared freeze.
+
+Default panels may translate stable enum/code tokens into teacher-readable text
+and may resolve evidence labels from the Selection summaries already present in
+the same exact preparation. Do not query a second source of curation truth.
+
+Keep exact identifiers in the preparation Technical Details / Provenance view.
+Keep the exact freeze preview exact: state/pointer observations, semantic IDs,
+delta, and fingerprint are replay/concurrency evidence.
+
+The menu must continue to pass the exact reviewed preparation object to the
+freeze executor without reconstructing or refreshing it.
+
 ## CLI
 
 Read-only:
