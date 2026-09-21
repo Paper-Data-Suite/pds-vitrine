@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 6 adds the read-only
+  `vitrine_candidate_evidence_preview_v1` authority foundation: exact
+  persisted-entry/state replay, canonical source-endpoint resolution, separate
+  fail-closed Artifact-preview authorization, and no producer I/O or mutation.
 - Issue #96 Slice 5 adds an instructional Candidate-discovery preflight and
   `vitrine_candidate_discovery_presentation_v1` completion summary with exact
   run counts, safe producer-family participation, explicit no-Selection/
