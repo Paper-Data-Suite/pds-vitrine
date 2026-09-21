@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 2 adds the transient
+  `vitrine_candidate_evidence_presentation_v1` contract with deterministic
+  instructional evidence names, exact Profile-fit labels, and exact
+  representation-family context while keeping display values non-authoritative.
 - Issue #96 Slice 1 makes Candidate rediscovery identity independent of
   persisted display snapshots, so presentation-only label changes reuse the
   same exact Candidates without rewriting historical display text.

@@ -10,6 +10,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from vitrine.candidate_evidence_presentation import (
+    build_candidate_evidence_presentation,
+)
 from vitrine.candidate_inbox import CandidateInboxDetail
 from vitrine.models import PortfolioProfileBinding, PortfolioProfileRevision
 from vitrine.portfolio_services import show_portfolio
@@ -135,15 +138,13 @@ def build_teacher_candidate_detail(
     'Project one exact Inbox detail without changing Candidate semantics.'
 
     item = detail.item
-    section_labels = {
-        section.section_id: section.label for section in detail.profile_revision.sections
-    }
+    evidence = build_candidate_evidence_presentation(detail)
     eligible_sections = tuple(
         TeacherCandidateSection(
-            section_id=section_id,
-            label=section_labels.get(section_id),
+            section_id=role.section_id,
+            label=role.label,
         )
-        for section_id in item.eligible_section_ids
+        for role in evidence.profile_fit
     )
     return TeacherCandidateDetail(
         contract_version=TEACHER_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
@@ -159,7 +160,7 @@ def build_teacher_candidate_detail(
         profile_revision=item.profile_revision,
         profile_label=item.profile_label,
         profile_purpose=item.profile_purpose,
-        evidence_label=item.source_display_label,
+        evidence_label=evidence.primary_label,
         evaluation_outcome=item.evaluation_outcome,
         candidate_condition=item.candidate_condition,
         currentness=item.stale_state,

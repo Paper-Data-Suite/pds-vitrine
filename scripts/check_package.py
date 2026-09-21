@@ -24,6 +24,7 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/cli.py",
     "vitrine/compatibility_cli.py",
     "vitrine/compatibility_diagnostics.py",
+    "vitrine/candidate_evidence_presentation.py",
     "vitrine/candidate_inbox.py",
     "vitrine/candidate_inbox_menu.py",
     "vitrine/candidate_review.py",
