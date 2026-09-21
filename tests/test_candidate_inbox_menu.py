@@ -89,7 +89,9 @@ def test_candidate_inbox_menu_lists_and_inspects_read_only(
     assert "2 matching entries" in rendered
     assert "Candidate Evidence" in rendered
     assert "Portfolio fit" in rendered
-    assert "Eligible for:" in rendered
+    assert "Matches: Assessment Context" in rendered
+    assert "promise current Placement validity." in rendered
+    assert "Assessment Attempt — Synthetic argument_assessment — Attempt 1" in rendered
     assert "Profile:" in rendered
     assert "Currentness:" in rendered
     assert "Selection:" in rendered

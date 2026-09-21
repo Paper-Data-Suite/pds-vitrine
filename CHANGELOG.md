@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 3 applies instructional Candidate evidence presentation to
+  Candidate Inbox and guided Review list/detail surfaces, phrases exact Profile
+  eligibility as `Matches`, and explicitly avoids promising current Placement
+  validity while preserving persisted source labels in technical provenance.
 - Issue #96 Slice 2 adds the transient
   `vitrine_candidate_evidence_presentation_v1` contract with deterministic
   instructional evidence names, exact Profile-fit labels, and exact

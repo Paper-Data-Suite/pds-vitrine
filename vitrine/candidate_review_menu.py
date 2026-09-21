@@ -163,7 +163,16 @@ def _teacher_selection(value: str) -> str:
     return "Not selected"
 
 
-def _item_line(item: CandidateInboxItem) -> str:
+def _item_line(
+    item: CandidateInboxItem,
+    *,
+    detail: CandidateReviewDetail | None = None,
+) -> str:
+    evidence_label = (
+        item.source_display_label
+        if detail is None
+        else build_teacher_candidate_detail(detail.inbox_detail).evidence_label
+    )
     outcome = teacher_term(item.evaluation_outcome)
     condition = (
         teacher_term(item.candidate_condition)
@@ -172,7 +181,7 @@ def _item_line(item: CandidateInboxItem) -> str:
     )
     attention = " — NEEDS ATTENTION" if item.attention_needed else ""
     return (
-        f"{item.source_display_label} — {outcome}; {condition}; "
+        f"{evidence_label} — {outcome}; {condition}; "
         f"{_teacher_currentness(item.stale_state)}; "
         f"{_teacher_selection(item.selected_state)}{attention}"
     )
@@ -252,6 +261,13 @@ def _render_detail(output: TextIO, detail: CandidateReviewDetail) -> None:
         if view.attention_needed
         else "No current attention signal"
     )
+    profile_matches = (
+        ", ".join(
+            section.label or section.section_id
+            for section in view.eligible_sections
+        )
+        or "No Profile section matches listed"
+    )
     _write(
         output,
         "Candidate Review",
@@ -280,7 +296,15 @@ def _render_detail(output: TextIO, detail: CandidateReviewDetail) -> None:
             "",
         )
     if detail.sections:
-        _write(output, "Eligible Portfolio sections")
+        _write(
+            output,
+            "Portfolio fit",
+            f"Matches: {profile_matches}",
+            "A Profile match is eligibility context; it does not by itself",
+            "guarantee current Placement validity.",
+            "",
+            "Matched Profile section context",
+        )
         for index, section in enumerate(detail.sections, 1):
             _write(
                 output,
@@ -771,9 +795,16 @@ def _replacement_flow(
     if not successors:
         _write(output, "No other unselected positive Candidate is available.")
         return
+    successor_details = {
+        item.entry_id: get_candidate_review_detail(root, item.entry_id)
+        for item in successors
+    }
     _write(output, "Choose exact successor Candidate")
     for index, item in enumerate(successors, 1):
-        _write(output, f"{index}. {_item_line(item)}")
+        _write(
+            output,
+            f"{index}. {_item_line(item, detail=successor_details[item.entry_id])}",
+        )
     successor_item = _numbered_choice(
         _read(input_fn, "Successor Candidate number: "),
         successors,
@@ -781,7 +812,7 @@ def _replacement_flow(
     if successor_item is None or isinstance(successor_item, NavigationChoice):
         _write(output, "That successor Candidate number is not available.")
         return
-    successor_detail = get_candidate_review_detail(root, successor_item.entry_id)
+    successor_detail = successor_details[successor_item.entry_id]
     clear_fn()
     _render_detail(output, successor_detail)
     proposed_sections = _choose_sections(
@@ -878,9 +909,12 @@ def _portfolio_selection_targets(
             if selection.selection_id in seen:
                 continue
             seen.add(selection.selection_id)
+            evidence_label = build_teacher_candidate_detail(
+                detail.inbox_detail
+            ).evidence_label
             values.append(
                 (
-                    f"{item.source_display_label} — {selection.selection_id} — "
+                    f"{evidence_label} — {selection.selection_id} — "
                     f"{selection.lifecycle_state}",
                     CurationTargetRef(
                         target_kind="selection",
@@ -1660,8 +1694,15 @@ def run_candidate_review_menu(
                 _write(output, "No matching persisted Candidate review entries.")
                 _pause(input_fn)
                 continue
+            row_details = {
+                item.entry_id: get_candidate_review_detail(root, item.entry_id)
+                for item in items
+            }
             for index, item in enumerate(items, 1):
-                _write(output, f"{index}. {_item_line(item)}")
+                _write(
+                    output,
+                    f"{index}. {_item_line(item, detail=row_details[item.entry_id])}",
+                )
             selected = _numbered_choice(
                 _read(input_fn, "Entry number (B to go back): "),
                 items,

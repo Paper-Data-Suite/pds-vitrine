@@ -236,7 +236,9 @@ def _render_detail(output: TextIO, detail: CandidateInboxDetail) -> None:
         "",
         "Portfolio fit",
         f"Eligibility: {teacher_term(view.evaluation_outcome)}",
-        f"Eligible for: {_eligible_sections(view)}",
+        f"Matches: {_eligible_sections(view)}",
+        "Profile matches describe Candidate eligibility context; they do not",
+        "promise current Placement validity.",
         f"Status: {status}",
         f"Currentness: {_teacher_currentness(view.currentness)}",
         f"Attention: {attention}",
@@ -444,9 +446,17 @@ def run_candidate_inbox_menu(
                 if item.candidate_condition is None
                 else f" — {_label(item.candidate_condition)}"
             )
+            try:
+                row_detail = get_candidate_inbox_detail(root, item.entry_id)
+            except CandidateInboxError:
+                evidence_label = item.source_display_label
+            else:
+                evidence_label = build_teacher_candidate_detail(
+                    row_detail
+                ).evidence_label
             _write(
                 output,
-                f"{index}. {item.source_display_label}{marker}",
+                f"{index}. {evidence_label}{marker}",
                 f"   {_label(item.evaluation_outcome)}{condition}; {_selection(item)}",
             )
         if not result.items:
