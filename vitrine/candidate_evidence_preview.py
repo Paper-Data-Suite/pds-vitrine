@@ -15,11 +15,30 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, Protocol
 
+from pds_core.academic_work_registration_storage import (
+    AcademicWorkRegistrationIntegrityError,
+    AcademicWorkRegistrationNotFoundError,
+    AcademicWorkRegistrationReadError,
+    load_academic_work_registration_revision,
+)
+from pds_core.academic_work_registrations import AcademicWorkRegistration
+from pds_core.publication_records import PublicationRecord
+from pds_core.registry_services import (
+    RegistryServiceIntegrityError,
+    RegistryServiceNotFoundError,
+    RegistryServiceWriteError,
+    get_canonical_publication_record,
+)
+
 from vitrine.candidate_inbox import (
     CandidateInboxError,
     get_candidate_inbox_detail,
 )
-from vitrine.models import ActorAttribution, CandidateSourceEndpoint
+from vitrine.models import (
+    ActorAttribution,
+    CandidateSourceEndpoint,
+    CorePublicationSourceReference,
+)
 from vitrine.models.common import (
     lower_key_tuple,
     require_enum,
@@ -28,11 +47,36 @@ from vitrine.models.common import (
     require_text,
 )
 from vitrine.models.errors import VitrineModelValidationError
+from vitrine.producer_adapters import (
+    ProducerAdapterConflictError,
+    ProducerAdapterError,
+    ProducerAdapterSupportRequest,
+    ProducerAdapterUnsupportedError,
+    ProducerProjectionAdapter,
+    ProducerProjectionAdapterRegistry,
+    ProducerProjectionBatch,
+    ProducerProjectionError,
+    ProducerReaderError,
+    ProjectedProducerRelationship,
+    ProjectedProducerSource,
+)
+from vitrine.producer_reader_services import (
+    ProducerReaderServiceError,
+    SourceReadAuthorizationGate,
+    SourceReadAuthorizationRequest,
+    read_authorized_producer_manifest,
+)
 
 CANDIDATE_EVIDENCE_PREVIEW_CONTRACT_VERSION: Final[str] = (
     "vitrine_candidate_evidence_preview_v1"
 )
 CANDIDATE_EVIDENCE_PREVIEW_OPERATION: Final[str] = "candidate_evidence_preview"
+CANDIDATE_EVIDENCE_PREVIEW_MANIFEST_OPERATION: Final[str] = (
+    "candidate_evidence_preview_manifest"
+)
+CANDIDATE_EVIDENCE_PREVIEW_KINDS: Final[frozenset[str]] = frozenset(
+    {"structured_summary", "artifact_preview", "preview_unavailable"}
+)
 CANDIDATE_EVIDENCE_PREVIEW_AUTHORIZATION_OUTCOMES: Final[frozenset[str]] = (
     frozenset({"allowed", "denied", "unresolved"})
 )
@@ -44,6 +88,16 @@ CANDIDATE_EVIDENCE_PREVIEW_CODES: Final[frozenset[str]] = frozenset(
         "candidate_evidence_preview.state_conflict",
         "candidate_evidence_preview.context_mismatch",
         "candidate_evidence_preview.source_unavailable",
+        "candidate_evidence_preview.canonical_source_missing",
+        "candidate_evidence_preview.canonical_source_mismatch",
+        "candidate_evidence_preview.adapter_unavailable",
+        "candidate_evidence_preview.source_read_denied",
+        "candidate_evidence_preview.source_read_unresolved",
+        "candidate_evidence_preview.manifest_missing",
+        "candidate_evidence_preview.source_integrity_failed",
+        "candidate_evidence_preview.producer_reader_failed",
+        "candidate_evidence_preview.projection_failed",
+        "candidate_evidence_preview.source_drift",
         "candidate_evidence_preview.authorization_denied",
         "candidate_evidence_preview.authorization_unresolved",
     }
@@ -178,6 +232,56 @@ class CandidateEvidencePreviewAuthority:
         if not isinstance(self.source_endpoint, CandidateSourceEndpoint):
             raise ValueError("source_endpoint must be CandidateSourceEndpoint.")
 
+
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class CandidateEvidencePreviewResult:
+    """One exact revalidated preview form with no acquired Artifact bytes."""
+
+    contract_version: str
+    preview_kind: str
+    authority: CandidateEvidencePreviewAuthority
+    verified_source: ProjectedProducerSource
+    artifact_authorization_required: bool
+    unavailable_reason: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.contract_version != CANDIDATE_EVIDENCE_PREVIEW_CONTRACT_VERSION:
+            raise ValueError("unexpected Candidate evidence-preview contract.")
+        if self.preview_kind not in CANDIDATE_EVIDENCE_PREVIEW_KINDS:
+            raise ValueError("unsupported Candidate evidence-preview kind.")
+        if not isinstance(self.authority, CandidateEvidencePreviewAuthority):
+            raise ValueError("authority must be CandidateEvidencePreviewAuthority.")
+        if not isinstance(self.verified_source, ProjectedProducerSource):
+            raise ValueError("verified_source must be ProjectedProducerSource.")
+        if self.preview_kind == "artifact_preview":
+            if not self.artifact_authorization_required:
+                raise ValueError(
+                    "artifact preview must require explicit Artifact authorization."
+                )
+            if self.unavailable_reason is not None:
+                raise ValueError(
+                    "artifact preview must not carry an unavailable reason."
+                )
+        elif self.preview_kind == "structured_summary":
+            if self.artifact_authorization_required:
+                raise ValueError(
+                    "structured summary must not require Artifact-byte authorization."
+                )
+            if self.unavailable_reason is not None:
+                raise ValueError(
+                    "structured summary must not carry an unavailable reason."
+                )
+        else:
+            if self.artifact_authorization_required:
+                raise ValueError(
+                    "unavailable preview must not require Artifact authorization."
+                )
+            if not isinstance(self.unavailable_reason, str) or not self.unavailable_reason:
+                raise ValueError(
+                    "unavailable preview requires a bounded explanatory reason."
+                )
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CandidateEvidencePreviewAuthorizationRequest:
@@ -397,6 +501,414 @@ def resolve_candidate_evidence_preview_authority(
     )
 
 
+
+
+def _publication_matches_reference(
+    publication: PublicationRecord,
+    reference: CorePublicationSourceReference,
+) -> bool:
+    """Compare immutable Core Publication facts, not current series position."""
+    return (
+        publication.schema_version == reference.core_publication_schema_version
+        and publication.publication_id == reference.publication_id
+        and publication.work == reference.work
+        and publication.source_record == reference.source_record
+        and publication.publication_kind == reference.publication_kind
+        and tuple(publication.capabilities) == tuple(reference.capabilities)
+        and publication.record_set_id == reference.record_set_id
+        and publication.record_set_revision == reference.record_set_revision
+        and publication.manifest_contract_version == reference.manifest_contract_version
+        and publication.manifest_path == reference.manifest_path
+        and publication.manifest_digest_algorithm == reference.manifest_digest_algorithm
+        and publication.manifest_digest == reference.manifest_digest
+        and publication.published_at == reference.published_at
+        and publication.academic_work_registration_revision
+        == reference.academic_work_registration_revision
+        and publication.supersedes_publication_id == reference.supersedes_publication_id
+    )
+
+
+def _load_exact_preview_publication(
+    workspace_root: str | Path,
+    reference: CorePublicationSourceReference,
+) -> PublicationRecord:
+    try:
+        publication = get_canonical_publication_record(
+            workspace_root,
+            reference.publication_id,
+        )
+    except RegistryServiceNotFoundError as error:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.canonical_source_missing",
+            "Exact Candidate Publication is no longer available.",
+            stage="canonical_publication",
+        ) from error
+    except (RegistryServiceIntegrityError, RegistryServiceWriteError) as error:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.canonical_source_mismatch",
+            "Exact Candidate Publication could not be validated.",
+            stage="canonical_publication",
+        ) from error
+    if not _publication_matches_reference(publication, reference):
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.canonical_source_mismatch",
+            "Canonical Publication no longer matches the persisted Candidate source.",
+            stage="canonical_publication",
+        )
+    return publication
+
+
+def _registration_matches_snapshot(
+    registration: AcademicWorkRegistration,
+    reference: CorePublicationSourceReference,
+) -> bool:
+    snapshot = reference.registration_snapshot
+    if snapshot is None:
+        return False
+    return (
+        registration.work == reference.work
+        and registration.registration_revision == snapshot.registration_revision
+        and registration.producer_contract_version == snapshot.producer_contract_version
+        and registration.title == snapshot.title_snapshot
+        and registration.work_kind == snapshot.work_kind
+        and registration.academic_intent == snapshot.academic_intent
+        and registration.lifecycle == snapshot.lifecycle
+        and registration.source_records == snapshot.source_records
+    )
+
+
+def _load_exact_preview_registration(
+    workspace_root: str | Path,
+    publication: PublicationRecord,
+    reference: CorePublicationSourceReference,
+) -> AcademicWorkRegistration | None:
+    revision = reference.academic_work_registration_revision
+    snapshot = reference.registration_snapshot
+    if revision is None:
+        if snapshot is not None:
+            raise CandidateEvidencePreviewError(
+                "candidate_evidence_preview.canonical_source_mismatch",
+                "Persisted Candidate registration provenance is inconsistent.",
+                stage="registration",
+            )
+        return None
+    if snapshot is None or snapshot.registration_revision != revision:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.canonical_source_mismatch",
+            "Persisted Candidate registration provenance is incomplete.",
+            stage="registration",
+        )
+    try:
+        registration = load_academic_work_registration_revision(
+            workspace_root,
+            publication.work,
+            revision,
+        )
+    except AcademicWorkRegistrationNotFoundError as error:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.canonical_source_missing",
+            "Exact Candidate Academic Work Registration is unavailable.",
+            stage="registration",
+        ) from error
+    except (
+        AcademicWorkRegistrationIntegrityError,
+        AcademicWorkRegistrationReadError,
+    ) as error:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.canonical_source_mismatch",
+            "Exact Candidate Academic Work Registration could not be validated.",
+            stage="registration",
+        ) from error
+    if not _registration_matches_snapshot(registration, reference):
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.canonical_source_mismatch",
+            "Academic Work Registration no longer matches persisted Candidate provenance.",
+            stage="registration",
+        )
+    return registration
+
+
+def _preview_adapter_request(
+    publication: PublicationRecord,
+    registration: AcademicWorkRegistration | None,
+) -> ProducerAdapterSupportRequest:
+    source = publication.source_record
+    return ProducerAdapterSupportRequest(
+        producer_module_id=publication.work.module_id,
+        core_publication_schema_version=publication.schema_version,
+        publication_kind=publication.publication_kind,
+        manifest_contract_version=publication.manifest_contract_version,
+        producer_contract_version=(
+            None if registration is None else registration.producer_contract_version
+        ),
+        source_record_kind=None if source is None else source.record_kind,
+        source_record_contract_version=(
+            None if source is None else source.contract_version
+        ),
+        capabilities=tuple(publication.capabilities),
+    )
+
+
+def _select_preview_adapter(
+    registry: ProducerProjectionAdapterRegistry,
+    request: ProducerAdapterSupportRequest,
+) -> ProducerProjectionAdapter:
+    try:
+        return registry.select_adapter(request)
+    except (
+        ProducerAdapterUnsupportedError,
+        ProducerAdapterConflictError,
+        ProducerAdapterError,
+    ) as error:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.adapter_unavailable",
+            "No exact audited Vitrine adapter can revalidate this Candidate source.",
+            stage="adapter_support",
+        ) from error
+
+
+def _read_preview_public_model(
+    workspace_root: str | Path,
+    *,
+    authority: CandidateEvidencePreviewAuthority,
+    publication: PublicationRecord,
+    adapter: ProducerProjectionAdapter,
+    authorization_gate: SourceReadAuthorizationGate,
+) -> object:
+    request = SourceReadAuthorizationRequest(
+        portfolio_id=authority.portfolio_id,
+        portfolio_subject_id=authority.portfolio_subject_id,
+        publication_id=authority.source_publication_id,
+        operation=CANDIDATE_EVIDENCE_PREVIEW_MANIFEST_OPERATION,
+        purpose=authority.requested_purpose,
+    )
+    try:
+        result = read_authorized_producer_manifest(
+            workspace_root,
+            publication=publication,
+            authorization_gate=authorization_gate,
+            authorization_request=request,
+            reader=adapter.reader,
+        )
+    except ProducerReaderServiceError as error:
+        if error.code == "source_read.authorization_denied":
+            code = "candidate_evidence_preview.source_read_denied"
+        elif error.code == "source_read.authorization_unresolved":
+            code = "candidate_evidence_preview.source_read_unresolved"
+        elif error.code == "source_read.manifest_missing":
+            code = "candidate_evidence_preview.manifest_missing"
+        elif error.code == "source_read.manifest_integrity_failed":
+            code = "candidate_evidence_preview.source_integrity_failed"
+        else:
+            code = "candidate_evidence_preview.invalid_request"
+        raise CandidateEvidencePreviewError(
+            code,
+            "Exact Candidate producer source could not be read safely.",
+            stage=error.stage,
+        ) from error
+    except ProducerReaderError as error:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.producer_reader_failed",
+            "Producer public reader rejected the exact Candidate manifest.",
+            stage="producer_reader",
+        ) from error
+    return result.public_model
+
+
+def _project_preview_sources(
+    adapter: ProducerProjectionAdapter,
+    public_model: object,
+) -> tuple[ProjectedProducerSource, ...]:
+    try:
+        batch = adapter.project(public_model)
+    except ProducerProjectionError as error:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.projection_failed",
+            "Producer source projection failed safely.",
+            stage="producer_projection",
+        ) from error
+    if not isinstance(batch, ProducerProjectionBatch):
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.projection_failed",
+            "Producer adapter returned an invalid projection result.",
+            stage="producer_projection",
+        )
+    declaration = adapter.declaration
+    if (
+        batch.adapter_id != declaration.adapter_id
+        or batch.adapter_contract_version != declaration.adapter_contract_version
+        or batch.reader_id != declaration.public_reader_id
+        or batch.reader_contract_version != declaration.reader_contract_version
+        or batch.candidate_projection_contract_version
+        != declaration.candidate_projection_contract_version
+        or batch.support_key != declaration.support_key
+    ):
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.projection_failed",
+            "Producer projection provenance disagrees with the selected adapter.",
+            stage="producer_projection",
+        )
+    return batch.projected_sources
+
+
+def _relationship_key(
+    value: ProjectedProducerRelationship,
+) -> tuple[str, str, str, str, str | None]:
+    return (
+        value.source_subject_kind,
+        value.source_subject_id,
+        value.relationship_kind,
+        value.relationship_authority,
+        value.supporting_source_reference,
+    )
+
+
+def _persisted_relationship_keys(
+    endpoint: CandidateSourceEndpoint,
+) -> tuple[tuple[str, str, str, str, str | None], ...]:
+    return tuple(
+        (
+            value.source_subject_kind,
+            value.source_subject_id,
+            value.relationship_kind,
+            value.relationship_authority,
+            value.supporting_source_reference,
+        )
+        for value in endpoint.subject_relationship_assertions
+    )
+
+
+def _source_matches_persisted_endpoint(
+    source: ProjectedProducerSource,
+    endpoint: CandidateSourceEndpoint,
+) -> bool:
+    if (
+        source.producer_source != endpoint.producer_source
+        or source.source_artifact != endpoint.source_artifact
+        or source.source_privacy != endpoint.source_privacy
+    ):
+        return False
+    projected_relationships = {
+        _relationship_key(value) for value in source.source_relationships
+    }
+    return all(
+        value in projected_relationships
+        for value in _persisted_relationship_keys(endpoint)
+    )
+
+
+def _classify_preview_source(
+    source: ProjectedProducerSource,
+) -> tuple[str, bool, str | None]:
+    kind = source.source_artifact.artifact_kind
+    if kind == "assessment_summary":
+        return "structured_summary", False, None
+    if kind in {
+        "original_student_work",
+        "rendered_feedback",
+        "collaborative_artifact",
+    }:
+        return "artifact_preview", True, None
+    return (
+        "preview_unavailable",
+        False,
+        "This exact source has no supported Candidate preview representation.",
+    )
+
+
+def _require_preview_authority_still_current(
+    workspace_root: str | Path,
+    authority: CandidateEvidencePreviewAuthority,
+) -> None:
+    try:
+        detail = get_candidate_inbox_detail(workspace_root, authority.entry_id)
+    except CandidateInboxError as error:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.state_conflict",
+            "Candidate state changed while preview authority was being revalidated.",
+            stage="state_replay",
+        ) from error
+    item = detail.item
+    if (
+        detail.observed_state_revision != authority.observed_state_revision
+        or item.portfolio_id != authority.portfolio_id
+        or item.portfolio_subject_id != authority.portfolio_subject_id
+        or item.candidate_id != authority.candidate_id
+        or item.current_evaluation_id != authority.candidate_evaluation_id
+    ):
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.state_conflict",
+            "Candidate state changed while preview authority was being revalidated.",
+            stage="state_replay",
+        )
+
+
+def prepare_candidate_evidence_preview(
+    workspace_root: str | Path,
+    request: CandidateEvidencePreviewRequest,
+    *,
+    adapter_registry: ProducerProjectionAdapterRegistry,
+    source_read_authorization_gate: SourceReadAuthorizationGate,
+) -> CandidateEvidencePreviewResult:
+    """Revalidate one exact Candidate source and classify its preview form.
+
+    This stage acquires no producer Artifact bytes. ``artifact_preview`` means
+    byte-bearing preview is supported by the exact source shape and will require
+    the separate Candidate evidence-preview authorization contract before a
+    later acquisition step.
+    """
+    authority = resolve_candidate_evidence_preview_authority(
+        workspace_root,
+        request,
+    )
+    reference = authority.source_endpoint.core_publication
+    publication = _load_exact_preview_publication(workspace_root, reference)
+    registration = _load_exact_preview_registration(
+        workspace_root,
+        publication,
+        reference,
+    )
+    adapter = _select_preview_adapter(
+        adapter_registry,
+        _preview_adapter_request(publication, registration),
+    )
+    public_model = _read_preview_public_model(
+        workspace_root,
+        authority=authority,
+        publication=publication,
+        adapter=adapter,
+        authorization_gate=source_read_authorization_gate,
+    )
+    projected_sources = _project_preview_sources(adapter, public_model)
+    matches = tuple(
+        source
+        for source in projected_sources
+        if _source_matches_persisted_endpoint(
+            source,
+            authority.source_endpoint,
+        )
+    )
+    if len(matches) != 1:
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.source_drift",
+            "Producer state does not resolve to exactly the persisted Candidate source.",
+            stage="source_revalidation",
+        )
+    verified_source = matches[0]
+    preview_kind, authorization_required, unavailable_reason = (
+        _classify_preview_source(verified_source)
+    )
+    _require_preview_authority_still_current(workspace_root, authority)
+    return CandidateEvidencePreviewResult(
+        contract_version=CANDIDATE_EVIDENCE_PREVIEW_CONTRACT_VERSION,
+        preview_kind=preview_kind,
+        authority=authority,
+        verified_source=verified_source,
+        artifact_authorization_required=authorization_required,
+        unavailable_reason=unavailable_reason,
+    )
+
+
 def build_candidate_evidence_preview_authorization_request(
     authority: CandidateEvidencePreviewAuthority,
 ) -> CandidateEvidencePreviewAuthorizationRequest:
@@ -472,6 +984,8 @@ __all__ = [
     "CANDIDATE_EVIDENCE_PREVIEW_AUTHORIZATION_OUTCOMES",
     "CANDIDATE_EVIDENCE_PREVIEW_CODES",
     "CANDIDATE_EVIDENCE_PREVIEW_CONTRACT_VERSION",
+    "CANDIDATE_EVIDENCE_PREVIEW_KINDS",
+    "CANDIDATE_EVIDENCE_PREVIEW_MANIFEST_OPERATION",
     "CANDIDATE_EVIDENCE_PREVIEW_OPERATION",
     "CandidateEvidencePreviewAuthorizationDecision",
     "CandidateEvidencePreviewAuthorizationGate",
@@ -479,7 +993,9 @@ __all__ = [
     "CandidateEvidencePreviewAuthority",
     "CandidateEvidencePreviewError",
     "CandidateEvidencePreviewRequest",
+    "CandidateEvidencePreviewResult",
     "authorize_candidate_evidence_preview",
     "build_candidate_evidence_preview_authorization_request",
+    "prepare_candidate_evidence_preview",
     "resolve_candidate_evidence_preview_authority",
 ]

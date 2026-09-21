@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 7 revalidates exact Candidate preview provenance through
+  immutable Core Publication/Registration replay, the authorized verified
+  producer-manifest reader, exact adapter re-projection, and persisted source
+  matching, then classifies structured, Artifact, or unavailable preview forms.
 - Issue #96 Slice 6 adds the read-only
   `vitrine_candidate_evidence_preview_v1` authority foundation: exact
   persisted-entry/state replay, canonical source-endpoint resolution, separate
