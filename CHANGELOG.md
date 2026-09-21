@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 1 makes Candidate rediscovery identity independent of
+  persisted display snapshots, so presentation-only label changes reuse the
+  same exact Candidates without rewriting historical display text.
 - Issue #95 Slice 8 closure qualification: A-J acceptance matrix, dedicated
   validator, package/repository wiring, isolated installed-wheel presentation
   smoke, duplicate Portfolio-label disambiguation, and teacher-first successful

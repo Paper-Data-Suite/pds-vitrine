@@ -1126,7 +1126,6 @@ def _existing_positive_result(
     eligible_section_ids: tuple[str, ...],
     outcome: str,
     condition_state: str,
-    display_snapshot: str,
     source: ProjectedProducerSource,
 ) -> CandidateEvaluationResult | None:
     profile_binding_id = binding.profile_binding_id
@@ -1147,7 +1146,8 @@ def _existing_positive_result(
             or candidate.eligible_profile_rule_ids != eligible_rule_ids
             or candidate.eligible_section_ids != eligible_section_ids
             or candidate.condition_state != condition_state
-            or candidate.display_snapshot != display_snapshot
+            # display_snapshot is persisted presentation history, not Candidate
+            # identity or rediscovery authority.
             or _endpoint_semantic_key(candidate.source_endpoint)
             != _endpoint_semantic_key(endpoint)
         ):
@@ -1295,7 +1295,6 @@ def _evaluate_source(
         eligible_section_ids=eligible_sections,
         outcome=outcome,
         condition_state=condition_state,
-        display_snapshot=display,
         source=source,
     )
     if existing is not None:
