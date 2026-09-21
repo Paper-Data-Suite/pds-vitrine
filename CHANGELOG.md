@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 4 makes `Ready to consider` require
+  `selected_state="unselected"`, excluding actively selected and historical-only
+  Candidates while preserving the separate Already selected/history workflows.
 - Issue #96 Slice 3 applies instructional Candidate evidence presentation to
   Candidate Inbox and guided Review list/detail surfaces, phrases exact Profile
   eligibility as `Matches`, and explicitly avoids promising current Placement

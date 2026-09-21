@@ -170,6 +170,23 @@ def test_guided_review_list_humanizes_state_tokens() -> None:
     assert "ready_for_consideration" not in rendered
 
 
+def test_ready_to_consider_category_requires_unselected_candidate() -> None:
+    query = candidate_review_menu._query_for_category("portfolio_exact", "2")
+
+    assert query.portfolio_id == "portfolio_exact"
+    assert query.candidate_conditions == ("ready_for_consideration",)
+    assert query.selected_state == "unselected"
+
+
+def test_selection_categories_remain_distinct() -> None:
+    ready = candidate_review_menu._query_for_category("portfolio_exact", "2")
+    selected = candidate_review_menu._query_for_category("portfolio_exact", "3")
+
+    assert ready.selected_state == "unselected"
+    assert selected.selected_state == "selected"
+    assert ready.selected_state != selected.selected_state
+
+
 def test_guided_review_list_uses_instructional_detail_projection(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

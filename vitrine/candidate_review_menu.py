@@ -198,6 +198,7 @@ def _query_for_category(portfolio_id: str, category: str) -> CandidateInboxQuery
         return CandidateInboxQuery(
             portfolio_id=portfolio_id,
             candidate_conditions=("ready_for_consideration",),
+            selected_state="unselected",
             limit=100,
         )
     if category in {"3", "6"}:
