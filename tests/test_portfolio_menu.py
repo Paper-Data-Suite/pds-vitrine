@@ -206,6 +206,84 @@ def test_portfolio_choice_prioritizes_recognizable_context_without_id(
     assert "portfolio_exact" not in rendered
 
 
+def test_duplicate_portfolio_labels_use_exact_id_only_for_disambiguation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first = SimpleNamespace(
+        portfolio_id="portfolio_first",
+        title_snapshot="Improvement Portfolio",
+        subject_display_label="Jordan Rivera",
+    )
+    second = SimpleNamespace(
+        portfolio_id="portfolio_second",
+        title_snapshot="Improvement Portfolio",
+        subject_display_label="Jordan Rivera",
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "list_portfolios",
+        lambda _: (first, second),
+    )
+    output = io.StringIO()
+
+    selected = portfolio_menu._choose_portfolio(
+        root=tmp_path,
+        input_fn=_inputs(["2"]),  # type: ignore[arg-type]
+        output=output,
+        clear_fn=lambda: None,
+    )
+
+    rendered = output.getvalue()
+    assert selected == "portfolio_second"
+    assert "Jordan Rivera — Improvement Portfolio — Portfolio ID portfolio_first" in rendered
+    assert "Jordan Rivera — Improvement Portfolio — Portfolio ID portfolio_second" in rendered
+
+
+def test_overview_subject_details_require_explicit_action(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    view = SimpleNamespace(
+        portfolio_id="portfolio_exact",
+        portfolio_subject_id="subject_exact",
+        title="Improvement Portfolio",
+        subject_label="Jordan Rivera",
+        profile_binding_id="binding_exact",
+        portfolio_profile_id="profile_exact",
+        profile_revision=1,
+        profile_label="Starter Improvement Portfolio",
+        purpose_kind="improvement",
+        subject_links=(),
+        candidate_count=0,
+        active_selection_count=0,
+        current_composition_revision=None,
+        snapshot_series_count=0,
+        current_edition_count=0,
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "build_teacher_portfolio_overview",
+        lambda *_: view,
+    )
+    routed: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        portfolio_menu,
+        "run_subject_menu",
+        lambda **kwargs: routed.append(kwargs),
+    )
+
+    portfolio_menu._overview_workflow(
+        root=tmp_path,
+        portfolio_id="portfolio_exact",
+        input_fn=_inputs(["B"]),  # type: ignore[arg-type]
+        output=io.StringIO(),
+        clear_fn=lambda: None,
+    )
+
+    assert routed == []
+
+
 def test_profile_binding_default_is_teacher_first_and_technical_is_exact() -> None:
     view = TeacherProfileBinding(
         contract_version="vitrine_teacher_information_architecture_v1",

@@ -88,6 +88,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "teacher information architecture",
+        (
+            "scripts/validate_teacher_information_architecture.py",
+            "--skip-focused-tests",
+        ),
+    ),
+    (
         "Vitrine suite operations integration",
         (
             "scripts/validate_suite_operations_integration.py",
@@ -387,6 +394,10 @@ def validate(
                 (
                     "Vitrine attention / next actions",
                     "scripts/smoke_test_attention_next_actions_wheel.py",
+                ),
+                (
+                    "teacher information architecture",
+                    "scripts/smoke_test_teacher_information_architecture_wheel.py",
                 ),
                 (
                     "Vitrine module operations",

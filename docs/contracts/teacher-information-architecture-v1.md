@@ -3,7 +3,7 @@
 - **Issue:** #95
 - **Branch:** `95-teacher-information-architecture-provenance-drilldown`
 - **Contract:** `vitrine_teacher_information_architecture_v1`
-- **Status:** Slice 7 — current teacher surfaces use teacher-first presentation with explicit provenance
+- **Status:** Slice 8 — acceptance/package/installed-wheel closure qualification
 
 ## Purpose
 
@@ -319,6 +319,28 @@ currentness/completion semantics, counts, notices, owner-action routing meaning,
 Portfolio scoping, Snapshot interpretation, or read-only guarantees. Issue #103
 continues to own changes to what constitutes completed/unfinished Portfolio
 work.
+
+## Slice 8 closure qualification
+
+The final #95 implementation pass adds issue-level acceptance enforcement rather
+than a new domain model.
+
+It adds:
+
+- an A-J acceptance matrix tied to concrete behavior tests;
+- a dedicated #95 validator wired into complete repository validation;
+- source-distribution guards for the presentation tests/validator/docs;
+- an isolated Core+Vitrine installed-wheel presentation smoke;
+- duplicate-Portfolio-label disambiguation using exact ID only when necessary;
+- a teacher-first successful Build / Export result with exact Snapshot
+  Series/Export Artifact identity behind Technical Details / Provenance.
+
+The successful build result remains a one-shot result screen. It does not add
+Edition discovery, opening, printing, history, or management; those remain
+issue #102.
+
+The presentation validator protects the transient layer from importing or
+calling mutation/authority services. It does not make display models canonical.
 
 ## Privacy and provenance boundaries
 

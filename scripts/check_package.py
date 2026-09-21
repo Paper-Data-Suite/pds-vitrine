@@ -200,6 +200,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/smoke_test_working_composition_wheel.py",
     "scripts/smoke_test_current_portfolio_build_export_wheel.py",
     "scripts/smoke_test_attention_next_actions_wheel.py",
+    "scripts/smoke_test_teacher_information_architecture_wheel.py",
     "scripts/smoke_test_operations_wheel.py",
     "scripts/smoke_test_portfolio_setup_wheel.py",
     "scripts/smoke_test_curation_wheel.py",
@@ -231,6 +232,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/validate_working_composition.py",
     "scripts/validate_current_portfolio_build_export.py",
     "scripts/validate_attention_next_actions.py",
+    "scripts/validate_teacher_information_architecture.py",
     "scripts/validate_suite_operations_integration.py",
     "scripts/validate_portfolio_setup.py",
     "scripts/validate_curation_workflows.py",
@@ -337,6 +339,9 @@ REQUIRED_SDIST_FILES = {
     "tests/test_attention_menu.py",
     "tests/test_attention_acceptance_matrix.py",
     "tests/test_validate_attention_next_actions.py",
+    "tests/test_teacher_presentation.py",
+    "tests/test_teacher_information_architecture_acceptance.py",
+    "tests/test_validate_teacher_information_architecture.py",
     "tests/test_pds_operations.py",
     "tests/test_operations_package_contract.py",
     "tests/test_validate_suite_operations_integration.py",
@@ -390,6 +395,7 @@ REQUIRED_SDIST_FILES = {
     "docs/validation/issue-68-build-export-current-portfolio-validation.md",
     "docs/validation/issue-69-attention-next-actions-validation.md",
     "docs/validation/issue-70-suite-operations-integration-validation.md",
+    "docs/validation/issue-95-teacher-information-architecture-validation.md",
 }
 
 

@@ -106,6 +106,8 @@ files = [
     "scripts/smoke_test_current_portfolio_build_export_wheel.py",
     "scripts/validate_attention_next_actions.py",
     "scripts/smoke_test_attention_next_actions_wheel.py",
+    "scripts/validate_teacher_information_architecture.py",
+    "scripts/smoke_test_teacher_information_architecture_wheel.py",
     "scripts/smoke_test_operations_wheel.py",
     "scripts/validate_suite_operations_integration.py",
     "scripts/validate_portfolio_setup.py",

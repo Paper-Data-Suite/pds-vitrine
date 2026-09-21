@@ -181,6 +181,7 @@ fixtures/representative-portfolios/
 - [Issue #68 Build and Export Current Portfolio validation](validation/issue-68-build-export-current-portfolio-validation.md) — cross-workflow acceptance matrix, contract validator, package guards, isolated Core+Vitrine byte-bearing Export smoke, and complete repository qualification.
 - [Issue #69 Attention and Next Actions validation](validation/issue-69-attention-next-actions-validation.md) — cross-workflow acceptance matrix, contract validator, package/current-release guards, isolated Core+Vitrine attention smoke, and complete repository qualification.
 - [Issue #70 Suite Operations Integration validation](validation/issue-70-suite-operations-integration-validation.md) â€” Core provider/readiness/attention contract, class-scope boundary, opaque workspace relocation, package guards, isolated Core+Vitrine operations smoke, and complete repository qualification.
+- [Issue #95 Teacher Information Architecture validation](validation/issue-95-teacher-information-architecture-validation.md) — acceptance matrix, display-versus-authority/read-only/privacy guards, successful-build result hierarchy, package wiring, and isolated Core+Vitrine presentation smoke.
 
 - [Issue #71 live installed cross-producer acceptance validation](validation/issue-71-live-installed-cross-producer-acceptance-validation.md) — exact released-wheel authentication, live producer/Candidate/curation/Snapshot acceptance, negative currentness/authorization matrix, custody/tamper/historical verification, and producer-independent sealed verification.
 

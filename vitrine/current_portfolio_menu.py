@@ -212,9 +212,26 @@ def _print_result(result: CurrentPortfolioBuildExportResult, output: TextIO) -> 
         output,
         "",
         "Build and Export Current Portfolio completed.",
-        f"Snapshot Series: {result.snapshot_series_id}",
+        f"Portfolio Edition: {result.edition_number}",
+        f"Export: {teacher_term(result.export_disposition)}",
+        f"Export location: {result.export_path}",
+        "Current Edition pointer advanced: no",
+        "Export creation is not disclosure permission or delivery.",
+    )
+
+
+def _print_result_technical_details(
+    result: CurrentPortfolioBuildExportResult,
+    output: TextIO,
+) -> None:
+    _write(
+        output,
+        "",
+        "Build Result Technical Details / Provenance",
+        "",
+        f"Snapshot Series ID: {result.snapshot_series_id}",
         f"Snapshot Edition: {result.edition_number}",
-        f"Snapshot Export Artifact: {result.snapshot_export_artifact_id}",
+        f"Snapshot Export Artifact ID: {result.snapshot_export_artifact_id}",
         f"Export disposition: {result.export_disposition}",
         f"Export path: {result.export_path}",
         "Current Edition pointer advanced: no",
@@ -416,6 +433,19 @@ def run_current_portfolio_build_export_menu(
             source_providers=dependencies.snapshot_source_providers,
         )
         _print_result(result, output)
+        _write(
+            output,
+            "",
+            "T. Technical details / provenance",
+        )
+        if (
+            _read(
+                input_fn,
+                "T for build-result technical details or Enter to finish: ",
+            ).casefold()
+            == "t"
+        ):
+            _print_result_technical_details(result, output)
     except CurrentPortfolioExecutionError as error:
         _print_execution_error(error, output)
     except RuntimeError as error:

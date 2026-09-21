@@ -139,6 +139,19 @@ def _portfolio_summary_label(item: object) -> str:
     return str(title or subject or "Untitled Portfolio")
 
 
+def _portfolio_summary_labels(values: Sequence[object]) -> tuple[str, ...]:
+    base = tuple(_portfolio_summary_label(item) for item in values)
+    counts = {label: base.count(label) for label in set(base)}
+    return tuple(
+        (
+            label
+            if counts[label] == 1
+            else f"{label} — Portfolio ID {getattr(item, 'portfolio_id')}"
+        )
+        for item, label in zip(values, base, strict=True)
+    )
+
+
 def _choose_portfolio(
     *,
     root: Path,
@@ -153,8 +166,9 @@ def _choose_portfolio(
         _write(output, "No Portfolios exist yet.")
         _pause(input_fn)
         return None
-    for index, item in enumerate(values, 1):
-        _write(output, f"{index}. {_portfolio_summary_label(item)}")
+    labels = _portfolio_summary_labels(values)
+    for index, label in enumerate(labels, 1):
+        _write(output, f"{index}. {label}")
     raw = _read(input_fn, "Portfolio number (B to go back): ")
     selected = _numbered_choice(raw, values)
     if isinstance(selected, NavigationChoice):
@@ -1061,8 +1075,8 @@ def run_portfolio_menu(
                 values = list_portfolios(root)
                 if not values:
                     _write(output, "No Portfolios exist yet.")
-                for x in values:
-                    _write(output, _portfolio_summary_label(x))
+                for label in _portfolio_summary_labels(values):
+                    _write(output, label)
                 _pause(input_fn)
             else:
                 _write(output, "Please choose 1-3, H, B, M, or Q.")

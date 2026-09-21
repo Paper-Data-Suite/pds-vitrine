@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #95 Slice 8 closure qualification: A-J acceptance matrix, dedicated
+  validator, package/repository wiring, isolated installed-wheel presentation
+  smoke, duplicate Portfolio-label disambiguation, and teacher-first successful
+  Build / Export result provenance.
 - Issue #95 Slice 7 teacher-first Attention / Next Actions presentation with
   exact #69 evaluation/state/code/class/reason/action provenance behind
   Technical Details / Provenance and unchanged attention semantics.

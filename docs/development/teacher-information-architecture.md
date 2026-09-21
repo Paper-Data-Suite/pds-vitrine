@@ -172,10 +172,33 @@ write acknowledgement/seen state.
 Issue #103 owns future semantic changes to attention completion. #95 only changes
 which existing fields are primary versus technical presentation.
 
+## Successful Build / Export result
+
+Slice 8 applies the same split after successful execution:
+
+```text
+CurrentPortfolioBuildExportResult
+-> teacher completion / Edition / Export-location summary
+-> T. Technical details / provenance
+   -> Snapshot Series / Edition / Export Artifact identity
+```
+
+Do not turn this into the completed-Edition management workflow. Issue #102 owns
+open/print/history/update behavior.
+
+## Ambiguous display labels
+
+A human label remains display-only. When duplicate Portfolio labels make a
+numbered choice ambiguous, include the exact Portfolio ID only for
+disambiguation. The original exact object/ID remains the selected authority.
+
+Do not silently match Portfolios by title or Subject display label.
+
 ## Extension rule
 
-Future #95 slices should extend `teacher_presentation.py` or adjacent transient
-presentation modules instead of formatting canonical records ad hoc in each menu.
+Future teacher-facing work should extend `teacher_presentation.py` or adjacent
+transient presentation modules instead of formatting canonical records ad hoc in
+each menu.
 
 Keep the layers distinct:
 
@@ -191,27 +214,25 @@ derivation while implementing this presentation issue; those belong to #96-#103.
 
 ## Focused validation
 
-Run after Slice 7:
+Run after Slice 8:
 
 ```powershell
-python -m pytest -q `
-  tests/test_attention_menu.py `
-  tests/test_attention_cli.py `
-  tests/test_attention_acceptance_matrix.py `
-  tests/test_validate_attention_next_actions.py
-
-python scripts/validate_attention_next_actions.py
+python scripts/validate_teacher_information_architecture.py
 
 python -m ruff check `
-  vitrine/attention_menu.py `
-  vitrine/menu.py `
+  vitrine/teacher_presentation.py `
   vitrine/portfolio_menu.py `
-  tests/test_attention_menu.py `
-  scripts/validate_attention_next_actions.py
+  vitrine/current_portfolio_menu.py `
+  scripts/validate_teacher_information_architecture.py `
+  scripts/smoke_test_teacher_information_architecture_wheel.py `
+  tests/test_teacher_information_architecture_acceptance.py `
+  tests/test_validate_teacher_information_architecture.py
 
 python -m mypy
 python scripts/check_documentation.py
 git diff --check
 ```
 
-The complete repository gate remains authoritative before the issue is closed.
+Then run the complete repository qualification documented in
+`docs/validation/issue-95-teacher-information-architecture-validation.md`.
+That complete clean-tree gate is authoritative before #95 is closed.

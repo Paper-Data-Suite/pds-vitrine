@@ -227,6 +227,12 @@ same preparation object must remain the reviewed/executed authority.
 
 The direct CLI continues to use the exact renderer.
 
+After successful execution, the guided result likewise presents completion,
+Edition number, Export disposition/location, and non-delivery/current-pointer
+boundaries first. Exact Snapshot Series and Export Artifact identifiers are
+available through `T. Technical details / provenance`. This one-shot drill-down
+does not implement the completed-Edition management workflow owned by issue #102.
+
 ## Teacher menu
 
 Portfolio option 6 delegates to:
