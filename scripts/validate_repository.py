@@ -407,6 +407,10 @@ def validate(
                     "scripts/smoke_test_teacher_information_architecture_wheel.py",
                 ),
                 (
+                    "Candidate evidence review",
+                    "scripts/smoke_test_candidate_evidence_review_wheel.py",
+                ),
+                (
                     "Vitrine module operations",
                     "scripts/smoke_test_operations_wheel.py",
                 ),

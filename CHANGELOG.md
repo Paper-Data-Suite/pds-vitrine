@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 12 adds exact installed ScoreForm/Quillan/Concord Candidate
+  evidence presentation/preview acceptance through the #71 isolation harness,
+  using the current Quillan 0.10.1 patch-release endpoint only for #96 while
+  preserving #71's historical frozen 0.10.0 composition, plus the isolated
+  Core+Vitrine-only #96 contract smoke and final qualification wiring.
 - Issue #96 Slice 11 adds the A-N focused acceptance matrix, a direct suppressed-
   Evaluation preview privacy regression, dedicated Candidate evidence-review
   validator, repository/package guards, and contract/development/validation

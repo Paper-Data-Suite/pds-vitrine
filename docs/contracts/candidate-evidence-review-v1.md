@@ -6,7 +6,7 @@
 - **Discovery presentation:** `vitrine_candidate_discovery_presentation_v1`
 - **Preview contract:** `vitrine_candidate_evidence_preview_v1`
 - **Artifact preview contract:** `vitrine_candidate_evidence_artifact_preview_v1`
-- **Status:** Slice 11 — focused acceptance and repository-guard closure
+- **Status:** Slice 12 — installed acceptance closure
 
 ## Purpose
 
@@ -175,3 +175,37 @@ Issue #97 owns Selection/Placement domain validity. Issue #98 owns the systemati
 menu transition/confirmation audit. Issues #99-#103 retain their documented
 Reflection, Composition, student-output, Edition, and Attention scopes. Issue
 #104 remains the final umbrella synthetic acceptance.
+
+## Installed acceptance endpoint note
+
+Issue #96 began against the then-audited Quillan 0.10.0 contract. Quillan v0.10.1 was subsequently released as a compatible patch release and remains qualified with Core 0.6.3. Slice 12 therefore advances only the #96 installed qualification endpoint to the exact v0.10.1 wheel; issue #71's historical frozen 0.10.0 acceptance composition is not rewritten.
+
+## Installed acceptance closure
+
+Slice 12 extends the existing authenticated issue #71 wheel harness with:
+
+```text
+--candidate-evidence-review-only
+```
+
+The mode authenticates the exact frozen Core 0.6.3, ScoreForm 0.11.0, Quillan
+0.10.0, and Concord 0.3.0 wheels, installs the candidate Vitrine wheel
+noneditably outside the repository, creates real producer-native synthetic
+Publications, performs live Candidate discovery, then proves:
+
+- ScoreForm presentation uses `Synthetic Baseline Assessment` and preserves
+  attempts 1 and 2;
+- Quillan presentation exposes Review, Student Work, Feedback PDF, and Feedback
+  Markdown for `Synthetic Later Writing Evidence`;
+- Concord exposes recognizable collaborative evidence for
+  `Synthetic Collaborative Later Evidence`;
+- ScoreForm preview remains a structured summary and cannot fabricate Artifact
+  bytes;
+- an authorized Quillan PDF preview returns verified producer bytes;
+- an authorized Concord returned-Artifact preview returns verified PDF bytes;
+- manifest and Artifact preview authorization use the #96 operation scopes;
+- preview leaves Vitrine state revision unchanged.
+
+The installed Core+Vitrine-only wheel smoke imports every #96 runtime contract
+with ScoreForm, Quillan, and Concord absent, proving producer packages remain
+optional/lazy rather than unconditional Vitrine dependencies.

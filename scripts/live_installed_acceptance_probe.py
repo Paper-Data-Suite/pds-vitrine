@@ -55,14 +55,24 @@ def _inside_prefix(path: Path) -> bool:
     return path.is_relative_to(prefix) and "site-packages" in lowered
 
 
-def _distribution_versions() -> dict[str, str]:
-    return {name: metadata.version(name) for name in EXPECTED_VERSIONS}
+def _distribution_versions(
+    expected_versions: dict[str, str],
+) -> dict[str, str]:
+    return {name: metadata.version(name) for name in expected_versions}
 
 
-def run_live_probe(repository: Path) -> dict[str, Any]:
+def run_live_probe(
+    repository: Path,
+    *,
+    quillan_version: str = EXPECTED_VERSIONS["quillan"],
+) -> dict[str, Any]:
     _require("PYTHONPATH" not in os.environ, "PYTHONPATH must be absent")
-    versions = _distribution_versions()
-    _require(versions == EXPECTED_VERSIONS, "installed release versions disagree")
+    expected_versions = {
+        **EXPECTED_VERSIONS,
+        "quillan": quillan_version,
+    }
+    versions = _distribution_versions(expected_versions)
+    _require(versions == expected_versions, "installed release versions disagree")
     vitrine_version = metadata.version("pds-vitrine")
 
     required_modules = (
@@ -212,11 +222,18 @@ def main() -> int:
         required=True,
         choices=("live-preflight", "sealed-verifier-preflight"),
     )
+    parser.add_argument(
+        "--quillan-version",
+        default=EXPECTED_VERSIONS["quillan"],
+    )
     args = parser.parse_args()
     try:
         repository = args.repository.resolve(strict=True)
         if args.mode == "live-preflight":
-            result = run_live_probe(repository)
+            result = run_live_probe(
+                repository,
+                quillan_version=args.quillan_version,
+            )
         else:
             result = run_sealed_verifier_probe(repository)
     except (InstalledProbeError, OSError, metadata.PackageNotFoundError) as error:

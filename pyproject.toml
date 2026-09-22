@@ -108,6 +108,8 @@ files = [
     "scripts/smoke_test_attention_next_actions_wheel.py",
     "scripts/validate_teacher_information_architecture.py",
     "scripts/validate_candidate_evidence_review.py",
+    "scripts/live_installed_candidate_evidence_review.py",
+    "scripts/smoke_test_candidate_evidence_review_wheel.py",
     "scripts/smoke_test_teacher_information_architecture_wheel.py",
     "scripts/smoke_test_operations_wheel.py",
     "scripts/validate_suite_operations_integration.py",

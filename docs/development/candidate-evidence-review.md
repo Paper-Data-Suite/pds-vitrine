@@ -84,5 +84,26 @@ python scripts/check_documentation.py
 git diff --check
 ```
 
-Slice 12 separately owns exact installed-producer and installed-Vitrine-wheel
-acceptance required by Issue #96.
+## Installed qualification
+
+Slice 12 adds the exact installed-producer and installed-Vitrine-wheel boundary.
+
+Build the candidate Vitrine wheel, then run:
+
+```powershell
+python .\scripts\qualify_installed_live_portfolio.py `
+  --vitrine-wheel .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
+  --wheel-dir "$HOME\Downloads" `
+  --candidate-evidence-review-only
+```
+
+The wheel directory must contain the four exact audited PDS release wheels and
+the ordinary third-party dependency wheelhouse already required by issue #71.
+
+The isolated Core+Vitrine-only smoke is:
+
+```powershell
+python .\scripts\smoke_test_candidate_evidence_review_wheel.py `
+  .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
+  "$HOME\Downloads\pds_core-0.6.3-py3-none-any.whl"
+```

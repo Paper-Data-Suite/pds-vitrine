@@ -11,8 +11,8 @@ vitrine_candidate_evidence_preview_v1
 vitrine_candidate_evidence_artifact_preview_v1
 ```
 
-It does not claim the exact installed-producer/wheel gate; that remains the next
-closure slice.
+Slice 12 adds the exact installed-producer/wheel gate while preserving the
+focused A-N acceptance from Slice 11.
 
 ## A-N acceptance matrix
 
@@ -62,20 +62,30 @@ development, validation, validator, matrix, and validator-test files. Runtime
 preview modules were already added to the wheel allowlist by their implementation
 slices.
 
-## Remaining installed acceptance
+## Installed acceptance
 
-Issue #96 additionally requires exact released-producer acceptance using:
+Slice 12 reuses the frozen issue #71 exact-wheel harness rather than creating a
+second release-authentication system.
+
+The new `--candidate-evidence-review-only` mode authenticates and installs:
 
 ```text
 pds-core 0.6.3
 scoreform 0.11.0
-quillan 0.10.0
+quillan 0.10.1
 pds-concord 0.3.0
+pds-vitrine 0.3.0 candidate wheel
 ```
 
-and an isolated installed Vitrine wheel smoke. Those are deliberately separated
-into Slice 12 so live-package failures do not obscure the focused functional
-acceptance layer.
+It builds real producer-native synthetic Publications, discovers live Candidates,
+asserts exact instructional naming, executes one ScoreForm structured preview,
+one authorized Quillan PDF preview, and one authorized Concord returned-Artifact
+preview, verifies digests/sizes/media and state non-mutation, and prints no source
+content.
+
+The Core+Vitrine-only installed smoke proves every #96 runtime module imports and
+the four contract identities are packaged while producer distributions remain
+absent and unimported.
 
 ## Current qualification
 
@@ -99,3 +109,45 @@ python -m mypy
 python scripts/check_documentation.py
 git diff --check
 ```
+
+## Slice 12 qualification
+
+Build the Vitrine wheel:
+
+```powershell
+Remove-Item .\dist -Recurse -Force -ErrorAction SilentlyContinue
+python -m build --outdir .\dist
+```
+
+Run the isolated installed Vitrine smoke:
+
+```powershell
+python .\scripts\smoke_test_candidate_evidence_review_wheel.py `
+  .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
+  "$HOME\Downloads\pds_core-0.6.3-py3-none-any.whl"
+```
+
+Run exact live producer acceptance:
+
+```powershell
+python .\scripts\qualify_installed_live_portfolio.py `
+  --vitrine-wheel .\dist\pds_vitrine-0.3.0-py3-none-any.whl `
+  --wheel-dir "$HOME\Downloads" `
+  --candidate-evidence-review-only
+```
+
+Expected terminal markers are:
+
+```text
+PASS isolated Candidate evidence review wheel smoke test
+PASS exact release wheel authentication
+PASS issue #96 installed Candidate evidence review acceptance
+```
+
+The normal complete repository gate also runs the isolated wheel smoke. The
+heavy exact-producer gate remains an explicit exact-wheel qualification because
+it requires the caller-prepared offline wheelhouse.
+
+## Quillan v0.10.1 endpoint
+
+The #96 installed gate uses `quillan-0.10.1-py3-none-any.whl` with SHA-256 `5311cccc03a012a7d319827e30b5a989901a9e77693171a8861e4e58409764ad`. The existing #71 frozen 0.10.0 composition remains historical and unchanged; only the #96 qualifier mode substitutes the newer exact Quillan wheel.

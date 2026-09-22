@@ -37,6 +37,7 @@ FOCUSED_TESTS = (
     "tests/test_candidate_review.py",
     "tests/test_candidate_review_menu.py",
     "tests/test_candidate_evidence_review_acceptance.py",
+    "tests/test_candidate_evidence_review_installed_acceptance.py",
     "tests/test_validate_candidate_evidence_review.py",
 )
 
@@ -144,21 +145,53 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "test_issue96_acceptance_matrix_points_to_real_behavior_tests",
     )
     _require_text(
+        ROOT / "scripts/live_installed_candidate_evidence_review.py",
+        '"pds-core": "0.6.3"',
+        '"scoreform": "0.11.0"',
+        '"quillan": "0.10.1"',
+        '"pds-concord": "0.3.0"',
+        "prepare_candidate_evidence_preview_context",
+        "acquire_candidate_evidence_artifact_preview",
+        "Synthetic Baseline Assessment",
+        "Synthetic Later Writing Evidence",
+        "Synthetic Collaborative Later Evidence",
+    )
+    _require_text(
+        ROOT / "scripts/qualify_installed_live_portfolio.py",
+        "--candidate-evidence-review-only",
+        'version="0.10.1"',
+        'sha256="5311cccc03a012a7d319827e30b5a989901a9e77693171a8861e4e58409764ad"',
+        "PASS issue #96 installed Candidate evidence review acceptance",
+        "live_installed_candidate_evidence_review.py",
+    )
+    _require_text(
+        ROOT / "scripts/smoke_test_candidate_evidence_review_wheel.py",
+        "PASS isolated Candidate evidence review wheel smoke test",
+        "vitrine_candidate_evidence_preview_v1",
+        "vitrine_candidate_evidence_artifact_preview_v1",
+    )
+    _require_text(
         ROOT / "scripts/check_package.py",
         '"docs/contracts/candidate-evidence-review-v1.md"',
         '"docs/development/candidate-evidence-review.md"',
         '"docs/validation/issue-96-candidate-evidence-review-validation.md"',
         '"scripts/validate_candidate_evidence_review.py"',
+        '"scripts/live_installed_candidate_evidence_review.py"',
+        '"scripts/smoke_test_candidate_evidence_review_wheel.py"',
         '"tests/test_candidate_evidence_review_acceptance.py"',
+        '"tests/test_candidate_evidence_review_installed_acceptance.py"',
         '"tests/test_validate_candidate_evidence_review.py"',
     )
     _require_text(
         ROOT / "scripts/validate_repository.py",
         "scripts/validate_candidate_evidence_review.py",
+        "scripts/smoke_test_candidate_evidence_review_wheel.py",
     )
     _require_text(
         ROOT / "pyproject.toml",
         '"scripts/validate_candidate_evidence_review.py"',
+        '"scripts/live_installed_candidate_evidence_review.py"',
+        '"scripts/smoke_test_candidate_evidence_review_wheel.py"',
     )
     _require_text(
         ROOT / "docs/contracts/teacher-information-architecture-v1.md",
