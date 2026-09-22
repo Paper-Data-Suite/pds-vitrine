@@ -95,6 +95,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "Candidate evidence review",
+        (
+            "scripts/validate_candidate_evidence_review.py",
+            "--skip-focused-tests",
+        ),
+    ),
+    (
         "Vitrine suite operations integration",
         (
             "scripts/validate_suite_operations_integration.py",

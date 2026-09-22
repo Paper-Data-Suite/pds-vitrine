@@ -147,6 +147,7 @@ REQUIRED_SDIST_FILES = {
     "docs/contracts/build-export-current-portfolio-v1.md",
     "docs/contracts/attention-next-actions-v1.md",
     "docs/contracts/teacher-information-architecture-v1.md",
+    "docs/contracts/candidate-evidence-review-v1.md",
     "docs/contracts/suite-operations-integration-v1.md",
     "docs/contracts/create-portfolio-for-student-v1.md",
     "docs/contracts/curation-workflows-v1.md",
@@ -165,6 +166,7 @@ REQUIRED_SDIST_FILES = {
     "docs/development/build-export-current-portfolio.md",
     "docs/development/attention-next-actions.md",
     "docs/development/teacher-information-architecture.md",
+    "docs/development/candidate-evidence-review.md",
     "docs/development/suite-operations-integration.md",
     "docs/development/create-portfolio-for-student.md",
     "docs/development/curation-workflows.md",
@@ -238,6 +240,7 @@ REQUIRED_SDIST_FILES = {
     "scripts/validate_current_portfolio_build_export.py",
     "scripts/validate_attention_next_actions.py",
     "scripts/validate_teacher_information_architecture.py",
+    "scripts/validate_candidate_evidence_review.py",
     "scripts/validate_suite_operations_integration.py",
     "scripts/validate_portfolio_setup.py",
     "scripts/validate_curation_workflows.py",
@@ -346,6 +349,8 @@ REQUIRED_SDIST_FILES = {
     "tests/test_validate_attention_next_actions.py",
     "tests/test_teacher_presentation.py",
     "tests/test_teacher_information_architecture_acceptance.py",
+    "tests/test_candidate_evidence_review_acceptance.py",
+    "tests/test_validate_candidate_evidence_review.py",
     "tests/test_validate_teacher_information_architecture.py",
     "tests/test_pds_operations.py",
     "tests/test_operations_package_contract.py",
@@ -401,6 +406,7 @@ REQUIRED_SDIST_FILES = {
     "docs/validation/issue-69-attention-next-actions-validation.md",
     "docs/validation/issue-70-suite-operations-integration-validation.md",
     "docs/validation/issue-95-teacher-information-architecture-validation.md",
+    "docs/validation/issue-96-candidate-evidence-review-validation.md",
 }
 
 

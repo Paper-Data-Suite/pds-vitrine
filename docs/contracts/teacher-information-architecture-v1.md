@@ -342,6 +342,31 @@ issue #102.
 The presentation validator protects the transient layer from importing or
 calling mutation/authority services. It does not make display models canonical.
 
+## Issue #96 extension — Candidate evidence presentation and preview
+
+Issue #96 extends this teacher information hierarchy without replacing it.
+
+Candidate Inbox and guided Candidate Review now consume a shared transient
+instructional evidence projection. Recognizable assignment/activity titles,
+evidence kinds, attempt/variant labels, representation labels, and Profile-role
+labels appear on the primary teacher surface while exact Candidate/Evaluation/
+Publication/producer/Artifact identities remain Technical Details / Provenance.
+
+The extension preserves the #95 authority rule:
+
+```text
+instructional evidence label != Candidate/source authority
+```
+
+Candidate preview is also explicitly outside the passive #95 presentation layer.
+Merely opening Candidate detail or Technical Details remains producer-I/O free.
+Only the teacher's explicit `V. View evidence` action enters the #96 exact
+revalidation and authorization workflow.
+
+That workflow does not make the preview bytes or structured summary canonical,
+does not create Selection or Placement state, and does not weaken the existing
+Technical Details / Provenance or privacy boundaries.
+
 ## Privacy and provenance boundaries
 
 Viewing the presentation projection or its technical drill-down must not:
