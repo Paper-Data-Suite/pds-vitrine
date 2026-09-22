@@ -236,6 +236,84 @@ class CandidateEvidencePreviewAuthority:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class CandidateEvidenceStructuredField:
+    """One allowlisted instructional fact in a transient structured preview."""
+
+    source_key: str
+    label: str
+    value: str
+
+    def __post_init__(self) -> None:
+        try:
+            object.__setattr__(
+                self,
+                "source_key",
+                require_text(self.source_key, "source_key", maximum=128),
+            )
+            object.__setattr__(
+                self,
+                "label",
+                require_text(self.label, "label", maximum=128),
+            )
+            object.__setattr__(
+                self,
+                "value",
+                require_text(self.value, "value", maximum=1200),
+            )
+        except VitrineModelValidationError as error:
+            raise CandidateEvidencePreviewError(
+                "candidate_evidence_preview.invalid_request",
+                "Structured Candidate preview field is invalid.",
+                stage="structured_preview",
+            ) from error
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class CandidateEvidenceStructuredPreview:
+    """Bounded teacher-readable content from an exact revalidated projection."""
+
+    title: str
+    evidence_kind: str
+    fields: tuple[CandidateEvidenceStructuredField, ...]
+
+    def __post_init__(self) -> None:
+        try:
+            object.__setattr__(
+                self,
+                "title",
+                require_text(self.title, "title", maximum=300),
+            )
+            object.__setattr__(
+                self,
+                "evidence_kind",
+                require_text(self.evidence_kind, "evidence_kind", maximum=128),
+            )
+        except VitrineModelValidationError as error:
+            raise CandidateEvidencePreviewError(
+                "candidate_evidence_preview.invalid_request",
+                "Structured Candidate preview is invalid.",
+                stage="structured_preview",
+            ) from error
+        fields = tuple(self.fields)
+        if any(
+            not isinstance(item, CandidateEvidenceStructuredField)
+            for item in fields
+        ):
+            raise CandidateEvidencePreviewError(
+                "candidate_evidence_preview.invalid_request",
+                "Structured Candidate preview fields are invalid.",
+                stage="structured_preview",
+            )
+        if len({item.source_key for item in fields}) != len(fields):
+            raise CandidateEvidencePreviewError(
+                "candidate_evidence_preview.invalid_request",
+                "Structured Candidate preview contains duplicate source fields.",
+                stage="structured_preview",
+            )
+        object.__setattr__(self, "fields", fields)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class CandidateEvidencePreviewResult:
     """One exact revalidated preview form with no acquired Artifact bytes."""
 
@@ -244,6 +322,7 @@ class CandidateEvidencePreviewResult:
     authority: CandidateEvidencePreviewAuthority
     verified_source: ProjectedProducerSource
     artifact_authorization_required: bool
+    structured_preview: CandidateEvidenceStructuredPreview | None = None
     unavailable_reason: str | None = None
 
     def __post_init__(self) -> None:
@@ -256,6 +335,10 @@ class CandidateEvidencePreviewResult:
         if not isinstance(self.verified_source, ProjectedProducerSource):
             raise ValueError("verified_source must be ProjectedProducerSource.")
         if self.preview_kind == "artifact_preview":
+            if self.structured_preview is not None:
+                raise ValueError(
+                    "artifact preview must not carry structured preview content."
+                )
             if not self.artifact_authorization_required:
                 raise ValueError(
                     "artifact preview must require explicit Artifact authorization."
@@ -265,6 +348,13 @@ class CandidateEvidencePreviewResult:
                     "artifact preview must not carry an unavailable reason."
                 )
         elif self.preview_kind == "structured_summary":
+            if not isinstance(
+                self.structured_preview,
+                CandidateEvidenceStructuredPreview,
+            ):
+                raise ValueError(
+                    "structured summary requires bounded structured preview content."
+                )
             if self.artifact_authorization_required:
                 raise ValueError(
                     "structured summary must not require Artifact-byte authorization."
@@ -274,6 +364,10 @@ class CandidateEvidencePreviewResult:
                     "structured summary must not carry an unavailable reason."
                 )
         else:
+            if self.structured_preview is not None:
+                raise ValueError(
+                    "unavailable preview must not carry structured preview content."
+                )
             if self.artifact_authorization_required:
                 raise ValueError(
                     "unavailable preview must not require Artifact authorization."
@@ -797,6 +891,146 @@ def _source_matches_persisted_endpoint(
     )
 
 
+_STRUCTURED_PREVIEW_ALLOWLIST: Final[
+    dict[str, tuple[tuple[str, str], ...]]
+] = {
+    "scoreform": (
+        ("attempt_number", "Attempt"),
+        ("recorded_at", "Recorded"),
+        ("points_earned", "Points earned"),
+        ("points_possible", "Points possible"),
+        ("question_count", "Questions"),
+        ("response_states", "Response summary"),
+        ("question_standard_alignments", "Standards / alignment"),
+        ("standard_alignments", "Standards / alignment"),
+    ),
+    "quillan": (
+        ("writing_type", "Writing type"),
+        ("submission_state", "Submission"),
+        ("review_state", "Review status"),
+        ("minimum_requirement_status", "Minimum requirement"),
+        ("rating_scale_id", "Rating scale"),
+        ("rating_scale_values", "Rating scale values"),
+        ("observation_standard_ids", "Observed standards"),
+        ("observation_evidence_present", "Evidence present"),
+        ("observation_ratings", "Observation ratings"),
+        ("overall_rating_standard_ids", "Overall rating standards"),
+        ("overall_rating_values", "Overall ratings"),
+    ),
+    "concord": (
+        ("activity_title", "Activity"),
+        ("criterion_label", "Criterion"),
+        ("criterion_definition", "Criterion definition"),
+        ("criterion_standard_id", "Criterion standard"),
+        ("criterion_alignment_standard_ids", "Standards / alignment"),
+        ("scoring_scale_name", "Scale"),
+        ("score_target_kind", "Target type"),
+        ("score_disposition", "Status"),
+        ("score_native_value", "Score"),
+        ("score_scored_at", "Recorded"),
+        ("score_moderation_complete", "Moderation complete"),
+        ("disposition", "Status"),
+        ("scale_id", "Scale"),
+        ("target_kind", "Target type"),
+        ("native_value", "Score"),
+    ),
+}
+
+
+def _structured_preview_family(module_id: str) -> str | None:
+    if module_id in {"scoreform", "vitrine_scoreform_fixture"}:
+        return "scoreform"
+    if module_id in {"quillan", "vitrine_quillan_fixture"}:
+        return "quillan"
+    if module_id in {"concord", "vitrine_concord_fixture"}:
+        return "concord"
+    return None
+
+
+def _structured_preview_evidence_kind(family: str | None) -> str:
+    if family == "scoreform":
+        return "Assessment Attempt"
+    if family == "quillan":
+        return "Review"
+    if family == "concord":
+        return "Assessment Evidence"
+    return "Evidence Summary"
+
+
+def _structured_preview_value(value: object) -> str:
+    values = value if isinstance(value, tuple) else (value,)
+    rendered: list[str] = []
+    for item in values[:24]:
+        if item is None:
+            continue
+        if isinstance(item, bool):
+            rendered.append("Yes" if item else "No")
+        else:
+            rendered.append(str(item))
+    if not rendered:
+        return "Not recorded"
+    text = ", ".join(rendered)
+    if isinstance(value, tuple) and len(value) > 24:
+        text += f" … (+{len(value) - 24} more)"
+    if len(text) > 1200:
+        text = text[:1197].rstrip() + "..."
+    return text
+
+
+def build_candidate_evidence_structured_preview(
+    authority: CandidateEvidencePreviewAuthority,
+    source: ProjectedProducerSource,
+) -> CandidateEvidenceStructuredPreview:
+    """Build a deliberate allowlisted summary from one verified projection."""
+
+    if not isinstance(authority, CandidateEvidencePreviewAuthority):
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.invalid_request",
+            "Structured preview authority is invalid.",
+            stage="structured_preview",
+        )
+    if not isinstance(source, ProjectedProducerSource):
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.invalid_request",
+            "Structured preview source is invalid.",
+            stage="structured_preview",
+        )
+    if source.source_artifact.artifact_kind != "assessment_summary":
+        raise CandidateEvidencePreviewError(
+            "candidate_evidence_preview.invalid_request",
+            "Structured preview requires assessment-summary evidence.",
+            stage="structured_preview",
+        )
+
+    family = _structured_preview_family(
+        source.producer_source.producer_module_id
+    )
+    allowlist = _STRUCTURED_PREVIEW_ALLOWLIST.get(family or "", ())
+    by_key = {item.key: item.value for item in source.display_snapshot.fields}
+    fields = tuple(
+        CandidateEvidenceStructuredField(
+            source_key=source_key,
+            label=label,
+            value=_structured_preview_value(by_key[source_key]),
+        )
+        for source_key, label in allowlist
+        if source_key in by_key
+    )
+
+    registration = authority.source_endpoint.core_publication.registration_snapshot
+    title = (
+        registration.title_snapshot
+        if registration is not None
+        else source.display_snapshot.title
+    )
+    return CandidateEvidenceStructuredPreview(
+        title=title,
+        evidence_kind=_structured_preview_evidence_kind(family),
+        fields=fields,
+    )
+
+
+
 def _classify_preview_source(
     source: ProjectedProducerSource,
 ) -> tuple[str, bool, str | None]:
@@ -898,6 +1132,14 @@ def prepare_candidate_evidence_preview(
     preview_kind, authorization_required, unavailable_reason = (
         _classify_preview_source(verified_source)
     )
+    structured_preview = (
+        build_candidate_evidence_structured_preview(
+            authority,
+            verified_source,
+        )
+        if preview_kind == "structured_summary"
+        else None
+    )
     _require_preview_authority_still_current(workspace_root, authority)
     return CandidateEvidencePreviewResult(
         contract_version=CANDIDATE_EVIDENCE_PREVIEW_CONTRACT_VERSION,
@@ -905,6 +1147,7 @@ def prepare_candidate_evidence_preview(
         authority=authority,
         verified_source=verified_source,
         artifact_authorization_required=authorization_required,
+        structured_preview=structured_preview,
         unavailable_reason=unavailable_reason,
     )
 
@@ -994,8 +1237,11 @@ __all__ = [
     "CandidateEvidencePreviewError",
     "CandidateEvidencePreviewRequest",
     "CandidateEvidencePreviewResult",
+    "CandidateEvidenceStructuredField",
+    "CandidateEvidenceStructuredPreview",
     "authorize_candidate_evidence_preview",
     "build_candidate_evidence_preview_authorization_request",
+    "build_candidate_evidence_structured_preview",
     "prepare_candidate_evidence_preview",
     "resolve_candidate_evidence_preview_authority",
 ]

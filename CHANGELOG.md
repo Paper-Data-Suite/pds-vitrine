@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 8 adds bounded transient structured preview content for
+  metadata-only evidence, using producer-family instructional allowlists over
+  the exact revalidated projection while excluding paths, hashes, raw payloads,
+  private-note state, unrelated identities, and other technical internals.
 - Issue #96 Slice 7 revalidates exact Candidate preview provenance through
   immutable Core Publication/Registration replay, the authorized verified
   producer-manifest reader, exact adapter re-projection, and persisted source
