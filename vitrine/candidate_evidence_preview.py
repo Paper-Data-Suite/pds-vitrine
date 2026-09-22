@@ -11,7 +11,7 @@ contracts. Exact canonical references remain the only routing authority.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final, Protocol
 
@@ -98,6 +98,10 @@ CANDIDATE_EVIDENCE_PREVIEW_CODES: Final[frozenset[str]] = frozenset(
         "candidate_evidence_preview.producer_reader_failed",
         "candidate_evidence_preview.projection_failed",
         "candidate_evidence_preview.source_drift",
+        "candidate_evidence_preview.artifact_not_supported",
+        "candidate_evidence_preview.artifact_contract_unavailable",
+        "candidate_evidence_preview.artifact_source_unavailable",
+        "candidate_evidence_preview.artifact_source_integrity_failed",
         "candidate_evidence_preview.authorization_denied",
         "candidate_evidence_preview.authorization_unresolved",
     }
@@ -376,6 +380,23 @@ class CandidateEvidencePreviewResult:
                 raise ValueError(
                     "unavailable preview requires a bounded explanatory reason."
                 )
+
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class CandidateEvidencePreviewPreparedContext:
+    """Exact revalidated preview plus its already-authorized public producer model."""
+
+    workspace_root: Path
+    result: CandidateEvidencePreviewResult
+    producer_public_model: object = field(repr=False)
+
+    def __post_init__(self) -> None:
+        root = Path(self.workspace_root).absolute()
+        object.__setattr__(self, "workspace_root", root)
+        if not isinstance(self.result, CandidateEvidencePreviewResult):
+            raise ValueError("result must be CandidateEvidencePreviewResult.")
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CandidateEvidencePreviewAuthorizationRequest:
@@ -1077,19 +1098,18 @@ def _require_preview_authority_still_current(
         )
 
 
-def prepare_candidate_evidence_preview(
+def prepare_candidate_evidence_preview_context(
     workspace_root: str | Path,
     request: CandidateEvidencePreviewRequest,
     *,
     adapter_registry: ProducerProjectionAdapterRegistry,
     source_read_authorization_gate: SourceReadAuthorizationGate,
-) -> CandidateEvidencePreviewResult:
-    """Revalidate one exact Candidate source and classify its preview form.
+) -> CandidateEvidencePreviewPreparedContext:
+    """Revalidate one exact Candidate source and retain its public producer model.
 
-    This stage acquires no producer Artifact bytes. ``artifact_preview`` means
-    byte-bearing preview is supported by the exact source shape and will require
-    the separate Candidate evidence-preview authorization contract before a
-    later acquisition step.
+    This stage acquires no producer Artifact bytes. The retained producer model
+    is transient and came from the already-authorized, integrity-verified public
+    manifest read used for exact Candidate reprojection.
     """
     authority = resolve_candidate_evidence_preview_authority(
         workspace_root,
@@ -1141,7 +1161,7 @@ def prepare_candidate_evidence_preview(
         else None
     )
     _require_preview_authority_still_current(workspace_root, authority)
-    return CandidateEvidencePreviewResult(
+    result = CandidateEvidencePreviewResult(
         contract_version=CANDIDATE_EVIDENCE_PREVIEW_CONTRACT_VERSION,
         preview_kind=preview_kind,
         authority=authority,
@@ -1150,6 +1170,28 @@ def prepare_candidate_evidence_preview(
         structured_preview=structured_preview,
         unavailable_reason=unavailable_reason,
     )
+    return CandidateEvidencePreviewPreparedContext(
+        workspace_root=Path(workspace_root),
+        result=result,
+        producer_public_model=public_model,
+    )
+
+
+def prepare_candidate_evidence_preview(
+    workspace_root: str | Path,
+    request: CandidateEvidencePreviewRequest,
+    *,
+    adapter_registry: ProducerProjectionAdapterRegistry,
+    source_read_authorization_gate: SourceReadAuthorizationGate,
+) -> CandidateEvidencePreviewResult:
+    """Return the public preview result without exposing producer context."""
+
+    return prepare_candidate_evidence_preview_context(
+        workspace_root,
+        request,
+        adapter_registry=adapter_registry,
+        source_read_authorization_gate=source_read_authorization_gate,
+    ).result
 
 
 def build_candidate_evidence_preview_authorization_request(
@@ -1235,6 +1277,7 @@ __all__ = [
     "CandidateEvidencePreviewAuthorizationRequest",
     "CandidateEvidencePreviewAuthority",
     "CandidateEvidencePreviewError",
+    "CandidateEvidencePreviewPreparedContext",
     "CandidateEvidencePreviewRequest",
     "CandidateEvidencePreviewResult",
     "CandidateEvidenceStructuredField",
@@ -1243,5 +1286,6 @@ __all__ = [
     "build_candidate_evidence_preview_authorization_request",
     "build_candidate_evidence_structured_preview",
     "prepare_candidate_evidence_preview",
+    "prepare_candidate_evidence_preview_context",
     "resolve_candidate_evidence_preview_authority",
 ]

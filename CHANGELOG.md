@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 9 adds transient byte-bearing Candidate preview through the
+  released Quillan and Concord Artifact APIs, bridges exact Candidate preview
+  authorization inside producer-owned pre-I/O gates, verifies returned identity,
+  representation, media type, digest, and byte size, and creates no Snapshot state.
 - Issue #96 Slice 8 adds bounded transient structured preview content for
   metadata-only evidence, using producer-family instructional allowlists over
   the exact revalidated projection while excluding paths, hashes, raw payloads,
