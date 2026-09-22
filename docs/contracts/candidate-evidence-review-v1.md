@@ -188,8 +188,8 @@ Slice 12 extends the existing authenticated issue #71 wheel harness with:
 --candidate-evidence-review-only
 ```
 
-The mode authenticates the exact frozen Core 0.6.3, ScoreForm 0.11.0, Quillan
-0.10.0, and Concord 0.3.0 wheels, installs the candidate Vitrine wheel
+The mode authenticates the exact Core 0.6.3, ScoreForm 0.11.0, Quillan
+0.10.1, and Concord 0.3.0 wheels for Issue #96, installs the candidate Vitrine wheel
 noneditably outside the repository, creates real producer-native synthetic
 Publications, performs live Candidate discovery, then proves:
 
