@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 10 wires explicit `V. View evidence` actions into Candidate
+  Inbox detail and guided Candidate Review, renders bounded structured summaries,
+  and opens authorized Artifact bytes only from temporary verified-media files
+  that are removed on return, without automatic detail-time producer access.
 - Issue #96 Slice 9 adds transient byte-bearing Candidate preview through the
   released Quillan and Concord Artifact APIs, bridges exact Candidate preview
   authorization inside producer-owned pre-I/O gates, verifies returned identity,

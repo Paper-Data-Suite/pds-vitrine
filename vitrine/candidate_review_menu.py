@@ -8,6 +8,7 @@ from typing import TextIO, TypeVar
 
 from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 
+from vitrine.candidate_evidence_preview_menu import run_candidate_evidence_preview
 from vitrine.candidate_inbox import (
     CandidateInboxError,
     CandidateInboxItem,
@@ -1465,13 +1466,33 @@ def _review_entry(
         _write(
             output,
             "",
+            "V. View evidence",
             "T. Technical details / provenance",
             "B. Back",
         )
         action = _read(
             input_fn,
-            "T for technical details or Enter/B to return: ",
+            "V to view evidence, T for technical details, or Enter/B to return: ",
         )
+        if action.casefold() == "v":
+            run_candidate_evidence_preview(
+                workspace_root=root,
+                detail=detail.inbox_detail,
+                dependencies=dependencies,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                actor=actor,
+            )
+            return _review_entry(
+                root=root,
+                entry_id=entry_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                actor=actor,
+            )
         if action.casefold() == "t":
             clear_fn()
             _render_technical_detail(output, detail)
@@ -1489,6 +1510,7 @@ def _review_entry(
             "5. Withdraw Selection",
             "6. Replace Selection",
             "7. View complete history",
+            "V. View evidence",
             "T. Technical details / provenance",
             "B. Back",
         )
@@ -1552,6 +1574,25 @@ def _review_entry(
             )
         elif action == "7":
             _render_history(output, detail)
+        elif action.casefold() == "v":
+            run_candidate_evidence_preview(
+                workspace_root=root,
+                detail=detail.inbox_detail,
+                dependencies=dependencies,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                actor=actor,
+            )
+            return _review_entry(
+                root=root,
+                entry_id=entry_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                actor=actor,
+            )
         elif action.casefold() == "t":
             clear_fn()
             _render_technical_detail(output, detail)
@@ -1564,6 +1605,7 @@ def _review_entry(
         "2. Decline this proposed use",
         "3. Decide an existing Proposal",
         "4. View complete history",
+        "V. View evidence",
         "T. Technical details / provenance",
         "B. Not now",
     )
@@ -1624,6 +1666,25 @@ def _review_entry(
         )
     elif action == "4":
         _render_history(output, detail)
+    elif action.casefold() == "v":
+        run_candidate_evidence_preview(
+            workspace_root=root,
+            detail=detail.inbox_detail,
+            dependencies=dependencies,
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            actor=actor,
+        )
+        return _review_entry(
+            root=root,
+            entry_id=entry_id,
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            dependencies=dependencies,
+            actor=actor,
+        )
     elif action.casefold() == "t":
         clear_fn()
         _render_technical_detail(output, detail)

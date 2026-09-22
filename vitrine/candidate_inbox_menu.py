@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TextIO
 
 from pds_core.menu_navigation import (
@@ -12,6 +13,7 @@ from pds_core.menu_navigation import (
 )
 from pds_core.workspace import WorkspaceRootError, resolve_workspace_root
 
+from vitrine.candidate_evidence_preview_menu import run_candidate_evidence_preview
 from vitrine.candidate_inbox import (
     CandidateInboxDetail,
     CandidateInboxError,
@@ -21,11 +23,15 @@ from vitrine.candidate_inbox import (
     list_candidate_inbox,
 )
 from vitrine.menu_types import ClearFunction, InputFunction
-from vitrine.models import CandidateSourceEndpoint
+from vitrine.models import ActorAttribution, CandidateSourceEndpoint
 from vitrine.teacher_presentation import (
     TeacherCandidateDetail,
     build_teacher_candidate_detail,
     teacher_term,
+)
+from vitrine.workflow_context import (
+    VitrineWorkflowDependencies,
+    default_workflow_dependencies,
 )
 
 
@@ -358,23 +364,43 @@ def _render_technical_detail(output: TextIO, detail: CandidateInboxDetail) -> No
 
 
 def _candidate_detail_menu(
+    root: Path,
     detail: CandidateInboxDetail,
     *,
     input_fn: InputFunction,
     output: TextIO,
     clear_fn: ClearFunction,
+    dependencies: VitrineWorkflowDependencies,
+    actor: ActorAttribution | None,
 ) -> None:
     while True:
         clear_fn()
         _render_detail(output, detail)
-        _write(output, "", "T. Technical details / provenance")
+        _write(
+            output,
+            "",
+            "V. View evidence",
+            "T. Technical details / provenance",
+        )
         print_navigation_options(file=output)
         choice = _read(
             input_fn,
-            "T for technical details or navigation choice (Enter to return): ",
+            "V to view evidence, T for technical details, or navigation choice "
+            "(Enter to return): ",
         )
         if not choice or _nav(choice) is NavigationChoice.BACK:
             return
+        if choice.casefold() == "v":
+            run_candidate_evidence_preview(
+                workspace_root=root,
+                detail=detail,
+                dependencies=dependencies,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                actor=actor,
+            )
+            continue
         if choice.casefold() == "t":
             clear_fn()
             _render_technical_detail(output, detail)
@@ -393,10 +419,13 @@ def run_candidate_inbox_menu(
     input_fn: InputFunction = input,
     output: TextIO,
     clear_fn: ClearFunction,
+    dependencies: VitrineWorkflowDependencies | None = None,
+    actor: ActorAttribution | None = None,
 ) -> None:
     """Browse current Candidate inbox state without mutations."""
 
     filters = CandidateInboxMenuFilters()
+    workflow_dependencies = dependencies or default_workflow_dependencies()
     while True:
         clear_fn()
         try:
@@ -487,10 +516,13 @@ def run_candidate_inbox_menu(
                 _write(output, f"{error.code}: {error}")
             else:
                 _candidate_detail_menu(
+                    root,
                     detail,
                     input_fn=input_fn,
                     output=output,
                     clear_fn=clear_fn,
+                    dependencies=workflow_dependencies,
+                    actor=actor,
                 )
             continue
         _write(output, "That Candidate inbox choice is not available.")

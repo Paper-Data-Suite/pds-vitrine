@@ -28,6 +28,7 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/candidate_evidence_artifact_preview.py",
     "vitrine/candidate_evidence_presentation.py",
     "vitrine/candidate_evidence_preview.py",
+    "vitrine/candidate_evidence_preview_menu.py",
     "vitrine/candidate_inbox.py",
     "vitrine/candidate_inbox_menu.py",
     "vitrine/candidate_review.py",

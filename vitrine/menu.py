@@ -260,6 +260,7 @@ def run_menu(
                         input_fn=input_fn,
                         output=stream,
                         clear_fn=clear_fn,
+                        dependencies=workflow_dependencies,
                     )
                 except ReturnToMainMenu:
                     continue
