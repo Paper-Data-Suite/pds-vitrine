@@ -67,6 +67,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "Selection/Placement domain-correct guidance",
+        (
+            "scripts/validate_selection_placement_guidance.py",
+            "--skip-focused-tests",
+        ),
+    ),
+    (
         "guided Working Composition",
         (
             "scripts/validate_working_composition.py",
@@ -389,6 +396,10 @@ def validate(
                 (
                     "guided Candidate review/Selection",
                     "scripts/smoke_test_candidate_review_selection_wheel.py",
+                ),
+                (
+                    "Selection/Placement domain-correct guidance",
+                    "scripts/smoke_test_selection_placement_guidance_wheel.py",
                 ),
                 (
                     "guided Working Composition",

@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #97 closes Selection/Placement domain-correctness qualification with a dedicated validator, installed-wheel smoke, package guards, repository-gate integration, and contract/development/validation documentation.
+
 - Issue #97 Slice 7 projects transient Selection/Placement actionability into Candidate Review without rewriting semantic Profile fit, scopes fresh requirement choices to exact actionable sections, and makes fresh Selection, ordinary Placement, and replacement menus offer only operation-correct section targets.
 
 - Issue #97 Slice 6 makes guided Selection replacement planning and canonical `replace_selection` writes consume the shared replacement-aware actionability projection, preserving one-for-one capacity while rejecting post-release overflow, prohibited, ineligible, and Arrangement-conflicted targets.
