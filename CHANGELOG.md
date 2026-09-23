@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #97 Slice 1 adds the transient `vitrine_selection_placement_guidance_v1` actionability foundation, separating persisted Candidate/Profile fit from current Selection, Placement, and operation-aware replacement capacity while scoping requirement intent to Candidate-matched section requirements.
+
 - Issue #96 Slice 12 adds exact installed ScoreForm/Quillan/Concord Candidate
   evidence presentation/preview acceptance through the #71 isolation harness,
   using the current Quillan 0.10.1 patch-release endpoint only for #96 while
