@@ -67,6 +67,11 @@ from vitrine.models.common import (
 )
 from vitrine.models.errors import VitrineModelValidationError
 from vitrine.profile_state import collect_profile_state_issues, project_profile_state
+from vitrine.selection_placement_guidance import (
+    SelectionPlacementGuidanceError,
+    profile_requirement_ids_for_sections,
+    project_selection_placement_guidance,
+)
 from vitrine.storage import (
     VitrineStorageConflictError,
     VitrineStorageError,
@@ -784,6 +789,88 @@ def _require_profile_requirements(context: _Context, requirement_ids: tuple[str,
         )
 
 
+def _require_fresh_selection_intent(
+    context: _Context,
+    candidate: PortfolioCandidate,
+    section_ids: tuple[str, ...],
+    requirement_ids: tuple[str, ...],
+    *,
+    stage: str,
+) -> None:
+    """Require current actionability for newly written Selection intent."""
+
+    for section_id in section_ids:
+        _section(context, section_id)
+    try:
+        guidance = project_selection_placement_guidance(
+            candidate=candidate,
+            profile=context.profile,
+            curation=context.curation,
+            operation="fresh_selection",
+        )
+    except SelectionPlacementGuidanceError as error:
+        raise CurationWorkflowError(
+            "curation.profile_mismatch",
+            "Fresh Selection actionability could not be derived safely.",
+            stage=stage,
+        ) from error
+
+    sections = {item.section_id: item for item in guidance.sections}
+    for section_id in section_ids:
+        section = sections[section_id]
+        reasons = set(section.unavailability_reason_codes)
+        if "candidate_not_semantically_eligible" in reasons:
+            raise CurationWorkflowError(
+                "curation.section_not_candidate_eligible",
+                "Candidate is not eligible for a proposed section.",
+                stage=stage,
+            )
+        if "section_prohibited" in reasons:
+            raise CurationWorkflowError(
+                "curation.section_prohibited",
+                "Profile section is prohibited for Selection intent.",
+                stage=stage,
+            )
+        if (
+            "section_not_placement_bearing" in reasons
+            or "section_full" in reasons
+        ):
+            raise CurationWorkflowError(
+                "curation.section_cardinality_exceeded",
+                "Profile section has no current Placement capacity for fresh Selection intent.",
+                stage=stage,
+            )
+        if "arrangement_pointer_conflict" in reasons:
+            raise CurationWorkflowError(
+                "curation.arrangement_conflict",
+                "Profile section has conflicting Arrangement pointer state.",
+                stage=stage,
+            )
+        if not section.current_actionable:
+            raise CurationWorkflowError(
+                "curation.invalid_request",
+                "Profile section is not currently actionable for fresh Selection intent.",
+                stage=stage,
+            )
+
+    try:
+        applicable_requirement_ids = set(
+            profile_requirement_ids_for_sections(guidance, section_ids)
+        )
+    except SelectionPlacementGuidanceError as error:
+        raise CurationWorkflowError(
+            "curation.profile_mismatch",
+            "Fresh Selection requirement intent could not be derived safely.",
+            stage=stage,
+        ) from error
+    if not set(requirement_ids).issubset(applicable_requirement_ids):
+        raise CurationWorkflowError(
+            "curation.profile_mismatch",
+            "Fresh Selection requirement intent is not applicable to the exact proposed sections.",
+            stage=stage,
+        )
+
+
 def _rationale(
     *,
     context: _Context,
@@ -896,15 +983,13 @@ def propose_candidate_selection(
             "Selection Proposal fields are invalid.",
             stage="proposal",
         ) from error
-    for section_id in sections:
-        _section(context, section_id)
-        if section_id not in candidate.eligible_section_ids:
-            raise CurationWorkflowError(
-                "curation.section_not_candidate_eligible",
-                "Candidate is not eligible for a proposed section.",
-                stage="proposal",
-            )
-    _require_profile_requirements(context, requirement_ids)
+    _require_fresh_selection_intent(
+        context,
+        candidate,
+        sections,
+        requirement_ids,
+        stage="proposal",
+    )
     _authority(
         authority_gate,
         context,
@@ -1180,15 +1265,13 @@ def select_candidate_directly(
             "Direct Selection fields are invalid.",
             stage="direct_selection",
         ) from error
-    for section_id in sections:
-        _section(context, section_id)
-        if section_id not in candidate.eligible_section_ids:
-            raise CurationWorkflowError(
-                "curation.section_not_candidate_eligible",
-                "Candidate is not eligible for a proposed section.",
-                stage="direct_selection",
-            )
-    _require_profile_requirements(context, requirement_ids)
+    _require_fresh_selection_intent(
+        context,
+        candidate,
+        sections,
+        requirement_ids,
+        stage="direct_selection",
+    )
     authority = _authority(
         authority_gate,
         context,
@@ -1289,15 +1372,13 @@ def reject_candidate_directly(
             "Direct decline fields are invalid.",
             stage="direct_decline",
         ) from error
-    for section_id in sections:
-        _section(context, section_id)
-        if section_id not in candidate.eligible_section_ids:
-            raise CurationWorkflowError(
-                "curation.section_not_candidate_eligible",
-                "Candidate is not eligible for a proposed section.",
-                stage="direct_decline",
-            )
-    _require_profile_requirements(context, requirement_ids)
+    _require_fresh_selection_intent(
+        context,
+        candidate,
+        sections,
+        requirement_ids,
+        stage="direct_decline",
+    )
     undecided = tuple(
         proposal
         for proposal in context.curation.proposals
