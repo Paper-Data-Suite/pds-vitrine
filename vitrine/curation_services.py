@@ -1180,6 +1180,14 @@ def decide_selection_proposal(
             "curation.decision_invalid", "Selection decision is invalid.", stage="decision"
         ) from error
     candidate = _candidate(context, proposal.candidate_id)
+    if decision_kind == "accepted":
+        _require_fresh_selection_intent(
+            context,
+            candidate,
+            proposal.proposed_section_ids,
+            proposal.intended_profile_requirement_ids,
+            stage="decision",
+        )
     authority = _authority(
         authority_gate,
         context,

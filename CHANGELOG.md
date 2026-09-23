@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #97 Slice 4 revalidates persisted Selection Proposal intent before acceptance against current section actionability and exact applicable requirements, while preserving immutable Proposal history and allowing negative decisions when a Proposal is no longer selectable.
+
 - Issue #97 Slice 3 enforces the shared fresh Selection actionability and exact section-scoped requirement boundary in canonical Proposal, direct Selection, and direct-decline writes, preventing planner bypasses from persisting unusable fresh intent.
 
 - Issue #97 Slice 2 makes fresh guided Candidate decisions consume the shared Selection/Placement actionability projection, rejecting currently unusable section intent and limiting explicit Profile requirement intent to Candidate-matched requirements for the exact selected sections.

@@ -1028,6 +1028,42 @@ def plan_candidate_decision(
             )
         sections = proposal.proposed_section_ids
         requirement_ids = proposal.intended_profile_requirement_ids
+        if decision == "select":
+            curation = _load_curation_state(
+                workspace_root,
+                detail.observed_state_revision,
+            )
+            try:
+                guidance = project_selection_placement_guidance(
+                    candidate=candidate,
+                    profile=detail.inbox_detail.profile_revision,
+                    curation=curation,
+                    operation="fresh_selection",
+                )
+            except SelectionPlacementGuidanceError as error:
+                raise CandidateReviewError(
+                    "candidate_review.state_invalid",
+                    "Current Selection/Placement actionability could not be derived.",
+                ) from error
+            if not set(sections).issubset(guidance.actionable_section_ids):
+                raise CandidateReviewError(
+                    "candidate_review.action_not_available",
+                    "The exact Selection Proposal is no longer currently actionable.",
+                )
+            try:
+                applicable_requirement_ids = set(
+                    profile_requirement_ids_for_sections(guidance, sections)
+                )
+            except SelectionPlacementGuidanceError as error:
+                raise CandidateReviewError(
+                    "candidate_review.state_invalid",
+                    "Applicable Profile requirement intent could not be derived.",
+                ) from error
+            if not set(requirement_ids).issubset(applicable_requirement_ids):
+                raise CandidateReviewError(
+                    "candidate_review.action_not_available",
+                    "The exact Selection Proposal requirement intent is no longer applicable.",
+                )
         operation = "decide_selection"
     else:
         if pending:
