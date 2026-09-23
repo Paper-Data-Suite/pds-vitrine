@@ -1537,12 +1537,6 @@ def plan_selection_replacement(
         field_name="proposed_section_ids",
         nonempty=True,
     )
-    successor_sections = {item.section_id for item in successor_detail.sections}
-    if not set(proposed_sections).issubset(successor_sections):
-        raise CandidateReviewError(
-            "candidate_review.action_not_available",
-            "Replacement Proposal includes a section not eligible for the successor.",
-        )
     active_placements = tuple(
         item
         for item in detail.placements
@@ -1555,6 +1549,41 @@ def plan_selection_replacement(
             "candidate_review.invalid_request",
             "Replacement requires one explicit disposition for every active Placement.",
         )
+    curation = _load_curation_state(
+        workspace_root,
+        detail.observed_state_revision,
+    )
+    try:
+        replacement_guidance = project_selection_placement_guidance(
+            candidate=successor,
+            profile=successor_detail.inbox_detail.profile_revision,
+            curation=curation,
+            operation="replacement",
+            selection_id=selection.selection_id,
+            releasing_placement_ids=tuple(
+                item.placement_id for item in active_placements
+            ),
+        )
+    except SelectionPlacementGuidanceError as error:
+        if error.code in {
+            "selection_placement_guidance.selection_not_active",
+            "selection_placement_guidance.replacement_candidate_conflict",
+            "selection_placement_guidance.replacement_release_mismatch",
+        }:
+            raise CandidateReviewError(
+                "candidate_review.action_not_available",
+                "The exact Selection replacement is no longer actionable.",
+            ) from error
+        raise CandidateReviewError(
+            "candidate_review.state_invalid",
+            "Current replacement actionability could not be derived.",
+        ) from error
+    actionable_section_ids = set(replacement_guidance.actionable_section_ids)
+    if not set(proposed_sections).issubset(actionable_section_ids):
+        raise CandidateReviewError(
+            "candidate_review.action_not_available",
+            "Every replacement Proposal section must be currently actionable after releasing the predecessor Placements.",
+        )
     normalized: list[CandidateReviewReplacementDisposition] = []
     migrated_sections: list[str] = []
     for placement in active_placements:
@@ -1564,10 +1593,10 @@ def plan_selection_replacement(
                 "candidate_review.invalid_request",
                 "Replacement target section IDs must be nonempty when provided.",
             )
-        if target is not None and target not in successor_sections:
+        if target is not None and target not in actionable_section_ids:
             raise CandidateReviewError(
                 "candidate_review.action_not_available",
-                "A migrated Placement target is not eligible for the successor Candidate.",
+                "A migrated Placement target is not currently actionable after releasing the predecessor Placements.",
             )
         if target is not None:
             migrated_sections.append(target)

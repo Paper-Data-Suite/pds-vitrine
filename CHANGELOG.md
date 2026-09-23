@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #97 Slice 6 makes guided Selection replacement planning and canonical `replace_selection` writes consume the shared replacement-aware actionability projection, preserving one-for-one capacity while rejecting post-release overflow, prohibited, ineligible, and Arrangement-conflicted targets.
+
 - Issue #97 Slice 5 makes guided Placement planning and canonical `place_selection` writes consume the shared current actionability projection, preserving bounded curation errors for duplicate, full, prohibited, ineligible, and Arrangement-conflicted targets.
 
 - Issue #97 Slice 4 revalidates persisted Selection Proposal intent before acceptance against current section actionability and exact applicable requirements, while preserving immutable Proposal history and allowing negative decisions when a Proposal is no longer selectable.
