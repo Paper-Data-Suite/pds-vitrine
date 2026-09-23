@@ -1287,24 +1287,39 @@ def plan_selection_placement(
             "This Candidate inbox entry has no selectable Candidate.",
         )
     selection = _active_selection_summary(detail, selection_id)
-    section = _candidate_section_summary(detail, section_id)
-    if any(
-        placement.selection_id == selection.selection_id
-        and placement.section_id == section.section_id
-        and placement.lifecycle_state == "activated"
-        for placement in detail.placements
-    ):
-        raise CandidateReviewError(
-            "candidate_review.action_not_available",
-            "Selection already has an active Placement in this exact section.",
+    curation = _load_curation_state(
+        workspace_root,
+        detail.observed_state_revision,
+    )
+    try:
+        guidance = project_selection_placement_guidance(
+            candidate=candidate,
+            profile=detail.inbox_detail.profile_revision,
+            curation=curation,
+            operation="placement",
+            selection_id=selection.selection_id,
         )
-    if (
-        section.maximum_placements is not None
-        and section.active_placement_count >= section.maximum_placements
-    ):
+    except SelectionPlacementGuidanceError as error:
+        if error.code in {
+            "selection_placement_guidance.selection_not_active",
+            "selection_placement_guidance.selection_candidate_mismatch",
+        }:
+            raise CandidateReviewError(
+                "candidate_review.action_not_available",
+                "The exact Selection is no longer actionable for this Candidate.",
+            ) from error
+        raise CandidateReviewError(
+            "candidate_review.state_invalid",
+            "Current Placement actionability could not be derived.",
+        ) from error
+    section = next(
+        (item for item in guidance.sections if item.section_id == section_id),
+        None,
+    )
+    if section is None or not section.current_actionable:
         raise CandidateReviewError(
             "candidate_review.action_not_available",
-            "The exact section is already at its Placement maximum.",
+            "The exact section is not currently actionable for this Selection.",
         )
     return CandidateReviewPlacementActionPlan(
         contract_version=CANDIDATE_REVIEW_CONTRACT_VERSION,
