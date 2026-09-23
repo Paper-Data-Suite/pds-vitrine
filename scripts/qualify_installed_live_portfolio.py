@@ -45,6 +45,20 @@ else:
     )
 
 
+ISSUE96_QUILLAN_WHEEL = WheelSpec(
+    distribution_name="quillan",
+    version="0.10.1",
+    filename="quillan-0.10.1-py3-none-any.whl",
+    sha256="5311cccc03a012a7d319827e30b5a989901a9e77693171a8861e4e58409764ad",
+    release_tag="v0.10.1",
+    repository="Paper-Data-Suite/pds-quillan",
+)
+ISSUE96_AUDITED_RELEASE_WHEELS = tuple(
+    ISSUE96_QUILLAN_WHEEL if spec.distribution_name == "quillan" else spec
+    for spec in AUDITED_RELEASE_WHEELS
+)
+
+
 class LiveInstalledQualificationError(RuntimeError):
     pass
 
@@ -77,11 +91,15 @@ def _authenticate(path: Path, spec: WheelSpec) -> Path:
     return resolved
 
 
-def _resolve_release_wheels(wheel_dir: Path) -> tuple[Path, ...]:
+def _resolve_release_wheels(
+    wheel_dir: Path,
+    *,
+    specs: tuple[WheelSpec, ...] = AUDITED_RELEASE_WHEELS,
+) -> tuple[Path, ...]:
     root = wheel_dir.resolve(strict=True)
     if not root.is_dir():
         raise LiveInstalledQualificationError("wheel-dir must be a directory")
-    return tuple(_authenticate(root / spec.filename, spec) for spec in AUDITED_RELEASE_WHEELS)
+    return tuple(_authenticate(root / spec.filename, spec) for spec in specs)
 
 
 def _distribution_version_from_wheel_filename(path: Path) -> tuple[str, str]:
@@ -168,6 +186,7 @@ def _run_preflights(
     work_root: Path,
     vitrine_wheel: Path,
     release_wheels: tuple[Path, ...],
+    live_quillan_version: str = "0.10.0",
 ) -> tuple[Path, Path, Path]:
     env = _clean_env()
     runner_root = work_root / "runner"
@@ -196,6 +215,9 @@ def _run_preflights(
     _copy_runner_file(
         repository, runner_root, "live_installed_acceptance_scenario.py"
     )
+    _copy_runner_file(
+        repository, runner_root, "live_installed_candidate_evidence_review.py"
+    )
 
     live_venv = work_root / "live-venv"
     venv.EnvBuilder(with_pip=True, clear=True).create(live_venv)
@@ -215,6 +237,8 @@ def _run_preflights(
             str(repository),
             "--mode",
             "live-preflight",
+            "--quillan-version",
+            live_quillan_version,
         ],
         cwd=runner_root,
         env=env,
@@ -263,6 +287,30 @@ def _run_candidate_discovery_slice(
             str(repository),
             "--work-root",
             str(work_root / "scenario-work"),
+        ],
+        cwd=runner_root,
+        env=_clean_env(),
+    )
+
+
+def _run_candidate_evidence_review_slice(
+    *,
+    live_python: Path,
+    runner_root: Path,
+    repository: Path,
+    work_root: Path,
+) -> None:
+    runner = runner_root / "live_installed_candidate_evidence_review.py"
+    _run(
+        [
+            str(live_python),
+            str(runner),
+            "--workspace",
+            str(work_root / "issue96-live-workspace"),
+            "--repository",
+            str(repository),
+            "--work-root",
+            str(work_root / "issue96-scenario-work"),
         ],
         cwd=runner_root,
         env=_clean_env(),
@@ -365,6 +413,7 @@ def qualify(
     vitrine_wheel: Path,
     wheel_dir: Path,
     preflight_only: bool,
+    candidate_evidence_review_only: bool,
     candidate_discovery_only: bool,
     portfolio_snapshot_only: bool,
     negative_matrix_only: bool,
@@ -373,7 +422,12 @@ def qualify(
     validate_contract_constants()
     repository = repository.resolve(strict=True)
     candidate, candidate_sha256 = _authenticate_vitrine_wheel(vitrine_wheel)
-    release_wheels = _resolve_release_wheels(wheel_dir)
+    release_specs = (
+        ISSUE96_AUDITED_RELEASE_WHEELS
+        if candidate_evidence_review_only
+        else AUDITED_RELEASE_WHEELS
+    )
+    release_wheels = _resolve_release_wheels(wheel_dir, specs=release_specs)
     print("PASS exact release wheel authentication", flush=True)
     print(f"PASS candidate Vitrine wheel authentication sha256={candidate_sha256}", flush=True)
 
@@ -388,8 +442,20 @@ def qualify(
             work_root=work_root,
             vitrine_wheel=candidate,
             release_wheels=release_wheels,
+            live_quillan_version=(
+                ISSUE96_QUILLAN_WHEEL.version
+                if candidate_evidence_review_only
+                else "0.10.0"
+            ),
         )
-        if candidate_discovery_only:
+        if candidate_evidence_review_only:
+            _run_candidate_evidence_review_slice(
+                live_python=live_python,
+                runner_root=runner_root,
+                repository=repository,
+                work_root=work_root,
+            )
+        elif candidate_discovery_only:
             if not CANDIDATE_DISCOVERY_SLICE_READY:
                 raise LiveInstalledQualificationError(
                     "Slice 2 Candidate discovery scenario is not enabled"
@@ -458,6 +524,12 @@ def qualify(
     if preflight_only:
         print("PASS issue #71 Slice 1 acceptance infrastructure preflight", flush=True)
         return
+    if candidate_evidence_review_only:
+        print(
+            "PASS issue #96 installed Candidate evidence review acceptance",
+            flush=True,
+        )
+        return
     if candidate_discovery_only:
         print(
             "PASS issue #71 Slice 2 native producer and live Candidate acceptance",
@@ -499,6 +571,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--wheel-dir", type=Path, required=True)
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--preflight-only", action="store_true")
+    mode.add_argument("--candidate-evidence-review-only", action="store_true")
     mode.add_argument("--candidate-discovery-only", action="store_true")
     mode.add_argument("--portfolio-snapshot-only", action="store_true")
     mode.add_argument("--negative-matrix-only", action="store_true")
@@ -510,6 +583,7 @@ def main(argv: list[str] | None = None) -> int:
             vitrine_wheel=args.vitrine_wheel,
             wheel_dir=args.wheel_dir,
             preflight_only=args.preflight_only,
+            candidate_evidence_review_only=args.candidate_evidence_review_only,
             candidate_discovery_only=args.candidate_discovery_only,
             portfolio_snapshot_only=args.portfolio_snapshot_only,
             negative_matrix_only=args.negative_matrix_only,

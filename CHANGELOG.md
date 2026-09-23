@@ -6,6 +6,53 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #96 Slice 12 adds exact installed ScoreForm/Quillan/Concord Candidate
+  evidence presentation/preview acceptance through the #71 isolation harness,
+  using the current Quillan 0.10.1 patch-release endpoint only for #96 while
+  preserving #71's historical frozen 0.10.0 composition, plus the isolated
+  Core+Vitrine-only #96 contract smoke and final qualification wiring.
+- Issue #96 Slice 11 adds the A-N focused acceptance matrix, a direct suppressed-
+  Evaluation preview privacy regression, dedicated Candidate evidence-review
+  validator, repository/package guards, and contract/development/validation
+  documentation while leaving installed live-producer/wheel acceptance separate.
+- Issue #96 Slice 10 wires explicit `V. View evidence` actions into Candidate
+  Inbox detail and guided Candidate Review, renders bounded structured summaries,
+  and opens authorized Artifact bytes only from temporary verified-media files
+  that are removed on return, without automatic detail-time producer access.
+- Issue #96 Slice 9 adds transient byte-bearing Candidate preview through the
+  released Quillan and Concord Artifact APIs, bridges exact Candidate preview
+  authorization inside producer-owned pre-I/O gates, verifies returned identity,
+  representation, media type, digest, and byte size, and creates no Snapshot state.
+- Issue #96 Slice 8 adds bounded transient structured preview content for
+  metadata-only evidence, using producer-family instructional allowlists over
+  the exact revalidated projection while excluding paths, hashes, raw payloads,
+  private-note state, unrelated identities, and other technical internals.
+- Issue #96 Slice 7 revalidates exact Candidate preview provenance through
+  immutable Core Publication/Registration replay, the authorized verified
+  producer-manifest reader, exact adapter re-projection, and persisted source
+  matching, then classifies structured, Artifact, or unavailable preview forms.
+- Issue #96 Slice 6 adds the read-only
+  `vitrine_candidate_evidence_preview_v1` authority foundation: exact
+  persisted-entry/state replay, canonical source-endpoint resolution, separate
+  fail-closed Artifact-preview authorization, and no producer I/O or mutation.
+- Issue #96 Slice 5 adds an instructional Candidate-discovery preflight and
+  `vitrine_candidate_discovery_presentation_v1` completion summary with exact
+  run counts, safe producer-family participation, explicit no-Selection/
+  no-Placement language, and opt-in technical finding provenance.
+- Issue #96 Slice 4 makes `Ready to consider` require
+  `selected_state="unselected"`, excluding actively selected and historical-only
+  Candidates while preserving the separate Already selected/history workflows.
+- Issue #96 Slice 3 applies instructional Candidate evidence presentation to
+  Candidate Inbox and guided Review list/detail surfaces, phrases exact Profile
+  eligibility as `Matches`, and explicitly avoids promising current Placement
+  validity while preserving persisted source labels in technical provenance.
+- Issue #96 Slice 2 adds the transient
+  `vitrine_candidate_evidence_presentation_v1` contract with deterministic
+  instructional evidence names, exact Profile-fit labels, and exact
+  representation-family context while keeping display values non-authoritative.
+- Issue #96 Slice 1 makes Candidate rediscovery identity independent of
+  persisted display snapshots, so presentation-only label changes reuse the
+  same exact Candidates without rewriting historical display text.
 - Issue #95 Slice 8 closure qualification: A-J acceptance matrix, dedicated
   validator, package/repository wiring, isolated installed-wheel presentation
   smoke, duplicate Portfolio-label disambiguation, and teacher-first successful

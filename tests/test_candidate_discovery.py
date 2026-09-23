@@ -514,6 +514,84 @@ def test_exact_positive_replay_reuses_existing_candidates(tmp_path: Path) -> Non
     assert load_current_state(setup.workspace).state_revision == after_first
 
 
+def test_label_only_rediscovery_reuses_existing_candidate_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    setup = build_candidate_fixture_workspace(tmp_path)
+    first = _run(setup, "vitrine_scoreform_fixture")
+    assert tuple(item.disposition for item in first.evaluation_results) == (
+        "created",
+        "created",
+    )
+    first_candidates = tuple(
+        item.candidate
+        for item in first.evaluation_results
+        if item.candidate is not None
+    )
+    assert len(first_candidates) == 2
+    candidate_ids_before = tuple(item.candidate_id for item in first_candidates)
+    display_snapshots_before = {
+        item.candidate_id: item.display_snapshot for item in first_candidates
+    }
+    after_first = load_current_state(setup.workspace).state_revision
+
+    def replacement_display(source: object) -> str:
+        projected = getattr(source, "producer_source")
+        return (
+            "Instructional replacement label — "
+            f"{getattr(projected, 'source_record_id')}"
+        )
+
+    monkeypatch.setattr(candidate_services, "_display_snapshot", replacement_display)
+    second_request = CandidateDiscoveryRequest(
+        portfolio_id=setup.portfolio_id,
+        requesting_actor=ACTOR,
+        requested_purpose="improvement",
+        catalog_query=PublicationCatalogQuery(
+            module_id="vitrine_scoreform_fixture", state="current", limit=20
+        ),
+        expected_state_revision=after_first,
+    )
+    second = discover_and_evaluate_candidates(
+        setup.workspace,
+        second_request,
+        producer_registry=build_development_fixture_producer_registry(),
+        adapter_registry=build_development_fixture_adapter_registry(),
+        authorization_gate=StaticAuthorizationGate("allowed"),
+        clock=fixed_clock,
+        id_factory=DeterministicIds(),
+    )
+
+    assert tuple(item.disposition for item in second.evaluation_results) == (
+        "existing",
+        "existing",
+    )
+    second_candidates = tuple(
+        item.candidate
+        for item in second.evaluation_results
+        if item.candidate is not None
+    )
+    assert tuple(item.candidate_id for item in second_candidates) == candidate_ids_before
+    assert second.committed_state_revision is None
+    assert load_current_state(setup.workspace).state_revision == after_first
+
+    persisted_candidates = tuple(
+        item
+        for item in load_current_records(setup.workspace)
+        if isinstance(item, PortfolioCandidate)
+    )
+    assert tuple(item.candidate_id for item in persisted_candidates) == candidate_ids_before
+    assert {
+        item.candidate_id: item.display_snapshot for item in persisted_candidates
+    } == display_snapshots_before
+    assert all(
+        item.display_snapshot != replacement_display(result.projected_source)
+        for item, result in zip(
+            second_candidates, second.evaluation_results, strict=True
+        )
+    )
+
+
 def test_same_student_id_in_another_class_does_not_resolve(tmp_path: Path) -> None:
     setup = build_candidate_fixture_workspace(
         tmp_path, link_student=True, link_class_id="english10_p3"

@@ -8,6 +8,7 @@ from typing import TextIO, TypeVar
 
 from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 
+from vitrine.candidate_evidence_preview_menu import run_candidate_evidence_preview
 from vitrine.candidate_inbox import (
     CandidateInboxError,
     CandidateInboxItem,
@@ -163,7 +164,16 @@ def _teacher_selection(value: str) -> str:
     return "Not selected"
 
 
-def _item_line(item: CandidateInboxItem) -> str:
+def _item_line(
+    item: CandidateInboxItem,
+    *,
+    detail: CandidateReviewDetail | None = None,
+) -> str:
+    evidence_label = (
+        item.source_display_label
+        if detail is None
+        else build_teacher_candidate_detail(detail.inbox_detail).evidence_label
+    )
     outcome = teacher_term(item.evaluation_outcome)
     condition = (
         teacher_term(item.candidate_condition)
@@ -172,7 +182,7 @@ def _item_line(item: CandidateInboxItem) -> str:
     )
     attention = " — NEEDS ATTENTION" if item.attention_needed else ""
     return (
-        f"{item.source_display_label} — {outcome}; {condition}; "
+        f"{evidence_label} — {outcome}; {condition}; "
         f"{_teacher_currentness(item.stale_state)}; "
         f"{_teacher_selection(item.selected_state)}{attention}"
     )
@@ -189,6 +199,7 @@ def _query_for_category(portfolio_id: str, category: str) -> CandidateInboxQuery
         return CandidateInboxQuery(
             portfolio_id=portfolio_id,
             candidate_conditions=("ready_for_consideration",),
+            selected_state="unselected",
             limit=100,
         )
     if category in {"3", "6"}:
@@ -252,6 +263,13 @@ def _render_detail(output: TextIO, detail: CandidateReviewDetail) -> None:
         if view.attention_needed
         else "No current attention signal"
     )
+    profile_matches = (
+        ", ".join(
+            section.label or section.section_id
+            for section in view.eligible_sections
+        )
+        or "No Profile section matches listed"
+    )
     _write(
         output,
         "Candidate Review",
@@ -280,7 +298,15 @@ def _render_detail(output: TextIO, detail: CandidateReviewDetail) -> None:
             "",
         )
     if detail.sections:
-        _write(output, "Eligible Portfolio sections")
+        _write(
+            output,
+            "Portfolio fit",
+            f"Matches: {profile_matches}",
+            "A Profile match is eligibility context; it does not by itself",
+            "guarantee current Placement validity.",
+            "",
+            "Matched Profile section context",
+        )
         for index, section in enumerate(detail.sections, 1):
             _write(
                 output,
@@ -771,9 +797,16 @@ def _replacement_flow(
     if not successors:
         _write(output, "No other unselected positive Candidate is available.")
         return
+    successor_details = {
+        item.entry_id: get_candidate_review_detail(root, item.entry_id)
+        for item in successors
+    }
     _write(output, "Choose exact successor Candidate")
     for index, item in enumerate(successors, 1):
-        _write(output, f"{index}. {_item_line(item)}")
+        _write(
+            output,
+            f"{index}. {_item_line(item, detail=successor_details[item.entry_id])}",
+        )
     successor_item = _numbered_choice(
         _read(input_fn, "Successor Candidate number: "),
         successors,
@@ -781,7 +814,7 @@ def _replacement_flow(
     if successor_item is None or isinstance(successor_item, NavigationChoice):
         _write(output, "That successor Candidate number is not available.")
         return
-    successor_detail = get_candidate_review_detail(root, successor_item.entry_id)
+    successor_detail = successor_details[successor_item.entry_id]
     clear_fn()
     _render_detail(output, successor_detail)
     proposed_sections = _choose_sections(
@@ -878,9 +911,12 @@ def _portfolio_selection_targets(
             if selection.selection_id in seen:
                 continue
             seen.add(selection.selection_id)
+            evidence_label = build_teacher_candidate_detail(
+                detail.inbox_detail
+            ).evidence_label
             values.append(
                 (
-                    f"{item.source_display_label} — {selection.selection_id} — "
+                    f"{evidence_label} — {selection.selection_id} — "
                     f"{selection.lifecycle_state}",
                     CurationTargetRef(
                         target_kind="selection",
@@ -1430,13 +1466,33 @@ def _review_entry(
         _write(
             output,
             "",
+            "V. View evidence",
             "T. Technical details / provenance",
             "B. Back",
         )
         action = _read(
             input_fn,
-            "T for technical details or Enter/B to return: ",
+            "V to view evidence, T for technical details, or Enter/B to return: ",
         )
+        if action.casefold() == "v":
+            run_candidate_evidence_preview(
+                workspace_root=root,
+                detail=detail.inbox_detail,
+                dependencies=dependencies,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                actor=actor,
+            )
+            return _review_entry(
+                root=root,
+                entry_id=entry_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                actor=actor,
+            )
         if action.casefold() == "t":
             clear_fn()
             _render_technical_detail(output, detail)
@@ -1454,6 +1510,7 @@ def _review_entry(
             "5. Withdraw Selection",
             "6. Replace Selection",
             "7. View complete history",
+            "V. View evidence",
             "T. Technical details / provenance",
             "B. Back",
         )
@@ -1517,6 +1574,25 @@ def _review_entry(
             )
         elif action == "7":
             _render_history(output, detail)
+        elif action.casefold() == "v":
+            run_candidate_evidence_preview(
+                workspace_root=root,
+                detail=detail.inbox_detail,
+                dependencies=dependencies,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                actor=actor,
+            )
+            return _review_entry(
+                root=root,
+                entry_id=entry_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                actor=actor,
+            )
         elif action.casefold() == "t":
             clear_fn()
             _render_technical_detail(output, detail)
@@ -1529,6 +1605,7 @@ def _review_entry(
         "2. Decline this proposed use",
         "3. Decide an existing Proposal",
         "4. View complete history",
+        "V. View evidence",
         "T. Technical details / provenance",
         "B. Not now",
     )
@@ -1589,6 +1666,25 @@ def _review_entry(
         )
     elif action == "4":
         _render_history(output, detail)
+    elif action.casefold() == "v":
+        run_candidate_evidence_preview(
+            workspace_root=root,
+            detail=detail.inbox_detail,
+            dependencies=dependencies,
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            actor=actor,
+        )
+        return _review_entry(
+            root=root,
+            entry_id=entry_id,
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            dependencies=dependencies,
+            actor=actor,
+        )
     elif action.casefold() == "t":
         clear_fn()
         _render_technical_detail(output, detail)
@@ -1660,8 +1756,15 @@ def run_candidate_review_menu(
                 _write(output, "No matching persisted Candidate review entries.")
                 _pause(input_fn)
                 continue
+            row_details = {
+                item.entry_id: get_candidate_review_detail(root, item.entry_id)
+                for item in items
+            }
             for index, item in enumerate(items, 1):
-                _write(output, f"{index}. {_item_line(item)}")
+                _write(
+                    output,
+                    f"{index}. {_item_line(item, detail=row_details[item.entry_id])}",
+                )
             selected = _numbered_choice(
                 _read(input_fn, "Entry number (B to go back): "),
                 items,

@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from pds_core.publication_compatibility import (
     PublicationProducerRegistry,
     build_publication_producer_registry,
 )
 
+from vitrine.candidate_evidence_preview import (
+    CandidateEvidencePreviewAuthorizationDecision,
+    CandidateEvidencePreviewAuthorizationGate,
+    CandidateEvidencePreviewAuthorizationRequest,
+)
 from vitrine.candidate_services import (
     SourceReadAuthorizationDecision,
     SourceReadAuthorizationGate,
@@ -42,6 +47,17 @@ class _UnresolvedSourceGate:
         )
 
 
+class _UnresolvedCandidateEvidencePreviewGate:
+    def authorize(
+        self,
+        request: CandidateEvidencePreviewAuthorizationRequest,
+    ) -> CandidateEvidencePreviewAuthorizationDecision:
+        return CandidateEvidencePreviewAuthorizationDecision(
+            outcome="unresolved",
+            reason_codes=("integration_unconfigured",),
+        )
+
+
 class _UnresolvedCurationGate:
     def authorize(self, request: CurationAuthorityRequest) -> CurationAuthorityDecision:
         return CurationAuthorityDecision(
@@ -69,6 +85,9 @@ class VitrineWorkflowDependencies:
     snapshot_build_authority_gate: SnapshotBuildAuthorityGate
     snapshot_source_providers: SnapshotSourceProviderRegistry
     snapshot_renderers: SnapshotRendererRegistry
+    candidate_evidence_preview_authorization_gate: (
+        CandidateEvidencePreviewAuthorizationGate
+    ) = field(default_factory=_UnresolvedCandidateEvidencePreviewGate)
     snapshot_planning_provider: SnapshotPlanningProvider = (
         UnconfiguredSnapshotPlanningProvider()
     )
@@ -95,6 +114,9 @@ def default_workflow_dependencies() -> VitrineWorkflowDependencies:
         snapshot_build_authority_gate=_UnresolvedSnapshotGate(),
         snapshot_source_providers=SnapshotSourceProviderRegistry(),
         snapshot_renderers=SnapshotRendererRegistry(),
+        candidate_evidence_preview_authorization_gate=(
+            _UnresolvedCandidateEvidencePreviewGate()
+        ),
         snapshot_planning_provider=UnconfiguredSnapshotPlanningProvider(),
     )
 

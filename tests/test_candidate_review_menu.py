@@ -139,7 +139,10 @@ def test_guided_review_detail_is_teacher_first_with_explicit_technical_view() ->
     assert "Synthetic evidence" in rendered
     assert "Student: Student" in rendered
     assert "Portfolio: Portfolio" in rendered
-    assert "Eligible Portfolio sections" in rendered
+    assert "Portfolio fit" in rendered
+    assert "Matches: Section One, Section Two" in rendered
+    assert "Matched Profile section context" in rendered
+    assert "guarantee current Placement validity." in rendered
     assert "Section One — Optional; 0 placed; no maximum" in rendered
     assert "Entry ID: entry_exact" not in rendered
     assert "Candidate ID: candidate_exact" not in rendered
@@ -165,6 +168,42 @@ def test_guided_review_list_humanizes_state_tokens() -> None:
     assert "Ready For Consideration" in rendered
     assert "Not selected" in rendered
     assert "ready_for_consideration" not in rendered
+
+
+def test_ready_to_consider_category_requires_unselected_candidate() -> None:
+    query = candidate_review_menu._query_for_category("portfolio_exact", "2")
+
+    assert query.portfolio_id == "portfolio_exact"
+    assert query.candidate_conditions == ("ready_for_consideration",)
+    assert query.selected_state == "unselected"
+
+
+def test_selection_categories_remain_distinct() -> None:
+    ready = candidate_review_menu._query_for_category("portfolio_exact", "2")
+    selected = candidate_review_menu._query_for_category("portfolio_exact", "3")
+
+    assert ready.selected_state == "unselected"
+    assert selected.selected_state == "selected"
+    assert ready.selected_state != selected.selected_state
+
+
+def test_guided_review_list_uses_instructional_detail_projection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    detail = _detail()
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "build_teacher_candidate_detail",
+        lambda _detail: SimpleNamespace(
+            evidence_label="Feedback — Argument Paragraph (PDF)"
+        ),
+    )
+
+    rendered = candidate_review_menu._item_line(_item(), detail=detail)
+
+    assert "Feedback — Argument Paragraph (PDF)" in rendered
+    assert "Synthetic evidence" not in rendered
+    assert "Ready For Consideration" in rendered
 
 
 def test_guided_menu_fresh_select_uses_numbered_section_and_shared_orchestration(

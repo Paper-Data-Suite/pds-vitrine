@@ -28,6 +28,8 @@ def validate(*, run_focused_tests: bool = True) -> None:
                 "pytest",
                 "tests/test_candidate_services.py",
                 "tests/test_candidate_discovery.py",
+                "tests/test_candidate_discovery_presentation.py",
+                "tests/test_candidate_discovery_menu.py",
                 "-q",
             ],
             cwd=ROOT,
