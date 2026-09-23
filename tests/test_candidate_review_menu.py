@@ -352,7 +352,7 @@ def test_active_selection_placement_uses_exact_numbered_section_and_pointer_plan
         "execute_selection_placement",
         lambda *_args, **_kwargs: SimpleNamespace(state_revision=22),
     )
-    raw_input = _inputs(["3", "1", "1", "1", "2", "PLACE SELECTION", "", "B"])
+    raw_input = _inputs(["3", "1", "1", "1", "1", "PLACE SELECTION", "", "B"])
 
     candidate_review_menu.run_candidate_review_menu(
         portfolio_id="portfolio_exact",
@@ -388,6 +388,11 @@ def test_replacement_requires_explicit_same_section_disposition(
         lambda _root, entry_id: (
             successor_detail if entry_id == "entry_successor" else detail
         ),
+    )
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "list_candidate_review_section_guidance",
+        lambda *_args, **_kwargs: successor_detail.sections,
     )
     planned: list[dict[str, object]] = []
 

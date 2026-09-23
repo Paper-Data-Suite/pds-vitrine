@@ -30,6 +30,7 @@ from vitrine.candidate_review import (
     execute_selection_withdrawal,
     get_candidate_review_detail,
     list_candidate_review_entries,
+    list_candidate_review_section_guidance,
     plan_annotation_creation,
     plan_annotation_revision,
     plan_candidate_decision,
@@ -243,6 +244,50 @@ def _section_capacity(section: CandidateReviewSectionSummary) -> str:
     return f"{placed}; limit {section.maximum_placements}"
 
 
+def _section_is_actionable(section: CandidateReviewSectionSummary) -> bool:
+    return bool(getattr(section, "current_actionable", True))
+
+
+def _actionable_sections(
+    sections: Sequence[CandidateReviewSectionSummary],
+) -> tuple[CandidateReviewSectionSummary, ...]:
+    return tuple(section for section in sections if _section_is_actionable(section))
+
+
+def _section_availability(section: CandidateReviewSectionSummary) -> str:
+    if _section_is_actionable(section):
+        return "Available now"
+    reasons = tuple(getattr(section, "unavailability_reason_codes", ()))
+    labels = {
+        "candidate_not_semantically_eligible": "Candidate fit is not current",
+        "section_prohibited": "section is prohibited",
+        "section_not_placement_bearing": "not a Placement target",
+        "section_full": "at Placement capacity",
+        "arrangement_pointer_conflict": "Arrangement needs resolution",
+        "selection_already_placed_in_section": "Selection already placed here",
+    }
+    detail = ", ".join(labels.get(reason, reason) for reason in reasons)
+    return f"Not available now — {detail or 'current curation state'}"
+
+
+def _requirements_for_sections(
+    detail: CandidateReviewDetail,
+    section_ids: Sequence[str],
+) -> tuple[CandidateReviewProfileRequirementSummary, ...]:
+    selected = set(section_ids)
+    relevant_ids = {
+        requirement_id
+        for section in detail.sections
+        if section.section_id in selected
+        for requirement_id in section.relevant_profile_requirement_ids
+    }
+    return tuple(
+        requirement
+        for requirement in detail.profile_requirements
+        if requirement.requirement_id in relevant_ids
+    )
+
+
 def _section_labels(
     detail: CandidateReviewDetail,
     section_ids: Sequence[str],
@@ -312,7 +357,8 @@ def _render_detail(output: TextIO, detail: CandidateReviewDetail) -> None:
                 output,
                 f"{index}. {section.label} — "
                 f"{teacher_term(section.obligation)}; "
-                f"{_section_capacity(section)}",
+                f"{_section_capacity(section)}; "
+                f"{_section_availability(section)}",
             )
         _write(output, "")
     if detail.proposals:
@@ -411,6 +457,14 @@ def _render_technical_detail(
                 f"{section.obligation}; active {section.active_placement_count}; "
                 f"maximum {maximum}; arrangement pointer "
                 f"{section.arrangement_pointer_revision}",
+                "   "
+                f"actionability {getattr(section, 'actionability_operation', 'unknown')}; "
+                f"placement-bearing {getattr(section, 'placement_bearing', True)}; "
+                f"remaining {getattr(section, 'remaining_capacity', None)}; "
+                "pointer state "
+                f"{getattr(section, 'arrangement_pointer_state', 'unknown')}; "
+                "reasons "
+                f"{', '.join(getattr(section, 'unavailability_reason_codes', ())) or '(none)'}",
             )
         _write(output, "")
     if detail.proposals:
@@ -452,7 +506,7 @@ def _choose_sections(
     prompt: str,
 ) -> tuple[str, ...] | None:
     if not sections:
-        _write(output, "No eligible sections are available.")
+        _write(output, "No currently actionable sections are available.")
         return None
     for index, section in enumerate(sections, 1):
         _write(
@@ -540,7 +594,7 @@ def _decision_flow(
         sections = _choose_sections(
             input_fn,
             output,
-            detail.sections,
+            _actionable_sections(detail.sections),
             prompt="Intended section numbers, comma-separated: ",
         )
         if sections is None:
@@ -548,7 +602,7 @@ def _decision_flow(
         requirements = _choose_profile_requirements(
             input_fn,
             output,
-            detail.profile_requirements,
+            _requirements_for_sections(detail, sections),
         )
         if requirements is None:
             return
@@ -629,10 +683,21 @@ def _placement_flow(
     selection = _choose_active_selection(input_fn, output, detail)
     if selection is None:
         return
+    occupied_section_ids = {
+        placement.section_id
+        for placement in detail.placements
+        if placement.selection_id == selection.selection_id
+        and placement.lifecycle_state == "activated"
+    }
+    placement_sections = tuple(
+        section
+        for section in _actionable_sections(detail.sections)
+        if section.section_id not in occupied_section_ids
+    )
     section_ids = _choose_sections(
         input_fn,
         output,
-        detail.sections,
+        placement_sections,
         prompt="One exact section number for this Placement: ",
     )
     if section_ids is None or len(section_ids) != 1:
@@ -815,27 +880,38 @@ def _replacement_flow(
         _write(output, "That successor Candidate number is not available.")
         return
     successor_detail = successor_details[successor_item.entry_id]
-    clear_fn()
-    _render_detail(output, successor_detail)
-    proposed_sections = _choose_sections(
-        input_fn,
-        output,
-        successor_detail.sections,
-        prompt="Replacement Proposal section numbers, comma-separated: ",
-    )
-    if proposed_sections is None:
-        return
     active_placements = tuple(
         item
         for item in detail.placements
         if item.selection_id == selection.selection_id
         and item.lifecycle_state == "activated"
     )
+    replacement_sections = _actionable_sections(
+        list_candidate_review_section_guidance(
+            root,
+            successor_item.entry_id,
+            operation="replacement",
+            selection_id=selection.selection_id,
+            releasing_placement_ids=tuple(
+                item.placement_id for item in active_placements
+            ),
+        )
+    )
+    clear_fn()
+    _render_detail(output, successor_detail)
+    proposed_sections = _choose_sections(
+        input_fn,
+        output,
+        replacement_sections,
+        prompt="Replacement Proposal section numbers, comma-separated: ",
+    )
+    if proposed_sections is None:
+        return
     dispositions = _replacement_dispositions(
         input_fn=input_fn,
         output=output,
         placements=active_placements,
-        successor_sections=successor_detail.sections,
+        successor_sections=replacement_sections,
     )
     if dispositions is None:
         return
@@ -1503,7 +1579,7 @@ def _review_entry(
     if active:
         _write(
             output,
-            "1. Place in another eligible section",
+            "1. Place in another currently available section",
             "2. Add / revise Annotation",
             "3. Add / revise Reflection",
             "4. Record curation Review",
