@@ -38,6 +38,11 @@ from vitrine.models import (
     PlacementPresentation,
     SelectionProposal,
 )
+from vitrine.selection_placement_guidance import (
+    SelectionPlacementGuidanceError,
+    profile_requirement_ids_for_sections,
+    project_selection_placement_guidance,
+)
 from vitrine.storage import (
     VitrineStorageError,
     VitrineStorageNotFoundError,
@@ -1045,16 +1050,41 @@ def plan_candidate_decision(
             field_name="intended_profile_requirement_ids",
             nonempty=False,
         )
-        eligible_sections = {value.section_id for value in detail.sections}
-        if not set(sections).issubset(eligible_sections):
-            raise CandidateReviewError(
-                "candidate_review.action_not_available",
-                "Candidate is not eligible for every exact proposed section.",
+        curation = _load_curation_state(
+            workspace_root,
+            detail.observed_state_revision,
+        )
+        try:
+            guidance = project_selection_placement_guidance(
+                candidate=candidate,
+                profile=detail.inbox_detail.profile_revision,
+                curation=curation,
+                operation="fresh_selection",
             )
-        if not set(requirement_ids).issubset(detail.profile_requirement_ids):
+        except SelectionPlacementGuidanceError as error:
+            raise CandidateReviewError(
+                "candidate_review.state_invalid",
+                "Current Selection/Placement actionability could not be derived.",
+            ) from error
+        actionable_section_ids = set(guidance.actionable_section_ids)
+        if not set(sections).issubset(actionable_section_ids):
             raise CandidateReviewError(
                 "candidate_review.action_not_available",
-                "One or more exact Profile requirement IDs are unavailable.",
+                "Every exact proposed section must be currently actionable for this Candidate.",
+            )
+        try:
+            applicable_requirement_ids = set(
+                profile_requirement_ids_for_sections(guidance, sections)
+            )
+        except SelectionPlacementGuidanceError as error:
+            raise CandidateReviewError(
+                "candidate_review.state_invalid",
+                "Applicable Profile requirement intent could not be derived.",
+            ) from error
+        if not set(requirement_ids).issubset(applicable_requirement_ids):
+            raise CandidateReviewError(
+                "candidate_review.action_not_available",
+                "One or more exact Profile requirement IDs are not applicable to the proposed sections.",
             )
         operation = "direct_select" if decision == "select" else "direct_decline"
 
