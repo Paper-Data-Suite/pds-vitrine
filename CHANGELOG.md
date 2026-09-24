@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 11 moves standalone Portfolio Subject identity mutations onto the shared case-insensitive exact/retryable confirmation contract: CREATE, LINK, INVALIDATE, REPLACE, MERGE, and SPLIT final reviews now clear/redraw on mismatch instead of silently abandoning the action, while class/student/Subject identity choices remain explicit.
+
 - Issue #98 Slice 10 moves all standalone Portfolio Profile mutation confirmations onto the shared case-insensitive exact/retryable confirmation contract: CREATE, SAVE, ACTIVATE, BIND, MIGRATE, COMPOSE, and INSTALL final reviews now clear/redraw on mismatch instead of silently abandoning the action.
 
 - Issue #98 Slice 9 standardizes Portfolio-scoped Profile Binding and migration: a sole required bindable revision is carried forward without a redundant prompt, BIND/MIGRATE use the shared case-insensitive exact/retryable confirmation contract, reason/authority inputs are included before final confirmation, blocked migrations remain non-mutating, and successful writes reload and redraw the current binding.

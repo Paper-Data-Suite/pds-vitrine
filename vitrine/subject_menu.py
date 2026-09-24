@@ -35,6 +35,7 @@ from vitrine.subject_services import (
     split_portfolio_subject,
 )
 
+from .menu_interactions import ReviewRenderer, confirm_exact_phrase
 from .menu_types import ClearFunction, InputFunction
 
 
@@ -340,17 +341,17 @@ def _confirm_word(
     word: str,
     *,
     input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+    render_review: ReviewRenderer,
 ) -> bool:
-    response = _read(
-        input_fn,
-        f"Type {word} to continue, or press Enter to cancel: ",
+    return confirm_exact_phrase(
+        expected_phrase=word,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
     )
-    if not response:
-        return False
-    navigation = _navigation(response)
-    if navigation is NavigationChoice.BACK:
-        return False
-    return response.casefold() == word.casefold()
 
 
 def _reference(class_id: str, school_year: str, student: StudentRecord) -> ClassQualifiedStudentRef:
@@ -408,20 +409,27 @@ def _create_subject_workflow(
     )
     if context is None:
         return
-    clear_fn()
-    _write(
-        output,
-        "Create Portfolio Subject",
-        "",
-        f"Student: {student.first_name} {student.last_name}",
-        f"School year: {school_year}",
-        f"Class: {class_id}",
-        f"Student ID: {student.student_id}",
-        "",
-        "This confirms only local Vitrine identity; it grants no source access.",
-        "",
-    )
-    if not _confirm_word("CREATE", input_fn=input_fn):
+    def render_review() -> None:
+        _write(
+            output,
+            "Create Portfolio Subject",
+            "",
+            f"Student: {student.first_name} {student.last_name}",
+            f"School year: {school_year}",
+            f"Class: {class_id}",
+            f"Student ID: {student.student_id}",
+            "",
+            "This confirms only local Vitrine identity; it grants no source access.",
+            "",
+        )
+
+    if not _confirm_word(
+        "CREATE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     result = create_portfolio_subject(
         workspace_root,
@@ -482,22 +490,29 @@ def _link_subject_workflow(
     )
     if context is None:
         return
-    clear_fn()
-    _write(
-        output,
-        "Confirm Cross-Class Link",
-        "",
-        f"Portfolio Subject: {subject.display_name or subject.portfolio_subject_id}",
-        f"School year: {school_year}",
-        f"Class: {class_id}",
-        f"Student: {student.first_name} {student.last_name}",
-        f"Student ID: {student.student_id}",
-        "",
-        "Names or matching IDs did not create this association.",
-        "This confirmation grants no source or disclosure access.",
-        "",
-    )
-    if not _confirm_word("LINK", input_fn=input_fn):
+    def render_review() -> None:
+        _write(
+            output,
+            "Confirm Cross-Class Link",
+            "",
+            f"Portfolio Subject: {subject.display_name or subject.portfolio_subject_id}",
+            f"School year: {school_year}",
+            f"Class: {class_id}",
+            f"Student: {student.first_name} {student.last_name}",
+            f"Student ID: {student.student_id}",
+            "",
+            "Names or matching IDs did not create this association.",
+            "This confirmation grants no source or disclosure access.",
+            "",
+        )
+
+    if not _confirm_word(
+        "LINK",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     result = link_portfolio_subject(
         workspace_root,
@@ -638,16 +653,23 @@ def _correct_link_workflow(
     if context is None:
         return
     if choice == "2":
-        clear_fn()
-        _write(
-            output,
-            "Invalidate Link",
-            "",
-            f"Link ID: {link_id}",
-            "The historical link will be preserved.",
-            "",
-        )
-        if not _confirm_word("INVALIDATE", input_fn=input_fn):
+        def render_invalidate_review() -> None:
+            _write(
+                output,
+                "Invalidate Link",
+                "",
+                f"Link ID: {link_id}",
+                "The historical link will be preserved.",
+                "",
+            )
+
+        if not _confirm_word(
+            "INVALIDATE",
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            render_review=render_invalidate_review,
+        ):
             return
         invalidate_subject_link(
             workspace_root,
@@ -676,18 +698,25 @@ def _correct_link_workflow(
     )
     if student is None:
         return
-    clear_fn()
-    _write(
-        output,
-        "Replace Subject Link",
-        "",
-        f"New class: {class_id} ({school_year})",
-        f"New student: {student.first_name} {student.last_name}",
-        f"New student ID: {student.student_id}",
-        "Old link will remain in history.",
-        "",
-    )
-    if not _confirm_word("REPLACE", input_fn=input_fn):
+    def render_replace_review() -> None:
+        _write(
+            output,
+            "Replace Subject Link",
+            "",
+            f"New class: {class_id} ({school_year})",
+            f"New student: {student.first_name} {student.last_name}",
+            f"New student ID: {student.student_id}",
+            "Old link will remain in history.",
+            "",
+        )
+
+    if not _confirm_word(
+        "REPLACE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_replace_review,
+    ):
         return
     correct_subject_link(
         workspace_root,
@@ -728,25 +757,36 @@ def _merge_workflow(
     )
     if context is None:
         return
-    clear_fn()
-    _write(output, "Merge Portfolio Subjects", "")
-    for detail in details:
+    affected = sum(detail.summary.portfolio_count for detail in details)
+
+    def render_review() -> None:
+        _write(output, "Merge Portfolio Subjects", "")
+        for detail in details:
+            _write(
+                output,
+                detail.summary.display_name or detail.summary.portfolio_subject_id,
+            )
+            for link in detail.current_links:
+                ref = link.reference
+                _write(
+                    output,
+                    f"  {ref.school_year} / {ref.class_id} / ID {ref.student_id}",
+                )
         _write(
             output,
-            detail.summary.display_name or detail.summary.portfolio_subject_id,
+            "",
+            f"Affected existing Portfolios: {affected}",
+            "A new successor Subject will be created; predecessors stay historical.",
+            "",
         )
-        for link in detail.current_links:
-            ref = link.reference
-            _write(output, f"  {ref.school_year} / {ref.class_id} / ID {ref.student_id}")
-    affected = sum(detail.summary.portfolio_count for detail in details)
-    _write(
-        output,
-        "",
-        f"Affected existing Portfolios: {affected}",
-        "A new successor Subject will be created; predecessors stay historical.",
-        "",
-    )
-    if not _confirm_word("MERGE", input_fn=input_fn):
+
+    if not _confirm_word(
+        "MERGE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     result = merge_portfolio_subjects(
         workspace_root,
@@ -835,21 +875,32 @@ def _split_workflow(
     if context is None:
         return
     link_by_id = {item.subject_link_id: item for item in detail.current_links}
-    clear_fn()
-    _write(output, "Confirm Split", "")
-    for index, group in enumerate(groups, start=1):
-        _write(output, f"Successor {index}:")
-        for link_id in group:
-            ref = link_by_id[link_id].reference
-            _write(output, f"  {ref.school_year} / {ref.class_id} / ID {ref.student_id}")
-    _write(
-        output,
-        "",
-        f"Affected existing Portfolios: {detail.summary.portfolio_count}",
-        "The predecessor Subject will remain historical.",
-        "",
-    )
-    if not _confirm_word("SPLIT", input_fn=input_fn):
+
+    def render_review() -> None:
+        _write(output, "Confirm Split", "")
+        for index, group in enumerate(groups, start=1):
+            _write(output, f"Successor {index}:")
+            for link_id in group:
+                ref = link_by_id[link_id].reference
+                _write(
+                    output,
+                    f"  {ref.school_year} / {ref.class_id} / ID {ref.student_id}",
+                )
+        _write(
+            output,
+            "",
+            f"Affected existing Portfolios: {detail.summary.portfolio_count}",
+            "The predecessor Subject will remain historical.",
+            "",
+        )
+
+    if not _confirm_word(
+        "SPLIT",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     result = split_portfolio_subject(
         workspace_root,
