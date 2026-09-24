@@ -353,6 +353,166 @@ def test_candidate_decision_confirmation_mismatch_is_explicit_and_retryable(
     assert len(clear_calls) >= 4
 
 
+
+def test_post_selection_next_action_reloads_state_and_routes_to_separate_placement(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    detail = _detail()
+    refreshed = _detail(active=True)
+    refreshed.selections[0].active_placement_ids = ()
+    refreshed.placements = ()
+    refreshed.sections = (_section("section_one", "Baseline Evidence"),)
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "get_candidate_review_detail",
+        lambda _root, entry_id: (
+            refreshed
+            if entry_id == detail.inbox_detail.item.entry_id
+            else pytest.fail("unexpected Candidate entry")
+        ),
+    )
+    placement_calls: list[object] = []
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "_placement_flow",
+        lambda **kwargs: placement_calls.append(kwargs["detail"]),
+    )
+    output = io.StringIO()
+
+    result = candidate_review_menu._post_selection_next_action(
+        root=tmp_path,
+        entry_id=detail.inbox_detail.item.entry_id,
+        state_revision=12,
+        input_fn=lambda _prompt: "1",
+        output=output,
+        clear_fn=lambda: None,
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert result is True
+    assert placement_calls == [refreshed]
+    assert "1. Place now in Baseline Evidence" in output.getvalue()
+    assert "Selection and Placement remain separate explicit actions." in output.getvalue()
+
+
+def test_post_selection_next_action_does_not_create_placement_without_choice(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    refreshed = _detail(active=True)
+    refreshed.selections[0].active_placement_ids = ()
+    refreshed.placements = ()
+    refreshed.sections = (_section("section_one", "Baseline Evidence"),)
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "get_candidate_review_detail",
+        lambda *_args, **_kwargs: refreshed,
+    )
+    placement_calls: list[object] = []
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "_placement_flow",
+        lambda **kwargs: placement_calls.append(kwargs["detail"]),
+    )
+
+    result = candidate_review_menu._post_selection_next_action(
+        root=tmp_path,
+        entry_id="entry_exact",
+        state_revision=12,
+        input_fn=lambda _prompt: "",
+        output=io.StringIO(),
+        clear_fn=lambda: None,
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert result is False
+    assert placement_calls == []
+
+
+def test_post_selection_refresh_failure_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail_refresh(*_args: object, **_kwargs: object) -> object:
+        raise candidate_review_menu.CandidateReviewError(
+            "candidate_review.state_changed",
+            "current Candidate state changed",
+        )
+
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "get_candidate_review_detail",
+        fail_refresh,
+    )
+    output = io.StringIO()
+    placement_calls: list[object] = []
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "_placement_flow",
+        lambda **kwargs: placement_calls.append(kwargs["detail"]),
+    )
+
+    result = candidate_review_menu._post_selection_next_action(
+        root=tmp_path,
+        entry_id="entry_exact",
+        state_revision=12,
+        input_fn=lambda _prompt: pytest.fail("refresh failure must not prompt"),
+        output=output,
+        clear_fn=lambda: None,
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert result is True
+    assert placement_calls == []
+    assert "could not be refreshed for Placement" in output.getvalue()
+    assert "candidate_review.state_changed" in output.getvalue()
+
+
+
+def test_post_selection_candidate_inbox_refresh_failure_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail_refresh(*_args: object, **_kwargs: object) -> object:
+        raise candidate_review_menu.CandidateInboxError(
+            "candidate_inbox.state_invalid",
+            "Canonical Vitrine state is unavailable.",
+        )
+
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "get_candidate_review_detail",
+        fail_refresh,
+    )
+    output = io.StringIO()
+    placement_calls: list[object] = []
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "_placement_flow",
+        lambda **kwargs: placement_calls.append(kwargs["detail"]),
+    )
+
+    result = candidate_review_menu._post_selection_next_action(
+        root=tmp_path,
+        entry_id="entry_exact",
+        state_revision=12,
+        input_fn=lambda _prompt: pytest.fail("refresh failure must not prompt"),
+        output=output,
+        clear_fn=lambda: None,
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert result is True
+    assert placement_calls == []
+    assert "could not be refreshed for Placement" in output.getvalue()
+    assert "candidate_inbox.state_invalid" in output.getvalue()
+
+
 def test_guided_menu_evaluation_only_entry_is_read_only(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

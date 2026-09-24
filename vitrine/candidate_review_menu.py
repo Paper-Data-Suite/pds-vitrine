@@ -663,13 +663,24 @@ def _decision_flow(
         authority_gate=dependencies.curation_authority_gate,
         rationale_text=rationale,
     )
+    if decision == "select":
+        _post_selection_next_action(
+            root=root,
+            entry_id=detail.inbox_detail.item.entry_id,
+            state_revision=result.state_revision,
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            dependencies=dependencies,
+            actor=mutation_actor,
+        )
+        return
     clear_fn()
     _write(
         output,
         "Candidate decision recorded.",
         "",
         f"State revision: {result.state_revision}",
-        "No Placement was created implicitly.",
     )
 
 
@@ -712,6 +723,23 @@ def _choose_active_selection(
     return chosen
 
 
+def _placement_sections_for_selection(
+    detail: CandidateReviewDetail,
+    selection: CandidateReviewSelectionSummary,
+) -> tuple[CandidateReviewSectionSummary, ...]:
+    occupied_section_ids = {
+        placement.section_id
+        for placement in detail.placements
+        if placement.selection_id == selection.selection_id
+        and placement.lifecycle_state == "activated"
+    }
+    return tuple(
+        section
+        for section in _actionable_sections(detail.sections)
+        if section.section_id not in occupied_section_ids
+    )
+
+
 def _placement_flow(
     *,
     root: Path,
@@ -727,17 +755,7 @@ def _placement_flow(
     selection = _choose_active_selection(input_fn, output, detail)
     if selection is None:
         return
-    occupied_section_ids = {
-        placement.section_id
-        for placement in detail.placements
-        if placement.selection_id == selection.selection_id
-        and placement.lifecycle_state == "activated"
-    }
-    placement_sections = tuple(
-        section
-        for section in _actionable_sections(detail.sections)
-        if section.section_id not in occupied_section_ids
-    )
+    placement_sections = _placement_sections_for_selection(detail, selection)
     section_resolution = resolve_required_choice(placement_sections)
     if section_resolution.disposition == "unavailable":
         _write(output, "No currently actionable Placement section is available.")
@@ -810,6 +828,110 @@ def _placement_flow(
         f"Section: {plan.section_label}",
         f"State revision: {result.state_revision}",
     )
+
+
+def _post_selection_next_action(
+    *,
+    root: Path,
+    entry_id: str,
+    state_revision: int,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+    dependencies: VitrineWorkflowDependencies,
+    actor: ActorAttribution,
+) -> bool:
+    """Offer an explicit Placement continuation from freshly reloaded state."""
+
+    try:
+        refreshed = get_candidate_review_detail(root, entry_id)
+    except (CandidateInboxError, CandidateReviewError) as error:
+        clear_fn()
+        _write(
+            output,
+            "Selection recorded.",
+            "",
+            f"State revision: {state_revision}",
+            "No Placement was created implicitly.",
+            "",
+            "Current Candidate state could not be refreshed for Placement.",
+            "Return to Candidate Review before attempting Placement.",
+            f"{error.code}: {error}",
+        )
+        return True
+
+    active = tuple(
+        selection
+        for selection in refreshed.selections
+        if selection.lifecycle_state == "activated"
+    )
+    clear_fn()
+    _write(
+        output,
+        "Selection recorded.",
+        "",
+        f"State revision: {state_revision}",
+        "No Placement was created implicitly.",
+        "Selection and Placement remain separate explicit actions.",
+    )
+    if not active:
+        _write(
+            output,
+            "",
+            "The refreshed Candidate state has no active Selection available",
+            "for Placement. Return to Candidate Review before continuing.",
+        )
+        return True
+    if len(active) != 1:
+        _write(
+            output,
+            "",
+            "More than one active Selection requires an explicit choice.",
+            "Return to Already selected to choose the Selection to place.",
+        )
+        return True
+
+    selection = active[0]
+    placement_sections = _placement_sections_for_selection(refreshed, selection)
+    if not placement_sections:
+        _write(
+            output,
+            "",
+            "No currently available Placement destination remains.",
+            "The Selection is saved and no Placement was created.",
+        )
+        return True
+
+    if len(placement_sections) == 1:
+        next_action = f"1. Place now in {placement_sections[0].label}"
+    else:
+        next_action = "1. Place this Selection now"
+    _write(
+        output,
+        "",
+        next_action,
+        "B. Return to Candidate Review",
+    )
+    action = _read(input_fn, "Next action (1 or B): ")
+    if not action:
+        return False
+    navigation = _navigation(action)
+    if navigation is NavigationChoice.BACK:
+        return False
+    if action != "1":
+        _write(output, "That next action is not available.")
+        return True
+
+    _placement_flow(
+        root=root,
+        detail=refreshed,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        dependencies=dependencies,
+        actor=actor,
+    )
+    return True
 
 
 def _withdrawal_flow(
