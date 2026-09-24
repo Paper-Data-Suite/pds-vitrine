@@ -130,7 +130,7 @@ def test_activation_flow_clears_revision_list_before_confirmation(
                 "teacher_profile",
                 "local_instructional_policy",
                 "Approved local use.",
-                "ACTIVATE",
+                "activate",
                 "",  # success pause
                 "b",
             ]
@@ -154,6 +154,51 @@ def test_activation_flow_clears_revision_list_before_confirmation(
     assert "profile_growth@1" in confirmation
     assert "Select Profile Revision" not in confirmation
     assert "1. Growth Profile" not in confirmation
+
+
+
+def test_activation_confirmation_mismatch_is_explicit_and_retryable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = make_profile_workspace(tmp_path)
+    monkeypatch.setenv("PDS_WORKSPACE_ROOT", str(workspace))
+    create_profile_family(workspace, improvement_family(), expected_state_revision=1)
+    create_profile_revision(
+        workspace,
+        improvement_revision(1),
+        improvement_requirements(1),
+        expected_state_revision=2,
+    )
+    recorder = ScreenRecorder()
+    run_profile_menu(
+        input_fn=scripted_input(
+            [
+                "4",
+                "1",
+                "teacher_profile",
+                "local_instructional_policy",
+                "Approved local use.",
+                "WRONG",
+                "activate",
+                "",
+                "b",
+            ]
+        ),
+        output=recorder.output,
+        clear_fn=recorder.clear,
+    )
+
+    bindable = list_bindable_profile_revisions(workspace)
+    assert len(bindable) == 1
+    rendered = recorder.output.getvalue()
+    assert "Confirmation not accepted." in rendered
+    confirmation_screens = tuple(
+        screen
+        for screen in recorder.screens()
+        if screen.startswith("Activate Profile Revision\n")
+        and "Requirements:" in screen
+    )
+    assert len(confirmation_screens) == 2
 
 
 def test_view_profile_is_compact_after_selection(
@@ -291,7 +336,7 @@ def test_starter_profile_menu_installs_one_bindable_canonical_profile(
                 "teacher_starter",
                 "local_instructional_policy",
                 "Reviewed starter for local use.",
-                "INSTALL",
+                "install",
                 "",  # success pause
                 "b",  # leave starter list
                 "b",  # leave Profile menu

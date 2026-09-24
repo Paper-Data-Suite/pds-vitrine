@@ -15,6 +15,7 @@ from pds_core.menu_navigation import (
 )
 from pds_core.workspace import resolve_workspace_root
 
+from vitrine.menu_interactions import ReviewRenderer, confirm_exact_phrase
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import (
     ActorAttribution,
@@ -90,14 +91,21 @@ def _navigation(value: str) -> NavigationChoice | None:
     return parse_navigation_choice(value)
 
 
-def _confirm(word: str, *, input_fn: InputFunction) -> bool:
-    value = _read(input_fn, f"Type {word} to continue, or press Enter to cancel: ")
-    if not value:
-        return False
-    navigation = _navigation(value)
-    if navigation is NavigationChoice.BACK:
-        return False
-    return value.casefold() == word.casefold()
+def _confirm(
+    word: str,
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+    render_review: ReviewRenderer,
+) -> bool:
+    return confirm_exact_phrase(
+        expected_phrase=word,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    )
 
 
 def _show_help(output: TextIO, input_fn: InputFunction) -> None:
@@ -327,19 +335,26 @@ def _create_family(
     if not label or _navigation(label) is NavigationChoice.BACK:
         return
     description = _read(input_fn, "Description (optional): ") or None
-    clear_fn()
-    _write(
-        output,
-        "Review Profile Family",
-        "",
-        f"ID: {family_id}",
-        f"Label: {label}",
-        f"Purpose: {purpose}",
-        "",
-        "A Family groups related Profile series; it supplies no inherited rules.",
-        "",
-    )
-    if not _confirm("CREATE", input_fn=input_fn):
+    def render_review() -> None:
+        _write(
+            output,
+            "Review Profile Family",
+            "",
+            f"ID: {family_id}",
+            f"Label: {label}",
+            f"Purpose: {purpose}",
+            "",
+            "A Family groups related Profile series; it supplies no inherited rules.",
+            "",
+        )
+
+    if not _confirm(
+        "CREATE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     family = PortfolioProfileFamily(
         profile_family_id=family_id,
@@ -557,21 +572,28 @@ def _create_revision(
         source_authority_references=tuple(item.strip() for item in source_raw.split(",") if item.strip()),
         known_limitations=(limitation_raw,) if limitation_raw else (),
     )
-    clear_fn()
-    _write(
-        output,
-        "Review Profile Revision",
-        "",
-        f"Profile: {profile_id}@{revision_number}",
-        f"Purpose: {revision.purpose_kind}",
-        f"Sections: {len(sections)}",
-        f"Requirements: {len(requirements)}",
-        f"Audience rules: {len(audiences)}",
-        "",
-        "Saving creates an immutable Revision. It does not activate it.",
-        "",
-    )
-    if not _confirm("SAVE", input_fn=input_fn):
+    def render_review() -> None:
+        _write(
+            output,
+            "Review Profile Revision",
+            "",
+            f"Profile: {profile_id}@{revision_number}",
+            f"Purpose: {revision.purpose_kind}",
+            f"Sections: {len(sections)}",
+            f"Requirements: {len(requirements)}",
+            f"Audience rules: {len(audiences)}",
+            "",
+            "Saving creates an immutable Revision. It does not activate it.",
+            "",
+        )
+
+    if not _confirm(
+        "SAVE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     create_profile_revision(workspace, revision, requirements, expected_state_revision=expected)
     _show_success("Profile Revision saved. It remains inactive until explicitly activated.", input_fn=input_fn, output=output, clear_fn=clear_fn)
@@ -588,9 +610,25 @@ def _activate(
     if context is None:
         return
     actor, authority, reason = context
-    clear_fn()
-    _write(output, "Activate Profile Revision", "", f"Profile: {selected.reference.portfolio_profile_id}@{selected.reference.profile_revision}", f"Requirements: {selected.requirement_count}", "", "Activation makes this exact Revision eligible for new Bindings when applicable.", "")
-    if not _confirm("ACTIVATE", input_fn=input_fn):
+    def render_review() -> None:
+        _write(
+            output,
+            "Activate Profile Revision",
+            "",
+            f"Profile: {selected.reference.portfolio_profile_id}@{selected.reference.profile_revision}",
+            f"Requirements: {selected.requirement_count}",
+            "",
+            "Activation makes this exact Revision eligible for new Bindings when applicable.",
+            "",
+        )
+
+    if not _confirm(
+        "ACTIVATE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     activate_profile_revision(workspace, selected.reference, actor=actor, reason=reason, authority_reference=authority, expected_state_revision=expected)
     _show_success("Profile Revision activated.", input_fn=input_fn, output=output, clear_fn=clear_fn)
@@ -637,9 +675,25 @@ def _bind(
     if context is None:
         return
     actor, _authority, reason = context
-    clear_fn()
-    _write(output, "Bind Portfolio to Profile", "", f"Portfolio: {portfolio_id}", f"Profile: {selected.reference.portfolio_profile_id}@{selected.reference.profile_revision}", "", "This exact Binding remains until explicitly migrated.", "")
-    if not _confirm("BIND", input_fn=input_fn):
+    def render_review() -> None:
+        _write(
+            output,
+            "Bind Portfolio to Profile",
+            "",
+            f"Portfolio: {portfolio_id}",
+            f"Profile: {selected.reference.portfolio_profile_id}@{selected.reference.profile_revision}",
+            "",
+            "This exact Binding remains until explicitly migrated.",
+            "",
+        )
+
+    if not _confirm(
+        "BIND",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     bind_portfolio_profile(workspace, portfolio_id, selected.reference, actor=actor, binding_reason=reason, context=binding_context, expected_state_revision=expected)
     _show_success("Portfolio Profile Binding created.", input_fn=input_fn, output=output, clear_fn=clear_fn)
@@ -693,11 +747,23 @@ def _migrate(
     if context is None:
         return
     actor, authority, reason = context
-    clear_fn()
-    _write(output, "Confirm Profile Migration", "")
-    _render_analysis(output, analysis)
-    _write(output, "", "Existing Portfolio content is preserved but is not automatically declared sufficient under the target Profile.", "")
-    if not _confirm("MIGRATE", input_fn=input_fn):
+    def render_review() -> None:
+        _write(output, "Confirm Profile Migration", "")
+        _render_analysis(output, analysis)
+        _write(
+            output,
+            "",
+            "Existing Portfolio content is preserved but is not automatically declared sufficient under the target Profile.",
+            "",
+        )
+
+    if not _confirm(
+        "MIGRATE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     migrate_portfolio_profile(workspace, portfolio_id, target.reference, actor=actor, migration_reason=reason, authority_reference=authority, context=binding_context, expected_state_revision=expected)
     _show_success("Portfolio migrated with a successor Profile Binding.", input_fn=input_fn, output=output, clear_fn=clear_fn)
@@ -753,9 +819,26 @@ def _overlay(
         component_revisions=(component.reference,),
         requirement_changes=tuple(changes),
     )
-    clear_fn()
-    _write(output, "Review Local Overlay", "", f"Overlay: {overlay_id}@{revision_number}", f"Base Profile: {component.reference.portfolio_profile_id}@{component.reference.profile_revision}", f"Requirement changes: {len(changes)}", "", "The Overlay is immutable and does not change its base Profile.", "")
-    if not _confirm("SAVE", input_fn=input_fn):
+    def render_review() -> None:
+        _write(
+            output,
+            "Review Local Overlay",
+            "",
+            f"Overlay: {overlay_id}@{revision_number}",
+            f"Base Profile: {component.reference.portfolio_profile_id}@{component.reference.profile_revision}",
+            f"Requirement changes: {len(changes)}",
+            "",
+            "The Overlay is immutable and does not change its base Profile.",
+            "",
+        )
+
+    if not _confirm(
+        "SAVE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     create_profile_overlay(workspace, overlay, expected_state_revision=expected)
     _show_success("Local Overlay Revision saved.", input_fn=input_fn, output=output, clear_fn=clear_fn)
@@ -814,9 +897,26 @@ def _compose(
         source_authority_references=base.source_authority_references,
         known_limitations=tuple(dict.fromkeys((*base.known_limitations, *overlay.known_limitations))),
     )
-    clear_fn()
-    _write(output, "Review Effective Profile", "", f"Profile: {profile_id}@{revision_number}", f"Base: {component.reference.portfolio_profile_id}@{component.reference.profile_revision}", f"Overlay: {overlay.overlay_id}@{overlay.overlay_revision}", "", "The result is self-contained. Later component changes will not alter it.", "")
-    if not _confirm("COMPOSE", input_fn=input_fn):
+    def render_review() -> None:
+        _write(
+            output,
+            "Review Effective Profile",
+            "",
+            f"Profile: {profile_id}@{revision_number}",
+            f"Base: {component.reference.portfolio_profile_id}@{component.reference.profile_revision}",
+            f"Overlay: {overlay.overlay_id}@{overlay.overlay_revision}",
+            "",
+            "The result is self-contained. Later component changes will not alter it.",
+            "",
+        )
+
+    if not _confirm(
+        "COMPOSE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     compose_profile_revision(workspace, effective, (component.reference,), (ProfileOverlayRevisionRef(overlay_id=overlay.overlay_id, overlay_revision=overlay.overlay_revision),), actor=actor, authority_reference=authority, expected_state_revision=expected)
     _show_success("Effective Profile Revision composed. It remains inactive until activated.", input_fn=input_fn, output=output, clear_fn=clear_fn)
@@ -991,27 +1091,35 @@ def _install_reviewed_starter(
     if context is None:
         return False
     actor, authority, reason = context
-    clear_fn()
-    _write(
-        output,
-        "Confirm Starter Profile Installation",
-        "",
-        f"Starter: {plan.label}",
-        f"Profile: {plan.portfolio_profile_id}@{plan.profile_revision}",
-        f"Records to create: {plan.created_record_count}",
-        f"Exact records to reuse: {plan.reused_record_count}",
-        f"Authority/reference: {authority}",
-        f"Reason: {reason}",
-        "",
-    )
-    if plan.activation_required:
+
+    def render_review() -> None:
         _write(
             output,
-            "This installation will explicitly activate the exact starter Profile",
-            "Revision and make it available for new Portfolio Bindings.",
+            "Confirm Starter Profile Installation",
+            "",
+            f"Starter: {plan.label}",
+            f"Profile: {plan.portfolio_profile_id}@{plan.profile_revision}",
+            f"Records to create: {plan.created_record_count}",
+            f"Exact records to reuse: {plan.reused_record_count}",
+            f"Authority/reference: {authority}",
+            f"Reason: {reason}",
             "",
         )
-    if not _confirm("INSTALL", input_fn=input_fn):
+        if plan.activation_required:
+            _write(
+                output,
+                "This installation will explicitly activate the exact starter Profile",
+                "Revision and make it available for new Portfolio Bindings.",
+                "",
+            )
+
+    if not _confirm(
+        "INSTALL",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return False
     result = install_starter_profile(
         plan.starter_profile_id,

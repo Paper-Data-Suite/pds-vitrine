@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 10 moves all standalone Portfolio Profile mutation confirmations onto the shared case-insensitive exact/retryable confirmation contract: CREATE, SAVE, ACTIVATE, BIND, MIGRATE, COMPOSE, and INSTALL final reviews now clear/redraw on mismatch instead of silently abandoning the action.
+
 - Issue #98 Slice 9 standardizes Portfolio-scoped Profile Binding and migration: a sole required bindable revision is carried forward without a redundant prompt, BIND/MIGRATE use the shared case-insensitive exact/retryable confirmation contract, reason/authority inputs are included before final confirmation, blocked migrations remain non-mutating, and successful writes reload and redraw the current binding.
 
 - Issue #98 Slice 8 standardizes Current Portfolio Build/Export interaction: required one-option Audience Rule/Context/Series choices are carried forward without redundant prompts, obligation and final-build confirmations use the shared case-insensitive exact/retryable contract, Technical Details remains a non-mutating confirmation drill-down, and successful build/export redraws the resulting current state.
