@@ -6,6 +6,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TextIO, TypeVar
 
+from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
+
 from vitrine.current_portfolio_build import (
     CurrentPortfolioBuildPreparation,
     prepare_current_portfolio_build,
@@ -19,7 +21,8 @@ from vitrine.current_portfolio_surface import (
     print_current_portfolio_technical_details,
     print_teacher_current_portfolio_preparation,
 )
-from vitrine.menu_types import InputFunction
+from vitrine.menu_interactions import confirm_exact_phrase, resolve_required_choice
+from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import ActorAttribution
 from vitrine.teacher_presentation import teacher_term
 from vitrine.workflow_context import VitrineWorkflowDependencies
@@ -40,6 +43,22 @@ def _write(output: TextIO, *lines: str) -> None:
         print(line, file=output)
 
 
+def _pause(input_fn: InputFunction) -> None:
+    try:
+        input_fn("Press Enter to continue...")
+    except (EOFError, KeyboardInterrupt):
+        return
+
+
+def _navigation(value: str) -> NavigationChoice | None:
+    return parse_navigation_choice(
+        value,
+        allow_back=True,
+        allow_main_menu=True,
+        allow_quit=True,
+    )
+
+
 def _choose(
     values: tuple[T, ...],
     *,
@@ -48,26 +67,38 @@ def _choose(
     label: str,
     render: Callable[[T], str],
 ) -> T | None:
-    if not values:
+    resolution = resolve_required_choice(values)
+    if resolution.disposition == "unavailable":
         return None
-    for index, value in enumerate(values, 1):
+    if resolution.disposition == "carried_forward":
+        selected = resolution.selected
+        assert selected is not None
+        _write(
+            output,
+            f"Using the only available {label}: {render(selected)}",
+        )
+        return selected
+
+    for index, value in enumerate(resolution.choices, 1):
         _write(output, f"{index}. {render(value)}")
     raw = _read(input_fn, f"{label} number (B to cancel): ")
-    if raw.upper() == "B":
+    navigation = _navigation(raw)
+    if navigation is NavigationChoice.BACK:
         return None
     if not raw.isdecimal():
         _write(output, f"That {label} number is not available.")
         return None
     index = int(raw)
-    if index < 1 or index > len(values):
+    if index < 1 or index > len(resolution.choices):
         _write(output, f"That {label} number is not available.")
         return None
-    return values[index - 1]
+    return resolution.choices[index - 1]
 
 
 def _actor(input_fn: InputFunction) -> ActorAttribution | None:
     actor_id = _read(input_fn, "Teacher/actor ID (B to cancel): ")
-    if actor_id.upper() == "B" or not actor_id:
+    navigation = _navigation(actor_id)
+    if navigation is NavigationChoice.BACK or not actor_id:
         return None
     return ActorAttribution(
         actor_kind="authorized_adult",
@@ -173,26 +204,29 @@ def _acknowledge_obligations(
     audience_rule_id: str,
     input_fn: InputFunction,
     output: TextIO,
+    clear_fn: ClearFunction,
     dependencies: VitrineWorkflowDependencies,
 ) -> CurrentPortfolioBuildPreparation | None:
     unresolved = preparation.unresolved_obligation_codes
     if not unresolved:
         return preparation
-    _write(output, "", "These Composition obligations remain unresolved:")
-    for code in unresolved:
-        _write(output, f"- {teacher_term(code)}")
-    _write(
-        output,
-        "",
-        "Acknowledging them allows the Snapshot Plan to preserve that state.",
-        "It does not satisfy, clear, approve, or authorize disclosure.",
-    )
-    if (
-        _read(
-            input_fn,
-            "Type ACKNOWLEDGE OBLIGATIONS to continue: ",
+    def render_acknowledgement() -> None:
+        _write(output, "Unresolved Composition obligations", "")
+        for code in unresolved:
+            _write(output, f"- {teacher_term(code)}")
+        _write(
+            output,
+            "",
+            "Acknowledging them allows the Snapshot Plan to preserve that state.",
+            "It does not satisfy, clear, approve, or authorize disclosure.",
         )
-        != "ACKNOWLEDGE OBLIGATIONS"
+
+    if not confirm_exact_phrase(
+        expected_phrase="ACKNOWLEDGE OBLIGATIONS",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_acknowledgement,
     ):
         _write(output, "Obligations were not acknowledged. Nothing was written.")
         return None
@@ -269,12 +303,14 @@ def run_current_portfolio_build_export_menu(
     portfolio_id: str,
     input_fn: InputFunction,
     output: TextIO,
+    clear_fn: ClearFunction,
     dependencies: VitrineWorkflowDependencies,
     actor: ActorAttribution | None = None,
 ) -> None:
     """Prepare, explicitly confirm, and execute the first-party Current Portfolio."""
 
     try:
+        clear_fn()
         working = prepare_working_composition(root, portfolio_id)
         if working.disposition != "reuse_exact_current":
             _write(
@@ -359,15 +395,16 @@ def run_current_portfolio_build_export_menu(
             audience_rule_id=rule.audience_rule_id,
             input_fn=input_fn,
             output=output,
+            clear_fn=clear_fn,
             dependencies=dependencies,
         )
         if acknowledged_preparation is None:
             return
         preparation = acknowledged_preparation
 
-        _write(output, "")
-        print_teacher_current_portfolio_preparation(preparation, output=output)
         if not preparation.ready_for_plan_execution:
+            clear_fn()
+            print_teacher_current_portfolio_preparation(preparation, output=output)
             _write(
                 output,
                 "",
@@ -390,34 +427,42 @@ def run_current_portfolio_build_export_menu(
                 )
             return
 
-        _write(
-            output,
-            "",
-            "Final confirmation",
-            "This will create/reuse canonical Snapshot workflow records, acquire",
-            "only authorized planned bytes, seal an immutable Edition, verify it,",
-            "and create/verify a local directory Export.",
-            "It will not advance the current Edition pointer or deliver the Export.",
-        )
-        confirmation = _read(
-            input_fn,
-            (
-                "Type T for Technical Details / Provenance, or "
-                "BUILD AND EXPORT CURRENT PORTFOLIO to continue: "
-            ),
-        )
-        if confirmation.casefold() == "t":
-            _write(output, "")
+        def render_final_confirmation() -> None:
+            print_teacher_current_portfolio_preparation(
+                preparation,
+                output=output,
+            )
+            _write(
+                output,
+                "",
+                "Final confirmation",
+                "This will create/reuse canonical Snapshot workflow records, acquire",
+                "only authorized planned bytes, seal an immutable Edition, verify it,",
+                "and create/verify a local directory Export.",
+                "It will not advance the current Edition pointer or deliver the Export.",
+                "",
+                "T. Technical details / provenance",
+            )
+
+        def handle_confirmation_action(value: str) -> bool:
+            if value.casefold() != "t":
+                return False
+            clear_fn()
             print_current_portfolio_technical_details(
                 preparation,
                 output=output,
             )
-            _write(output, "", "Final confirmation")
-            confirmation = _read(
-                input_fn,
-                "Type BUILD AND EXPORT CURRENT PORTFOLIO to continue: ",
-            )
-        if confirmation != "BUILD AND EXPORT CURRENT PORTFOLIO":
+            _pause(input_fn)
+            return True
+
+        if not confirm_exact_phrase(
+            expected_phrase="BUILD AND EXPORT CURRENT PORTFOLIO",
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            render_review=render_final_confirmation,
+            handle_review_action=handle_confirmation_action,
+        ):
             _write(output, "Build/export cancelled. Nothing was written.")
             return
         mutation_actor = actor or _actor(input_fn)
@@ -432,6 +477,7 @@ def run_current_portfolio_build_export_menu(
             authority_gate=dependencies.snapshot_build_authority_gate,
             source_providers=dependencies.snapshot_source_providers,
         )
+        clear_fn()
         _print_result(result, output)
         _write(
             output,
@@ -445,6 +491,7 @@ def run_current_portfolio_build_export_menu(
             ).casefold()
             == "t"
         ):
+            clear_fn()
             _print_result_technical_details(result, output)
     except CurrentPortfolioExecutionError as error:
         _print_execution_error(error, output)

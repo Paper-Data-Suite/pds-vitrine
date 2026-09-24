@@ -1138,6 +1138,7 @@ def _portfolio_context(
                 portfolio_id=portfolio_id,
                 input_fn=input_fn,
                 output=output,
+                clear_fn=clear_fn,
                 dependencies=dependencies,
                 actor=actor,
             )

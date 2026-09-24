@@ -116,6 +116,37 @@ def test_confirmation_rejects_nonmatching_phrase_and_redraws_review() -> None:
     assert output.getvalue().count("Confirmation not accepted.") == 1
 
 
+
+def test_confirmation_review_action_redraws_without_mismatch() -> None:
+    output = StringIO()
+    clear_calls: list[str] = []
+    review_calls: list[str] = []
+    handled: list[str] = []
+    responses = iter(("T", "confirm action"))
+
+    def render_review() -> None:
+        review_calls.append("review")
+        print("Final Review", file=output)
+
+    confirmed = confirm_exact_phrase(
+        expected_phrase="CONFIRM ACTION",
+        input_fn=lambda _prompt: next(responses),
+        output=output,
+        clear_fn=lambda: clear_calls.append("clear"),
+        render_review=render_review,
+        handle_review_action=lambda value: (
+            handled.append(value),
+            value.casefold() == "t",
+        )[1],
+    )
+
+    assert confirmed is True
+    assert handled == ["T"]
+    assert clear_calls == ["clear", "clear"]
+    assert review_calls == ["review", "review"]
+    assert "Confirmation not accepted." not in output.getvalue()
+
+
 @pytest.mark.parametrize("response", ("", "B", "b"))
 def test_confirmation_blank_or_back_cancels_without_write(response: str) -> None:
     output = StringIO()

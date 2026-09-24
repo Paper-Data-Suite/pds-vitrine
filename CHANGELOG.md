@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 8 standardizes Current Portfolio Build/Export interaction: required one-option Audience Rule/Context/Series choices are carried forward without redundant prompts, obligation and final-build confirmations use the shared case-insensitive exact/retryable contract, Technical Details remains a non-mutating confirmation drill-down, and successful build/export redraws the resulting current state.
+
 - Issue #98 Slice 7 standardizes Working Composition freeze on the shared case-insensitive exact confirmation contract with explicit mismatch retry, preserves cancel-without-write behavior, and redraws only the resulting Working Composition state after a successful or exact-reuse freeze.
 
 - Issue #98 Slice 6 standardizes Create Portfolio for Student confirmation on the shared exact-phrase interaction contract and returns the exact newly created Portfolio ID so the existing Portfolio menu opens that Portfolio immediately without reselection; Candidate discovery remains explicit.

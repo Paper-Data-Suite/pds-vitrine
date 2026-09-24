@@ -28,6 +28,7 @@ RequiredChoiceDisposition = Literal[
     "requires_choice",
 ]
 ReviewRenderer = Callable[[], None]
+ReviewActionHandler = Callable[[str], bool]
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,6 +89,7 @@ def confirm_exact_phrase(
     output: TextIO,
     clear_fn: ClearFunction,
     render_review: ReviewRenderer,
+    handle_review_action: ReviewActionHandler | None = None,
 ) -> bool:
     """Confirm one consequential write with current-state redraw semantics.
 
@@ -133,6 +135,9 @@ def confirm_exact_phrase(
             return False
         if response.casefold() == phrase.casefold():
             return True
+        if handle_review_action is not None and handle_review_action(response):
+            mismatch = False
+            continue
         mismatch = True
 
 
@@ -140,6 +145,7 @@ __all__ = [
     "GUIDED_MENU_INTERACTION_CONTRACT_VERSION",
     "RequiredChoiceDisposition",
     "RequiredChoiceResolution",
+    "ReviewActionHandler",
     "ReviewRenderer",
     "confirm_exact_phrase",
     "resolve_required_choice",
