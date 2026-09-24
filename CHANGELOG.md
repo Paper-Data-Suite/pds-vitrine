@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 1 adds the UI-only `vitrine_guided_menu_interaction_v1` foundation for capitalization-insensitive exact confirmations with Core navigation/redraw semantics and cardinality-only zero/one/many required-choice resolution.
+
 - Issue #97 closes Selection/Placement domain-correctness qualification with a dedicated validator, installed-wheel smoke, package guards, repository-gate integration, and contract/development/validation documentation.
 
 - Issue #97 Slice 7 projects transient Selection/Placement actionability into Candidate Review without rewriting semantic Profile fit, scopes fresh requirement choices to exact actionable sections, and makes fresh Selection, ordinary Placement, and replacement menus offer only operation-correct section targets.
