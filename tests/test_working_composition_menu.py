@@ -204,7 +204,7 @@ def test_guided_menu_freezes_the_exact_reviewed_preparation(
         freeze,
     )
     output = io.StringIO()
-    raw_input = _inputs(["1", "", "7", "FREEZE COMPOSITION", "", "B"])
+    raw_input = _inputs(["1", "", "7", "freeze composition", "B"])
     dependencies = default_workflow_dependencies()
 
     working_composition_menu.run_working_composition_menu(
@@ -224,6 +224,55 @@ def test_guided_menu_freezes_the_exact_reviewed_preparation(
     text = output.getvalue()
     assert "retain the unresolved obligations" in text
     assert "Freezing does not clear, waive, satisfy, or authorize them." in text
+
+
+
+def test_guided_menu_freeze_mismatch_is_explicit_and_retryable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    preparation = _preparation()
+    monkeypatch.setattr(
+        working_composition_menu,
+        "show_composition",
+        lambda *_: _empty_view(),
+    )
+    monkeypatch.setattr(
+        working_composition_menu,
+        "prepare_working_composition",
+        lambda *_args, **_kwargs: preparation,
+    )
+    frozen: list[object] = []
+    monkeypatch.setattr(
+        working_composition_menu,
+        "freeze_prepared_working_composition",
+        lambda *_args, **_kwargs: (
+            frozen.append(preparation),
+            SimpleNamespace(state_revision=8, disposition="created", records=()),
+        )[1],
+    )
+    output = io.StringIO()
+    clears: list[str] = []
+    raw_input = _inputs(
+        ["1", "", "7", "FREEZE", "freeze composition", "B"]
+    )
+
+    working_composition_menu.run_working_composition_menu(
+        portfolio_id="portfolio_exact",
+        input_fn=lambda prompt: raw_input(prompt),  # type: ignore[operator]
+        output=output,
+        clear_fn=lambda: clears.append("clear"),
+        dependencies=default_workflow_dependencies(),
+        workspace_root=tmp_path,
+        actor=ACTOR,
+    )
+
+    assert frozen == [preparation]
+    rendered = output.getvalue()
+    assert "Confirmation not accepted." in rendered
+    assert rendered.count("Exact freeze preview") >= 2
+    assert "Working Composition frozen." in rendered
+    assert len(clears) >= 5
 
 
 def test_guided_menu_requires_exact_freeze_phrase(

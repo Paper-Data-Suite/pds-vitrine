@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 7 standardizes Working Composition freeze on the shared case-insensitive exact confirmation contract with explicit mismatch retry, preserves cancel-without-write behavior, and redraws only the resulting Working Composition state after a successful or exact-reuse freeze.
+
 - Issue #98 Slice 6 standardizes Create Portfolio for Student confirmation on the shared exact-phrase interaction contract and returns the exact newly created Portfolio ID so the existing Portfolio menu opens that Portfolio immediately without reselection; Candidate discovery remains explicit.
 
 - Issue #98 Slice 5 standardizes Candidate discovery on the shared controlled confirmation flow and turns the completion summary into a contextual next-action menu with direct persisted-state `Review Candidates now` routing plus a technical details drill-down that returns to the current discovery result.

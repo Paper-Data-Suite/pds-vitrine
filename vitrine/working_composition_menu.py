@@ -8,6 +8,7 @@ from typing import TextIO
 from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 
 from vitrine.curation_services import CurationWorkflowError
+from vitrine.menu_interactions import confirm_exact_phrase
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import ActorAttribution
 from vitrine.teacher_presentation import teacher_term
@@ -640,21 +641,23 @@ def _review_preparation(
         elif choice.casefold() == "t":
             _render_preparation_technical_details(output, preparation)
         elif choice == "7":
-            _render_preview(root, output, preparation)
-            if preparation.payload.unresolved_obligation_codes:
-                _write(
-                    output,
-                    "",
-                    "This exact Composition will retain the unresolved obligations shown above.",
-                    "Freezing does not clear, waive, satisfy, or authorize them.",
-                )
-            confirmation = _read(
-                input_fn,
-                "Type FREEZE COMPOSITION to use this exact reviewed preparation: ",
-            )
-            if confirmation != "FREEZE COMPOSITION":
-                _write(output, "Working Composition was not frozen.")
-                _pause(input_fn)
+            def render_freeze_review() -> None:
+                _render_preview(root, output, preparation)
+                if preparation.payload.unresolved_obligation_codes:
+                    _write(
+                        output,
+                        "",
+                        "This exact Composition will retain the unresolved obligations shown above.",
+                        "Freezing does not clear, waive, satisfy, or authorize them.",
+                    )
+
+            if not confirm_exact_phrase(
+                expected_phrase="FREEZE COMPOSITION",
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                render_review=render_freeze_review,
+            ):
                 continue
             mutation_actor = _mutation_actor(actor, input_fn)
             if mutation_actor is None:
@@ -677,18 +680,23 @@ def _review_preparation(
                 )
                 _pause(input_fn)
                 return
+            clear_fn()
             if result.disposition == "existing":
                 _write(
                     output,
-                    "Current Working Composition already freezes this exact semantic state.",
+                    "Working Composition current state",
+                    "",
+                    "The current frozen Composition already matches this exact semantic state.",
                     "No duplicate Composition revision was created.",
+                    f"Vitrine state revision: {result.state_revision}",
                 )
             else:
                 _write(
                     output,
-                    f"Working Composition frozen at Vitrine state revision {result.state_revision}.",
+                    "Working Composition frozen.",
+                    "",
+                    f"Vitrine state revision: {result.state_revision}",
                 )
-            _pause(input_fn)
             return
         else:
             _write(output, "That Working Composition action is not available.")
