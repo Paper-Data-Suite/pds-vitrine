@@ -32,6 +32,7 @@ from vitrine.curation_services import (
 from vitrine.current_portfolio_menu import (
     run_current_portfolio_build_export_menu,
 )
+from vitrine.menu_interactions import confirm_exact_phrase
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import ActorAttribution, PortfolioProfileMigration
 from vitrine.portfolio_services import (
@@ -357,14 +358,12 @@ def _candidate_discovery_workflow(
     actor: ActorAttribution | None,
 ) -> None:
     view = build_teacher_portfolio_overview(root, portfolio_id)
-    clear_fn()
-    _render_discovery_preflight(output, view)
-    if (
-        _read(
-            input_fn,
-            "Type DISCOVER to continue, or Enter to cancel: ",
-        )
-        != "DISCOVER"
+    if not confirm_exact_phrase(
+        expected_phrase="DISCOVER",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=lambda: _render_discovery_preflight(output, view),
     ):
         return
 
@@ -403,16 +402,41 @@ def _candidate_discovery_workflow(
     )
     summary = build_candidate_discovery_summary(discovery)
 
-    clear_fn()
-    _render_discovery_summary(output, summary)
-    _write(output, "", "T. Technical discovery details")
-    choice = _read(
-        input_fn,
-        "T for technical details or Enter to return: ",
-    )
-    if choice.casefold() == "t":
+    while True:
         clear_fn()
-        _render_discovery_technical_details(output, discovery)
+        _render_discovery_summary(output, summary)
+        _write(
+            output,
+            "",
+            "1. Review Candidates now",
+            "T. Technical discovery details",
+            "B. Return to Portfolio",
+            "M. Main Menu",
+            "Q. Quit",
+        )
+        choice = _read(input_fn, "Next action: ")
+        if choice == "1":
+            run_candidate_review_menu(
+                portfolio_id=portfolio_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                workspace_root=root,
+                actor=mutation_actor,
+            )
+            return
+        if choice.casefold() == "t":
+            clear_fn()
+            _render_discovery_technical_details(output, discovery)
+            _pause(input_fn)
+            continue
+        navigation = _navigation(choice)
+        if navigation is not None:
+            return
+        if not choice:
+            return
+        _write(output, "That next action is not available.")
         _pause(input_fn)
 
 

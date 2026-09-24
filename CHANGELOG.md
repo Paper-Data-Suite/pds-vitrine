@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 5 standardizes Candidate discovery on the shared controlled confirmation flow and turns the completion summary into a contextual next-action menu with direct persisted-state `Review Candidates now` routing plus a technical details drill-down that returns to the current discovery result.
+
 - Issue #98 Slice 4 standardizes the remaining guided Candidate Review mutations—withdrawal, replacement, Annotation, Reflection, and curation Review—on dedicated clear/redraw stages, shared capitalization-insensitive exact confirmation with explicit mismatch handling, and post-write current-state success screens without changing planner, authority, or persistence semantics.
 
 - Issue #98 Slice 3 reloads persisted Candidate state after successful Selection and offers a separate contextual `Place now` continuation only when one active Selection has a currently actionable destination, while refresh ambiguity fails closed without creating Placement.

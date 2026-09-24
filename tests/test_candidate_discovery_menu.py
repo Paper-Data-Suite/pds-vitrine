@@ -173,7 +173,7 @@ def test_guided_discovery_runs_after_preflight_and_summarizes_result(
     portfolio_menu._candidate_discovery_workflow(
         root=tmp_path,
         portfolio_id="portfolio_exact",
-        input_fn=_inputs(["DISCOVER", "", "", "", "", "", ""]),  # type: ignore[arg-type]
+        input_fn=_inputs(["discover", "", "", "", "", "", ""]),  # type: ignore[arg-type]
         output=output,
         clear_fn=lambda: None,
         dependencies=default_workflow_dependencies(),
@@ -191,6 +191,106 @@ def test_guided_discovery_runs_after_preflight_and_summarizes_result(
     )
     assert "Publications considered: 1" in rendered
     assert "No work was selected or placed in a Portfolio section." in rendered
+
+
+
+def test_guided_discovery_routes_directly_to_persisted_candidate_review(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        portfolio_menu,
+        "build_teacher_portfolio_overview",
+        lambda *_args: _overview(),
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "_require_observed_revision",
+        lambda _root: 11,
+    )
+    result = CandidateDiscoveryResult(
+        proposed_publication_ids=("publication_exact",),
+        findings=(),
+        evaluation_results=(),
+        committed_state_revision=12,
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "discover_and_evaluate_candidates",
+        lambda *_args, **_kwargs: result,
+    )
+    review_calls: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        portfolio_menu,
+        "run_candidate_review_menu",
+        lambda **kwargs: review_calls.append(kwargs),
+    )
+    raw_input = _inputs(["discover", "", "", "", "", "", "1"])
+
+    portfolio_menu._candidate_discovery_workflow(
+        root=tmp_path,
+        portfolio_id="portfolio_exact",
+        input_fn=lambda prompt: raw_input(prompt),  # type: ignore[operator]
+        output=io.StringIO(),
+        clear_fn=lambda: None,
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert len(review_calls) == 1
+    assert review_calls[0]["portfolio_id"] == "portfolio_exact"
+    assert review_calls[0]["workspace_root"] == tmp_path
+    assert review_calls[0]["actor"] == ACTOR
+
+
+def test_guided_discovery_technical_details_return_to_completion_summary(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        portfolio_menu,
+        "build_teacher_portfolio_overview",
+        lambda *_args: _overview(),
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "_require_observed_revision",
+        lambda _root: 11,
+    )
+    result = CandidateDiscoveryResult(
+        proposed_publication_ids=("publication_exact",),
+        findings=(
+            CandidateDiscoveryFinding(
+                code="candidate.reader_failed",
+                stage="producer_read",
+                proposed_publication_id="publication_exact",
+            ),
+        ),
+        evaluation_results=(),
+        committed_state_revision=12,
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "discover_and_evaluate_candidates",
+        lambda *_args, **_kwargs: result,
+    )
+    output = io.StringIO()
+    raw_input = _inputs(["DISCOVER", "", "", "", "", "", "t", "", ""])
+
+    portfolio_menu._candidate_discovery_workflow(
+        root=tmp_path,
+        portfolio_id="portfolio_exact",
+        input_fn=lambda prompt: raw_input(prompt),  # type: ignore[operator]
+        output=output,
+        clear_fn=lambda: None,
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    rendered = output.getvalue()
+    assert "Candidate Discovery Technical Details / Provenance" in rendered
+    assert rendered.count("Candidate discovery complete.") == 2
+    assert rendered.count("1. Review Candidates now") == 2
 
 
 def test_guided_discovery_cancel_does_not_call_service(
