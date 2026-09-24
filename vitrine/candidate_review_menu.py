@@ -42,6 +42,7 @@ from vitrine.candidate_review import (
     plan_selection_withdrawal,
 )
 from vitrine.curation_services import CurationWorkflowError
+from vitrine.menu_interactions import confirm_exact_phrase, resolve_required_choice
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import ActorAttribution, CurationTargetRef
 from vitrine.teacher_presentation import (
@@ -587,10 +588,18 @@ def _decision_flow(
     selection_proposal_id: str | None,
     input_fn: InputFunction,
     output: TextIO,
+    clear_fn: ClearFunction,
     dependencies: VitrineWorkflowDependencies,
     actor: ActorAttribution | None,
 ) -> None:
     if selection_proposal_id is None:
+        clear_fn()
+        _write(
+            output,
+            "Candidate Decision",
+            "",
+            "Choose the exact Portfolio section intent for this decision.",
+        )
         sections = _choose_sections(
             input_fn,
             output,
@@ -599,10 +608,20 @@ def _decision_flow(
         )
         if sections is None:
             return
+        applicable_requirements = _requirements_for_sections(detail, sections)
+        if applicable_requirements:
+            clear_fn()
+            _write(
+                output,
+                "Candidate Decision",
+                "",
+                f"Intended sections: {_section_labels(detail, sections)}",
+                "",
+            )
         requirements = _choose_profile_requirements(
             input_fn,
             output,
-            _requirements_for_sections(detail, sections),
+            applicable_requirements,
         )
         if requirements is None:
             return
@@ -626,8 +645,13 @@ def _decision_flow(
         if _read(input_fn, "Type ACKNOWLEDGE to continue reviewing this action: ") != "ACKNOWLEDGE":
             return
     rationale = _read(input_fn, "Rationale (optional): ") or None
-    _render_decision_plan(output, plan, rationale)
-    if _read(input_fn, f"Type {plan.confirmation_phrase} to confirm: ") != plan.confirmation_phrase:
+    if not confirm_exact_phrase(
+        expected_phrase=plan.confirmation_phrase,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=lambda: _render_decision_plan(output, plan, rationale),
+    ):
         return
     mutation_actor = _mutation_actor(actor, input_fn)
     if mutation_actor is None:
@@ -639,9 +663,12 @@ def _decision_flow(
         authority_gate=dependencies.curation_authority_gate,
         rationale_text=rationale,
     )
+    clear_fn()
     _write(
         output,
-        f"Candidate decision recorded at state revision {result.state_revision}.",
+        "Candidate decision recorded.",
+        "",
+        f"State revision: {result.state_revision}",
         "No Placement was created implicitly.",
     )
 
@@ -654,21 +681,35 @@ def _choose_active_selection(
     selections = tuple(
         item for item in detail.selections if item.lifecycle_state == "activated"
     )
-    if not selections:
+    resolution = resolve_required_choice(selections)
+    if resolution.disposition == "unavailable":
         _write(output, "No active Selection is available.")
         return None
-    for index, selection in enumerate(selections, 1):
+    if resolution.disposition == "carried_forward":
+        selected = resolution.selected
+        assert selected is not None
+        placement_count = len(selected.active_placement_ids)
+        _write(
+            output,
+            "Using the active Selection for this evidence — "
+            f"{placement_count} active placement(s).",
+        )
+        return selected
+    for index, selection in enumerate(resolution.choices, 1):
         placement_count = len(selection.active_placement_ids)
         _write(
             output,
             f"{index}. Active Selection — "
             f"{placement_count} active placement(s)",
         )
-    selected = _numbered_choice(_read(input_fn, "Active Selection number: "), selections)
-    if selected is None or isinstance(selected, NavigationChoice):
+    chosen = _numbered_choice(
+        _read(input_fn, "Active Selection number: "),
+        resolution.choices,
+    )
+    if chosen is None or isinstance(chosen, NavigationChoice):
         _write(output, "That active Selection number is not available.")
         return None
-    return selected
+    return chosen
 
 
 def _placement_flow(
@@ -677,9 +718,12 @@ def _placement_flow(
     detail: CandidateReviewDetail,
     input_fn: InputFunction,
     output: TextIO,
+    clear_fn: ClearFunction,
     dependencies: VitrineWorkflowDependencies,
     actor: ActorAttribution | None,
 ) -> None:
+    clear_fn()
+    _write(output, "Place Selection", "")
     selection = _choose_active_selection(input_fn, output, detail)
     if selection is None:
         return
@@ -694,34 +738,60 @@ def _placement_flow(
         for section in _actionable_sections(detail.sections)
         if section.section_id not in occupied_section_ids
     )
-    section_ids = _choose_sections(
-        input_fn,
-        output,
-        placement_sections,
-        prompt="One exact section number for this Placement: ",
-    )
-    if section_ids is None or len(section_ids) != 1:
-        if section_ids is not None:
-            _write(output, "Placement requires exactly one section.")
+    section_resolution = resolve_required_choice(placement_sections)
+    if section_resolution.disposition == "unavailable":
+        _write(output, "No currently actionable Placement section is available.")
         return
+    if section_resolution.disposition == "carried_forward":
+        section = section_resolution.selected
+        assert section is not None
+        _write(
+            output,
+            f"Placement destination: {section.label} — {_section_capacity(section)}",
+        )
+    else:
+        for index, section_option in enumerate(section_resolution.choices, 1):
+            _write(
+                output,
+                f"{index}. {section_option.label} — "
+                f"{_section_capacity(section_option)}",
+            )
+        chosen_section = _numbered_choice(
+            _read(input_fn, "One exact section number for this Placement: "),
+            section_resolution.choices,
+        )
+        if chosen_section is None or isinstance(chosen_section, NavigationChoice):
+            _write(output, "That Placement section number is not available.")
+            return
+        section = chosen_section
     plan = plan_selection_placement(
         root,
         entry_id=detail.inbox_detail.item.entry_id,
         selection_id=selection.selection_id,
-        section_id=section_ids[0],
+        section_id=section.section_id,
     )
-    _write(
-        output,
-        "Final Placement Review",
-        f"Selection: {plan.selection_id}",
-        f"Section: {plan.section_label} ({plan.section_id})",
-        f"Current active count: {plan.active_placement_count}",
-        f"Maximum: {plan.maximum_placements if plan.maximum_placements is not None else 'unbounded'}",
-        "Observed Arrangement pointer revision: "
-        f"{plan.expected_arrangement_pointer_revision}",
-        f"Observed Vitrine state revision: {plan.observed_state_revision}",
-    )
-    if _read(input_fn, f"Type {plan.confirmation_phrase} to confirm: ") != plan.confirmation_phrase:
+
+    def render_review() -> None:
+        _write(
+            output,
+            "Final Placement Review",
+            f"Selection: {plan.selection_id}",
+            f"Section: {plan.section_label} ({plan.section_id})",
+            f"Current active count: {plan.active_placement_count}",
+            "Maximum: "
+            f"{plan.maximum_placements if plan.maximum_placements is not None else 'unbounded'}",
+            "Observed Arrangement pointer revision: "
+            f"{plan.expected_arrangement_pointer_revision}",
+            f"Observed Vitrine state revision: {plan.observed_state_revision}",
+        )
+
+    if not confirm_exact_phrase(
+        expected_phrase=plan.confirmation_phrase,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     mutation_actor = _mutation_actor(actor, input_fn)
     if mutation_actor is None:
@@ -732,7 +802,14 @@ def _placement_flow(
         placed_by=mutation_actor,
         authority_gate=dependencies.curation_authority_gate,
     )
-    _write(output, f"Selection placed at state revision {result.state_revision}.")
+    clear_fn()
+    _write(
+        output,
+        "Selection placed.",
+        "",
+        f"Section: {plan.section_label}",
+        f"State revision: {result.state_revision}",
+    )
 
 
 def _withdrawal_flow(
@@ -1577,9 +1654,17 @@ def _review_entry(
         item for item in detail.selections if item.lifecycle_state == "activated"
     )
     if active:
+        has_active_placements = any(
+            selection.active_placement_ids for selection in active
+        )
+        placement_action = (
+            "1. Place in another currently available section"
+            if has_active_placements
+            else "1. Place in a currently available section"
+        )
         _write(
             output,
-            "1. Place in another currently available section",
+            placement_action,
             "2. Add / revise Annotation",
             "3. Add / revise Reflection",
             "4. Record curation Review",
@@ -1599,6 +1684,7 @@ def _review_entry(
                 detail=detail,
                 input_fn=input_fn,
                 output=output,
+                clear_fn=clear_fn,
                 dependencies=dependencies,
                 actor=actor,
             )
@@ -1696,6 +1782,7 @@ def _review_entry(
             selection_proposal_id=None,
             input_fn=input_fn,
             output=output,
+            clear_fn=clear_fn,
             dependencies=dependencies,
             actor=actor,
         )
@@ -1707,6 +1794,7 @@ def _review_entry(
             selection_proposal_id=None,
             input_fn=input_fn,
             output=output,
+            clear_fn=clear_fn,
             dependencies=dependencies,
             actor=actor,
         )
@@ -1737,6 +1825,7 @@ def _review_entry(
             selection_proposal_id=chosen_proposal.selection_proposal_id,
             input_fn=input_fn,
             output=output,
+            clear_fn=clear_fn,
             dependencies=dependencies,
             actor=actor,
         )

@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 2 applies the shared interaction contract to guided Candidate Selection and Placement: final reviews redraw as current state, confirmation mismatches are explicit/retryable, one active Selection and one required Placement destination are carried forward without redundant prompts, and Placement wording reflects whether a Placement already exists.
+
 - Issue #98 Slice 1 adds the UI-only `vitrine_guided_menu_interaction_v1` foundation for capitalization-insensitive exact confirmations with Core navigation/redraw semantics and cardinality-only zero/one/many required-choice resolution.
 
 - Issue #97 closes Selection/Placement domain-correctness qualification with a dedicated validator, installed-wheel smoke, package guards, repository-gate integration, and contract/development/validation documentation.

@@ -255,7 +255,7 @@ def test_guided_menu_fresh_select_uses_numbered_section_and_shared_orchestration
         )[1],
     )
     raw_input = _inputs(
-        ["5", "1", "1", "2", "", "SELECT CANDIDATE", "", "B"]
+        ["5", "1", "1", "2", "", "select candidate", "", "B"]
     )
     output = io.StringIO()
 
@@ -274,6 +274,83 @@ def test_guided_menu_fresh_select_uses_numbered_section_and_shared_orchestration
     assert planned[0]["proposed_section_ids"] == ("section_two",)
     assert len(executed) == 1
     assert "No Placement was created implicitly." in output.getvalue()
+
+
+
+def test_single_active_selection_is_carried_forward_without_prompt() -> None:
+    detail = _detail(active=True)
+    output = io.StringIO()
+
+    def unexpected_input(_prompt: str) -> str:
+        pytest.fail("a one-item Active Selection chooser must not prompt")
+
+    selected = candidate_review_menu._choose_active_selection(
+        unexpected_input,
+        output,
+        detail,
+    )
+
+    assert selected is detail.selections[0]
+    assert "Using the active Selection for this evidence" in output.getvalue()
+    assert "Active Selection number:" not in output.getvalue()
+
+
+def test_candidate_decision_confirmation_mismatch_is_explicit_and_retryable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    detail = _detail()
+    plan = SimpleNamespace(
+        contract_version="vitrine_guided_candidate_review_v1",
+        observed_state_revision=11,
+        portfolio_id="portfolio_exact",
+        candidate_id="candidate_exact",
+        current_review_evaluation_id="evaluation_current",
+        curation_provenance_evaluation_id="evaluation_origin",
+        candidate_condition="ready_for_consideration",
+        stale_state="current",
+        stale_reason_codes=(),
+        decision="select",
+        selection_proposal_id=None,
+        proposed_section_ids=("section_one",),
+        intended_profile_requirement_ids=(),
+        condition_acknowledgement_required=False,
+        confirmation_phrase="SELECT CANDIDATE",
+    )
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "plan_candidate_decision",
+        lambda *_args, **_kwargs: plan,
+    )
+    executed: list[object] = []
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "execute_candidate_decision",
+        lambda *_args, **_kwargs: (
+            executed.append(_args[1]),
+            SimpleNamespace(state_revision=12),
+        )[1],
+    )
+    raw_input = _inputs(["1", "", "SELECT", "select candidate"])
+    output = io.StringIO()
+    clear_calls: list[str] = []
+
+    candidate_review_menu._decision_flow(
+        root=tmp_path,
+        detail=detail,
+        decision="select",
+        selection_proposal_id=None,
+        input_fn=lambda prompt: raw_input(prompt),  # type: ignore[operator]
+        output=output,
+        clear_fn=lambda: clear_calls.append("clear"),
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert len(executed) == 1
+    assert "Confirmation not accepted." in output.getvalue()
+    assert output.getvalue().count("Final Candidate Decision Review") == 2
+    assert len(clear_calls) >= 4
 
 
 def test_guided_menu_evaluation_only_entry_is_read_only(
@@ -352,7 +429,7 @@ def test_active_selection_placement_uses_exact_numbered_section_and_pointer_plan
         "execute_selection_placement",
         lambda *_args, **_kwargs: SimpleNamespace(state_revision=22),
     )
-    raw_input = _inputs(["3", "1", "1", "1", "1", "PLACE SELECTION", "", "B"])
+    raw_input = _inputs(["3", "1", "1", "PLACE SELECTION", "", "B"])
 
     candidate_review_menu.run_candidate_review_menu(
         portfolio_id="portfolio_exact",
@@ -429,7 +506,7 @@ def test_replacement_requires_explicit_same_section_disposition(
         lambda *_args, **_kwargs: SimpleNamespace(state_revision=32),
     )
     raw_input = _inputs(
-        ["1", "1", "1", "2", "replace reason", "REPLACE SELECTION"]
+        ["1", "1", "2", "replace reason", "REPLACE SELECTION"]
     )
 
     candidate_review_menu._replacement_flow(
