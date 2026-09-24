@@ -513,6 +513,57 @@ def test_post_selection_candidate_inbox_refresh_failure_fails_closed(
     assert "candidate_inbox.state_invalid" in output.getvalue()
 
 
+
+def test_withdrawal_uses_shared_confirmation_and_success_redraw(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    detail = _detail(active=True)
+    detail.selections[0].active_placement_ids = ()
+    detail.placements = ()
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "plan_selection_withdrawal",
+        lambda *_args, **kwargs: SimpleNamespace(
+            selection_id=kwargs["selection_id"],
+            candidate_id="candidate_exact",
+            selection_evaluation_id="evaluation_origin",
+            active_placement_ids=(),
+            affected_section_ids=(),
+            reason=kwargs["reason"],
+            observed_state_revision=51,
+            arrangement_pointers=(),
+            confirmation_phrase="WITHDRAW SELECTION",
+        ),
+    )
+    calls: list[str] = []
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "execute_selection_withdrawal",
+        lambda *_args, **_kwargs: (
+            calls.append("withdrawal"),
+            SimpleNamespace(state_revision=52),
+        )[1],
+    )
+    output = io.StringIO()
+    clear_calls: list[str] = []
+    raw_input = _inputs(["teacher reason", "withdraw selection"])
+
+    candidate_review_menu._withdrawal_flow(
+        root=tmp_path,
+        detail=detail,
+        input_fn=lambda prompt: raw_input(prompt),  # type: ignore[operator]
+        output=output,
+        clear_fn=lambda: clear_calls.append("clear"),
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert calls == ["withdrawal"]
+    assert "Selection withdrawn." in output.getvalue()
+    assert len(clear_calls) >= 3
+
+
 def test_guided_menu_evaluation_only_entry_is_read_only(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -723,12 +774,13 @@ def test_annotation_reflection_and_review_flows_use_shared_plans(
             SimpleNamespace(state_revision=42),
         )[1],
     )
-    annotation_input = _inputs(["1", "1", "1", "1", "note", "SAVE ANNOTATION"])
+    annotation_input = _inputs(["1", "1", "1", "1", "note", "save annotation"])
     candidate_review_menu._annotation_flow(
         root=tmp_path,
         detail=detail,
         input_fn=lambda prompt: annotation_input(prompt),  # type: ignore[operator]
         output=io.StringIO(),
+        clear_fn=lambda: None,
         dependencies=default_workflow_dependencies(),
         actor=ACTOR,
     )
@@ -756,13 +808,14 @@ def test_annotation_reflection_and_review_flows_use_shared_plans(
         )[1],
     )
     reflection_input = _inputs(
-        ["1", "1", "1", "1", "prompt", "v1", "Prompt", "text", "SAVE REFLECTION"]
+        ["1", "1", "1", "1", "prompt", "v1", "Prompt", "text", "save reflection"]
     )
     candidate_review_menu._reflection_flow(
         root=tmp_path,
         detail=detail,
         input_fn=lambda prompt: reflection_input(prompt),  # type: ignore[operator]
         output=io.StringIO(),
+        clear_fn=lambda: None,
         dependencies=default_workflow_dependencies(),
         actor=ACTOR,
     )
@@ -794,12 +847,13 @@ def test_annotation_reflection_and_review_flows_use_shared_plans(
             SimpleNamespace(state_revision=46),
         )[1],
     )
-    review_input = _inputs(["1", "1", "1", "", "reason", "RECORD REVIEW"])
+    review_input = _inputs(["1", "1", "1", "", "reason", "record review"])
     candidate_review_menu._review_flow(
         root=tmp_path,
         detail=detail,
         input_fn=lambda prompt: review_input(prompt),  # type: ignore[operator]
         output=io.StringIO(),
+        clear_fn=lambda: None,
         dependencies=default_workflow_dependencies(),
         actor=ACTOR,
     )

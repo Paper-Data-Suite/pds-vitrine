@@ -940,9 +940,12 @@ def _withdrawal_flow(
     detail: CandidateReviewDetail,
     input_fn: InputFunction,
     output: TextIO,
+    clear_fn: ClearFunction,
     dependencies: VitrineWorkflowDependencies,
     actor: ActorAttribution | None,
 ) -> None:
+    clear_fn()
+    _write(output, "Withdraw Selection", "")
     selection = _choose_active_selection(input_fn, output, detail)
     if selection is None:
         return
@@ -956,23 +959,31 @@ def _withdrawal_flow(
         selection_id=selection.selection_id,
         reason=reason,
     )
-    _write(
-        output,
-        "Final Withdrawal Review",
-        f"Selection: {plan.selection_id}",
-        f"Candidate: {plan.candidate_id}",
-        f"Selection Evaluation: {plan.selection_evaluation_id}",
-        f"Active Placements: {', '.join(plan.active_placement_ids) or '(none)'}",
-        f"Affected sections: {', '.join(plan.affected_section_ids) or '(none)'}",
-        f"Reason: {plan.reason}",
-        f"Observed Vitrine state revision: {plan.observed_state_revision}",
-    )
-    for pointer in plan.arrangement_pointers:
+    def render_review() -> None:
         _write(
             output,
-            f"- {pointer.section_id}: Arrangement pointer {pointer.pointer_revision}",
+            "Final Withdrawal Review",
+            f"Selection: {plan.selection_id}",
+            f"Candidate: {plan.candidate_id}",
+            f"Selection Evaluation: {plan.selection_evaluation_id}",
+            f"Active Placements: {', '.join(plan.active_placement_ids) or '(none)'}",
+            f"Affected sections: {', '.join(plan.affected_section_ids) or '(none)'}",
+            f"Reason: {plan.reason}",
+            f"Observed Vitrine state revision: {plan.observed_state_revision}",
         )
-    if _read(input_fn, f"Type {plan.confirmation_phrase} to confirm: ") != plan.confirmation_phrase:
+        for pointer in plan.arrangement_pointers:
+            _write(
+                output,
+                f"- {pointer.section_id}: Arrangement pointer {pointer.pointer_revision}",
+            )
+
+    if not confirm_exact_phrase(
+        expected_phrase=plan.confirmation_phrase,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     mutation_actor = _mutation_actor(actor, input_fn)
     if mutation_actor is None:
@@ -983,7 +994,13 @@ def _withdrawal_flow(
         withdrawn_by=mutation_actor,
         authority_gate=dependencies.curation_authority_gate,
     )
-    _write(output, f"Selection withdrawn at state revision {result.state_revision}.")
+    clear_fn()
+    _write(
+        output,
+        "Selection withdrawn.",
+        "",
+        f"State revision: {result.state_revision}",
+    )
 
 
 def _successor_entries(
@@ -1049,6 +1066,8 @@ def _replacement_flow(
     actor: ActorAttribution | None,
     clear_fn: ClearFunction,
 ) -> None:
+    clear_fn()
+    _write(output, "Replace Selection", "")
     selection = _choose_active_selection(input_fn, output, detail)
     candidate_id = detail.inbox_detail.item.candidate_id
     if selection is None or candidate_id is None:
@@ -1127,34 +1146,42 @@ def _replacement_flow(
         placement_dispositions=dispositions,
         reason=reason,
     )
-    _write(
-        output,
-        "Final Replacement Review",
-        f"Old Selection: {plan.selection_id}",
-        f"Old Candidate: {plan.candidate_id}",
-        f"Successor Candidate: {plan.successor_candidate_id}",
-        "Successor current review Evaluation: "
-        f"{plan.successor_current_review_evaluation_id or '(none)'}",
-        "Successor curation provenance Evaluation: "
-        f"{plan.successor_curation_provenance_evaluation_id}",
-        f"Successor condition: {plan.successor_candidate_condition}",
-        f"Successor stale state: {plan.successor_stale_state or '(none)'}",
-        f"Replacement Proposal sections: {', '.join(plan.proposed_section_ids)}",
-        f"Reason: {plan.reason}",
-        f"Observed Vitrine state revision: {plan.observed_state_revision}",
-    )
-    for disposition in plan.placement_dispositions:
+    def render_review() -> None:
         _write(
             output,
-            f"- {disposition.placement_id}: {disposition.source_section_id} -> "
-            f"{disposition.target_section_id or 'DROP'}",
+            "Final Replacement Review",
+            f"Old Selection: {plan.selection_id}",
+            f"Old Candidate: {plan.candidate_id}",
+            f"Successor Candidate: {plan.successor_candidate_id}",
+            "Successor current review Evaluation: "
+            f"{plan.successor_current_review_evaluation_id or '(none)'}",
+            "Successor curation provenance Evaluation: "
+            f"{plan.successor_curation_provenance_evaluation_id}",
+            f"Successor condition: {plan.successor_candidate_condition}",
+            f"Successor stale state: {plan.successor_stale_state or '(none)'}",
+            f"Replacement Proposal sections: {', '.join(plan.proposed_section_ids)}",
+            f"Reason: {plan.reason}",
+            f"Observed Vitrine state revision: {plan.observed_state_revision}",
         )
-    for pointer in plan.arrangement_pointers:
-        _write(
-            output,
-            f"- {pointer.section_id}: Arrangement pointer {pointer.pointer_revision}",
-        )
-    if _read(input_fn, f"Type {plan.confirmation_phrase} to confirm: ") != plan.confirmation_phrase:
+        for disposition in plan.placement_dispositions:
+            _write(
+                output,
+                f"- {disposition.placement_id}: {disposition.source_section_id} -> "
+                f"{disposition.target_section_id or 'DROP'}",
+            )
+        for pointer in plan.arrangement_pointers:
+            _write(
+                output,
+                f"- {pointer.section_id}: Arrangement pointer {pointer.pointer_revision}",
+            )
+
+    if not confirm_exact_phrase(
+        expected_phrase=plan.confirmation_phrase,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     mutation_actor = _mutation_actor(actor, input_fn)
     if mutation_actor is None:
@@ -1165,7 +1192,13 @@ def _replacement_flow(
         replaced_by=mutation_actor,
         authority_gate=dependencies.curation_authority_gate,
     )
-    _write(output, f"Selection replaced at state revision {result.state_revision}.")
+    clear_fn()
+    _write(
+        output,
+        "Selection replaced.",
+        "",
+        f"State revision: {result.state_revision}",
+    )
 
 
 def _portfolio_selection_targets(
@@ -1344,9 +1377,11 @@ def _annotation_flow(
     detail: CandidateReviewDetail,
     input_fn: InputFunction,
     output: TextIO,
+    clear_fn: ClearFunction,
     dependencies: VitrineWorkflowDependencies,
     actor: ActorAttribution | None,
 ) -> None:
+    clear_fn()
     _write(output, "Annotation", "", "1. Create Annotation", "2. Revise Annotation")
     action = _read(input_fn, "Annotation action: ")
     if action == "1":
@@ -1401,16 +1436,24 @@ def _annotation_flow(
         )
     else:
         return
-    _write(
-        output,
-        "Final Annotation Review",
-        f"Action: {plan.action}",
-        f"Purpose: {plan.purpose}",
-        f"Scope: {plan.target_scope}",
-        f"Observed Vitrine state revision: {plan.observed_state_revision}",
-    )
-    _render_targets(output, plan.target_references)
-    if _read(input_fn, f"Type {plan.confirmation_phrase} to confirm: ") != plan.confirmation_phrase:
+    def render_review() -> None:
+        _write(
+            output,
+            "Final Annotation Review",
+            f"Action: {plan.action}",
+            f"Purpose: {plan.purpose}",
+            f"Scope: {plan.target_scope}",
+            f"Observed Vitrine state revision: {plan.observed_state_revision}",
+        )
+        _render_targets(output, plan.target_references)
+
+    if not confirm_exact_phrase(
+        expected_phrase=plan.confirmation_phrase,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     mutation_actor = _mutation_actor(actor, input_fn)
     if mutation_actor is None:
@@ -1421,7 +1464,13 @@ def _annotation_flow(
         author=mutation_actor,
         authority_gate=dependencies.curation_authority_gate,
     )
-    _write(output, f"Annotation recorded at state revision {result.state_revision}.")
+    clear_fn()
+    _write(
+        output,
+        "Annotation recorded.",
+        "",
+        f"State revision: {result.state_revision}",
+    )
 
 
 def _reflection_requirements(
@@ -1440,9 +1489,11 @@ def _reflection_flow(
     detail: CandidateReviewDetail,
     input_fn: InputFunction,
     output: TextIO,
+    clear_fn: ClearFunction,
     dependencies: VitrineWorkflowDependencies,
     actor: ActorAttribution | None,
 ) -> None:
+    clear_fn()
     _write(output, "Reflection", "", "1. Create Reflection", "2. Revise Reflection")
     action = _read(input_fn, "Reflection action: ")
     if action == "1":
@@ -1508,18 +1559,26 @@ def _reflection_flow(
         )
     else:
         return
-    _write(
-        output,
-        "Final Reflection Review",
-        f"Action: {plan.action}",
-        f"Requirement: {plan.reflection_requirement_id}",
-        f"Prompt: {plan.prompt_id} / {plan.prompt_version}",
-        f"Scope: {plan.target_scope}",
-        f"Observed Vitrine state revision: {plan.observed_state_revision}",
-        "Authorship is preserved from the explicit actor below; it is not inferred.",
-    )
-    _render_targets(output, plan.target_references)
-    if _read(input_fn, f"Type {plan.confirmation_phrase} to confirm: ") != plan.confirmation_phrase:
+    def render_review() -> None:
+        _write(
+            output,
+            "Final Reflection Review",
+            f"Action: {plan.action}",
+            f"Requirement: {plan.reflection_requirement_id}",
+            f"Prompt: {plan.prompt_id} / {plan.prompt_version}",
+            f"Scope: {plan.target_scope}",
+            f"Observed Vitrine state revision: {plan.observed_state_revision}",
+            "Authorship is preserved from the explicit actor below; it is not inferred.",
+        )
+        _render_targets(output, plan.target_references)
+
+    if not confirm_exact_phrase(
+        expected_phrase=plan.confirmation_phrase,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     mutation_actor = _mutation_actor(actor, input_fn)
     if mutation_actor is None:
@@ -1530,7 +1589,13 @@ def _reflection_flow(
         author=mutation_actor,
         authority_gate=dependencies.curation_authority_gate,
     )
-    _write(output, f"Reflection recorded at state revision {result.state_revision}.")
+    clear_fn()
+    _write(
+        output,
+        "Reflection recorded.",
+        "",
+        f"State revision: {result.state_revision}",
+    )
 
 
 def _review_targets(
@@ -1602,9 +1667,12 @@ def _review_flow(
     detail: CandidateReviewDetail,
     input_fn: InputFunction,
     output: TextIO,
+    clear_fn: ClearFunction,
     dependencies: VitrineWorkflowDependencies,
     actor: ActorAttribution | None,
 ) -> None:
+    clear_fn()
+    _write(output, "Curation Review", "")
     targets = _review_targets(detail)
     if not targets:
         _write(output, "No exact curation target is available for Review.")
@@ -1670,17 +1738,25 @@ def _review_flow(
         required_follow_up_codes=follow_ups,
         predecessor_review_decision_id=predecessor_review_decision_id,
     )
-    _write(
-        output,
-        "Final Curation Review",
-        f"Decision: {plan.decision}",
-        f"Approval requirement: {plan.approval_requirement_id or '(none)'}",
-        f"Reason: {plan.reason}",
-        f"Observed Vitrine state revision: {plan.observed_state_revision}",
-        "Curation approval is not disclosure authorization.",
-    )
-    _render_targets(output, plan.target_references)
-    if _read(input_fn, f"Type {plan.confirmation_phrase} to confirm: ") != plan.confirmation_phrase:
+    def render_review() -> None:
+        _write(
+            output,
+            "Final Curation Review",
+            f"Decision: {plan.decision}",
+            f"Approval requirement: {plan.approval_requirement_id or '(none)'}",
+            f"Reason: {plan.reason}",
+            f"Observed Vitrine state revision: {plan.observed_state_revision}",
+            "Curation approval is not disclosure authorization.",
+        )
+        _render_targets(output, plan.target_references)
+
+    if not confirm_exact_phrase(
+        expected_phrase=plan.confirmation_phrase,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
         return
     mutation_actor = _mutation_actor(actor, input_fn)
     if mutation_actor is None:
@@ -1691,7 +1767,13 @@ def _review_flow(
         reviewed_by=mutation_actor,
         authority_gate=dependencies.curation_authority_gate,
     )
-    _write(output, f"Curation Review recorded at state revision {result.state_revision}.")
+    clear_fn()
+    _write(
+        output,
+        "Curation Review recorded.",
+        "",
+        f"State revision: {result.state_revision}",
+    )
 
 
 def _render_history(output: TextIO, detail: CandidateReviewDetail) -> None:
@@ -1816,6 +1898,7 @@ def _review_entry(
                 detail=detail,
                 input_fn=input_fn,
                 output=output,
+                clear_fn=clear_fn,
                 dependencies=dependencies,
                 actor=actor,
             )
@@ -1825,6 +1908,7 @@ def _review_entry(
                 detail=detail,
                 input_fn=input_fn,
                 output=output,
+                clear_fn=clear_fn,
                 dependencies=dependencies,
                 actor=actor,
             )
@@ -1834,6 +1918,7 @@ def _review_entry(
                 detail=detail,
                 input_fn=input_fn,
                 output=output,
+                clear_fn=clear_fn,
                 dependencies=dependencies,
                 actor=actor,
             )
@@ -1843,6 +1928,7 @@ def _review_entry(
                 detail=detail,
                 input_fn=input_fn,
                 output=output,
+                clear_fn=clear_fn,
                 dependencies=dependencies,
                 actor=actor,
             )

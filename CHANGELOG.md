@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 4 standardizes the remaining guided Candidate Review mutations—withdrawal, replacement, Annotation, Reflection, and curation Review—on dedicated clear/redraw stages, shared capitalization-insensitive exact confirmation with explicit mismatch handling, and post-write current-state success screens without changing planner, authority, or persistence semantics.
+
 - Issue #98 Slice 3 reloads persisted Candidate state after successful Selection and offers a separate contextual `Place now` continuation only when one active Selection has a currently actionable destination, while refresh ambiguity fails closed without creating Placement.
 
 - Issue #98 Slice 2 applies the shared interaction contract to guided Candidate Selection and Placement: final reviews redraw as current state, confirmation mismatches are explicit/retryable, one active Selection and one required Placement destination are carried forward without redundant prompts, and Placement wording reflects whether a Placement already exists.
