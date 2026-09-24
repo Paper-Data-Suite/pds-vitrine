@@ -67,6 +67,11 @@ from vitrine.models.common import (
 )
 from vitrine.models.errors import VitrineModelValidationError
 from vitrine.profile_state import collect_profile_state_issues, project_profile_state
+from vitrine.selection_placement_guidance import (
+    SelectionPlacementGuidanceError,
+    profile_requirement_ids_for_sections,
+    project_selection_placement_guidance,
+)
 from vitrine.storage import (
     VitrineStorageConflictError,
     VitrineStorageError,
@@ -784,6 +789,267 @@ def _require_profile_requirements(context: _Context, requirement_ids: tuple[str,
         )
 
 
+def _require_fresh_selection_intent(
+    context: _Context,
+    candidate: PortfolioCandidate,
+    section_ids: tuple[str, ...],
+    requirement_ids: tuple[str, ...],
+    *,
+    stage: str,
+) -> None:
+    """Require current actionability for newly written Selection intent."""
+
+    for section_id in section_ids:
+        _section(context, section_id)
+    try:
+        guidance = project_selection_placement_guidance(
+            candidate=candidate,
+            profile=context.profile,
+            curation=context.curation,
+            operation="fresh_selection",
+        )
+    except SelectionPlacementGuidanceError as error:
+        raise CurationWorkflowError(
+            "curation.profile_mismatch",
+            "Fresh Selection actionability could not be derived safely.",
+            stage=stage,
+        ) from error
+
+    sections = {item.section_id: item for item in guidance.sections}
+    for section_id in section_ids:
+        section = sections[section_id]
+        reasons = set(section.unavailability_reason_codes)
+        if "candidate_not_semantically_eligible" in reasons:
+            raise CurationWorkflowError(
+                "curation.section_not_candidate_eligible",
+                "Candidate is not eligible for a proposed section.",
+                stage=stage,
+            )
+        if "section_prohibited" in reasons:
+            raise CurationWorkflowError(
+                "curation.section_prohibited",
+                "Profile section is prohibited for Selection intent.",
+                stage=stage,
+            )
+        if (
+            "section_not_placement_bearing" in reasons
+            or "section_full" in reasons
+        ):
+            raise CurationWorkflowError(
+                "curation.section_cardinality_exceeded",
+                "Profile section has no current Placement capacity for fresh Selection intent.",
+                stage=stage,
+            )
+        if "arrangement_pointer_conflict" in reasons:
+            raise CurationWorkflowError(
+                "curation.arrangement_conflict",
+                "Profile section has conflicting Arrangement pointer state.",
+                stage=stage,
+            )
+        if not section.current_actionable:
+            raise CurationWorkflowError(
+                "curation.invalid_request",
+                "Profile section is not currently actionable for fresh Selection intent.",
+                stage=stage,
+            )
+
+    try:
+        applicable_requirement_ids = set(
+            profile_requirement_ids_for_sections(guidance, section_ids)
+        )
+    except SelectionPlacementGuidanceError as error:
+        raise CurationWorkflowError(
+            "curation.profile_mismatch",
+            "Fresh Selection requirement intent could not be derived safely.",
+            stage=stage,
+        ) from error
+    if not set(requirement_ids).issubset(applicable_requirement_ids):
+        raise CurationWorkflowError(
+            "curation.profile_mismatch",
+            "Fresh Selection requirement intent is not applicable to the exact proposed sections.",
+            stage=stage,
+        )
+
+
+def _require_current_placement_target(
+    context: _Context,
+    candidate: PortfolioCandidate,
+    selection: PortfolioSelection,
+    section_id: str,
+    *,
+    stage: str,
+) -> None:
+    """Require one exact current Placement target through shared guidance."""
+
+    _section(context, section_id)
+    try:
+        guidance = project_selection_placement_guidance(
+            candidate=candidate,
+            profile=context.profile,
+            curation=context.curation,
+            operation="placement",
+            selection_id=selection.selection_id,
+        )
+    except SelectionPlacementGuidanceError as error:
+        if error.code == "selection_placement_guidance.selection_not_active":
+            raise CurationWorkflowError(
+                "curation.selection_inactive",
+                "Selection is not active for Placement.",
+                stage=stage,
+            ) from error
+        if error.code == "selection_placement_guidance.selection_candidate_mismatch":
+            raise CurationWorkflowError(
+                "curation.candidate_context_mismatch",
+                "Selection Candidate does not match the Placement Candidate context.",
+                stage=stage,
+            ) from error
+        if error.code == "selection_placement_guidance.profile_mismatch":
+            raise CurationWorkflowError(
+                "curation.profile_mismatch",
+                "Selection Placement does not match the exact bound Profile Revision.",
+                stage=stage,
+            ) from error
+        raise CurationWorkflowError(
+            "curation.invalid_request",
+            "Current Placement actionability could not be derived safely.",
+            stage=stage,
+        ) from error
+
+    target = next(
+        (item for item in guidance.sections if item.section_id == section_id),
+        None,
+    )
+    if target is None:
+        raise CurationWorkflowError(
+            "curation.section_not_found",
+            "Profile section does not exist.",
+            stage=stage,
+        )
+    reasons = set(target.unavailability_reason_codes)
+    if "selection_already_placed_in_section" in reasons:
+        raise CurationWorkflowError(
+            "curation.placement_duplicate_active",
+            "Selection already has an active Placement in this section.",
+            stage=stage,
+        )
+    if "candidate_not_semantically_eligible" in reasons:
+        raise CurationWorkflowError(
+            "curation.section_not_candidate_eligible",
+            "Selection Candidate is not eligible for this section.",
+            stage=stage,
+        )
+    if "section_prohibited" in reasons:
+        raise CurationWorkflowError(
+            "curation.section_prohibited",
+            "Profile section is prohibited.",
+            stage=stage,
+        )
+    if "section_not_placement_bearing" in reasons or "section_full" in reasons:
+        raise CurationWorkflowError(
+            "curation.section_cardinality_exceeded",
+            "Profile section has no current Placement capacity.",
+            stage=stage,
+        )
+    if "arrangement_pointer_conflict" in reasons:
+        raise CurationWorkflowError(
+            "curation.arrangement_conflict",
+            "Section Arrangement pointer is conflicted.",
+            stage=stage,
+        )
+    if not target.current_actionable:
+        raise CurationWorkflowError(
+            "curation.invalid_request",
+            "Profile section is not currently actionable for Placement.",
+            stage=stage,
+        )
+
+
+def _require_current_replacement_targets(
+    context: _Context,
+    successor: PortfolioCandidate,
+    predecessor: PortfolioSelection,
+    *,
+    releasing_placement_ids: tuple[str, ...],
+    section_ids: tuple[str, ...],
+    stage: str,
+) -> None:
+    """Require exact replacement targets through operation-aware shared guidance."""
+
+    for section_id in section_ids:
+        _section(context, section_id)
+    try:
+        guidance = project_selection_placement_guidance(
+            candidate=successor,
+            profile=context.profile,
+            curation=context.curation,
+            operation="replacement",
+            selection_id=predecessor.selection_id,
+            releasing_placement_ids=releasing_placement_ids,
+        )
+    except SelectionPlacementGuidanceError as error:
+        if error.code == "selection_placement_guidance.selection_not_active":
+            raise CurationWorkflowError(
+                "curation.selection_inactive",
+                "Predecessor Selection is not active for replacement.",
+                stage=stage,
+            ) from error
+        if error.code == "selection_placement_guidance.profile_mismatch":
+            raise CurationWorkflowError(
+                "curation.profile_mismatch",
+                "Replacement does not match the exact bound Profile Revision.",
+                stage=stage,
+            ) from error
+        if error.code in {
+            "selection_placement_guidance.replacement_candidate_conflict",
+            "selection_placement_guidance.replacement_release_mismatch",
+        }:
+            raise CurationWorkflowError(
+                "curation.invalid_request",
+                "Replacement Candidate or predecessor Placement release set is invalid.",
+                stage=stage,
+            ) from error
+        raise CurationWorkflowError(
+            "curation.invalid_request",
+            "Current replacement actionability could not be derived safely.",
+            stage=stage,
+        ) from error
+
+    sections = {item.section_id: item for item in guidance.sections}
+    for section_id in section_ids:
+        section = sections[section_id]
+        reasons = set(section.unavailability_reason_codes)
+        if "candidate_not_semantically_eligible" in reasons:
+            raise CurationWorkflowError(
+                "curation.section_not_candidate_eligible",
+                "Replacement Candidate is not eligible for a target section.",
+                stage=stage,
+            )
+        if "section_prohibited" in reasons:
+            raise CurationWorkflowError(
+                "curation.section_prohibited",
+                "Replacement target section is prohibited.",
+                stage=stage,
+            )
+        if "section_not_placement_bearing" in reasons or "section_full" in reasons:
+            raise CurationWorkflowError(
+                "curation.section_cardinality_exceeded",
+                "Replacement target has no post-release Placement capacity.",
+                stage=stage,
+            )
+        if "arrangement_pointer_conflict" in reasons:
+            raise CurationWorkflowError(
+                "curation.arrangement_conflict",
+                "Replacement target has conflicting Arrangement pointer state.",
+                stage=stage,
+            )
+        if not section.current_actionable:
+            raise CurationWorkflowError(
+                "curation.invalid_request",
+                "Replacement target is not currently actionable.",
+                stage=stage,
+            )
+
+
 def _rationale(
     *,
     context: _Context,
@@ -896,15 +1162,13 @@ def propose_candidate_selection(
             "Selection Proposal fields are invalid.",
             stage="proposal",
         ) from error
-    for section_id in sections:
-        _section(context, section_id)
-        if section_id not in candidate.eligible_section_ids:
-            raise CurationWorkflowError(
-                "curation.section_not_candidate_eligible",
-                "Candidate is not eligible for a proposed section.",
-                stage="proposal",
-            )
-    _require_profile_requirements(context, requirement_ids)
+    _require_fresh_selection_intent(
+        context,
+        candidate,
+        sections,
+        requirement_ids,
+        stage="proposal",
+    )
     _authority(
         authority_gate,
         context,
@@ -1095,6 +1359,14 @@ def decide_selection_proposal(
             "curation.decision_invalid", "Selection decision is invalid.", stage="decision"
         ) from error
     candidate = _candidate(context, proposal.candidate_id)
+    if decision_kind == "accepted":
+        _require_fresh_selection_intent(
+            context,
+            candidate,
+            proposal.proposed_section_ids,
+            proposal.intended_profile_requirement_ids,
+            stage="decision",
+        )
     authority = _authority(
         authority_gate,
         context,
@@ -1180,15 +1452,13 @@ def select_candidate_directly(
             "Direct Selection fields are invalid.",
             stage="direct_selection",
         ) from error
-    for section_id in sections:
-        _section(context, section_id)
-        if section_id not in candidate.eligible_section_ids:
-            raise CurationWorkflowError(
-                "curation.section_not_candidate_eligible",
-                "Candidate is not eligible for a proposed section.",
-                stage="direct_selection",
-            )
-    _require_profile_requirements(context, requirement_ids)
+    _require_fresh_selection_intent(
+        context,
+        candidate,
+        sections,
+        requirement_ids,
+        stage="direct_selection",
+    )
     authority = _authority(
         authority_gate,
         context,
@@ -1289,15 +1559,13 @@ def reject_candidate_directly(
             "Direct decline fields are invalid.",
             stage="direct_decline",
         ) from error
-    for section_id in sections:
-        _section(context, section_id)
-        if section_id not in candidate.eligible_section_ids:
-            raise CurationWorkflowError(
-                "curation.section_not_candidate_eligible",
-                "Candidate is not eligible for a proposed section.",
-                stage="direct_decline",
-            )
-    _require_profile_requirements(context, requirement_ids)
+    _require_fresh_selection_intent(
+        context,
+        candidate,
+        sections,
+        requirement_ids,
+        stage="direct_decline",
+    )
     undecided = tuple(
         proposal
         for proposal in context.curation.proposals
@@ -1529,25 +1797,13 @@ def place_selection(
     selection = _selection(context, selection_id, active=True)
     candidate = _candidate(context, selection.candidate_id)
     section = _section(context, section_id)
-    if section.section_id not in candidate.eligible_section_ids:
-        raise CurationWorkflowError(
-            "curation.section_not_candidate_eligible",
-            "Selection Candidate is not eligible for this section.",
-            stage="placement",
-        )
-    if any(
-        item.selection_id == selection.selection_id and item.section_id == section.section_id
-        for item in context.curation.active_placements(
-            portfolio_id=context.portfolio.portfolio_id,
-            profile_binding_id=context.binding.profile_binding_id,
-        )
-    ):
-        raise CurationWorkflowError(
-            "curation.placement_duplicate_active",
-            "Selection already has an active Placement in this section.",
-            stage="placement",
-        )
-    _check_section_capacity(context, section.section_id, additional=1)
+    _require_current_placement_target(
+        context,
+        candidate,
+        selection,
+        section.section_id,
+        stage="placement",
+    )
     authority = _authority(
         authority_gate,
         context,
@@ -1993,14 +2249,24 @@ def replace_selection(
                 "Replacement Proposal section intent is invalid.",
                 stage="replacement",
             ) from error
-        for proposed_section_id in proposed_sections:
-            _section(context, proposed_section_id)
-            if proposed_section_id not in successor.eligible_section_ids:
-                raise CurationWorkflowError(
-                    "curation.section_not_candidate_eligible",
-                    "Replacement Candidate is not eligible for a proposed section.",
-                    stage="replacement",
-                )
+    requested_migration_sections = tuple(
+        target
+        for target in placement_dispositions.values()
+        if target is not None
+    )
+    replacement_target_sections = tuple(
+        dict.fromkeys((*proposed_sections, *requested_migration_sections))
+    )
+    _require_current_replacement_targets(
+        context,
+        successor,
+        old,
+        releasing_placement_ids=tuple(
+            item.placement_id for item in active_old_placements
+        ),
+        section_ids=replacement_target_sections,
+        stage="replacement",
+    )
     proposal = SelectionProposal(
         selection_proposal_id=proposal_id,
         portfolio_id=context.portfolio.portfolio_id,
@@ -2106,28 +2372,10 @@ def replace_selection(
             continue
         section = _section(context, target_section)
         affected_sections.add(section.section_id)
-        if section.section_id not in successor.eligible_section_ids:
-            raise CurationWorkflowError(
-                "curation.section_not_candidate_eligible",
-                "Replacement Candidate is not eligible for a migrated Placement section.",
-                stage="replacement",
-            )
         if section.section_id in migrated_target_sections:
             raise CurationWorkflowError(
                 "curation.placement_duplicate_active",
                 "Replacement would create duplicate active Placements in one section.",
-                stage="replacement",
-            )
-        existing_target_count = sum(
-            1 for item in future if item.section_id == section.section_id
-        )
-        if (
-            section.maximum_placements is not None
-            and existing_target_count + 1 > section.maximum_placements
-        ):
-            raise CurationWorkflowError(
-                "curation.section_cardinality_exceeded",
-                "Replacement Placement would exceed the Profile section maximum.",
                 stage="replacement",
             )
         migrated_target_sections.add(section.section_id)

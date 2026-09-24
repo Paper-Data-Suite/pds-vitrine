@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #97 closes Selection/Placement domain-correctness qualification with a dedicated validator, installed-wheel smoke, package guards, repository-gate integration, and contract/development/validation documentation.
+
+- Issue #97 Slice 7 projects transient Selection/Placement actionability into Candidate Review without rewriting semantic Profile fit, scopes fresh requirement choices to exact actionable sections, and makes fresh Selection, ordinary Placement, and replacement menus offer only operation-correct section targets.
+
+- Issue #97 Slice 6 makes guided Selection replacement planning and canonical `replace_selection` writes consume the shared replacement-aware actionability projection, preserving one-for-one capacity while rejecting post-release overflow, prohibited, ineligible, and Arrangement-conflicted targets.
+
+- Issue #97 Slice 5 makes guided Placement planning and canonical `place_selection` writes consume the shared current actionability projection, preserving bounded curation errors for duplicate, full, prohibited, ineligible, and Arrangement-conflicted targets.
+
+- Issue #97 Slice 4 revalidates persisted Selection Proposal intent before acceptance against current section actionability and exact applicable requirements, while preserving immutable Proposal history and allowing negative decisions when a Proposal is no longer selectable.
+
+- Issue #97 Slice 3 enforces the shared fresh Selection actionability and exact section-scoped requirement boundary in canonical Proposal, direct Selection, and direct-decline writes, preventing planner bypasses from persisting unusable fresh intent.
+
+- Issue #97 Slice 2 makes fresh guided Candidate decisions consume the shared Selection/Placement actionability projection, rejecting currently unusable section intent and limiting explicit Profile requirement intent to Candidate-matched requirements for the exact selected sections.
+
+- Issue #97 Slice 1 adds the transient `vitrine_selection_placement_guidance_v1` actionability foundation, separating persisted Candidate/Profile fit from current Selection, Placement, and operation-aware replacement capacity while scoping requirement intent to Candidate-matched section requirements.
+
 - Issue #96 Slice 12 adds exact installed ScoreForm/Quillan/Concord Candidate
   evidence presentation/preview acceptance through the #71 isolation harness,
   using the current Quillan 0.10.1 patch-release endpoint only for #96 while

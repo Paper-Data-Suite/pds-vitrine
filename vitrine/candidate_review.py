@@ -38,6 +38,12 @@ from vitrine.models import (
     PlacementPresentation,
     SelectionProposal,
 )
+from vitrine.selection_placement_guidance import (
+    SelectionPlacementGuidance,
+    SelectionPlacementGuidanceError,
+    profile_requirement_ids_for_sections,
+    project_selection_placement_guidance,
+)
 from vitrine.storage import (
     VitrineStorageError,
     VitrineStorageNotFoundError,
@@ -114,6 +120,13 @@ class CandidateReviewSectionSummary:
     minimum_placements: int
     maximum_placements: int | None
     active_placement_count: int
+    remaining_capacity: int | None
+    semantic_candidate_eligible: bool
+    placement_bearing: bool
+    actionability_operation: str
+    current_actionable: bool
+    unavailability_reason_codes: tuple[str, ...]
+    arrangement_pointer_state: str
     arrangement_pointer_revision: int | None
     arrangement_pointer_conflict: bool
     relevant_profile_requirement_ids: tuple[str, ...]
@@ -472,7 +485,47 @@ def _load_curation_state(
     return project_curation_state(records)
 
 
-def _section_summaries(
+def _section_summaries_from_guidance(
+    detail: CandidateInboxDetail,
+    guidance: SelectionPlacementGuidance,
+) -> tuple[CandidateReviewSectionSummary, ...]:
+    by_id = {item.section_id: item for item in guidance.sections}
+    values: list[CandidateReviewSectionSummary] = []
+    for section_id in detail.item.eligible_section_ids:
+        section = by_id.get(section_id)
+        if section is None:
+            raise CandidateReviewError(
+                "candidate_review.state_invalid",
+                "Candidate eligibility references an unavailable Profile section.",
+            )
+        values.append(
+            CandidateReviewSectionSummary(
+                section_id=section.section_id,
+                label=section.label,
+                obligation=section.obligation,
+                minimum_placements=section.minimum_placements,
+                maximum_placements=section.maximum_placements,
+                active_placement_count=section.active_placement_count,
+                remaining_capacity=section.remaining_capacity,
+                semantic_candidate_eligible=section.semantic_candidate_eligible,
+                placement_bearing=section.placement_bearing,
+                actionability_operation=section.operation,
+                current_actionable=section.current_actionable,
+                unavailability_reason_codes=section.unavailability_reason_codes,
+                arrangement_pointer_state=section.arrangement_pointer_state,
+                arrangement_pointer_revision=section.arrangement_pointer_revision,
+                arrangement_pointer_conflict=(
+                    section.arrangement_pointer_state == "conflict"
+                ),
+                relevant_profile_requirement_ids=(
+                    section.relevant_profile_requirement_ids
+                ),
+            )
+        )
+    return tuple(values)
+
+
+def _evaluation_only_section_summaries(
     detail: CandidateInboxDetail,
     curation: CurationState,
 ) -> tuple[CandidateReviewSectionSummary, ...]:
@@ -485,7 +538,7 @@ def _section_summaries(
         if section is None:
             raise CandidateReviewError(
                 "candidate_review.state_invalid",
-                "Candidate eligibility references an unavailable Profile section.",
+                "Evaluation eligibility references an unavailable Profile section.",
             )
         active = curation.active_placements(
             portfolio_id=item.portfolio_id,
@@ -497,14 +550,15 @@ def _section_summaries(
             item.profile_binding_id,
             section_id,
         )
-        requirement_ids = tuple(
-            sorted(
-                requirement.requirement_id
-                for requirement in curation.profile_requirements
-                if requirement.portfolio_profile_id == profile.portfolio_profile_id
-                and requirement.profile_revision == profile.profile_revision
-                and requirement.scope_reference == section_id
-            )
+        remaining = (
+            None
+            if section.maximum_placements is None
+            else max(section.maximum_placements - len(active), 0)
+        )
+        pointer_state = (
+            "conflict"
+            if len(pointer_heads) > 1
+            else ("current" if pointer_heads else "absent")
         )
         values.append(
             CandidateReviewSectionSummary(
@@ -514,16 +568,96 @@ def _section_summaries(
                 minimum_placements=section.minimum_placements,
                 maximum_placements=section.maximum_placements,
                 active_placement_count=len(active),
+                remaining_capacity=remaining,
+                semantic_candidate_eligible=True,
+                placement_bearing=(
+                    section.obligation != "prohibited"
+                    and section.maximum_placements != 0
+                ),
+                actionability_operation="fresh_selection",
+                current_actionable=False,
+                unavailability_reason_codes=(),
+                arrangement_pointer_state=pointer_state,
                 arrangement_pointer_revision=(
                     pointer_heads[0].pointer_revision
                     if len(pointer_heads) == 1
                     else None
                 ),
                 arrangement_pointer_conflict=len(pointer_heads) > 1,
-                relevant_profile_requirement_ids=requirement_ids,
+                relevant_profile_requirement_ids=(),
             )
         )
     return tuple(values)
+
+
+def _section_summaries(
+    detail: CandidateInboxDetail,
+    curation: CurationState,
+) -> tuple[CandidateReviewSectionSummary, ...]:
+    candidate = detail.candidate
+    if candidate is None:
+        return _evaluation_only_section_summaries(detail, curation)
+    try:
+        guidance = project_selection_placement_guidance(
+            candidate=candidate,
+            profile=detail.profile_revision,
+            curation=curation,
+            operation="fresh_selection",
+        )
+    except SelectionPlacementGuidanceError as error:
+        raise CandidateReviewError(
+            "candidate_review.state_invalid",
+            "Current Candidate section actionability could not be derived.",
+        ) from error
+    return _section_summaries_from_guidance(detail, guidance)
+
+
+def list_candidate_review_section_guidance(
+    workspace_root: str | Path,
+    entry_id: str,
+    *,
+    operation: str,
+    selection_id: str | None = None,
+    releasing_placement_ids: tuple[str, ...] = (),
+) -> tuple[CandidateReviewSectionSummary, ...]:
+    """Project semantic Candidate sections under one exact current operation."""
+
+    detail = get_candidate_review_detail(workspace_root, entry_id)
+    candidate = detail.inbox_detail.candidate
+    if candidate is None or detail.curation_provenance_evaluation_id is None:
+        raise CandidateReviewError(
+            "candidate_review.not_selectable",
+            "This review entry has no persisted Candidate for curation guidance.",
+        )
+    curation = _load_curation_state(
+        workspace_root,
+        detail.observed_state_revision,
+    )
+    try:
+        guidance = project_selection_placement_guidance(
+            candidate=candidate,
+            profile=detail.inbox_detail.profile_revision,
+            curation=curation,
+            operation=operation,
+            selection_id=selection_id,
+            releasing_placement_ids=releasing_placement_ids,
+        )
+    except SelectionPlacementGuidanceError as error:
+        if error.code in {
+            "selection_placement_guidance.selection_not_active",
+            "selection_placement_guidance.selection_candidate_mismatch",
+            "selection_placement_guidance.replacement_candidate_conflict",
+            "selection_placement_guidance.replacement_release_mismatch",
+        }:
+            raise CandidateReviewError(
+                "candidate_review.action_not_available",
+                "The exact requested section action is no longer available.",
+            ) from error
+        raise CandidateReviewError(
+            "candidate_review.state_invalid",
+            "Current Candidate section actionability could not be derived.",
+        ) from error
+    return _section_summaries_from_guidance(detail.inbox_detail, guidance)
 
 
 def _proposal_decisions(
@@ -1023,6 +1157,42 @@ def plan_candidate_decision(
             )
         sections = proposal.proposed_section_ids
         requirement_ids = proposal.intended_profile_requirement_ids
+        if decision == "select":
+            curation = _load_curation_state(
+                workspace_root,
+                detail.observed_state_revision,
+            )
+            try:
+                guidance = project_selection_placement_guidance(
+                    candidate=candidate,
+                    profile=detail.inbox_detail.profile_revision,
+                    curation=curation,
+                    operation="fresh_selection",
+                )
+            except SelectionPlacementGuidanceError as error:
+                raise CandidateReviewError(
+                    "candidate_review.state_invalid",
+                    "Current Selection/Placement actionability could not be derived.",
+                ) from error
+            if not set(sections).issubset(guidance.actionable_section_ids):
+                raise CandidateReviewError(
+                    "candidate_review.action_not_available",
+                    "The exact Selection Proposal is no longer currently actionable.",
+                )
+            try:
+                applicable_requirement_ids = set(
+                    profile_requirement_ids_for_sections(guidance, sections)
+                )
+            except SelectionPlacementGuidanceError as error:
+                raise CandidateReviewError(
+                    "candidate_review.state_invalid",
+                    "Applicable Profile requirement intent could not be derived.",
+                ) from error
+            if not set(requirement_ids).issubset(applicable_requirement_ids):
+                raise CandidateReviewError(
+                    "candidate_review.action_not_available",
+                    "The exact Selection Proposal requirement intent is no longer applicable.",
+                )
         operation = "decide_selection"
     else:
         if pending:
@@ -1045,16 +1215,41 @@ def plan_candidate_decision(
             field_name="intended_profile_requirement_ids",
             nonempty=False,
         )
-        eligible_sections = {value.section_id for value in detail.sections}
-        if not set(sections).issubset(eligible_sections):
-            raise CandidateReviewError(
-                "candidate_review.action_not_available",
-                "Candidate is not eligible for every exact proposed section.",
+        curation = _load_curation_state(
+            workspace_root,
+            detail.observed_state_revision,
+        )
+        try:
+            guidance = project_selection_placement_guidance(
+                candidate=candidate,
+                profile=detail.inbox_detail.profile_revision,
+                curation=curation,
+                operation="fresh_selection",
             )
-        if not set(requirement_ids).issubset(detail.profile_requirement_ids):
+        except SelectionPlacementGuidanceError as error:
+            raise CandidateReviewError(
+                "candidate_review.state_invalid",
+                "Current Selection/Placement actionability could not be derived.",
+            ) from error
+        actionable_section_ids = set(guidance.actionable_section_ids)
+        if not set(sections).issubset(actionable_section_ids):
             raise CandidateReviewError(
                 "candidate_review.action_not_available",
-                "One or more exact Profile requirement IDs are unavailable.",
+                "Every exact proposed section must be currently actionable for this Candidate.",
+            )
+        try:
+            applicable_requirement_ids = set(
+                profile_requirement_ids_for_sections(guidance, sections)
+            )
+        except SelectionPlacementGuidanceError as error:
+            raise CandidateReviewError(
+                "candidate_review.state_invalid",
+                "Applicable Profile requirement intent could not be derived.",
+            ) from error
+        if not set(requirement_ids).issubset(applicable_requirement_ids):
+            raise CandidateReviewError(
+                "candidate_review.action_not_available",
+                "One or more exact Profile requirement IDs are not applicable to the proposed sections.",
             )
         operation = "direct_select" if decision == "select" else "direct_decline"
 
@@ -1221,24 +1416,39 @@ def plan_selection_placement(
             "This Candidate inbox entry has no selectable Candidate.",
         )
     selection = _active_selection_summary(detail, selection_id)
-    section = _candidate_section_summary(detail, section_id)
-    if any(
-        placement.selection_id == selection.selection_id
-        and placement.section_id == section.section_id
-        and placement.lifecycle_state == "activated"
-        for placement in detail.placements
-    ):
-        raise CandidateReviewError(
-            "candidate_review.action_not_available",
-            "Selection already has an active Placement in this exact section.",
+    curation = _load_curation_state(
+        workspace_root,
+        detail.observed_state_revision,
+    )
+    try:
+        guidance = project_selection_placement_guidance(
+            candidate=candidate,
+            profile=detail.inbox_detail.profile_revision,
+            curation=curation,
+            operation="placement",
+            selection_id=selection.selection_id,
         )
-    if (
-        section.maximum_placements is not None
-        and section.active_placement_count >= section.maximum_placements
-    ):
+    except SelectionPlacementGuidanceError as error:
+        if error.code in {
+            "selection_placement_guidance.selection_not_active",
+            "selection_placement_guidance.selection_candidate_mismatch",
+        }:
+            raise CandidateReviewError(
+                "candidate_review.action_not_available",
+                "The exact Selection is no longer actionable for this Candidate.",
+            ) from error
+        raise CandidateReviewError(
+            "candidate_review.state_invalid",
+            "Current Placement actionability could not be derived.",
+        ) from error
+    section = next(
+        (item for item in guidance.sections if item.section_id == section_id),
+        None,
+    )
+    if section is None or not section.current_actionable:
         raise CandidateReviewError(
             "candidate_review.action_not_available",
-            "The exact section is already at its Placement maximum.",
+            "The exact section is not currently actionable for this Selection.",
         )
     return CandidateReviewPlacementActionPlan(
         contract_version=CANDIDATE_REVIEW_CONTRACT_VERSION,
@@ -1456,12 +1666,6 @@ def plan_selection_replacement(
         field_name="proposed_section_ids",
         nonempty=True,
     )
-    successor_sections = {item.section_id for item in successor_detail.sections}
-    if not set(proposed_sections).issubset(successor_sections):
-        raise CandidateReviewError(
-            "candidate_review.action_not_available",
-            "Replacement Proposal includes a section not eligible for the successor.",
-        )
     active_placements = tuple(
         item
         for item in detail.placements
@@ -1474,6 +1678,41 @@ def plan_selection_replacement(
             "candidate_review.invalid_request",
             "Replacement requires one explicit disposition for every active Placement.",
         )
+    curation = _load_curation_state(
+        workspace_root,
+        detail.observed_state_revision,
+    )
+    try:
+        replacement_guidance = project_selection_placement_guidance(
+            candidate=successor,
+            profile=successor_detail.inbox_detail.profile_revision,
+            curation=curation,
+            operation="replacement",
+            selection_id=selection.selection_id,
+            releasing_placement_ids=tuple(
+                item.placement_id for item in active_placements
+            ),
+        )
+    except SelectionPlacementGuidanceError as error:
+        if error.code in {
+            "selection_placement_guidance.selection_not_active",
+            "selection_placement_guidance.replacement_candidate_conflict",
+            "selection_placement_guidance.replacement_release_mismatch",
+        }:
+            raise CandidateReviewError(
+                "candidate_review.action_not_available",
+                "The exact Selection replacement is no longer actionable.",
+            ) from error
+        raise CandidateReviewError(
+            "candidate_review.state_invalid",
+            "Current replacement actionability could not be derived.",
+        ) from error
+    actionable_section_ids = set(replacement_guidance.actionable_section_ids)
+    if not set(proposed_sections).issubset(actionable_section_ids):
+        raise CandidateReviewError(
+            "candidate_review.action_not_available",
+            "Every replacement Proposal section must be currently actionable after releasing the predecessor Placements.",
+        )
     normalized: list[CandidateReviewReplacementDisposition] = []
     migrated_sections: list[str] = []
     for placement in active_placements:
@@ -1483,10 +1722,10 @@ def plan_selection_replacement(
                 "candidate_review.invalid_request",
                 "Replacement target section IDs must be nonempty when provided.",
             )
-        if target is not None and target not in successor_sections:
+        if target is not None and target not in actionable_section_ids:
             raise CandidateReviewError(
                 "candidate_review.action_not_available",
-                "A migrated Placement target is not eligible for the successor Candidate.",
+                "A migrated Placement target is not currently actionable after releasing the predecessor Placements.",
             )
         if target is not None:
             migrated_sections.append(target)
@@ -2342,6 +2581,7 @@ __all__ = [
     "execute_selection_withdrawal",
     "get_candidate_review_detail",
     "list_candidate_review_entries",
+    "list_candidate_review_section_guidance",
     "plan_annotation_creation",
     "plan_annotation_revision",
     "plan_candidate_decision",
