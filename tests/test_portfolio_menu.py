@@ -78,6 +78,37 @@ def test_teacher_creation_routes_to_guided_student_setup(
     assert request["actor"] == ACTOR
 
 
+
+def test_teacher_creation_opens_exact_new_portfolio_without_reselection(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created_id = "portfolio_created_exact"
+    monkeypatch.setattr(
+        portfolio_menu,
+        "run_create_portfolio_for_student_menu",
+        lambda **_kwargs: created_id,
+    )
+    opened: list[str] = []
+    monkeypatch.setattr(
+        portfolio_menu,
+        "_portfolio_context",
+        lambda **kwargs: opened.append(str(kwargs["portfolio_id"])),
+    )
+    raw_input = _inputs(["1", "B"])
+
+    portfolio_menu.run_portfolio_menu(
+        input_fn=lambda prompt: raw_input(prompt),  # type: ignore[operator]
+        output=io.StringIO(),
+        clear_fn=lambda: None,
+        dependencies=default_workflow_dependencies(),
+        workspace_root=tmp_path,
+        actor=ACTOR,
+    )
+
+    assert opened == [created_id]
+
+
 def test_portfolio_review_route_uses_guided_candidate_review_menu(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

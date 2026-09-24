@@ -96,8 +96,7 @@ def test_teacher_menu_creates_student_subject_portfolio_and_binding(
             "1",
             "Jane Improvement Portfolio",
             "Teacher-guided setup.",
-            "CREATE PORTFOLIO",
-            "",
+            "create portfolio",
         ]
     )
     output = io.StringIO()
@@ -111,10 +110,11 @@ def test_teacher_menu_creates_student_subject_portfolio_and_binding(
         actor=ACTOR,
     )
 
-    assert result is None
+    assert result is not None
     assert load_current_state(workspace).state_revision == before + 1
     portfolios = list_portfolios(workspace)
     assert len(portfolios) == 1
+    assert result == portfolios[0].portfolio_id
     assert portfolios[0].title_snapshot == "Jane Improvement Portfolio"
     rendered = output.getvalue()
     assert "Review Student Identity" in rendered
@@ -125,7 +125,8 @@ def test_teacher_menu_creates_student_subject_portfolio_and_binding(
     assert "Existing Portfolios" in rendered
     assert "portfolio_subject" in rendered
     assert "portfolio_profile_binding" in rendered
-    assert "Candidate discovery/review can now be started explicitly." in rendered
+    assert "Opening this Portfolio now." in rendered
+    assert "Candidate discovery/review remains an explicit next action." in rendered
 
 
 def test_existing_portfolio_can_be_opened_without_creating_another(

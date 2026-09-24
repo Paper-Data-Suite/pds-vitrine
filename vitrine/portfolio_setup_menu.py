@@ -10,6 +10,7 @@ from typing import TextIO, TypeVar
 from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 from pds_core.rosters import StudentRecord
 
+from vitrine.menu_interactions import confirm_exact_phrase
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import ActorAttribution, ClassQualifiedStudentRef
 from vitrine.portfolio_services import list_portfolios
@@ -846,7 +847,7 @@ def run_create_portfolio_for_student_menu(
     clear_fn: ClearFunction,
     actor: ActorAttribution | None = None,
 ) -> str | None:
-    """Run guided setup; return an existing Portfolio ID when teacher opens one."""
+    """Run guided setup; return the exact Portfolio ID to open on success."""
     chosen_class = _choose_class(
         workspace_root,
         input_fn=input_fn,
@@ -1024,23 +1025,18 @@ def run_create_portfolio_for_student_menu(
         _pause(input_fn)
         return None
 
-    while True:
-        _show_final_review(plan, output=output, clear_fn=clear_fn)
-        confirmation = _read(
-            input_fn,
-            "Type CREATE PORTFOLIO to create this exact setup: ",
-        )
-        if confirmation.casefold() == "h":
-            _show_help(output, input_fn, clear_fn)
-            continue
-        navigation = _navigation(confirmation)
-        if navigation is NavigationChoice.BACK or not confirmation:
-            return None
-        if confirmation != "CREATE PORTFOLIO":
-            _write(output, "Setup canceled; no records were created.")
-            _pause(input_fn)
-            return None
-        break
+    if not confirm_exact_phrase(
+        expected_phrase="CREATE PORTFOLIO",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=lambda: _show_final_review(
+            plan,
+            output=output,
+            clear_fn=lambda: None,
+        ),
+    ):
+        return None
 
     try:
         result = create_portfolio_for_student(
@@ -1073,10 +1069,10 @@ def run_create_portfolio_for_student_menu(
         f"{result.profile_revision.profile_revision}",
         f"Profile Binding: {result.profile_binding_id}",
         "",
-        "Candidate discovery/review can now be started explicitly.",
+        "Opening this Portfolio now.",
+        "Candidate discovery/review remains an explicit next action.",
     )
-    _pause(input_fn)
-    return None
+    return result.portfolio_id
 
 
 __all__ = ["run_create_portfolio_for_student_menu"]
