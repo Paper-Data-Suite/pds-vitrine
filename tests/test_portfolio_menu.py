@@ -409,10 +409,94 @@ def test_existing_profile_binding_is_inspectable_without_automatic_migration(
         portfolio_id="portfolio_exact",
         input_fn=_inputs(["1"]),  # type: ignore[arg-type]
         output=io.StringIO(),
+        clear_fn=lambda: None,
         actor=ACTOR,
     )
 
     assert migrated == []
+
+
+
+def test_initial_profile_binding_carries_single_revision_and_retries_confirmation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = SimpleNamespace(
+        portfolio_profile_id="profile_target",
+        profile_revision=1,
+    )
+    summary = SimpleNamespace(
+        label="Target Profile",
+        purpose_kind="improvement",
+        reference=target,
+    )
+    current_binding: list[object | None] = [None]
+    monkeypatch.setattr(
+        portfolio_menu,
+        "get_portfolio_profile_binding",
+        lambda *_: current_binding[0],
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "observe_profile_state_revision",
+        lambda _: 11,
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "list_bindable_profile_revisions",
+        lambda _: (summary,),
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "get_profile_revision",
+        lambda *_: SimpleNamespace(),
+    )
+    monkeypatch.setattr(
+        portfolio_menu,
+        "build_teacher_profile_binding",
+        lambda *_: SimpleNamespace(
+            profile_label="Target Profile",
+            purpose_kind="improvement",
+            profile_revision=1,
+            sections=(),
+        ),
+    )
+    bound: list[dict[str, object]] = []
+
+    def bind(_root: Path, _portfolio_id: str, reference: object, **kwargs: object) -> None:
+        bound.append({"reference": reference, **kwargs})
+        current_binding[0] = SimpleNamespace(profile_revision=target)
+
+    monkeypatch.setattr(portfolio_menu, "bind_portfolio_profile", bind)
+
+    responses = iter(("", "", "", "", "", "teacher reason", "WRONG", "bind"))
+
+    def input_fn(prompt: str) -> str:
+        if "Profile number" in prompt:
+            pytest.fail("one bindable Profile Revision must not prompt")
+        return next(responses)
+
+    output = io.StringIO()
+    clears: list[str] = []
+
+    portfolio_menu._profile_binding_workflow(
+        root=tmp_path,
+        portfolio_id="portfolio_exact",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=lambda: clears.append("clear"),
+        actor=ACTOR,
+    )
+
+    assert len(bound) == 1
+    assert bound[0]["reference"] is target
+    assert bound[0]["binding_reason"] == "teacher reason"
+    assert bound[0]["expected_state_revision"] == 11
+    rendered = output.getvalue()
+    assert "Using the only available Profile Revision" in rendered
+    assert "Confirmation not accepted." in rendered
+    assert rendered.count("Final Profile Binding Review") == 2
+    assert "Profile Binding recorded." in rendered
+    assert len(clears) >= 4
 
 
 def test_profile_migration_preserves_exact_observed_revision(
@@ -480,7 +564,7 @@ def test_profile_migration_preserves_exact_observed_revision(
         lambda *args, **kwargs: migrated.append((args, kwargs)),
     )
     raw_input = _inputs(
-        ["2", "2", "", "", "", "", "", "MIGRATE", "reason", "authority"]
+        ["2", "2", "", "", "", "", "", "reason", "authority", "migrate"]
     )
 
     portfolio_menu._profile_binding_workflow(
@@ -488,6 +572,7 @@ def test_profile_migration_preserves_exact_observed_revision(
         portfolio_id="portfolio_exact",
         input_fn=lambda prompt: raw_input(prompt),  # type: ignore[operator]
         output=io.StringIO(),
+        clear_fn=lambda: None,
         actor=ACTOR,
     )
 

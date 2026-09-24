@@ -32,7 +32,7 @@ from vitrine.curation_services import (
 from vitrine.current_portfolio_menu import (
     run_current_portfolio_build_export_menu,
 )
-from vitrine.menu_interactions import confirm_exact_phrase
+from vitrine.menu_interactions import confirm_exact_phrase, resolve_required_choice
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import ActorAttribution, PortfolioProfileMigration
 from vitrine.portfolio_services import (
@@ -662,8 +662,10 @@ def _profile_binding_workflow(
     portfolio_id: str,
     input_fn: InputFunction,
     output: TextIO,
+    clear_fn: ClearFunction,
     actor: ActorAttribution | None,
 ) -> None:
+    clear_fn()
     binding = get_portfolio_profile_binding(root, portfolio_id)
     if binding is not None:
         revision = get_profile_revision(root, binding.profile_revision)
@@ -711,63 +713,168 @@ def _profile_binding_workflow(
     observed_revision = observe_profile_state_revision(root)
     revisions = list_bindable_profile_revisions(root)
     labels = _profile_revision_display_labels(revisions)
-    for index, (revision_item, label) in enumerate(
-        zip(revisions, labels, strict=True),
-        1,
-    ):
-        marker = (
-            " (current)"
-            if binding is not None
-            and revision_item.reference == binding.profile_revision
-            else ""
-        )
-        _write(output, f"{index}. {label}{marker}")
-    raw_profile = _read(input_fn, "Profile number (Enter to leave unchanged): ")
-    selected = _numbered_choice(raw_profile, revisions)
-    if selected is None or isinstance(selected, NavigationChoice):
-        if raw_profile and selected is None:
-            _write(output, "That Profile number is not available.")
+    resolution = resolve_required_choice(revisions)
+    if resolution.disposition == "unavailable":
+        _write(output, "No bindable Profile Revisions are currently available.")
         return
+    if resolution.disposition == "carried_forward":
+        selected = resolution.selected
+        assert selected is not None
+        selected_label = labels[0]
+        if binding is not None and selected.reference == binding.profile_revision:
+            _write(
+                output,
+                "No alternate bindable Profile Revision is currently available.",
+            )
+            return
+        _write(
+            output,
+            f"Using the only available Profile Revision: {selected_label}",
+        )
+    else:
+        for index, (revision_item, label) in enumerate(
+            zip(resolution.choices, labels, strict=True),
+            1,
+        ):
+            marker = (
+                " (current)"
+                if binding is not None
+                and revision_item.reference == binding.profile_revision
+                else ""
+            )
+            _write(output, f"{index}. {label}{marker}")
+        raw_profile = _read(input_fn, "Profile number (Enter to leave unchanged): ")
+        selected_choice = _numbered_choice(raw_profile, resolution.choices)
+        if selected_choice is None or isinstance(
+            selected_choice, NavigationChoice
+        ):
+            if raw_profile and selected_choice is None:
+                _write(output, "That Profile number is not available.")
+            return
+        selected = selected_choice
+        selected_index = resolution.choices.index(selected)
+        selected_label = labels[selected_index]
+
     context = _profile_context(input_fn)
     mutation_actor = actor or _actor(input_fn)
     if mutation_actor is None:
         return
+
+    def render_context() -> None:
+        _write(
+            output,
+            f"As-of: {context.as_of or '(none)'}",
+            f"School year: {context.school_year or '(none)'}",
+            f"Institution: {context.institution_id or '(none)'}",
+            f"Program: {context.program_id or '(none)'}",
+            f"Content area: {context.content_area or '(none)'}",
+        )
+
+    def render_current_binding(success_heading: str) -> None:
+        current_binding = get_portfolio_profile_binding(root, portfolio_id)
+        clear_fn()
+        if current_binding is None:
+            _write(
+                output,
+                success_heading,
+                "",
+                "The write completed, but the current Profile Binding could not be reloaded.",
+            )
+            return
+        current_revision = get_profile_revision(
+            root,
+            current_binding.profile_revision,
+        )
+        current_view = build_teacher_profile_binding(
+            current_binding,
+            current_revision,
+        )
+        _write(output, success_heading, "")
+        _render_teacher_profile_binding(output, current_view)
+
     if binding is None:
-        if _read(input_fn, "Type BIND to bind this exact Profile Revision: ") != "BIND":
+        binding_reason = _read(input_fn, "Binding reason: ") or "teacher_selected"
+
+        def render_bind_review() -> None:
+            _write(
+                output,
+                "Final Profile Binding Review",
+                "",
+                f"Profile Revision: {selected_label}",
+                f"Binding reason: {binding_reason}",
+                f"Observed Profile state revision: {observed_revision}",
+                "",
+                "Applicability context",
+            )
+            render_context()
+
+        if not confirm_exact_phrase(
+            expected_phrase="BIND",
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            render_review=render_bind_review,
+        ):
             return
         bind_portfolio_profile(
             root,
             portfolio_id,
             selected.reference,
             actor=mutation_actor,
-            binding_reason=_read(input_fn, "Binding reason: ") or "teacher_selected",
+            binding_reason=binding_reason,
             context=context,
             expected_state_revision=observed_revision,
         )
-        _write(output, "Profile Binding recorded.")
+        render_current_binding("Profile Binding recorded.")
         return
 
     analysis = analyze_profile_migration(
         root, portfolio_id, selected.reference, context=context
     )
     impact = analysis.requirement_impact
-    _write(
-        output,
-        "Migration impact",
-        f"Added requirements: {', '.join(impact.added) or '(none)'}",
-        f"Removed requirements: {', '.join(impact.removed) or '(none)'}",
-        f"Replaced requirements: {', '.join(impact.replaced) or '(none)'}",
-        f"Material changes: {', '.join(impact.materially_changed) or '(none)'}",
-        f"Affected sections: {', '.join(analysis.affected_section_ids) or '(none)'}",
-        f"Potentially affected Selections: {analysis.potentially_affected_selection_count}",
-        f"Blocked: {'yes' if analysis.blocked else 'no'}",
+    migration_reason = _read(input_fn, "Migration reason: ") or "teacher_selected"
+    authority_reference = (
+        _read(input_fn, "Authority reference: ") or "teacher_workflow"
     )
-    if (
-        analysis.blocked
-        or _read(
-            input_fn, "Type MIGRATE to migrate explicitly to this exact revision: "
+
+    def render_migration_review() -> None:
+        _write(
+            output,
+            "Final Profile Migration Review",
+            "",
+            f"Target Profile Revision: {selected_label}",
+            f"Added requirements: {', '.join(impact.added) or '(none)'}",
+            f"Removed requirements: {', '.join(impact.removed) or '(none)'}",
+            f"Replaced requirements: {', '.join(impact.replaced) or '(none)'}",
+            f"Material changes: {', '.join(impact.materially_changed) or '(none)'}",
+            f"Affected sections: {', '.join(analysis.affected_section_ids) or '(none)'}",
+            "Potentially affected Selections: "
+            f"{analysis.potentially_affected_selection_count}",
+            f"Blocked: {'yes' if analysis.blocked else 'no'}",
+            f"Migration reason: {migration_reason}",
+            f"Authority reference: {authority_reference}",
+            f"Observed Profile state revision: {observed_revision}",
+            "",
+            "Applicability context",
         )
-        != "MIGRATE"
+        render_context()
+
+    if analysis.blocked:
+        clear_fn()
+        render_migration_review()
+        _write(
+            output,
+            "",
+            "Migration is blocked; no Profile Binding was changed.",
+        )
+        return
+
+    if not confirm_exact_phrase(
+        expected_phrase="MIGRATE",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_migration_review,
     ):
         return
     migrate_portfolio_profile(
@@ -775,13 +882,12 @@ def _profile_binding_workflow(
         portfolio_id,
         selected.reference,
         actor=mutation_actor,
-        migration_reason=_read(input_fn, "Migration reason: ") or "teacher_selected",
-        authority_reference=_read(input_fn, "Authority reference: ")
-        or "teacher_workflow",
+        migration_reason=migration_reason,
+        authority_reference=authority_reference,
         context=context,
         expected_state_revision=observed_revision,
     )
-    _write(output, "Profile migration recorded.")
+    render_current_binding("Profile migration recorded.")
 
 
 def _show_candidate_facts(
@@ -1099,6 +1205,7 @@ def _portfolio_context(
                 portfolio_id=portfolio_id,
                 input_fn=input_fn,
                 output=output,
+                clear_fn=clear_fn,
                 actor=actor,
             )
         elif choice == "3":
