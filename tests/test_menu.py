@@ -54,6 +54,31 @@ def test_workspace_submenu_back_and_main_navigation() -> None:
     assert output.getvalue().count("Vitrine\n") >= 3
 
 
+
+def test_workspace_confirmation_mismatch_is_explicit_and_retryable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = tmp_path / "workspace"
+    monkeypatch.setenv("PDS_WORKSPACE_ROOT", str(workspace))
+    output = io.StringIO()
+    clears: list[str] = []
+
+    result = run_menu(
+        input_fn=scripted_input(
+            ["3", "3", "WRONG", "create", "", "b", "q"]
+        ),
+        output=output,
+        clear_fn=lambda: clears.append("clear"),
+    )
+
+    assert result == 0
+    assert (workspace / ".pds" / "workspace.json").is_file()
+    rendered = output.getvalue()
+    assert "Confirmation not accepted." in rendered
+    assert rendered.count("Validate / Create Workspace") == 2
+    assert len(clears) >= 5
+
+
 def test_eof_and_keyboard_interrupt_exit_cleanly() -> None:
     for exception in (EOFError(), KeyboardInterrupt()):
 
@@ -91,7 +116,7 @@ def test_confirmed_validate_creates_workspace_without_saving(
     monkeypatch.setenv("XDG_CONFIG_HOME", str(config))
     output = io.StringIO()
     result = run_menu(
-        input_fn=scripted_input(["3", "3", "CREATE", "", "b", "q"]),
+        input_fn=scripted_input(["3", "3", "create", "", "b", "q"]),
         output=output,
         clear_fn=lambda: None,
     )

@@ -17,6 +17,7 @@ from pds_core.workspace import WorkspaceRootError
 
 from vitrine.attention_menu import run_attention_menu
 from vitrine.candidate_inbox_menu import run_candidate_inbox_menu
+from vitrine.menu_interactions import ReviewRenderer, confirm_exact_phrase
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.portfolio_menu import run_portfolio_menu
 from vitrine.profile_menu import run_profile_menu
@@ -89,21 +90,18 @@ def _render_workspace_status(output: TextIO, explicit_root: Path | None = None) 
 def _confirm(
     *,
     input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
     word: str,
-    allow_main_menu: bool = True,
+    render_review: ReviewRenderer,
 ) -> bool:
-    response = _read(input_fn, f"Type {word} to continue, or press Enter to cancel: ")
-    if not response:
-        return False
-    navigation = parse_navigation_choice(
-        response,
-        allow_back=True,
-        allow_main_menu=allow_main_menu,
-        allow_quit=True,
+    return confirm_exact_phrase(
+        expected_phrase=word,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
     )
-    if navigation is NavigationChoice.BACK:
-        return False
-    return response.casefold() == word.casefold()
 
 
 def _workspace_menu(
@@ -145,36 +143,79 @@ def _workspace_menu(
                 raw_path = _read(input_fn, "Workspace folder: ")
                 if not raw_path:
                     continue
-                _write_lines(output, "", f"Selected workspace: {Path(raw_path)}")
-                if _confirm(input_fn=input_fn, word="SET"):
+
+                def render_set_review() -> None:
+                    _write_lines(
+                        output,
+                        "Set Workspace Folder",
+                        "",
+                        f"Selected workspace: {Path(raw_path)}",
+                        "",
+                        "This changes only the saved workspace preference.",
+                    )
+
+                if _confirm(
+                    input_fn=input_fn,
+                    output=output,
+                    clear_fn=clear_fn,
+                    word="SET",
+                    render_review=render_set_review,
+                ):
                     result = set_workspace(raw_path)
+                    clear_fn()
                     action = "Created and saved" if result.created else "Saved"
-                    _write_lines(output, "", f"{action}: {result.root}")
+                    _write_lines(output, f"{action}: {result.root}")
                     _pause(input_fn)
             elif choice == "3":
-                clear_fn()
-                _render_workspace_status(output)
-                _write_lines(output, "")
-                if _confirm(input_fn=input_fn, word="CREATE"):
+                def render_create_review() -> None:
+                    _write_lines(
+                        output,
+                        "Validate / Create Workspace",
+                        "",
+                    )
+                    _render_workspace_status(output)
+                    _write_lines(
+                        output,
+                        "",
+                        "Validation creates missing workspace structure only when needed.",
+                    )
+
+                if _confirm(
+                    input_fn=input_fn,
+                    output=output,
+                    clear_fn=clear_fn,
+                    word="CREATE",
+                    render_review=render_create_review,
+                ):
                     result = validate_workspace()
+                    clear_fn()
                     action = "Created" if result.created else "Validated"
-                    _write_lines(output, "", f"{action}: {result.root}")
+                    _write_lines(output, f"{action}: {result.root}")
                     _pause(input_fn)
             elif choice == "4":
-                clear_fn()
-                _write_lines(
-                    output,
-                    "Resetting the preference does not delete any workspace files.",
-                    "",
-                )
-                if _confirm(input_fn=input_fn, word="RESET"):
+                def render_reset_review() -> None:
+                    _write_lines(
+                        output,
+                        "Reset Workspace Preference",
+                        "",
+                        "Resetting the preference does not delete any workspace files.",
+                    )
+
+                if _confirm(
+                    input_fn=input_fn,
+                    output=output,
+                    clear_fn=clear_fn,
+                    word="RESET",
+                    render_review=render_reset_review,
+                ):
                     removed = reset_workspace()
+                    clear_fn()
                     message = (
                         "Cleared saved workspace preference."
                         if removed
                         else "No saved workspace preference was set."
                     )
-                    _write_lines(output, "", message)
+                    _write_lines(output, message)
                     _pause(input_fn)
             else:
                 _write_lines(output, "Please choose 1-4, H, B, M, or Q.")

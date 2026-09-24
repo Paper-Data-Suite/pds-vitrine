@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 12 moves top-level Workspace Settings mutations onto the shared case-insensitive exact/retryable confirmation contract: SET, CREATE, and RESET now clear/redraw their current review on mismatch and redraw the result after success without changing workspace resolution or persistence semantics.
+
 - Issue #98 Slice 11 moves standalone Portfolio Subject identity mutations onto the shared case-insensitive exact/retryable confirmation contract: CREATE, LINK, INVALIDATE, REPLACE, MERGE, and SPLIT final reviews now clear/redraw on mismatch instead of silently abandoning the action, while class/student/Subject identity choices remain explicit.
 
 - Issue #98 Slice 10 moves all standalone Portfolio Profile mutation confirmations onto the shared case-insensitive exact/retryable confirmation contract: CREATE, SAVE, ACTIVATE, BIND, MIGRATE, COMPOSE, and INSTALL final reviews now clear/redraw on mismatch instead of silently abandoning the action.
