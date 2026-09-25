@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 13 closes guided-menu interaction qualification with the `vitrine_guided_menu_interaction_v1` contract/development/validation documentation, dedicated validator and regression test, package guards, repository-gate integration, Mypy coverage, and isolated installed-wheel interaction smoke.
+
 - Issue #98 Slice 12 moves top-level Workspace Settings mutations onto the shared case-insensitive exact/retryable confirmation contract: SET, CREATE, and RESET now clear/redraw their current review on mismatch and redraw the result after success without changing workspace resolution or persistence semantics.
 
 - Issue #98 Slice 11 moves standalone Portfolio Subject identity mutations onto the shared case-insensitive exact/retryable confirmation contract: CREATE, LINK, INVALIDATE, REPLACE, MERGE, and SPLIT final reviews now clear/redraw on mismatch instead of silently abandoning the action, while class/student/Subject identity choices remain explicit.

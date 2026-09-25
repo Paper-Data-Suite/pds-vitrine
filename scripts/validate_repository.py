@@ -74,6 +74,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "guided-menu interactions",
+        (
+            "scripts/validate_guided_menu_interactions.py",
+            "--skip-focused-tests",
+        ),
+    ),
+    (
         "guided Working Composition",
         (
             "scripts/validate_working_composition.py",
@@ -400,6 +407,10 @@ def validate(
                 (
                     "Selection/Placement domain-correct guidance",
                     "scripts/smoke_test_selection_placement_guidance_wheel.py",
+                ),
+                (
+                    "guided-menu interactions",
+                    "scripts/smoke_test_guided_menu_interactions_wheel.py",
                 ),
                 (
                     "guided Working Composition",

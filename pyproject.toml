@@ -104,6 +104,8 @@ files = [
     "scripts/validate_candidate_inbox.py",
     "scripts/validate_selection_placement_guidance.py",
     "scripts/smoke_test_selection_placement_guidance_wheel.py",
+    "scripts/validate_guided_menu_interactions.py",
+    "scripts/smoke_test_guided_menu_interactions_wheel.py",
     "scripts/validate_current_portfolio_build_export.py",
     "scripts/smoke_test_current_portfolio_build_export_wheel.py",
     "scripts/validate_attention_next_actions.py",
