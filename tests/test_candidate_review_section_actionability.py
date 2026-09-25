@@ -256,6 +256,7 @@ def test_fresh_menu_omits_max_zero_match_and_unrelated_requirements(
         selection_proposal_id=None,
         input_fn=lambda _prompt: next(values),
         output=output,
+        clear_fn=lambda: None,
         dependencies=SimpleNamespace(
             curation_authority_gate=StaticCurationAuthorityGate()
         ),

@@ -6,6 +6,32 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #98 Slice 13 closes guided-menu interaction qualification with the `vitrine_guided_menu_interaction_v1` contract/development/validation documentation, dedicated validator and regression test, package guards, repository-gate integration, Mypy coverage, and isolated installed-wheel interaction smoke.
+
+- Issue #98 Slice 12 moves top-level Workspace Settings mutations onto the shared case-insensitive exact/retryable confirmation contract: SET, CREATE, and RESET now clear/redraw their current review on mismatch and redraw the result after success without changing workspace resolution or persistence semantics.
+
+- Issue #98 Slice 11 moves standalone Portfolio Subject identity mutations onto the shared case-insensitive exact/retryable confirmation contract: CREATE, LINK, INVALIDATE, REPLACE, MERGE, and SPLIT final reviews now clear/redraw on mismatch instead of silently abandoning the action, while class/student/Subject identity choices remain explicit.
+
+- Issue #98 Slice 10 moves all standalone Portfolio Profile mutation confirmations onto the shared case-insensitive exact/retryable confirmation contract: CREATE, SAVE, ACTIVATE, BIND, MIGRATE, COMPOSE, and INSTALL final reviews now clear/redraw on mismatch instead of silently abandoning the action.
+
+- Issue #98 Slice 9 standardizes Portfolio-scoped Profile Binding and migration: a sole required bindable revision is carried forward without a redundant prompt, BIND/MIGRATE use the shared case-insensitive exact/retryable confirmation contract, reason/authority inputs are included before final confirmation, blocked migrations remain non-mutating, and successful writes reload and redraw the current binding.
+
+- Issue #98 Slice 8 standardizes Current Portfolio Build/Export interaction: required one-option Audience Rule/Context/Series choices are carried forward without redundant prompts, obligation and final-build confirmations use the shared case-insensitive exact/retryable contract, Technical Details remains a non-mutating confirmation drill-down, and successful build/export redraws the resulting current state.
+
+- Issue #98 Slice 7 standardizes Working Composition freeze on the shared case-insensitive exact confirmation contract with explicit mismatch retry, preserves cancel-without-write behavior, and redraws only the resulting Working Composition state after a successful or exact-reuse freeze.
+
+- Issue #98 Slice 6 standardizes Create Portfolio for Student confirmation on the shared exact-phrase interaction contract and returns the exact newly created Portfolio ID so the existing Portfolio menu opens that Portfolio immediately without reselection; Candidate discovery remains explicit.
+
+- Issue #98 Slice 5 standardizes Candidate discovery on the shared controlled confirmation flow and turns the completion summary into a contextual next-action menu with direct persisted-state `Review Candidates now` routing plus a technical details drill-down that returns to the current discovery result.
+
+- Issue #98 Slice 4 standardizes the remaining guided Candidate Review mutations—withdrawal, replacement, Annotation, Reflection, and curation Review—on dedicated clear/redraw stages, shared capitalization-insensitive exact confirmation with explicit mismatch handling, and post-write current-state success screens without changing planner, authority, or persistence semantics.
+
+- Issue #98 Slice 3 reloads persisted Candidate state after successful Selection and offers a separate contextual `Place now` continuation only when one active Selection has a currently actionable destination, while refresh ambiguity fails closed without creating Placement.
+
+- Issue #98 Slice 2 applies the shared interaction contract to guided Candidate Selection and Placement: final reviews redraw as current state, confirmation mismatches are explicit/retryable, one active Selection and one required Placement destination are carried forward without redundant prompts, and Placement wording reflects whether a Placement already exists.
+
+- Issue #98 Slice 1 adds the UI-only `vitrine_guided_menu_interaction_v1` foundation for capitalization-insensitive exact confirmations with Core navigation/redraw semantics and cardinality-only zero/one/many required-choice resolution.
+
 - Issue #97 closes Selection/Placement domain-correctness qualification with a dedicated validator, installed-wheel smoke, package guards, repository-gate integration, and contract/development/validation documentation.
 
 - Issue #97 Slice 7 projects transient Selection/Placement actionability into Candidate Review without rewriting semantic Profile fit, scopes fresh requirement choices to exact actionable sections, and makes fresh Selection, ordinary Placement, and replacement menus offer only operation-correct section targets.

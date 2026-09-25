@@ -116,7 +116,7 @@ def test_create_flow_clears_roster_before_confirmation(
                 "teacher_1",
                 "1",  # direct teacher knowledge
                 "I teach this student.",
-                "CREATE",
+                "create",
                 "",  # success pause
                 "b",
             ]
@@ -136,6 +136,45 @@ def test_create_flow_clears_roster_before_confirmation(
     assert "Select Student" not in confirmation
     assert "Smith, Alex" not in confirmation
     assert "1. Doe, Jane" not in confirmation
+
+
+
+def test_create_confirmation_mismatch_is_explicit_and_retryable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = make_subject_workspace(tmp_path)
+    monkeypatch.setenv("PDS_WORKSPACE_ROOT", str(workspace))
+    recorder = ScreenRecorder()
+    run_subject_menu(
+        input_fn=scripted_input(
+            [
+                "1",
+                "2",
+                "1",
+                "teacher_1",
+                "1",
+                "I teach this student.",
+                "WRONG",
+                "create",
+                "",
+                "b",
+            ]
+        ),
+        output=recorder.output,
+        clear_fn=recorder.clear,
+    )
+
+    subjects = list_subjects(workspace)
+    assert len(subjects) == 1
+    rendered = recorder.output.getvalue()
+    assert "Confirmation not accepted." in rendered
+    confirmation_screens = tuple(
+        screen
+        for screen in recorder.screens()
+        if screen.startswith("Create Portfolio Subject\n")
+        and "Student ID: 00107" in screen
+    )
+    assert len(confirmation_screens) == 2
 
 
 def test_expected_subject_error_is_concise_without_traceback(
@@ -184,7 +223,7 @@ def test_link_flow_requires_explicit_selected_class_and_student(
                 "teacher_1",
                 "1",
                 "I know these class records are the same student.",
-                "LINK",
+                "link",
                 "",
                 "b",
             ]
@@ -235,7 +274,7 @@ def test_invalidate_link_menu_preserves_history(
                 "teacher_1",
                 "1",
                 "The original confirmation was wrong.",
-                "INVALIDATE",
+                "invalidate",
                 "",
                 "b",
             ]
@@ -284,7 +323,7 @@ def test_merge_menu_creates_successor_without_rewriting_predecessors(
                 "teacher_1",
                 "1",
                 "I confirm these Subjects represent one person.",
-                "MERGE",
+                "merge",
                 "",
                 "b",
             ]
@@ -345,7 +384,7 @@ def test_split_menu_requires_explicit_link_allocation(
                 "teacher_1",
                 "1",
                 "These class links belong to different people.",
-                "SPLIT",
+                "split",
                 "",
                 "b",
             ]

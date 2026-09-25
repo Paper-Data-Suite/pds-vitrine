@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from vitrine.current_portfolio_menu import (
+    _choose,
     _print_result,
     _print_result_technical_details,
     run_current_portfolio_build_export_menu,
@@ -71,6 +72,25 @@ def _preparation(
     )
 
 
+
+def test_single_required_choice_is_carried_forward_without_prompt() -> None:
+    output = StringIO()
+
+    def unexpected_input(_prompt: str) -> str:
+        pytest.fail("one required choice must not prompt")
+
+    selected = _choose(
+        ("rule_exact",),
+        input_fn=unexpected_input,
+        output=output,
+        label="Audience Rule",
+        render=lambda value: value,
+    )
+
+    assert selected == "rule_exact"
+    assert "Using the only available Audience Rule: rule_exact" in output.getvalue()
+
+
 def test_stale_working_composition_stops_before_build_preparation(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -94,6 +114,7 @@ def test_stale_working_composition_stops_before_build_preparation(
         portfolio_id="portfolio_1",
         input_fn=_input([]),
         output=output,
+        clear_fn=lambda: None,
         dependencies=_dependencies(),
     )
 
@@ -186,16 +207,16 @@ def test_menu_requires_exact_context_series_and_obligation_acknowledgement(
         portfolio_id="portfolio_1",
         input_fn=_input(
             [
-                "1",  # Audience Rule
                 "2",  # exact Audience Context context_b
                 "1",  # exact Snapshot Series series_a
-                "ACKNOWLEDGE OBLIGATIONS",
-                "BUILD AND EXPORT CURRENT PORTFOLIO",
+                "acknowledge obligations",
+                "build and export current portfolio",
                 "teacher_1",
                 "",
             ]
         ),
         output=output,
+        clear_fn=lambda: None,
         dependencies=dependencies,
     )
 
@@ -297,18 +318,19 @@ def test_menu_can_open_exact_preparation_provenance_before_confirmation(
         portfolio_id="portfolio_1",
         input_fn=_input(
             [
-                "1",
                 "T",
-                "BUILD AND EXPORT CURRENT PORTFOLIO",
+                "",
+                "build and export current portfolio",
                 "teacher_1",
                 "",
             ]
         ),
         output=output,
+        clear_fn=lambda: None,
         dependencies=_dependencies(),
     )
 
-    assert shown == ["teacher", "technical"]
+    assert shown == ["teacher", "technical", "teacher"]
     assert executed == [preparation]
 
 
@@ -337,9 +359,12 @@ def test_menu_declined_final_confirmation_performs_no_write(
     run_current_portfolio_build_export_menu(
         root=tmp_path,
         portfolio_id="portfolio_1",
-        input_fn=_input(["1", "NO"]),
+        input_fn=_input(["NO", ""]),
         output=output,
+        clear_fn=lambda: None,
         dependencies=_dependencies(),
     )
 
-    assert "Build/export cancelled. Nothing was written." in output.getvalue()
+    rendered = output.getvalue()
+    assert "Confirmation not accepted." in rendered
+    assert "Build/export cancelled. Nothing was written." in rendered
