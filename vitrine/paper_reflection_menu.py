@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import webbrowser
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Sequence, TextIO, TypeVar
+from tempfile import TemporaryDirectory
+from typing import TextIO, TypeVar
 
 from pds_core.menu_navigation import (
     NavigationChoice,
@@ -11,13 +14,32 @@ from pds_core.menu_navigation import (
 )
 from pds_core.workspace import resolve_workspace_root
 
+from vitrine.curation_services import CurationWorkflowError, _clock
 from vitrine.menu_interactions import confirm_exact_phrase
 from vitrine.menu_types import ClearFunction, InputFunction
-from vitrine.models import ActorAttribution, CurationTargetRef, PortfolioSelection
+from vitrine.models import (
+    ActorAttribution,
+    CurationTargetRef,
+    PortfolioReflection,
+    PortfolioSelection,
+    ReflectionAuthorshipConfirmation,
+)
+from vitrine.paper_reflection_authorship import (
+    confirm_returned_paper_authorship,
+    finalize_confirmed_paper_reflection,
+)
 from vitrine.paper_reflection_packet import (
     IssuedPaperReflectionPacket,
     issue_paper_reflection_packet,
     render_issued_paper_reflection_packet,
+)
+from vitrine.paper_reflection_review import (
+    PaperReflectionReviewContext,
+    PaperReflectionReviewError,
+    PaperReflectionReviewOccurrence,
+    acquire_paper_reflection_evidence_preview,
+    prepare_paper_reflection_review_context,
+    selected_occurrence_ids,
 )
 from vitrine.paper_reflection_workflow import (
     PaperReflectionRequirementStatus,
@@ -37,6 +59,7 @@ from vitrine.workflow_views import (
 )
 
 _ChoiceValue = TypeVar("_ChoiceValue")
+PaperReflectionReviewLauncher = Callable[[Path], bool]
 
 
 def _write(output: TextIO, *lines: str) -> None:
@@ -82,7 +105,12 @@ def _numbered_choice(
     return choices[index - 1]
 
 
-def _actor(input_fn: InputFunction) -> ActorAttribution | None:
+def _actor(
+    actor: ActorAttribution | None,
+    input_fn: InputFunction,
+) -> ActorAttribution | None:
+    if actor is not None:
+        return actor
     actor_id = _read(input_fn, "Teacher/actor ID (B to cancel): ")
     if _navigation(actor_id) is NavigationChoice.BACK:
         return None
@@ -94,6 +122,10 @@ def _actor(input_fn: InputFunction) -> ActorAttribution | None:
         owning_system="local",
         role_snapshot="teacher",
     )
+
+
+def _default_launcher(path: Path) -> bool:
+    return bool(webbrowser.open(path.resolve().as_uri(), new=2))
 
 
 def _status_label(status: str) -> str:
@@ -446,7 +478,7 @@ def _prepare_print_flow(
         _pause(input_fn)
         return
 
-    mutation_actor = actor or _actor(input_fn)
+    mutation_actor = _actor(actor, input_fn)
     if mutation_actor is None:
         return
 
@@ -530,6 +562,382 @@ def _reprint_flow(
     _pause(input_fn)
 
 
+def _occurrence_line(item: PaperReflectionReviewOccurrence) -> str:
+    return (
+        f"{item.source_filename} — received {item.intake_timestamp} — "
+        f"scan {item.source_scan_id}"
+    )
+
+
+def _choose_returned_occurrences(
+    context: PaperReflectionReviewContext,
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+) -> tuple[str, ...] | None:
+    selected: list[str] = []
+    for page in context.pages:
+        _write(
+            output,
+            "",
+            f"Returned page {page.logical_page_number} of {page.total_pages}",
+        )
+        if len(page.occurrences) == 1:
+            occurrence = page.occurrences[0]
+            _write(output, f"Using: {_occurrence_line(occurrence)}")
+            selected.append(occurrence.returned_paper_evidence_id)
+            continue
+        _write(
+            output,
+            "Multiple routed scans exist for this page.",
+            "Choose the exact occurrence to use; no rescan is selected automatically.",
+        )
+        for index, occurrence in enumerate(page.occurrences, 1):
+            _write(output, f"{index}. {_occurrence_line(occurrence)}")
+        choice = _numbered_choice(
+            _read(input_fn, "Occurrence number: "),
+            page.occurrences,
+        )
+        if choice is None or isinstance(choice, NavigationChoice):
+            return None
+        selected.append(choice.returned_paper_evidence_id)
+    return selected_occurrence_ids(context, tuple(selected))
+
+
+def _preview_returned_paper(
+    context: PaperReflectionReviewContext,
+    selected_evidence_ids: tuple[str, ...],
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+    launcher: PaperReflectionReviewLauncher,
+) -> bool:
+    by_id = {
+        item.returned_paper_evidence_id: item
+        for page in context.pages
+        for item in page.occurrences
+    }
+    with TemporaryDirectory(prefix="pds-vitrine-reflection-review-") as temp_root:
+        temp = Path(temp_root)
+        for evidence_id in selected_evidence_ids:
+            occurrence = by_id[evidence_id]
+            preview = acquire_paper_reflection_evidence_preview(
+                context,
+                evidence_id,
+            )
+            path = temp / (
+                f"reflection-page-{occurrence.logical_page_number:02d}"
+                f"{preview.suffix}"
+            )
+            path.write_bytes(preview.content)
+            try:
+                opened = launcher(path)
+            except Exception:
+                opened = False
+            if not opened:
+                _write(
+                    output,
+                    "",
+                    "The exact returned paper was verified, but the local viewer",
+                    "could not be opened. Authorship confirmation was not recorded.",
+                )
+                return False
+            _write(
+                output,
+                "",
+                (
+                    f"Opened returned page {occurrence.logical_page_number} "
+                    f"of {occurrence.total_pages} in the local viewer."
+                ),
+                "Review the handwriting before continuing.",
+            )
+            _pause(input_fn)
+    return True
+
+
+def _render_authorship_review(
+    output: TextIO,
+    *,
+    overview: TeacherPortfolioOverview,
+    requirement: PaperReflectionRequirementStatus,
+    context: PaperReflectionReviewContext,
+    selected_evidence_ids: tuple[str, ...],
+    mutation_actor: ActorAttribution,
+) -> None:
+    selected = {
+        item.returned_paper_evidence_id: item
+        for page in context.pages
+        for item in page.occurrences
+        if item.returned_paper_evidence_id in selected_evidence_ids
+    }
+    student = overview.subject_label or context.student_reference.student_id
+    _write(
+        output,
+        "Confirm Returned Student Reflection",
+        "",
+        f"Student: {student}",
+        (
+            f"Class: {context.student_reference.class_id} — "
+            f"{context.student_reference.school_year}"
+        ),
+        f"Requirement: {requirement.title}",
+        f"Prompt: {context.prompt_snapshot}",
+        "",
+        "Exact curated targets",
+    )
+    for target in context.targets:
+        _write(output, f"- {target.display_label}")
+    _write(output, "", "Returned paper reviewed")
+    for page in context.pages:
+        evidence_id = selected_evidence_ids[page.logical_page_number - 1]
+        occurrence = selected[evidence_id]
+        _write(
+            output,
+            (
+                f"- Page {page.logical_page_number}: "
+                f"{occurrence.source_filename}"
+            ),
+        )
+    _write(
+        output,
+        "",
+        (
+            f"This records {student} as the author of the returned Reflection."
+        ),
+        (
+            f"{mutation_actor.actor_id} is recorded as the authorized adult "
+            "who confirms/records the association, not as the author."
+        ),
+        "Routing identifies the issued response; it does not prove authorship.",
+    )
+
+
+def _one_confirmation(records: tuple[object, ...]) -> ReflectionAuthorshipConfirmation:
+    values = tuple(
+        item for item in records if isinstance(item, ReflectionAuthorshipConfirmation)
+    )
+    if len(values) != 1:
+        raise RuntimeError(
+            "Authorship confirmation mutation did not return one exact confirmation."
+        )
+    return values[0]
+
+
+def _one_reflection(records: tuple[object, ...]) -> PortfolioReflection:
+    values = tuple(
+        item for item in records if isinstance(item, PortfolioReflection)
+    )
+    if len(values) != 1:
+        raise RuntimeError(
+            "Paper Reflection finalization did not return one exact Reflection."
+        )
+    return values[0]
+
+
+def _review_returned_flow(
+    *,
+    root: Path,
+    portfolio_id: str,
+    view: PaperReflectionWorkflowView,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+    dependencies: VitrineWorkflowDependencies,
+    actor: ActorAttribution | None,
+    launcher: PaperReflectionReviewLauncher,
+) -> None:
+    requirement = _choose_requirement(
+        tuple(
+            item
+            for item in view.requirements
+            if item.status == "returned_needs_review"
+            and item.issuance_id is not None
+        ),
+        input_fn=input_fn,
+        output=output,
+    )
+    if requirement is None or requirement.issuance_id is None:
+        _write(output, "No complete returned Reflection is available for review.")
+        _pause(input_fn)
+        return
+
+    try:
+        context = prepare_paper_reflection_review_context(
+            root,
+            portfolio_id=portfolio_id,
+            issuance_id=requirement.issuance_id,
+            expected_state_revision=view.observed_state_revision,
+        )
+        selected = _choose_returned_occurrences(
+            context,
+            input_fn=input_fn,
+            output=output,
+        )
+        if selected is None:
+            return
+        if not _preview_returned_paper(
+            context,
+            selected,
+            input_fn=input_fn,
+            output=output,
+            launcher=launcher,
+        ):
+            _pause(input_fn)
+            return
+
+        mutation_actor = _actor(actor, input_fn)
+        if mutation_actor is None:
+            return
+        overview = build_teacher_portfolio_overview(root, portfolio_id)
+
+        def render_review() -> None:
+            _render_authorship_review(
+                output,
+                overview=overview,
+                requirement=requirement,
+                context=context,
+                selected_evidence_ids=selected,
+                mutation_actor=mutation_actor,
+            )
+
+        if not confirm_exact_phrase(
+            expected_phrase="CONFIRM STUDENT AUTHOR",
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
+            render_review=render_review,
+        ):
+            return
+
+        confirmed = confirm_returned_paper_authorship(
+            root,
+            portfolio_id=portfolio_id,
+            issuance_id=context.issuance_id,
+            returned_paper_evidence_ids=selected,
+            confirmed_by=mutation_actor,
+            expected_state_revision=context.observed_state_revision,
+            authority_gate=dependencies.curation_authority_gate,
+            clock=_clock,
+        )
+        confirmation = _one_confirmation(confirmed.records)
+        finalized = finalize_confirmed_paper_reflection(
+            root,
+            portfolio_id=portfolio_id,
+            authorship_confirmation_id=confirmation.authorship_confirmation_id,
+            recorded_by=mutation_actor,
+            expected_state_revision=confirmed.state_revision,
+            authority_gate=dependencies.curation_authority_gate,
+            clock=_clock,
+        )
+        reflection = _one_reflection(finalized.records)
+        clear_fn()
+        _write(
+            output,
+            "Student Reflection recorded.",
+            "",
+            f"Student author: {overview.subject_label or reflection.author.actor_id}",
+            f"Recorded by: {mutation_actor.actor_id}",
+            f"Reflection revision: {reflection.reflection_revision}",
+            "Original returned paper evidence remains preserved.",
+        )
+        _pause(input_fn)
+    except (PaperReflectionReviewError, CurationWorkflowError, RuntimeError) as error:
+        clear_fn()
+        _write(
+            output,
+            "Returned Reflection review could not be completed safely.",
+            str(error),
+            "",
+            "No automatic target, rescan, or student substitution was made.",
+        )
+        _pause(input_fn)
+
+
+def _complete_recording_flow(
+    *,
+    root: Path,
+    portfolio_id: str,
+    view: PaperReflectionWorkflowView,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+    dependencies: VitrineWorkflowDependencies,
+    actor: ActorAttribution | None,
+) -> None:
+    requirement = _choose_requirement(
+        tuple(
+            item
+            for item in view.requirements
+            if item.status == "confirmed_needs_recording"
+            and item.authorship_confirmation_id is not None
+        ),
+        input_fn=input_fn,
+        output=output,
+    )
+    if (
+        requirement is None
+        or requirement.authorship_confirmation_id is None
+    ):
+        _write(output, "No confirmed Reflection is awaiting recording.")
+        _pause(input_fn)
+        return
+    mutation_actor = _actor(actor, input_fn)
+    if mutation_actor is None:
+        return
+
+    def render_review() -> None:
+        _write(
+            output,
+            "Complete Student Reflection Recording",
+            "",
+            f"Requirement: {requirement.title}",
+            f"Prompt: {requirement.prompt_snapshot or '(unavailable)'}",
+            "",
+            "Student authorship was already explicitly confirmed.",
+            "This action creates the canonical Portfolio Reflection from that",
+            "confirmed paper evidence; the teacher remains the recorder, not author.",
+        )
+
+    if not confirm_exact_phrase(
+        expected_phrase="RECORD REFLECTION",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
+        return
+    try:
+        finalized = finalize_confirmed_paper_reflection(
+            root,
+            portfolio_id=portfolio_id,
+            authorship_confirmation_id=requirement.authorship_confirmation_id,
+            recorded_by=mutation_actor,
+            expected_state_revision=view.observed_state_revision,
+            authority_gate=dependencies.curation_authority_gate,
+            clock=_clock,
+        )
+        reflection = _one_reflection(finalized.records)
+        clear_fn()
+        _write(
+            output,
+            "Student Reflection recorded.",
+            "",
+            f"Student author ID: {reflection.author.actor_id}",
+            f"Recorded by: {mutation_actor.actor_id}",
+            f"Reflection revision: {reflection.reflection_revision}",
+            "Original returned paper evidence remains preserved.",
+        )
+        _pause(input_fn)
+    except (CurationWorkflowError, RuntimeError) as error:
+        clear_fn()
+        _write(
+            output,
+            "Confirmed Reflection could not be recorded safely.",
+            str(error),
+        )
+        _pause(input_fn)
+
+
 def run_paper_reflection_menu(
     *,
     portfolio_id: str,
@@ -539,6 +947,7 @@ def run_paper_reflection_menu(
     dependencies: VitrineWorkflowDependencies,
     workspace_root: Path | None = None,
     actor: ActorAttribution | None = None,
+    launcher: PaperReflectionReviewLauncher = _default_launcher,
 ) -> None:
     """Run the Portfolio-scoped paper-first Student Reflection workflow."""
 
@@ -555,6 +964,16 @@ def run_paper_reflection_menu(
             for item in view.requirements
         ):
             actions.append("2. Reprint issued Reflection")
+        if any(
+            item.status == "returned_needs_review"
+            for item in view.requirements
+        ):
+            actions.append("3. Review returned paper / confirm student author")
+        if any(
+            item.status == "confirmed_needs_recording"
+            for item in view.requirements
+        ):
+            actions.append("4. Complete canonical Reflection recording")
         _write(
             output,
             "",
@@ -598,6 +1017,39 @@ def run_paper_reflection_menu(
                 output=output,
             )
             continue
+        if choice == "3" and any(
+            item.status == "returned_needs_review"
+            for item in view.requirements
+        ):
+            clear_fn()
+            _review_returned_flow(
+                root=root,
+                portfolio_id=portfolio_id,
+                view=view,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                actor=actor,
+                launcher=launcher,
+            )
+            continue
+        if choice == "4" and any(
+            item.status == "confirmed_needs_recording"
+            for item in view.requirements
+        ):
+            clear_fn()
+            _complete_recording_flow(
+                root=root,
+                portfolio_id=portfolio_id,
+                view=view,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                actor=actor,
+            )
+            continue
         navigation = _navigation(choice)
         if navigation is not None:
             return
@@ -605,4 +1057,7 @@ def run_paper_reflection_menu(
         _pause(input_fn)
 
 
-__all__ = ["run_paper_reflection_menu"]
+__all__ = [
+    "PaperReflectionReviewLauncher",
+    "run_paper_reflection_menu",
+]
