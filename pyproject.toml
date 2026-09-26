@@ -27,6 +27,9 @@ classifiers = [
 [project.scripts]
 vitrine = "vitrine.cli:main"
 
+[project.entry-points."paper_data_suite.modules"]
+vitrine = "vitrine.pds_module:get_module_profile"
+
 [project.entry-points."paper_data_suite.module_operations"]
 vitrine = "vitrine.pds_operations:get_module_operations_profile"
 
