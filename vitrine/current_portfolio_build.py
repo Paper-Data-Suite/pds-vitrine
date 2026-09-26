@@ -10,12 +10,13 @@ from pathlib import Path
 from typing import Final, TypeVar
 
 from vitrine.current_portfolio_reflection import (
-    CURRENT_PORTFOLIO_REFLECTION_MEDIA_TYPE,
     CURRENT_PORTFOLIO_REFLECTION_RENDERER_CONTRACT_VERSION,
     CURRENT_PORTFOLIO_REFLECTION_RENDERER_ID,
     CURRENT_PORTFOLIO_REFLECTION_RENDERER_VERSION,
     current_portfolio_reflection_bytes,
     current_portfolio_reflection_configuration_digest,
+    current_portfolio_reflection_input_references,
+    current_portfolio_reflection_media_type,
     current_portfolio_reflection_output_digest,
     current_portfolio_reflection_supported,
 )
@@ -27,9 +28,13 @@ from vitrine.models import (
     PortfolioReflection,
     PortfolioSelection,
     SnapshotEntryPlan,
-    SnapshotInputReference,
     SnapshotSeries,
     SourceArtifactReference,
+)
+from vitrine.paper_reflection_materialization import (
+    PaperReflectionMaterialization,
+    PaperReflectionMaterializationError,
+    resolve_paper_reflection_materialization,
 )
 from vitrine.snapshot_materialization import (
     SNAPSHOT_DEFERRED_SOURCE_MEDIA_TYPE,
@@ -264,6 +269,11 @@ class CurrentPortfolioGeneratedReflection:
     supported: bool
     explanation: str
     entry_plan: SnapshotEntryPlan | None
+    paper_finalization_id: str | None = None
+    paper_evidence_ids: tuple[str, ...] = ()
+    paper_source_scan_id: str | None = None
+    paper_source_relative_path: str | None = None
+    paper_source_sha256: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1182,6 +1192,7 @@ def _reflection_semantic_value(
     section: WorkingCompositionSectionSummary | None,
     position_in_section: int | None,
     reflection: PortfolioReflection,
+    paper_materialization: PaperReflectionMaterialization | None,
 ) -> dict[str, object]:
     return {
         "contract_version": CURRENT_PORTFOLIO_BUILD_CONTRACT_VERSION,
@@ -1217,6 +1228,23 @@ def _reflection_semantic_value(
             current_portfolio_reflection_configuration_digest().value
         ),
         "renderer_template_sha256": None,
+        "paper_materialization": (
+            None
+            if paper_materialization is None
+            else {
+                "paper_finalization_id": paper_materialization.paper_finalization_id,
+                "returned_paper_evidence_id": (
+                    paper_materialization.returned_paper_evidence_id
+                ),
+                "source_scan_id": paper_materialization.source_scan_id,
+                "source_page_number": paper_materialization.source_page_number,
+                "retained_source_relative_path": (
+                    paper_materialization.retained_source_relative_path
+                ),
+                "source_sha256": paper_materialization.source_sha256,
+                "media_type": paper_materialization.media_type,
+            }
+        ),
     }
 
 
@@ -1240,11 +1268,18 @@ def _reflection_target_path(
     section_order: int,
     position_in_section: int,
     semantic_value: dict[str, object],
+    media_type: str,
 ) -> str:
     token = _hash_value(_PATH_ID_DOMAIN, semantic_value)[:16]
+    suffix = _MEDIA_SUFFIX_BY_TYPE.get(media_type)
+    if suffix is None:
+        raise CurrentPortfolioBuildError(
+            "current_portfolio_build.reflection_context_invalid",
+            "Reflection materialization media type has no deterministic suffix.",
+        )
     return (
         f"section-{section_order:02d}/"
-        f"{position_in_section:02d}-reflection-{token}.txt"
+        f"{position_in_section:02d}-reflection-{token}{suffix}"
     )
 
 
@@ -1256,17 +1291,29 @@ def _planned_reflection_item(
     requirement: WorkingCompositionRequirementSummary,
     section: WorkingCompositionSectionSummary | None,
     reflection: PortfolioReflection,
+    records: tuple[object, ...],
     plan_position: int,
     position_in_section: int | None,
 ) -> tuple[CurrentPortfolioGeneratedReflection, tuple[str, ...]]:
+    paper_materialization: PaperReflectionMaterialization | None = None
+    paper_materialization_error: str | None = None
+    try:
+        paper_materialization = resolve_paper_reflection_materialization(
+            records, reflection
+        )
+    except PaperReflectionMaterializationError as error:
+        paper_materialization_error = str(error)
     semantic_value = _reflection_semantic_value(
         preparation=preparation,
         requirement=requirement,
         section=section,
         position_in_section=position_in_section,
         reflection=reflection,
+        paper_materialization=paper_materialization,
     )
-    content_supported = current_portfolio_reflection_supported(reflection)
+    content_supported = current_portfolio_reflection_supported(
+        reflection, records=records
+    )
     placement_supported = section is not None and position_in_section is not None
     audience_prohibited = _audience_prohibits(rule, "reflection")
     blockers: list[str] = []
@@ -1286,15 +1333,24 @@ def _planned_reflection_item(
         )
     if not content_supported:
         blockers.append("unsupported_reflection_rendering")
-        explanations.append(
-            "Frozen Reflection content mode or format is unsupported by the exact "
-            "first-party renderer; no reinterpretation or dereference is allowed."
-        )
+        if paper_materialization_error is not None:
+            explanations.append(paper_materialization_error)
+        else:
+            explanations.append(
+                "Frozen Reflection content mode or format is unsupported by the exact "
+                "first-party renderer; no reinterpretation or dereference is allowed."
+            )
     if not blockers:
-        explanations.append(
-            "Exact frozen inline Reflection content will be rendered by Vitrine "
-            "as deterministic UTF-8 bytes."
-        )
+        if paper_materialization is None:
+            explanations.append(
+                "Exact frozen inline Reflection content will be rendered by Vitrine "
+                "as deterministic UTF-8 bytes."
+            )
+        else:
+            explanations.append(
+                "Exact confirmed paper Reflection will preserve the original Core-retained "
+                "scan bytes without OCR or reinterpretation."
+            )
     explanation = " ".join(explanations)
 
     entry_plan_id = _reflection_entry_id(
@@ -1312,15 +1368,21 @@ def _planned_reflection_item(
     if content_supported and placement_supported and not audience_prohibited:
         assert section is not None
         assert position_in_section is not None
-        payload = current_portfolio_reflection_bytes(reflection)
+        media_type = current_portfolio_reflection_media_type(
+            reflection, records=records
+        )
         target_relative_path = _reflection_target_path(
             section_order=section.order,
             position_in_section=position_in_section,
             semantic_value=semantic_value,
+            media_type=media_type,
         )
-        media_type = CURRENT_PORTFOLIO_REFLECTION_MEDIA_TYPE
-        output_byte_size = len(payload)
-        output_sha256 = current_portfolio_reflection_output_digest(reflection).value
+        if paper_materialization is None:
+            payload = current_portfolio_reflection_bytes(reflection)
+            output_byte_size = len(payload)
+        output_sha256 = current_portfolio_reflection_output_digest(
+            reflection, records=records
+        ).value
         export_file = True
         entry_plan = SnapshotEntryPlan(
             entry_plan_id=entry_plan_id,
@@ -1339,12 +1401,8 @@ def _planned_reflection_item(
             ),
             renderer_configuration_digest=configuration,
             renderer_template_digest=None,
-            input_references=(
-                SnapshotInputReference(
-                    record_type="portfolio_reflection",
-                    record_id=reflection.reflection_id,
-                    record_revision=reflection.reflection_revision,
-                ),
+            input_references=current_portfolio_reflection_input_references(
+                reflection, records=records
             ),
             required_review_ids=required_review_ids,
         )
@@ -1388,6 +1446,31 @@ def _planned_reflection_item(
             ),
             explanation=explanation,
             entry_plan=entry_plan,
+            paper_finalization_id=(
+                None
+                if paper_materialization is None
+                else paper_materialization.paper_finalization_id
+            ),
+            paper_evidence_ids=(
+                ()
+                if paper_materialization is None
+                else (paper_materialization.returned_paper_evidence_id,)
+            ),
+            paper_source_scan_id=(
+                None
+                if paper_materialization is None
+                else paper_materialization.source_scan_id
+            ),
+            paper_source_relative_path=(
+                None
+                if paper_materialization is None
+                else paper_materialization.retained_source_relative_path
+            ),
+            paper_source_sha256=(
+                None
+                if paper_materialization is None
+                else paper_materialization.source_sha256
+            ),
         ),
         tuple(blockers),
     )
@@ -1448,6 +1531,7 @@ def _planned_items(
                 requirement=context.requirement,
                 section=section,
                 reflection=context.reflection,
+                records=records,
                 plan_position=plan_position,
                 position_in_section=position_in_section,
             )
@@ -1467,6 +1551,7 @@ def _planned_items(
             requirement=context.requirement,
             section=None,
             reflection=context.reflection,
+            records=records,
             plan_position=plan_position,
             position_in_section=None,
         )
@@ -1584,6 +1669,11 @@ def _generated_reflection_fingerprint_value(
         "output_sha256": item.output_sha256,
         "export_file": item.export_file,
         "supported": item.supported,
+        "paper_finalization_id": item.paper_finalization_id,
+        "paper_evidence_ids": list(item.paper_evidence_ids),
+        "paper_source_scan_id": item.paper_source_scan_id,
+        "paper_source_relative_path": item.paper_source_relative_path,
+        "paper_source_sha256": item.paper_source_sha256,
     }
 
 
