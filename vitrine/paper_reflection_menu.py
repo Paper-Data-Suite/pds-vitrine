@@ -1,21 +1,42 @@
-"""Portfolio-scoped teacher surface for paper-native Student Reflection."""
+"""Portfolio-scoped teacher workflow for paper-native Student Reflection."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TextIO
+from typing import Sequence, TextIO, TypeVar
 
-from pds_core.menu_navigation import parse_navigation_choice
+from pds_core.menu_navigation import (
+    NavigationChoice,
+    parse_navigation_choice,
+)
 from pds_core.workspace import resolve_workspace_root
 
+from vitrine.menu_interactions import confirm_exact_phrase
 from vitrine.menu_types import ClearFunction, InputFunction
-from vitrine.models import ActorAttribution
+from vitrine.models import ActorAttribution, CurationTargetRef, PortfolioSelection
+from vitrine.paper_reflection_packet import (
+    IssuedPaperReflectionPacket,
+    issue_paper_reflection_packet,
+    render_issued_paper_reflection_packet,
+)
 from vitrine.paper_reflection_workflow import (
     PaperReflectionRequirementStatus,
     PaperReflectionWorkflowView,
     build_paper_reflection_workflow_view,
 )
+from vitrine.teacher_presentation import (
+    TeacherPortfolioOverview,
+    TeacherSubjectLink,
+    build_teacher_portfolio_overview,
+)
 from vitrine.workflow_context import VitrineWorkflowDependencies
+from vitrine.workflow_views import (
+    CandidateSummary,
+    list_active_selections,
+    list_candidate_summaries,
+)
+
+_ChoiceValue = TypeVar("_ChoiceValue")
 
 
 def _write(output: TextIO, *lines: str) -> None:
@@ -35,6 +56,44 @@ def _pause(input_fn: InputFunction) -> None:
         input_fn("Press Enter to continue...")
     except (EOFError, KeyboardInterrupt):
         return
+
+
+def _navigation(value: str) -> NavigationChoice | None:
+    return parse_navigation_choice(
+        value,
+        allow_back=True,
+        allow_main_menu=True,
+        allow_quit=True,
+    )
+
+
+def _numbered_choice(
+    value: str,
+    choices: Sequence[_ChoiceValue],
+) -> _ChoiceValue | NavigationChoice | None:
+    navigation = _navigation(value)
+    if navigation is not None:
+        return navigation
+    if not value.isdecimal():
+        return None
+    index = int(value)
+    if index < 1 or index > len(choices):
+        return None
+    return choices[index - 1]
+
+
+def _actor(input_fn: InputFunction) -> ActorAttribution | None:
+    actor_id = _read(input_fn, "Teacher/actor ID (B to cancel): ")
+    if _navigation(actor_id) is NavigationChoice.BACK:
+        return None
+    if not actor_id:
+        return None
+    return ActorAttribution(
+        actor_kind="authorized_adult",
+        actor_id=actor_id,
+        owning_system="local",
+        role_snapshot="teacher",
+    )
 
 
 def _status_label(status: str) -> str:
@@ -132,6 +191,345 @@ def _render_technical(
         )
 
 
+def _choose_requirement(
+    values: tuple[PaperReflectionRequirementStatus, ...],
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+) -> PaperReflectionRequirementStatus | None:
+    if not values:
+        return None
+    if len(values) == 1:
+        return values[0]
+    _write(output, "Choose the Reflection requirement:")
+    for index, item in enumerate(values, 1):
+        _write(output, f"{index}. {item.title} — {_status_label(item.status)}")
+    selected = _numbered_choice(
+        _read(input_fn, "Requirement number: "),
+        values,
+    )
+    return (
+        None
+        if selected is None or isinstance(selected, NavigationChoice)
+        else selected
+    )
+
+
+def _choose_subject_link(
+    overview: TeacherPortfolioOverview,
+    *,
+    input_fn: InputFunction,
+    output: TextIO,
+) -> TeacherSubjectLink | None:
+    links = overview.subject_links
+    if not links:
+        _write(
+            output,
+            "No exact current class-qualified student link is available.",
+        )
+        return None
+    if len(links) == 1:
+        link = links[0]
+        _write(
+            output,
+            "Using the single current student/class link:",
+            (
+                f"{link.display_name or link.student_id} — "
+                f"{link.class_id} — {link.school_year}"
+            ),
+        )
+        return link
+    _write(output, "Choose the exact student/class link for this paper:")
+    for index, link in enumerate(links, 1):
+        _write(
+            output,
+            (
+                f"{index}. {link.display_name or link.student_id} — "
+                f"{link.class_id} — {link.school_year}"
+            ),
+        )
+    selected = _numbered_choice(
+        _read(input_fn, "Student/class link number: "),
+        links,
+    )
+    return (
+        None
+        if selected is None or isinstance(selected, NavigationChoice)
+        else selected
+    )
+
+
+def _selection_label(
+    selection: PortfolioSelection,
+    candidates: dict[str, CandidateSummary],
+) -> str:
+    candidate = candidates.get(selection.candidate_id)
+    if candidate is None:
+        return f"Selected Portfolio evidence ({selection.candidate_id})"
+    return candidate.display_snapshot
+
+
+def _choose_targets(
+    *,
+    root: Path,
+    portfolio_id: str,
+    input_fn: InputFunction,
+    output: TextIO,
+) -> tuple[tuple[CurationTargetRef, ...], tuple[str, ...]] | None:
+    selections = list_active_selections(root, portfolio_id)
+    if not selections:
+        _write(
+            output,
+            "No active curated Selections are available.",
+            "Curate the Portfolio evidence before issuing this Reflection.",
+        )
+        return None
+    candidates = {
+        item.candidate_id: item
+        for item in list_candidate_summaries(root, portfolio_id)
+    }
+    labels = tuple(
+        _selection_label(selection, candidates)
+        for selection in selections
+    )
+    _write(
+        output,
+        "Choose the exact curated evidence the student will reflect on.",
+        "Enter one or more numbers separated by commas.",
+    )
+    for index, label in enumerate(labels, 1):
+        _write(output, f"{index}. {label}")
+    raw = _read(input_fn, "Target numbers: ")
+    navigation = _navigation(raw)
+    if navigation is not None:
+        return None
+    chosen_indexes: list[int] = []
+    for token in raw.split(","):
+        value = token.strip()
+        if not value.isdecimal():
+            _write(output, "Target choices must be comma-separated numbers.")
+            return None
+        index = int(value)
+        if index < 1 or index > len(selections) or index in chosen_indexes:
+            _write(output, "Target choice is unavailable or duplicated.")
+            return None
+        chosen_indexes.append(index)
+    if not chosen_indexes:
+        return None
+    chosen = tuple(selections[index - 1] for index in chosen_indexes)
+    chosen_labels = tuple(labels[index - 1] for index in chosen_indexes)
+    targets = tuple(
+        CurationTargetRef(
+            target_kind="selection",
+            target_id=selection.selection_id,
+            semantic_role=f"comparison_item_{position}",
+        )
+        for position, selection in enumerate(chosen, 1)
+    )
+    return targets, chosen_labels
+
+
+def _page_count(input_fn: InputFunction, output: TextIO) -> int | None:
+    raw = _read(input_fn, "Response pages [1]: ")
+    if not raw:
+        return 1
+    if not raw.isdecimal() or int(raw) < 1 or int(raw) > 10:
+        _write(output, "Response pages must be a number from 1 through 10.")
+        return None
+    return int(raw)
+
+
+def _render_issue_review(
+    output: TextIO,
+    *,
+    overview: TeacherPortfolioOverview,
+    requirement: PaperReflectionRequirementStatus,
+    link: TeacherSubjectLink,
+    target_labels: tuple[str, ...],
+    prompt_id: str,
+    prompt_version: str,
+    prompt_snapshot: str,
+    page_count: int,
+) -> None:
+    _write(
+        output,
+        "Prepare / Print Student Reflection",
+        "",
+        f"Student: {link.display_name or overview.subject_label or link.student_id}",
+        f"Class: {link.class_id} — {link.school_year}",
+        f"Requirement: {requirement.title}",
+        "",
+        "Exact curated targets",
+    )
+    for label in target_labels:
+        _write(output, f"- {label}")
+    _write(
+        output,
+        "",
+        f"Prompt ID: {prompt_id}",
+        f"Prompt version: {prompt_version}",
+        f"Prompt: {prompt_snapshot}",
+        f"Response pages: {page_count}",
+        "",
+        "Issuing freezes the prompt, exact targets, class-qualified student link,",
+        "response-page identities, and PDS2 routing context.",
+    )
+
+
+def _report_packet(
+    output: TextIO,
+    packet: IssuedPaperReflectionPacket,
+) -> None:
+    _write(
+        output,
+        "Printable Student Reflection ready.",
+        "",
+        f"PDF: {packet.pdf_path}",
+        f"Response pages: {len(packet.issuance.response_page_ids)}",
+        f"PDS2 routes ready: {len(packet.registration_paths)}",
+        "",
+        "Print this PDF for the student. Returned scans route through normal PDS.",
+    )
+
+
+def _prepare_print_flow(
+    *,
+    root: Path,
+    portfolio_id: str,
+    view: PaperReflectionWorkflowView,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+    dependencies: VitrineWorkflowDependencies,
+    actor: ActorAttribution | None,
+) -> None:
+    requirement = _choose_requirement(
+        tuple(item for item in view.requirements if item.status == "not_issued"),
+        input_fn=input_fn,
+        output=output,
+    )
+    if requirement is None:
+        _write(output, "No unissued Reflection requirement is available.")
+        _pause(input_fn)
+        return
+
+    overview = build_teacher_portfolio_overview(root, portfolio_id)
+    link = _choose_subject_link(
+        overview,
+        input_fn=input_fn,
+        output=output,
+    )
+    if link is None:
+        _pause(input_fn)
+        return
+
+    selected = _choose_targets(
+        root=root,
+        portfolio_id=portfolio_id,
+        input_fn=input_fn,
+        output=output,
+    )
+    if selected is None:
+        _pause(input_fn)
+        return
+    target_references, target_labels = selected
+
+    prompt_id = _read(input_fn, "Prompt ID: ")
+    prompt_version = _read(input_fn, "Prompt version [1]: ") or "1"
+    prompt_snapshot = _read(input_fn, "Exact prompt shown to student: ")
+    if not prompt_id or not prompt_snapshot:
+        _write(output, "Prompt ID and prompt text are required.")
+        _pause(input_fn)
+        return
+    page_count = _page_count(input_fn, output)
+    if page_count is None:
+        _pause(input_fn)
+        return
+
+    mutation_actor = actor or _actor(input_fn)
+    if mutation_actor is None:
+        return
+
+    def render_review() -> None:
+        _render_issue_review(
+            output,
+            overview=overview,
+            requirement=requirement,
+            link=link,
+            target_labels=target_labels,
+            prompt_id=prompt_id,
+            prompt_version=prompt_version,
+            prompt_snapshot=prompt_snapshot,
+            page_count=page_count,
+        )
+
+    if not confirm_exact_phrase(
+        expected_phrase="ISSUE REFLECTION",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
+        return
+
+    packet = issue_paper_reflection_packet(
+        root,
+        portfolio_id=portfolio_id,
+        reflection_requirement_id=requirement.requirement_id,
+        prompt_id=prompt_id,
+        prompt_version=prompt_version,
+        prompt_snapshot=prompt_snapshot,
+        subject_link_id=link.subject_link_id,
+        issued_by=mutation_actor,
+        target_scope=(
+            "selection"
+            if len(target_references) == 1
+            else "comparison_set"
+        ),
+        target_references=target_references,
+        page_count=page_count,
+        expected_state_revision=view.observed_state_revision,
+        authority_gate=dependencies.curation_authority_gate,
+        student_display_name=link.display_name or overview.subject_label,
+    )
+    clear_fn()
+    _report_packet(output, packet)
+    _pause(input_fn)
+
+
+def _reprint_flow(
+    *,
+    root: Path,
+    portfolio_id: str,
+    view: PaperReflectionWorkflowView,
+    input_fn: InputFunction,
+    output: TextIO,
+) -> None:
+    requirement = _choose_requirement(
+        tuple(
+            item
+            for item in view.requirements
+            if item.status == "issued_awaiting_return"
+            and item.issuance_id is not None
+        ),
+        input_fn=input_fn,
+        output=output,
+    )
+    if requirement is None or requirement.issuance_id is None:
+        _write(output, "No issued Reflection is available to reprint.")
+        _pause(input_fn)
+        return
+    overview = build_teacher_portfolio_overview(root, portfolio_id)
+    packet = render_issued_paper_reflection_packet(
+        root,
+        issuance_id=requirement.issuance_id,
+        expected_state_revision=view.observed_state_revision,
+        student_display_name=overview.subject_label,
+    )
+    _report_packet(output, packet)
+    _pause(input_fn)
+
+
 def run_paper_reflection_menu(
     *,
     portfolio_id: str,
@@ -142,17 +540,25 @@ def run_paper_reflection_menu(
     workspace_root: Path | None = None,
     actor: ActorAttribution | None = None,
 ) -> None:
-    """Show Portfolio-scoped paper Reflection status and next workflow boundary."""
+    """Run the Portfolio-scoped paper-first Student Reflection workflow."""
 
-    del dependencies, actor
     root = resolve_workspace_root(workspace_root)
     while True:
         view = build_paper_reflection_workflow_view(root, portfolio_id)
         clear_fn()
         _render_workflow(output, view)
+        actions: list[str] = []
+        if any(item.status == "not_issued" for item in view.requirements):
+            actions.append("1. Prepare / print Reflection")
+        if any(
+            item.status == "issued_awaiting_return"
+            for item in view.requirements
+        ):
+            actions.append("2. Reprint issued Reflection")
         _write(
             output,
             "",
+            *actions,
             "T. Technical details / provenance",
             "B. Back",
             "M. Main Menu",
@@ -164,19 +570,38 @@ def run_paper_reflection_menu(
             _render_technical(output, view)
             _pause(input_fn)
             continue
-        navigation = parse_navigation_choice(
-            choice,
-            allow_back=True,
-            allow_main_menu=True,
-            allow_quit=True,
-        )
+        if choice == "1" and any(
+            item.status == "not_issued" for item in view.requirements
+        ):
+            clear_fn()
+            _prepare_print_flow(
+                root=root,
+                portfolio_id=portfolio_id,
+                view=view,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                actor=actor,
+            )
+            continue
+        if choice == "2" and any(
+            item.status == "issued_awaiting_return"
+            for item in view.requirements
+        ):
+            clear_fn()
+            _reprint_flow(
+                root=root,
+                portfolio_id=portfolio_id,
+                view=view,
+                input_fn=input_fn,
+                output=output,
+            )
+            continue
+        navigation = _navigation(choice)
         if navigation is not None:
             return
-        _write(
-            output,
-            "Preparation, printing, and returned-paper review actions are "
-            "introduced at the next workflow slice.",
-        )
+        _write(output, "That Student Reflection action is not available.")
         _pause(input_fn)
 
 

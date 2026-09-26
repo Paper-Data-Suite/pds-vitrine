@@ -34,3 +34,4 @@ def test_portfolio_reflection_menu_leads_with_paper_status(
     assert "Status: Prompt not issued" in rendered
     assert "Paper is the primary Reflection workflow." in rendered
     assert "Typed/manual Reflection remains a fallback" in rendered
+    assert "1. Prepare / print Reflection" in rendered
