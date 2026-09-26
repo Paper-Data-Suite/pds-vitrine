@@ -71,6 +71,13 @@ from .paper_reflection import (
     ReflectionResponsePage,
     ReflectionReturnedPaperEvidence,
 )
+from .paper_reflection_authorship import (
+    AUTHORSHIP_CONFIRMATION_BASES,
+    REFLECTION_AUTHORSHIP_CONFIRMATION_RECORD_TYPE,
+    REFLECTION_PAPER_FINALIZATION_RECORD_TYPE,
+    ReflectionAuthorshipConfirmation,
+    ReflectionPaperFinalization,
+)
 from .profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -173,6 +180,11 @@ __all__ = [
     "ReflectionPromptIssuance",
     "ReflectionResponsePage",
     "ReflectionReturnedPaperEvidence",
+    "ReflectionAuthorshipConfirmation",
+    "ReflectionPaperFinalization",
+    "AUTHORSHIP_CONFIRMATION_BASES",
+    "REFLECTION_AUTHORSHIP_CONFIRMATION_RECORD_TYPE",
+    "REFLECTION_PAPER_FINALIZATION_RECORD_TYPE",
     "ProfileAudienceRule",
     "ProfileOverlayRequirement",
     "ProfileOverlayRequirementChange",

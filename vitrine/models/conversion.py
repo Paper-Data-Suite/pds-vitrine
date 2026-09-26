@@ -67,6 +67,10 @@ from .paper_reflection import (
     ReflectionResponsePage,
     ReflectionReturnedPaperEvidence,
 )
+from .paper_reflection_authorship import (
+    ReflectionAuthorshipConfirmation,
+    ReflectionPaperFinalization,
+)
 from .profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -135,6 +139,8 @@ VitrineRecord: TypeAlias = (
     | ReflectionPromptIssuance
     | ReflectionResponsePage
     | ReflectionReturnedPaperEvidence
+    | ReflectionAuthorshipConfirmation
+    | ReflectionPaperFinalization
     | CurationReviewDecision
     | WorkingPortfolioCompositionInventory
     | WorkingPortfolioCompositionPointerRevision

@@ -43,6 +43,10 @@ from vitrine.models.paper_reflection import (
     ReflectionResponsePage,
     ReflectionReturnedPaperEvidence,
 )
+from vitrine.models.paper_reflection_authorship import (
+    ReflectionAuthorshipConfirmation,
+    ReflectionPaperFinalization,
+)
 from vitrine.models.profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -280,6 +284,18 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
         ReflectionReturnedPaperEvidence,
         None,
         ("returned_paper_evidence_id",),
+    ),
+    RecordDescriptor(
+        "reflection_authorship_confirmation",
+        ReflectionAuthorshipConfirmation,
+        None,
+        ("authorship_confirmation_id",),
+    ),
+    RecordDescriptor(
+        "reflection_paper_finalization",
+        ReflectionPaperFinalization,
+        None,
+        ("paper_finalization_id",),
     ),
     RecordDescriptor(
         "curation_review_decision",
