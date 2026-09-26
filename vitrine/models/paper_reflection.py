@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from typing import Final
 
 from .common import (
     SCHEMA_VERSION,
     identifier_tuple,
     require_aware_datetime,
+    require_date,
     require_enum,
     require_identifier,
     require_positive_int,
     require_record_envelope,
+    require_relative_path,
+    require_sha256,
     require_text,
 )
 from .curation_workflow import REFLECTION_SCOPES, CurationTargetRef
@@ -174,9 +177,106 @@ class ReflectionResponsePage:
             )
 
 
+REFLECTION_RETURNED_PAPER_EVIDENCE_RECORD_TYPE: Final[str] = (
+    "reflection_returned_paper_evidence"
+)
+REFLECTION_RETURNED_PAPER_EVIDENCE_KIND: Final[str] = "core_retained_source_page"
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ReflectionReturnedPaperEvidence:
+    """Immutable evidence that one routed page came from one Core-retained scan."""
+
+    returned_paper_evidence_id: str
+    issuance_id: str
+    response_page_id: str
+    route_id: str
+    class_id: str
+    work_id: str
+    source_scan_id: str
+    source_filename: str
+    source_page_number: int
+    retained_source_relative_path: str
+    source_sha256: str
+    intake_timestamp: datetime
+    intake_date: date
+    evidence_kind: str = field(default=REFLECTION_RETURNED_PAPER_EVIDENCE_KIND)
+    schema_version: str = field(default=SCHEMA_VERSION)
+    record_type: str = field(
+        default=REFLECTION_RETURNED_PAPER_EVIDENCE_RECORD_TYPE
+    )
+
+    def __post_init__(self) -> None:
+        require_record_envelope(
+            self.schema_version,
+            self.record_type,
+            REFLECTION_RETURNED_PAPER_EVIDENCE_RECORD_TYPE,
+        )
+        for name in (
+            "returned_paper_evidence_id",
+            "issuance_id",
+            "response_page_id",
+            "route_id",
+            "class_id",
+            "work_id",
+            "source_scan_id",
+        ):
+            object.__setattr__(
+                self,
+                name,
+                require_identifier(getattr(self, name), name),
+            )
+        object.__setattr__(
+            self,
+            "source_filename",
+            require_text(self.source_filename, "source_filename", maximum=512),
+        )
+        object.__setattr__(
+            self,
+            "source_page_number",
+            require_positive_int(
+                self.source_page_number,
+                "source_page_number",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "retained_source_relative_path",
+            require_relative_path(
+                self.retained_source_relative_path,
+                "retained_source_relative_path",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "source_sha256",
+            require_sha256(self.source_sha256, "source_sha256"),
+        )
+        object.__setattr__(
+            self,
+            "intake_timestamp",
+            require_aware_datetime(
+                self.intake_timestamp,
+                "intake_timestamp",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "intake_date",
+            require_date(self.intake_date, "intake_date"),
+        )
+        if self.evidence_kind != REFLECTION_RETURNED_PAPER_EVIDENCE_KIND:
+            raise VitrineModelValidationError(
+                "evidence_kind must be 'core_retained_source_page'."
+            )
+
+
 __all__ = [
     "REFLECTION_PROMPT_ISSUANCE_RECORD_TYPE",
     "REFLECTION_RESPONSE_PAGE_RECORD_TYPE",
+    "REFLECTION_RETURNED_PAPER_EVIDENCE_KIND",
+    "REFLECTION_RETURNED_PAPER_EVIDENCE_RECORD_TYPE",
     "ReflectionPromptIssuance",
     "ReflectionResponsePage",
+    "ReflectionReturnedPaperEvidence",
 ]

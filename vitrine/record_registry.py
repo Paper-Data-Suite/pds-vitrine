@@ -30,10 +30,6 @@ from vitrine.models.curation_workflow import (
     WorkingPortfolioCompositionInventory,
     WorkingPortfolioCompositionPointerRevision,
 )
-from vitrine.models.paper_reflection import (
-    ReflectionPromptIssuance,
-    ReflectionResponsePage,
-)
 from vitrine.models.identity import (
     Portfolio,
     PortfolioSubject,
@@ -41,6 +37,11 @@ from vitrine.models.identity import (
     PortfolioSubjectDisplaySnapshot,
     PortfolioSubjectIdentityDecision,
     PortfolioSubjectIdentityTransition,
+)
+from vitrine.models.paper_reflection import (
+    ReflectionPromptIssuance,
+    ReflectionResponsePage,
+    ReflectionReturnedPaperEvidence,
 )
 from vitrine.models.profiles import (
     PortfolioProfileBinding,
@@ -273,6 +274,12 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
         ReflectionResponsePage,
         None,
         ("response_page_id",),
+    ),
+    RecordDescriptor(
+        "reflection_returned_paper_evidence",
+        ReflectionReturnedPaperEvidence,
+        None,
+        ("returned_paper_evidence_id",),
     ),
     RecordDescriptor(
         "curation_review_decision",

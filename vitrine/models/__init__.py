@@ -69,6 +69,7 @@ from .identity import (
 from .paper_reflection import (
     ReflectionPromptIssuance,
     ReflectionResponsePage,
+    ReflectionReturnedPaperEvidence,
 )
 from .profiles import (
     PortfolioProfileBinding,
@@ -171,6 +172,7 @@ __all__ = [
     "ProfileApplicability",
     "ReflectionPromptIssuance",
     "ReflectionResponsePage",
+    "ReflectionReturnedPaperEvidence",
     "ProfileAudienceRule",
     "ProfileOverlayRequirement",
     "ProfileOverlayRequirementChange",
