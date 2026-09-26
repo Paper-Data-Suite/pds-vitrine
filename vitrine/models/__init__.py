@@ -66,6 +66,10 @@ from .identity import (
     SubjectAssociationAllocation,
     VitrineRecordRef,
 )
+from .paper_reflection import (
+    ReflectionPromptIssuance,
+    ReflectionResponsePage,
+)
 from .profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -165,6 +169,8 @@ __all__ = [
     "PortfolioSubjectRelationshipAssertion",
     "ProducerSourceReference",
     "ProfileApplicability",
+    "ReflectionPromptIssuance",
+    "ReflectionResponsePage",
     "ProfileAudienceRule",
     "ProfileOverlayRequirement",
     "ProfileOverlayRequirementChange",

@@ -54,6 +54,7 @@ from .curation_workflow import (
     WorkingPortfolioCompositionPointerRevision,
 )
 from .errors import VitrineSerializationError
+from .paper_reflection import ReflectionPromptIssuance, ReflectionResponsePage
 from .identity import (
     Portfolio,
     PortfolioSubject,
@@ -127,6 +128,8 @@ VitrineRecord: TypeAlias = (
     | CurationRationale
     | CurationAnnotation
     | PortfolioReflection
+    | ReflectionPromptIssuance
+    | ReflectionResponsePage
     | CurationReviewDecision
     | WorkingPortfolioCompositionInventory
     | WorkingPortfolioCompositionPointerRevision
