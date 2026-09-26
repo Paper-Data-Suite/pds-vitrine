@@ -21,16 +21,18 @@ from vitrine.candidate_review import (
     CandidateReviewProfileRequirementSummary,
     CandidateReviewSectionSummary,
     CandidateReviewSelectionSummary,
+    CandidateReviewStudentAuthorChoice,
     execute_annotation_action,
     execute_candidate_decision,
     execute_curation_review,
-    execute_reflection_action,
     execute_selection_placement,
     execute_selection_replacement,
     execute_selection_withdrawal,
+    execute_typed_reflection_action,
     get_candidate_review_detail,
     list_candidate_review_entries,
     list_candidate_review_section_guidance,
+    list_reflection_student_author_choices,
     plan_annotation_creation,
     plan_annotation_revision,
     plan_candidate_decision,
@@ -1483,6 +1485,54 @@ def _reflection_requirements(
     )
 
 
+def _choose_reflection_student_author(
+    *,
+    root: Path,
+    detail: CandidateReviewDetail,
+    input_fn: InputFunction,
+    output: TextIO,
+    reflection_id: str | None = None,
+) -> CandidateReviewStudentAuthorChoice | None:
+    choices = list_reflection_student_author_choices(
+        root,
+        detail.inbox_detail.item.entry_id,
+        reflection_id=reflection_id,
+    )
+    resolution = resolve_required_choice(choices)
+    if resolution.disposition == "unavailable":
+        _write(
+            output,
+            "No exact current class-qualified student link is available.",
+        )
+        return None
+    if resolution.disposition == "carried_forward":
+        selected = resolution.selected
+        assert isinstance(selected, CandidateReviewStudentAuthorChoice)
+        reference = selected.student_reference
+        _write(
+            output,
+            "Using the single current student author link:",
+            f"{reference.student_id} — {reference.class_id} — {reference.school_year}",
+        )
+        return selected
+
+    _write(output, "Choose the exact student author link:")
+    for index, choice in enumerate(resolution.choices, 1):
+        reference = choice.student_reference
+        _write(
+            output,
+            f"{index}. {reference.student_id} — {reference.class_id} — "
+            f"{reference.school_year}",
+        )
+    chosen = _numbered_choice(
+        _read(input_fn, "Student author link number: "),
+        resolution.choices,
+    )
+    if chosen is None or isinstance(chosen, NavigationChoice):
+        return None
+    return chosen
+
+
 def _reflection_flow(
     *,
     root: Path,
@@ -1494,7 +1544,16 @@ def _reflection_flow(
     actor: ActorAttribution | None,
 ) -> None:
     clear_fn()
-    _write(output, "Reflection", "", "1. Create Reflection", "2. Revise Reflection")
+    _write(
+        output,
+        "Reflection",
+        "",
+        "Paper Reflection is the primary workflow.",
+        "This screen records the typed/manual fallback.",
+        "",
+        "1. Create typed Reflection",
+        "2. Revise typed Reflection",
+    )
     action = _read(input_fn, "Reflection action: ")
     if action == "1":
         requirements = _reflection_requirements(detail)
@@ -1512,6 +1571,14 @@ def _reflection_flow(
             requirements,
         )
         if chosen_requirement is None or isinstance(chosen_requirement, NavigationChoice):
+            return
+        author_choice = _choose_reflection_student_author(
+            root=root,
+            detail=detail,
+            input_fn=input_fn,
+            output=output,
+        )
+        if author_choice is None:
             return
         target = _choose_target_scope(
             root=root,
@@ -1533,6 +1600,7 @@ def _reflection_flow(
             target_scope=scope,
             target_references=targets,
             content=_read(input_fn, "Reflection text: "),
+            subject_link_id=author_choice.subject_link_id,
         )
     elif action == "2":
         if not detail.reflections:
@@ -1551,11 +1619,21 @@ def _reflection_flow(
         )
         if chosen_reflection is None or isinstance(chosen_reflection, NavigationChoice):
             return
+        author_choice = _choose_reflection_student_author(
+            root=root,
+            detail=detail,
+            input_fn=input_fn,
+            output=output,
+            reflection_id=chosen_reflection.reflection_id,
+        )
+        if author_choice is None:
+            return
         plan = plan_reflection_revision(
             root,
             entry_id=detail.inbox_detail.item.entry_id,
             reflection_id=chosen_reflection.reflection_id,
             content=_read(input_fn, "Replacement Reflection text: "),
+            subject_link_id=author_choice.subject_link_id,
         )
     else:
         return
@@ -1568,7 +1646,9 @@ def _reflection_flow(
             f"Prompt: {plan.prompt_id} / {plan.prompt_version}",
             f"Scope: {plan.target_scope}",
             f"Observed Vitrine state revision: {plan.observed_state_revision}",
-            "Authorship is preserved from the explicit actor below; it is not inferred.",
+            "Student author: "
+            f"{plan.student_reference.student_id if plan.student_reference else '(unresolved)'}",
+            "The authorized adult recorder is not the Reflection author.",
         )
         _render_targets(output, plan.target_references)
 
@@ -1583,10 +1663,10 @@ def _reflection_flow(
     mutation_actor = _mutation_actor(actor, input_fn)
     if mutation_actor is None:
         return
-    result = execute_reflection_action(
+    result = execute_typed_reflection_action(
         root,
         plan,
-        author=mutation_actor,
+        recorded_by=mutation_actor,
         authority_gate=dependencies.curation_authority_gate,
     )
     clear_fn()

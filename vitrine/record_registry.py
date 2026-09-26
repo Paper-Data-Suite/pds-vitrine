@@ -38,6 +38,7 @@ from vitrine.models.identity import (
     PortfolioSubjectIdentityDecision,
     PortfolioSubjectIdentityTransition,
 )
+from vitrine.models.manual_reflection import ReflectionManualEntryProvenance
 from vitrine.models.paper_reflection import (
     ReflectionPromptIssuance,
     ReflectionResponsePage,
@@ -296,6 +297,12 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
         ReflectionPaperFinalization,
         None,
         ("paper_finalization_id",),
+    ),
+    RecordDescriptor(
+        "reflection_manual_entry_provenance",
+        ReflectionManualEntryProvenance,
+        None,
+        ("manual_entry_provenance_id",),
     ),
     RecordDescriptor(
         "curation_review_decision",

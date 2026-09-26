@@ -66,6 +66,11 @@ from .identity import (
     SubjectAssociationAllocation,
     VitrineRecordRef,
 )
+from .manual_reflection import (
+    REFLECTION_MANUAL_ENTRY_MODE,
+    REFLECTION_MANUAL_ENTRY_PROVENANCE_RECORD_TYPE,
+    ReflectionManualEntryProvenance,
+)
 from .paper_reflection import (
     ReflectionPromptIssuance,
     ReflectionResponsePage,
@@ -168,6 +173,9 @@ __all__ = [
     "PortfolioProfileRequirement",
     "PortfolioProfileRevision",
     "PortfolioReflection",
+    "REFLECTION_MANUAL_ENTRY_MODE",
+    "REFLECTION_MANUAL_ENTRY_PROVENANCE_RECORD_TYPE",
+    "ReflectionManualEntryProvenance",
     "PortfolioSelection",
     "PortfolioSubject",
     "PortfolioSubjectClassLink",
