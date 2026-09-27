@@ -424,6 +424,10 @@ def validate(
                     "scripts/smoke_test_paper_reflection_wheel.py",
                 ),
                 (
+                    "paper-native Reflection end-to-end",
+                    "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
+                ),
+                (
                     "guided Working Composition",
                     "scripts/smoke_test_working_composition_wheel.py",
                 ),

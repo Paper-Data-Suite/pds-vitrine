@@ -471,6 +471,8 @@ REQUIRED_SDIST_FILES = {
     "vitrine/paper_reflection_services.py",
     "vitrine/paper_reflection_workflow.py",
     "vitrine/pds_module.py",
+    "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
+    "tests/test_paper_reflection_installed_acceptance.py",
 }
 
 

@@ -148,6 +148,7 @@ files = [
     "scripts/validate_v030_release_audit.py",
     "scripts/validate_paper_reflection.py",
     "scripts/smoke_test_paper_reflection_wheel.py",
+    "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
 ]
 
 [[tool.mypy.overrides]]

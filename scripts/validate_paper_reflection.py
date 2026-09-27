@@ -24,6 +24,7 @@ FOCUSED_TESTS = (
     "tests/test_paper_reflection_menu.py",
     "tests/test_paper_reflection_returned_menu.py",
     "tests/test_current_portfolio_reflection.py",
+    "tests/test_paper_reflection_installed_acceptance.py",
 )
 
 REQUIRED_DOCS = (
@@ -160,6 +161,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
         ROOT / "scripts" / "validate_repository.py",
         "scripts/validate_paper_reflection.py",
         "scripts/smoke_test_paper_reflection_wheel.py",
+        "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
     )
     _require_text(
         ROOT / "docs" / "README.md",

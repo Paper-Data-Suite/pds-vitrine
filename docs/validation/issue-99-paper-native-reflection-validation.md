@@ -83,3 +83,19 @@ retained path, wrong confirmation phrase, and an invalid/ambiguous rescan
 selection.
 
 OCR is not part of acceptance.
+
+## Installed end-to-end wheel acceptance
+
+The final automated installed acceptance is:
+
+```text
+python scripts/smoke_test_paper_reflection_end_to_end_wheel.py <vitrine-wheel> <core-wheel>
+```
+
+The harness copies only synthetic test support and fixture data into a temporary directory. It does not copy the Vitrine or Core source packages. With `PYTHONPATH` removed and the working directory outside the repository, all `vitrine` and `pds_core` imports therefore resolve from the supplied wheels.
+
+The acceptance proves one exact one-page paper lifecycle: issuance, exact Core route registration, retained PNG source, installed module-profile discovery, Core dispatch to Vitrine, returned-paper evidence, explicit adult authorship confirmation, canonical student-authored Reflection, paper finalization, and exact retained bytes through the Current Portfolio Reflection renderer.
+
+It asserts no `PortfolioPlacement` is created for the Reflection, the student remains the canonical author, the adult remains confirmation/recording actor, the prompt and targets are unchanged from issuance, the retained digest is preserved, the Reflection requirement reaches `recorded`, and no sibling PDS producer package is installed.
+
+General repository wheel smokes that run `pip check` install the Vitrine wheel with its declared runtime dependencies. The two #99 isolation smokes intentionally use `--no-deps`: they do not run `pip check` and exercise only surfaces that do not require the PDF-rendering dependencies.
