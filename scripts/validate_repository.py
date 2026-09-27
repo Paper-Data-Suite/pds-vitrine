@@ -81,6 +81,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "paper-native student Reflection",
+        (
+            "scripts/validate_paper_reflection.py",
+            "--skip-focused-tests",
+        ),
+    ),
+    (
         "guided Working Composition",
         (
             "scripts/validate_working_composition.py",
@@ -411,6 +418,10 @@ def validate(
                 (
                     "guided-menu interactions",
                     "scripts/smoke_test_guided_menu_interactions_wheel.py",
+                ),
+                (
+                    "paper-native student Reflection",
+                    "scripts/smoke_test_paper_reflection_wheel.py",
                 ),
                 (
                     "guided Working Composition",

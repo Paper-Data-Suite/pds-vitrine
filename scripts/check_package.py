@@ -121,6 +121,21 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/working_composition_menu.py",
     "vitrine/working_composition_cli.py",
     "vitrine/workspace.py",
+    "vitrine/manual_reflection_services.py",
+    "vitrine/models/paper_reflection.py",
+    "vitrine/paper_reflection_authorship.py",
+    "vitrine/paper_reflection_evidence.py",
+    "vitrine/paper_reflection_materialization.py",
+    "vitrine/paper_reflection_menu.py",
+    "vitrine/paper_reflection_packet.py",
+    "vitrine/paper_reflection_pdf.py",
+    "vitrine/paper_reflection_printing.py",
+    "vitrine/paper_reflection_review.py",
+    "vitrine/paper_reflection_route_handler.py",
+    "vitrine/paper_reflection_routes.py",
+    "vitrine/paper_reflection_services.py",
+    "vitrine/paper_reflection_workflow.py",
+    "vitrine/pds_module.py",
 }
 REQUIRED_SDIST_FILES = {
     "CHANGELOG.md",
@@ -424,6 +439,38 @@ REQUIRED_SDIST_FILES = {
     "docs/validation/issue-70-suite-operations-integration-validation.md",
     "docs/validation/issue-95-teacher-information-architecture-validation.md",
     "docs/validation/issue-96-candidate-evidence-review-validation.md",
+    "docs/contracts/paper-native-reflection-v1.md",
+    "docs/development/paper-native-reflection.md",
+    "docs/validation/issue-99-paper-native-reflection-validation.md",
+    "scripts/smoke_test_paper_reflection_wheel.py",
+    "scripts/validate_paper_reflection.py",
+    "tests/test_paper_reflection_authorship.py",
+    "tests/test_paper_reflection_evidence.py",
+    "tests/test_paper_reflection_menu.py",
+    "tests/test_paper_reflection_models.py",
+    "tests/test_paper_reflection_packet.py",
+    "tests/test_paper_reflection_printing.py",
+    "tests/test_paper_reflection_returned_menu.py",
+    "tests/test_paper_reflection_review.py",
+    "tests/test_paper_reflection_routes.py",
+    "tests/test_paper_reflection_services.py",
+    "tests/test_paper_reflection_workflow.py",
+    "tests/test_validate_paper_reflection.py",
+    "vitrine/manual_reflection_services.py",
+    "vitrine/models/paper_reflection.py",
+    "vitrine/paper_reflection_authorship.py",
+    "vitrine/paper_reflection_evidence.py",
+    "vitrine/paper_reflection_materialization.py",
+    "vitrine/paper_reflection_menu.py",
+    "vitrine/paper_reflection_packet.py",
+    "vitrine/paper_reflection_pdf.py",
+    "vitrine/paper_reflection_printing.py",
+    "vitrine/paper_reflection_review.py",
+    "vitrine/paper_reflection_route_handler.py",
+    "vitrine/paper_reflection_routes.py",
+    "vitrine/paper_reflection_services.py",
+    "vitrine/paper_reflection_workflow.py",
+    "vitrine/pds_module.py",
 }
 
 
@@ -442,6 +489,10 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
     normalized = [item.replace(" ", "") for item in requirements]
     if not any("pds-core<0.7,>=0.6.3" in item for item in normalized):
         findings.append(f"missing Core dependency range: {requirements}")
+    if not any(item.lower().startswith("qrcode") for item in normalized):
+        findings.append(f"missing qrcode runtime dependency: {requirements}")
+    if not any(item.lower().startswith("reportlab") for item in normalized):
+        findings.append(f"missing reportlab runtime dependency: {requirements}")
     sibling_names = (
         "pds-scoreform",
         "pds-quillan",
@@ -529,8 +580,14 @@ def validate_wheel(path: Path) -> list[str]:
                 not in entries
             ):
                 findings.append("missing Vitrine module-operations entry point")
-            if "paper_data_suite.modules" in entries:
-                findings.append("routing entry point must not be declared")
+            if "[paper_data_suite.modules]" not in entries:
+                findings.append(
+                    "missing Vitrine routing module-profile entry point"
+                )
+            if "vitrine = vitrine.pds_module:get_module_profile" not in entries:
+                findings.append(
+                    "missing exact Vitrine routing module-profile provider"
+                )
             if "paper_data_suite.publication_producers" in entries:
                 findings.append("publication-producer entry point must not be declared")
     return findings

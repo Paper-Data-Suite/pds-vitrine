@@ -1,5 +1,7 @@
 # Changelog
 
+- Issue #99 paper-native student Reflection: immutable prompt/target issuance, Core PDS2 response-page routing, printable QR response PDFs, retained returned-paper evidence, explicit `CONFIRM STUDENT AUTHOR` review, separated student author/adult recorder provenance, typed fallback correction, and exact paper materialization for Current Portfolio.
+
 All notable changes to this project will be documented in this file.
 
 ## Unreleased

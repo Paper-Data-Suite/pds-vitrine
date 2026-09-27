@@ -146,6 +146,8 @@ files = [
     "scripts/qualify_installed_live_portfolio.py",
     "scripts/validate_live_installed_acceptance.py",
     "scripts/validate_v030_release_audit.py",
+    "scripts/validate_paper_reflection.py",
+    "scripts/smoke_test_paper_reflection_wheel.py",
 ]
 
 [[tool.mypy.overrides]]
