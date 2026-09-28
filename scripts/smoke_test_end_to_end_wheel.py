@@ -414,6 +414,7 @@ def smoke(
                 "-m",
                 "pip",
                 "install",
+                "--no-deps",
                 str(vitrine),
             ],
             cwd=work,

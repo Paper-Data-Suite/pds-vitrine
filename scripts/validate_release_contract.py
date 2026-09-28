@@ -36,7 +36,10 @@ EXPECTED_CONSOLE_SCRIPT = {"vitrine": "vitrine.cli:main"}
 EXPECTED_OPERATIONS_ENTRY_POINTS = {
     "paper_data_suite.module_operations": {
         "vitrine": "vitrine.pds_operations:get_module_operations_profile"
-    }
+    },
+    "paper_data_suite.modules": {
+        "vitrine": "vitrine.pds_module:get_module_profile"
+    },
 }
 EXPECTED_FIXTURE_PRODUCER_IDS = (
     "vitrine_concord_fixture",
@@ -52,7 +55,6 @@ EXPECTED_PURPOSE_KINDS = frozenset(
     {"improvement", "showcase", "parent_guardian_conference", "regulated"}
 )
 FORBIDDEN_ENTRY_POINT_GROUPS = (
-    "paper_data_suite.modules",
     "paper_data_suite.publication_producers",
 )
 FORBIDDEN_RUNTIME_DEPENDENCIES = (

@@ -1,7 +1,7 @@
 # Changelog
 
 - Issue #99 paper-native student Reflection: immutable prompt/target issuance, Core PDS2 response-page routing, printable QR response PDFs, retained returned-paper evidence, explicit `CONFIRM STUDENT AUTHOR` review, separated student author/adult recorder provenance, typed fallback correction, and exact paper materialization for Current Portfolio.
-- Issue #99 installed-wheel acceptance now exercises retained-source Core dispatch through canonical Reflection and exact Current Portfolio paper-byte materialization; legacy `pip check` wheel smokes install Vitrine's declared third-party runtime dependencies.
+- Issue #99 installed-wheel acceptance now exercises retained-source Core dispatch through canonical Reflection and exact Current Portfolio paper-byte materialization; the base distribution remains Core-only with printable PDF dependencies isolated in the `paper` extra.
 
 All notable changes to this project will be documented in this file.
 

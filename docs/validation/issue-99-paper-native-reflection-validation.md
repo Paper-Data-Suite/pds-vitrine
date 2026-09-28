@@ -98,4 +98,4 @@ The acceptance proves one exact one-page paper lifecycle: issuance, exact Core r
 
 It asserts no `PortfolioPlacement` is created for the Reflection, the student remains the canonical author, the adult remains confirmation/recording actor, the prompt and targets are unchanged from issuance, the retained digest is preserved, the Reflection requirement reaches `recorded`, and no sibling PDS producer package is installed.
 
-General repository wheel smokes that run `pip check` install the Vitrine wheel with its declared runtime dependencies. The two #99 isolation smokes intentionally use `--no-deps`: they do not run `pip check` and exercise only surfaces that do not require the PDF-rendering dependencies.
+General repository wheel smokes preserve the historical Core-only base installation and use `--no-deps`. Printable PDF support is declared under the `paper` extra (`pds-vitrine[paper]`). The #99 routing and end-to-end isolation smokes deliberately exercise only surfaces that remain available without that extra.

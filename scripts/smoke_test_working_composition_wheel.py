@@ -59,6 +59,7 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
                 "-m",
                 "pip",
                 "install",
+                "--no-deps",
                 str(vitrine_wheel.resolve()),
             ],
             cwd=work,

@@ -559,7 +559,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
     )
     _require_text(
         ROOT / "vitrine/portfolio_menu.py",
-        '"7. Attention / Next Actions"',
+        '"8. Attention / Next Actions"',
         "portfolio_id=portfolio_id",
     )
 

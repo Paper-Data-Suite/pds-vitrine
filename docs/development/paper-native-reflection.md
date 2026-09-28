@@ -65,12 +65,13 @@ rather than asking the teacher to repeat or fabricate provenance.
 
 ## Printing dependencies
 
-Printable Reflection PDFs use `qrcode[pil]` and `reportlab`. These are Vitrine
-runtime dependencies for the paper-generation surface. They do not create a
+Printable Reflection PDFs use `qrcode[pil]` and `reportlab`. These are Vitrine `paper` extra dependencies for the paper-generation surface. They do not create a
 dependency on Quillan, Concord, ScoreForm, Portia, or Meridian.
 
-The routing/profile modules and evidence/materialization path remain importable
-without sibling PDS producer packages.
+Install printable-paper support with `pds-vitrine[paper]`. The base Vitrine
+distribution remains Core-only. The routing/profile modules, Portfolio menu,
+and evidence/materialization path remain importable without the paper extra or
+sibling PDS producer packages.
 
 ## Release qualification
 

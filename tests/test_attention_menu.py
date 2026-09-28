@@ -193,7 +193,7 @@ def test_main_menu_option_six_routes_workspace_attention(
     assert routed[0]["input_fn"] is not None
 
 
-def test_portfolio_option_seven_routes_exact_portfolio_attention(
+def test_portfolio_option_eight_routes_exact_portfolio_attention(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -219,7 +219,7 @@ def test_portfolio_option_seven_routes_exact_portfolio_attention(
         "run_attention_menu",
         lambda **kwargs: routed.append(kwargs),
     )
-    raw_input = _inputs(["7", "B"])
+    raw_input = _inputs(["8", "B"])
 
     portfolio_menu._portfolio_context(
         root=tmp_path,

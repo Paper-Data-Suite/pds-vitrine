@@ -6,7 +6,7 @@ import webbrowser
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TextIO, TypeVar
+from typing import TYPE_CHECKING, TextIO, TypeVar
 
 from pds_core.menu_navigation import (
     NavigationChoice,
@@ -28,11 +28,9 @@ from vitrine.paper_reflection_authorship import (
     confirm_returned_paper_authorship,
     finalize_confirmed_paper_reflection,
 )
-from vitrine.paper_reflection_packet import (
-    IssuedPaperReflectionPacket,
-    issue_paper_reflection_packet,
-    render_issued_paper_reflection_packet,
-)
+
+if TYPE_CHECKING:
+    from vitrine.paper_reflection_packet import IssuedPaperReflectionPacket
 from vitrine.paper_reflection_review import (
     PaperReflectionReviewContext,
     PaperReflectionReviewError,
@@ -60,6 +58,27 @@ from vitrine.workflow_views import (
 
 _ChoiceValue = TypeVar("_ChoiceValue")
 PaperReflectionReviewLauncher = Callable[[Path], bool]
+
+
+def _paper_packet_api() -> tuple[
+    Callable[..., "IssuedPaperReflectionPacket"],
+    Callable[..., "IssuedPaperReflectionPacket"],
+]:
+    # Load optional printable-paper support only when a print action is used.
+    try:
+        from vitrine.paper_reflection_packet import (
+            issue_paper_reflection_packet,
+            render_issued_paper_reflection_packet,
+        )
+    except ModuleNotFoundError as error:
+        missing = error.name or ""
+        if missing == "qrcode" or missing.startswith("reportlab"):
+            raise RuntimeError(
+                "Printable Student Reflection requires the Vitrine paper extra: "
+                "install pds-vitrine[paper]."
+            ) from error
+        raise
+    return issue_paper_reflection_packet, render_issued_paper_reflection_packet
 
 
 def _write(output: TextIO, *lines: str) -> None:
@@ -504,7 +523,8 @@ def _prepare_print_flow(
     ):
         return
 
-    packet = issue_paper_reflection_packet(
+    issue_packet, _ = _paper_packet_api()
+    packet = issue_packet(
         root,
         portfolio_id=portfolio_id,
         reflection_requirement_id=requirement.requirement_id,
@@ -552,7 +572,8 @@ def _reprint_flow(
         _pause(input_fn)
         return
     overview = build_teacher_portfolio_overview(root, portfolio_id)
-    packet = render_issued_paper_reflection_packet(
+    _, render_packet = _paper_packet_api()
+    packet = render_packet(
         root,
         issuance_id=requirement.issuance_id,
         expected_state_revision=view.observed_state_revision,

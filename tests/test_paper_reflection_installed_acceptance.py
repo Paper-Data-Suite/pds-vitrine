@@ -24,11 +24,27 @@ def test_paper_reflection_installed_harness_copies_only_test_support(
     assert not (harness / "pds_core").exists()
 
 
-def test_pip_check_wheel_smokes_install_declared_vitrine_dependencies() -> None:
-    offenders: list[str] = []
-    for path in sorted((ROOT / "scripts").glob("smoke_test_*_wheel.py")):
-        source = path.read_text(encoding="utf-8")
-        if '"pip", "check"' in source and '"--no-deps"' in source:
-            offenders.append(path.name)
-
-    assert offenders == []
+def test_legacy_core_only_wheel_smokes_preserve_no_deps_isolation() -> None:
+    names = (
+        "smoke_test_adapter_wheel.py",
+        "smoke_test_attention_next_actions_wheel.py",
+        "smoke_test_candidate_evidence_review_wheel.py",
+        "smoke_test_candidate_inbox_wheel.py",
+        "smoke_test_candidate_review_selection_wheel.py",
+        "smoke_test_candidate_wheel.py",
+        "smoke_test_compatibility_wheel.py",
+        "smoke_test_curation_wheel.py",
+        "smoke_test_current_portfolio_build_export_wheel.py",
+        "smoke_test_end_to_end_wheel.py",
+        "smoke_test_guided_menu_interactions_wheel.py",
+        "smoke_test_operations_wheel.py",
+        "smoke_test_portfolio_setup_wheel.py",
+        "smoke_test_selection_placement_guidance_wheel.py",
+        "smoke_test_snapshot_wheel.py",
+        "smoke_test_starter_profiles_wheel.py",
+        "smoke_test_teacher_information_architecture_wheel.py",
+        "smoke_test_working_composition_wheel.py",
+    )
+    for name in names:
+        source = (ROOT / "scripts" / name).read_text(encoding="utf-8")
+        assert '"--no-deps"' in source

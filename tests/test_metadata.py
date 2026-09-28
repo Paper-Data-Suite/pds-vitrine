@@ -27,9 +27,16 @@ def test_only_core_module_operations_entry_point_is_declared() -> None:
     assert project["entry-points"] == {
         "paper_data_suite.module_operations": {
             "vitrine": "vitrine.pds_operations:get_module_operations_profile"
-        }
+        },
+        "paper_data_suite.modules": {
+            "vitrine": "vitrine.pds_module:get_module_profile"
+        },
     }
     assert project["scripts"] == {"vitrine": "vitrine.cli:main"}
+    assert project["optional-dependencies"]["paper"] == [
+        "qrcode[pil]",
+        "reportlab",
+    ]
 
     dependency_sets = (
         tuple(project["dependencies"]),

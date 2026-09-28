@@ -491,10 +491,19 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
     normalized = [item.replace(" ", "") for item in requirements]
     if not any("pds-core<0.7,>=0.6.3" in item for item in normalized):
         findings.append(f"missing Core dependency range: {requirements}")
-    if not any(item.lower().startswith("qrcode") for item in normalized):
-        findings.append(f"missing qrcode runtime dependency: {requirements}")
-    if not any(item.lower().startswith("reportlab") for item in normalized):
-        findings.append(f"missing reportlab runtime dependency: {requirements}")
+    extras = tuple(metadata.get_all("Provides-Extra", ()))
+    if "paper" not in extras:
+        findings.append(f"missing paper extra metadata: {extras}")
+    if not any(
+        item.lower().startswith("qrcode[pil]") and 'extra=="paper"' in item.lower()
+        for item in normalized
+    ):
+        findings.append(f"missing qrcode paper-extra dependency: {requirements}")
+    if not any(
+        item.lower().startswith("reportlab") and 'extra=="paper"' in item.lower()
+        for item in normalized
+    ):
+        findings.append(f"missing reportlab paper-extra dependency: {requirements}")
     sibling_names = (
         "pds-scoreform",
         "pds-quillan",

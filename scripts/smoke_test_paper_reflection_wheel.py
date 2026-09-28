@@ -88,8 +88,15 @@ metadata = importlib.metadata.metadata("pds-vitrine")
 requirements = tuple(metadata.get_all("Requires-Dist", ()))
 normalized = tuple(value.replace(" ", "").lower() for value in requirements)
 assert any("pds-core<0.7,>=0.6.3" in value for value in normalized)
-assert any(value.startswith("qrcode[pil]") or value.startswith("qrcode") for value in normalized)
-assert any(value.startswith("reportlab") for value in normalized)
+assert metadata.get_all("Provides-Extra", ()).count("paper") == 1
+assert any(
+    value.startswith("qrcode[pil]") and 'extra=="paper"' in value
+    for value in normalized
+)
+assert any(
+    value.startswith("reportlab") and 'extra=="paper"' in value
+    for value in normalized
+)
 
 for forbidden in ("pds-scoreform", "pds-quillan", "pds-concord", "pds-portia", "pds-meridian"):
     assert not any(forbidden in value for value in normalized)
@@ -106,6 +113,11 @@ for module_name in (
     "vitrine.paper_reflection_review",
 ):
     assert importlib.util.find_spec(module_name) is not None
+
+assert importlib.util.find_spec("qrcode") is None
+assert importlib.util.find_spec("reportlab") is None
+import vitrine.portfolio_menu
+assert vitrine.portfolio_menu is not None
 
 for sibling in ("scoreform", "quillan", "concord", "portia", "meridian"):
     assert importlib.util.find_spec(sibling) is None

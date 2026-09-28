@@ -154,8 +154,9 @@ def validate(*, run_focused_tests: bool = True) -> None:
         '"scripts/validate_paper_reflection.py"',
         '"scripts/smoke_test_paper_reflection_wheel.py"',
         "missing Vitrine routing module-profile entry point",
-        "missing qrcode runtime dependency",
-        "missing reportlab runtime dependency",
+        "missing paper extra metadata",
+        "missing qrcode paper-extra dependency",
+        "missing reportlab paper-extra dependency",
     )
     _require_text(
         ROOT / "scripts" / "validate_repository.py",
