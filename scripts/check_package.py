@@ -99,6 +99,8 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/models/errors.py",
     "vitrine/models/graph.py",
     "vitrine/models/identity.py",
+    "vitrine/models/manual_reflection.py",
+    "vitrine/models/paper_reflection_authorship.py",
     "vitrine/models/profiles.py",
     "vitrine/models/serialization.py",
     "vitrine/models/snapshot_workflow.py",

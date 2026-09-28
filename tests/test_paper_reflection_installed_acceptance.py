@@ -48,3 +48,11 @@ def test_legacy_core_only_wheel_smokes_preserve_no_deps_isolation() -> None:
     for name in names:
         source = (ROOT / "scripts" / name).read_text(encoding="utf-8")
         assert '"--no-deps"' in source
+
+def test_paper_reflection_runtime_models_are_package_audited() -> None:
+    from scripts.check_package import ALLOWED_RUNTIME_FILES
+
+    assert {
+        "vitrine/models/manual_reflection.py",
+        "vitrine/models/paper_reflection_authorship.py",
+    } <= ALLOWED_RUNTIME_FILES
