@@ -110,7 +110,7 @@ ACCEPTANCE_MATRIX: dict[str, dict[str, tuple[str, ...]]] = {
         "tests/test_current_portfolio_routing.py": (
             "test_workflow_cli_registers_portfolio_build_export_task",
             "test_workflow_cli_routes_build_export_to_shared_task_handler",
-            "test_portfolio_option_six_routes_to_current_portfolio_task",
+            "test_portfolio_option_seven_routes_to_current_portfolio_task",
         ),
     },
 }
