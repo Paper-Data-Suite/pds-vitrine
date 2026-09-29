@@ -30,10 +30,16 @@ from vitrine.curation_services import (
     withdraw_selection,
 )
 from vitrine.curation_state import CurationState, project_curation_state
+from vitrine.identity_state import project_identity_state
+from vitrine.manual_reflection_services import (
+    create_typed_reflection,
+    revise_typed_reflection,
+)
 from vitrine.models import (
     ActorAttribution,
     CandidateAvailabilityObservation,
     CandidateSourceEndpoint,
+    ClassQualifiedStudentRef,
     CurationTargetRef,
     PlacementPresentation,
     SelectionProposal,
@@ -372,6 +378,12 @@ class CandidateReviewAnnotationActionPlan:
 
 
 @dataclass(frozen=True, slots=True)
+class CandidateReviewStudentAuthorChoice:
+    subject_link_id: str
+    student_reference: ClassQualifiedStudentRef
+
+
+@dataclass(frozen=True, slots=True)
 class CandidateReviewReflectionActionPlan:
     contract_version: str
     observed_state_revision: int
@@ -391,6 +403,8 @@ class CandidateReviewReflectionActionPlan:
     language: str
     content_format: str
     confirmation_phrase: str
+    subject_link_id: str | None = None
+    student_reference: ClassQualifiedStudentRef | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -2233,6 +2247,94 @@ def execute_annotation_action(
     )
 
 
+def list_reflection_student_author_choices(
+    workspace_root: str | Path,
+    entry_id: str,
+    *,
+    reflection_id: str | None = None,
+) -> tuple[CandidateReviewStudentAuthorChoice, ...]:
+    """List exact current class-qualified student links for typed Reflection entry."""
+
+    detail = get_candidate_review_detail(workspace_root, entry_id)
+    try:
+        current, records = load_current_records_with_state(workspace_root)
+    except (VitrineStorageNotFoundError, VitrineStorageError) as error:
+        raise CandidateReviewError(
+            "candidate_review.state_invalid",
+            "Current Vitrine state is unavailable for Reflection authorship.",
+        ) from error
+    if current.state_revision != detail.observed_state_revision:
+        raise CandidateReviewError(
+            "candidate_review.state_changed",
+            "Vitrine state changed before Reflection authorship planning.",
+        )
+    subject_id = detail.inbox_detail.item.portfolio_subject_id
+    links = project_identity_state(records).current_links(subject_id)
+    if reflection_id is not None:
+        curation = project_curation_state(records)
+        heads = curation.reflection_heads(reflection_id)
+        if len(heads) != 1:
+            raise CandidateReviewError(
+                "candidate_review.action_not_available",
+                "Reflection does not have one exact current revision head.",
+            )
+        prior = heads[0]
+        if prior.author.actor_kind != "core_student":
+            raise CandidateReviewError(
+                "candidate_review.action_not_available",
+                "Legacy non-student Reflection authorship must be resolved before typed revision.",
+            )
+        links = tuple(
+            link
+            for link in links
+            if link.student_reference.student_id == prior.author.actor_id
+        )
+    return tuple(
+        CandidateReviewStudentAuthorChoice(
+            subject_link_id=link.subject_link_id,
+            student_reference=link.student_reference,
+        )
+        for link in links
+    )
+
+
+def _reflection_student_author_choice(
+    workspace_root: str | Path,
+    detail: CandidateReviewDetail,
+    *,
+    subject_link_id: str | None,
+    reflection_id: str | None = None,
+) -> CandidateReviewStudentAuthorChoice:
+    choices = list_reflection_student_author_choices(
+        workspace_root,
+        detail.inbox_detail.item.entry_id,
+        reflection_id=reflection_id,
+    )
+    if not choices:
+        raise CandidateReviewError(
+            "candidate_review.action_not_available",
+            "No exact current class-qualified student link is available for Reflection authorship.",
+        )
+    if subject_link_id is None:
+        if len(choices) == 1:
+            return choices[0]
+        raise CandidateReviewError(
+            "candidate_review.invalid_request",
+            "Multiple current student links exist; an exact subject link must be selected.",
+        )
+    matches = tuple(
+        choice
+        for choice in choices
+        if choice.subject_link_id == subject_link_id
+    )
+    if len(matches) != 1:
+        raise CandidateReviewError(
+            "candidate_review.invalid_request",
+            "Selected Reflection subject link is not an exact current author choice.",
+        )
+    return matches[0]
+
+
 def plan_reflection_creation(
     workspace_root: str | Path,
     *,
@@ -2247,10 +2349,16 @@ def plan_reflection_creation(
     content_mode: str = "inline_text",
     language: str = "en",
     content_format: str = "plain_text",
+    subject_link_id: str | None = None,
 ) -> CandidateReviewReflectionActionPlan:
     """Plan one new Reflection against an exact bound Profile requirement."""
 
     detail = get_candidate_review_detail(workspace_root, entry_id)
+    author_choice = _reflection_student_author_choice(
+        workspace_root,
+        detail,
+        subject_link_id=subject_link_id,
+    )
     _require_profile_requirement(
         detail, reflection_requirement_id, requirement_kind="reflection"
     )
@@ -2298,6 +2406,8 @@ def plan_reflection_creation(
             content_format, field_name="content_format", maximum=128
         ),
         confirmation_phrase="SAVE REFLECTION",
+        subject_link_id=author_choice.subject_link_id,
+        student_reference=author_choice.student_reference,
     )
 
 
@@ -2312,6 +2422,7 @@ def plan_reflection_revision(
     prompt_snapshot: str | None = None,
     target_scope: str | None = None,
     target_references: tuple[CurationTargetRef, ...] | None = None,
+    subject_link_id: str | None = None,
 ) -> CandidateReviewReflectionActionPlan:
     """Plan a successor Reflection revision from one exact current head."""
 
@@ -2324,6 +2435,12 @@ def plan_reflection_revision(
             "Reflection does not have one exact current revision head.",
         )
     prior = heads[0]
+    author_choice = _reflection_student_author_choice(
+        workspace_root,
+        detail,
+        subject_link_id=subject_link_id,
+        reflection_id=prior.reflection_id,
+    )
     if not any(
         item.reflection_id == prior.reflection_id
         and item.reflection_revision == prior.reflection_revision
@@ -2390,6 +2507,8 @@ def plan_reflection_revision(
         language=prior.language,
         content_format=prior.content_format,
         confirmation_phrase="SAVE REFLECTION",
+        subject_link_id=author_choice.subject_link_id,
+        student_reference=author_choice.student_reference,
     )
 
 
@@ -2444,6 +2563,61 @@ def execute_reflection_action(
         prompt_snapshot=plan.prompt_snapshot,
         target_scope=plan.target_scope,
         target_references=plan.target_references,
+    )
+
+
+def execute_typed_reflection_action(
+    workspace_root: str | Path,
+    plan: CandidateReviewReflectionActionPlan,
+    *,
+    recorded_by: ActorAttribution,
+    authority_gate: CurationAuthorityGate,
+) -> CurationMutationResult:
+    """Execute the guided typed/manual fallback with separated authorship."""
+
+    _require_plan_contract(plan.contract_version)
+    if plan.subject_link_id is None or plan.student_reference is None:
+        raise CandidateReviewError(
+            "candidate_review.invalid_request",
+            "Typed Reflection plan lacks exact student authorship context.",
+        )
+    if plan.action == "create":
+        return create_typed_reflection(
+            workspace_root,
+            portfolio_id=plan.portfolio_id,
+            reflection_requirement_id=plan.reflection_requirement_id,
+            prompt_id=plan.prompt_id,
+            prompt_version=plan.prompt_version,
+            prompt_snapshot=plan.prompt_snapshot,
+            subject_link_id=plan.subject_link_id,
+            recorded_by=recorded_by,
+            target_scope=plan.target_scope,
+            target_references=plan.target_references,
+            content=plan.content,
+            expected_state_revision=plan.observed_state_revision,
+            authority_gate=authority_gate,
+            language=plan.language,
+            content_format=plan.content_format,
+        )
+    if (
+        plan.action != "revise"
+        or plan.reflection_id is None
+        or plan.expected_reflection_revision is None
+    ):
+        raise CandidateReviewError(
+            "candidate_review.invalid_request",
+            "Typed Reflection action plan is incomplete.",
+        )
+    return revise_typed_reflection(
+        workspace_root,
+        portfolio_id=plan.portfolio_id,
+        reflection_id=plan.reflection_id,
+        expected_reflection_revision=plan.expected_reflection_revision,
+        subject_link_id=plan.subject_link_id,
+        recorded_by=recorded_by,
+        content=plan.content,
+        expected_state_revision=plan.observed_state_revision,
+        authority_gate=authority_gate,
     )
 
 
@@ -2570,18 +2744,21 @@ __all__ = [
     "CandidateReviewSectionSummary",
     "CandidateReviewSelectionSummary",
     "CandidateReviewSourceSummary",
+    "CandidateReviewStudentAuthorChoice",
     "CandidateReviewSubjectRelationshipSummary",
     "CandidateReviewWithdrawalActionPlan",
     "execute_annotation_action",
     "execute_candidate_decision",
     "execute_curation_review",
     "execute_reflection_action",
+    "execute_typed_reflection_action",
     "execute_selection_placement",
     "execute_selection_replacement",
     "execute_selection_withdrawal",
     "get_candidate_review_detail",
     "list_candidate_review_entries",
     "list_candidate_review_section_guidance",
+    "list_reflection_student_author_choices",
     "plan_annotation_creation",
     "plan_annotation_revision",
     "plan_candidate_decision",

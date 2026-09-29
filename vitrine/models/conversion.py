@@ -62,6 +62,16 @@ from .identity import (
     PortfolioSubjectIdentityDecision,
     PortfolioSubjectIdentityTransition,
 )
+from .manual_reflection import ReflectionManualEntryProvenance
+from .paper_reflection import (
+    ReflectionPromptIssuance,
+    ReflectionResponsePage,
+    ReflectionReturnedPaperEvidence,
+)
+from .paper_reflection_authorship import (
+    ReflectionAuthorshipConfirmation,
+    ReflectionPaperFinalization,
+)
 from .profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -127,6 +137,12 @@ VitrineRecord: TypeAlias = (
     | CurationRationale
     | CurationAnnotation
     | PortfolioReflection
+    | ReflectionPromptIssuance
+    | ReflectionResponsePage
+    | ReflectionReturnedPaperEvidence
+    | ReflectionAuthorshipConfirmation
+    | ReflectionPaperFinalization
+    | ReflectionManualEntryProvenance
     | CurationReviewDecision
     | WorkingPortfolioCompositionInventory
     | WorkingPortfolioCompositionPointerRevision

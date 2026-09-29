@@ -57,7 +57,7 @@ ACCEPTANCE_MATRIX: dict[str, dict[str, tuple[str, ...]]] = {
         "tests/test_attention_menu.py": (
             "test_attention_menu_renders_bounded_next_action_without_mutation",
             "test_main_menu_option_six_routes_workspace_attention",
-            "test_portfolio_option_seven_routes_exact_portfolio_attention",
+            "test_portfolio_option_eight_routes_exact_portfolio_attention",
         ),
     },
 }

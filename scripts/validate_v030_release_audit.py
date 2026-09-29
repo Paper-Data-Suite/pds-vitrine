@@ -164,10 +164,13 @@ def _validate_package_boundary() -> None:
     expected = {
         "paper_data_suite.module_operations": {
             "vitrine": "vitrine.pds_operations:get_module_operations_profile"
-        }
+        },
+        "paper_data_suite.modules": {
+            "vitrine": "vitrine.pds_module:get_module_profile"
+        },
     }
     if project.get("entry-points") != expected:
-        raise RuntimeError("v0.3.0 module-operations entry-point boundary drifted")
+        raise RuntimeError("current module-operations/routing entry-point boundary drifted")
 
 
 def _validate_authorization_and_producer_boundaries() -> None:

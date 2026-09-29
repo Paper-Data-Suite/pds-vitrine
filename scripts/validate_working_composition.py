@@ -347,7 +347,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
     portfolio_menu = ROOT / "vitrine" / "portfolio_menu.py"
     _require_text(
         portfolio_menu,
-        '"5. Working Composition"',
+        '"6. Working Composition"',
         "run_working_composition_menu(",
     )
 

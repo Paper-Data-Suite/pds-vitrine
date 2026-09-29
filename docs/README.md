@@ -204,3 +204,9 @@ When documents disagree:
 
 No document in this repository provides legal advice, activates an operational
 regulated Profile, or makes Vitrine an external compliance authority.
+
+## Paper-native Student Reflection — Issue #99
+
+- [Paper-native Reflection contract](contracts/paper-native-reflection-v1.md)
+- [Paper-native Reflection development notes](development/paper-native-reflection.md)
+- [Issue #99 validation and physical acceptance](validation/issue-99-paper-native-reflection-validation.md)

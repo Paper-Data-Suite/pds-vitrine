@@ -38,6 +38,16 @@ from vitrine.models.identity import (
     PortfolioSubjectIdentityDecision,
     PortfolioSubjectIdentityTransition,
 )
+from vitrine.models.manual_reflection import ReflectionManualEntryProvenance
+from vitrine.models.paper_reflection import (
+    ReflectionPromptIssuance,
+    ReflectionResponsePage,
+    ReflectionReturnedPaperEvidence,
+)
+from vitrine.models.paper_reflection_authorship import (
+    ReflectionAuthorshipConfirmation,
+    ReflectionPaperFinalization,
+)
 from vitrine.models.profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -257,6 +267,42 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
         None,
         ("reflection_id", "reflection_revision"),
         ("reflection_revision",),
+    ),
+    RecordDescriptor(
+        "reflection_prompt_issuance",
+        ReflectionPromptIssuance,
+        None,
+        ("issuance_id",),
+    ),
+    RecordDescriptor(
+        "reflection_response_page",
+        ReflectionResponsePage,
+        None,
+        ("response_page_id",),
+    ),
+    RecordDescriptor(
+        "reflection_returned_paper_evidence",
+        ReflectionReturnedPaperEvidence,
+        None,
+        ("returned_paper_evidence_id",),
+    ),
+    RecordDescriptor(
+        "reflection_authorship_confirmation",
+        ReflectionAuthorshipConfirmation,
+        None,
+        ("authorship_confirmation_id",),
+    ),
+    RecordDescriptor(
+        "reflection_paper_finalization",
+        ReflectionPaperFinalization,
+        None,
+        ("paper_finalization_id",),
+    ),
+    RecordDescriptor(
+        "reflection_manual_entry_provenance",
+        ReflectionManualEntryProvenance,
+        None,
+        ("manual_entry_provenance_id",),
     ),
     RecordDescriptor(
         "curation_review_decision",

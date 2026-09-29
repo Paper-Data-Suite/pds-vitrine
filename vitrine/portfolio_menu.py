@@ -35,6 +35,7 @@ from vitrine.current_portfolio_menu import (
 from vitrine.menu_interactions import confirm_exact_phrase, resolve_required_choice
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import ActorAttribution, PortfolioProfileMigration
+from vitrine.paper_reflection_menu import run_paper_reflection_menu
 from vitrine.portfolio_services import (
     list_portfolios,
     observe_portfolio_state_revision,
@@ -1166,9 +1167,10 @@ def _portfolio_context(
             "2. Profile Binding",
             "3. Discover Candidates",
             "4. Review Candidates / Selections",
-            "5. Working Composition",
-            "6. Build and Export Current Portfolio",
-            "7. Attention / Next Actions",
+            "5. Student Reflection",
+            "6. Working Composition",
+            "7. Build and Export Current Portfolio",
+            "8. Attention / Next Actions",
             "H. Help",
             "B. Back",
             "M. Main Menu",
@@ -1182,6 +1184,7 @@ def _portfolio_context(
                 "Portfolio Help",
                 "",
                 "Candidate review does not create a Selection.",
+                "Student Reflection is paper-first; typed entry is fallback.",
                 "Working Composition is not a Snapshot.",
                 "Audience Context is not disclosure authorization.",
             )
@@ -1230,7 +1233,7 @@ def _portfolio_context(
                 actor=actor,
             )
         elif choice == "5":
-            run_working_composition_menu(
+            run_paper_reflection_menu(
                 portfolio_id=portfolio_id,
                 input_fn=input_fn,
                 output=output,
@@ -1240,6 +1243,16 @@ def _portfolio_context(
                 actor=actor,
             )
         elif choice == "6":
+            run_working_composition_menu(
+                portfolio_id=portfolio_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+                dependencies=dependencies,
+                workspace_root=root,
+                actor=actor,
+            )
+        elif choice == "7":
             run_current_portfolio_build_export_menu(
                 root=root,
                 portfolio_id=portfolio_id,
@@ -1249,7 +1262,7 @@ def _portfolio_context(
                 dependencies=dependencies,
                 actor=actor,
             )
-        elif choice == "7":
+        elif choice == "8":
             run_attention_menu(
                 output=output,
                 clear_fn=clear_fn,
@@ -1259,7 +1272,7 @@ def _portfolio_context(
             )
             continue
         else:
-            _write(output, "Please choose 1-7, H, B, M, or Q.")
+            _write(output, "Please choose 1-8, H, B, M, or Q.")
         _pause(input_fn)
 
 

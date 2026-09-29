@@ -785,6 +785,19 @@ def test_annotation_reflection_and_review_flows_use_shared_plans(
         actor=ACTOR,
     )
 
+    author_choice = candidate_review_menu.CandidateReviewStudentAuthorChoice(
+        subject_link_id="subject_link_exact",
+        student_reference=SimpleNamespace(
+            student_id="student_exact",
+            class_id="class_exact",
+            school_year="2026-2027",
+        ),
+    )
+    monkeypatch.setattr(
+        candidate_review_menu,
+        "list_reflection_student_author_choices",
+        lambda *_args, **_kwargs: (author_choice,),
+    )
     monkeypatch.setattr(
         candidate_review_menu,
         "plan_reflection_creation",
@@ -797,11 +810,12 @@ def test_annotation_reflection_and_review_flows_use_shared_plans(
             target_references=kwargs["target_references"],
             observed_state_revision=43,
             confirmation_phrase="SAVE REFLECTION",
+            student_reference=author_choice.student_reference,
         ),
     )
     monkeypatch.setattr(
         candidate_review_menu,
-        "execute_reflection_action",
+        "execute_typed_reflection_action",
         lambda *_args, **_kwargs: (
             calls.append("reflection"),
             SimpleNamespace(state_revision=44),

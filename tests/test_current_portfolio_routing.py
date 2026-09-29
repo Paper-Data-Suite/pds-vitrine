@@ -73,13 +73,13 @@ def test_workflow_cli_routes_build_export_to_shared_task_handler(
     assert captured["output"] is output
 
 
-def test_portfolio_option_six_routes_to_current_portfolio_task(
+def test_portfolio_option_seven_routes_to_current_portfolio_task(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     dependencies = object()
     captured: dict[str, object] = {}
-    responses = iter(("6", "", "B"))
+    responses = iter(("7", "", "B"))
 
     monkeypatch.setattr(
         portfolio_menu,

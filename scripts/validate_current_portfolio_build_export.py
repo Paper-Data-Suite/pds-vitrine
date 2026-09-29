@@ -489,7 +489,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
     portfolio_menu = ROOT / "vitrine/portfolio_menu.py"
     _require_text(
         portfolio_menu,
-        '"6. Build and Export Current Portfolio"',
+        '"7. Build and Export Current Portfolio"',
         "run_current_portfolio_build_export_menu(",
     )
 

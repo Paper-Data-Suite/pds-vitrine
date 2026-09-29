@@ -66,6 +66,23 @@ from .identity import (
     SubjectAssociationAllocation,
     VitrineRecordRef,
 )
+from .manual_reflection import (
+    REFLECTION_MANUAL_ENTRY_MODE,
+    REFLECTION_MANUAL_ENTRY_PROVENANCE_RECORD_TYPE,
+    ReflectionManualEntryProvenance,
+)
+from .paper_reflection import (
+    ReflectionPromptIssuance,
+    ReflectionResponsePage,
+    ReflectionReturnedPaperEvidence,
+)
+from .paper_reflection_authorship import (
+    AUTHORSHIP_CONFIRMATION_BASES,
+    REFLECTION_AUTHORSHIP_CONFIRMATION_RECORD_TYPE,
+    REFLECTION_PAPER_FINALIZATION_RECORD_TYPE,
+    ReflectionAuthorshipConfirmation,
+    ReflectionPaperFinalization,
+)
 from .profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -156,6 +173,9 @@ __all__ = [
     "PortfolioProfileRequirement",
     "PortfolioProfileRevision",
     "PortfolioReflection",
+    "REFLECTION_MANUAL_ENTRY_MODE",
+    "REFLECTION_MANUAL_ENTRY_PROVENANCE_RECORD_TYPE",
+    "ReflectionManualEntryProvenance",
     "PortfolioSelection",
     "PortfolioSubject",
     "PortfolioSubjectClassLink",
@@ -165,6 +185,14 @@ __all__ = [
     "PortfolioSubjectRelationshipAssertion",
     "ProducerSourceReference",
     "ProfileApplicability",
+    "ReflectionPromptIssuance",
+    "ReflectionResponsePage",
+    "ReflectionReturnedPaperEvidence",
+    "ReflectionAuthorshipConfirmation",
+    "ReflectionPaperFinalization",
+    "AUTHORSHIP_CONFIRMATION_BASES",
+    "REFLECTION_AUTHORSHIP_CONFIRMATION_RECORD_TYPE",
+    "REFLECTION_PAPER_FINALIZATION_RECORD_TYPE",
     "ProfileAudienceRule",
     "ProfileOverlayRequirement",
     "ProfileOverlayRequirementChange",

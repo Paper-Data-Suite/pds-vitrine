@@ -138,11 +138,14 @@ def _validate_project_contract() -> None:
     expected = {
         MODULE_OPERATIONS_ENTRY_POINT_GROUP: {
             "vitrine": "vitrine.pds_operations:get_module_operations_profile"
-        }
+        },
+        "paper_data_suite.modules": {
+            "vitrine": "vitrine.pds_module:get_module_profile"
+        },
     }
     if entry_points != expected:
         raise RuntimeError(
-            "Issue #70 requires exactly one Vitrine operations entry point"
+            "Issue #70 requires Vitrine operations and routing entry points"
         )
 
     dependencies = tuple(project.get("dependencies", ()))

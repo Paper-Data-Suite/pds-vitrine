@@ -27,6 +27,9 @@ classifiers = [
 [project.scripts]
 vitrine = "vitrine.cli:main"
 
+[project.entry-points."paper_data_suite.modules"]
+vitrine = "vitrine.pds_module:get_module_profile"
+
 [project.entry-points."paper_data_suite.module_operations"]
 vitrine = "vitrine.pds_operations:get_module_operations_profile"
 
@@ -35,7 +38,14 @@ Documentation = "https://github.com/Paper-Data-Suite/pds-vitrine/tree/main/docs"
 Repository = "https://github.com/Paper-Data-Suite/pds-vitrine"
 
 [project.optional-dependencies]
+paper = [
+    "qrcode[pil]",
+    "reportlab",
+]
+
 dev = [
+    "qrcode[pil]",
+    "reportlab",
     "build>=1.2",
     "mypy>=1.11",
     "packaging>=24",
@@ -141,6 +151,9 @@ files = [
     "scripts/qualify_installed_live_portfolio.py",
     "scripts/validate_live_installed_acceptance.py",
     "scripts/validate_v030_release_audit.py",
+    "scripts/validate_paper_reflection.py",
+    "scripts/smoke_test_paper_reflection_wheel.py",
+    "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
 ]
 
 [[tool.mypy.overrides]]
@@ -148,5 +161,5 @@ module = ["pds_core", "pds_core.*"]
 follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
-module = ["scoreform", "scoreform.*", "quillan", "quillan.*", "concord", "concord.*", "pypdfium2"]
+module = ["scoreform", "scoreform.*", "quillan", "quillan.*", "concord", "concord.*", "pypdfium2", "qrcode", "qrcode.*", "reportlab", "reportlab.*"]
 ignore_missing_imports = true
