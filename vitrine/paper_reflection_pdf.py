@@ -15,6 +15,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import Canvas
 
+from vitrine.models import CurationTargetRef
 from vitrine.paper_reflection_printing import (
     PersistedReflectionPrintRoutes,
     ReflectionPrintPlan,
@@ -219,14 +220,20 @@ def _render_pdf(
         pdf.drawString(
             margin,
             prompt_y,
-            (
-                f"Prompt: {issuance.prompt_id} / version "
-                f"{issuance.prompt_version} | "
-                f"Exact curated targets: {len(issuance.target_references)}"
-            ),
+            f"Prompt: {issuance.prompt_id} / version {issuance.prompt_version}",
         )
+        prompt_y -= 10
+        for value in exact_curated_target_lines(issuance.target_references):
+            for line in _wrap_exact_text(
+                value,
+                font_name="Helvetica",
+                font_size=7,
+                max_width=page_width - 2 * margin,
+            ):
+                pdf.drawString(margin, prompt_y, line)
+                prompt_y -= 9
 
-        writing_top = prompt_y - 0.28 * inch
+        writing_top = prompt_y - 0.18 * inch
         writing_bottom = margin + 0.35 * inch
         writing_left = margin + 0.18 * inch
         writing_right = page_width - margin
@@ -246,6 +253,60 @@ def _render_pdf(
         pdf.showPage()
 
     pdf.save()
+
+
+def exact_curated_target_lines(
+    target_references: tuple[CurationTargetRef, ...],
+) -> tuple[str, ...]:
+    lines = [f"Exact curated targets ({len(target_references)}):"]
+    if not target_references:
+        lines.append("Target: none")
+        return tuple(lines)
+
+    lines.extend(
+        f"Target {index}: {target.target_kind}:{target.target_id}"
+        for index, target in enumerate(target_references, start=1)
+    )
+    return tuple(lines)
+
+
+def _wrap_exact_text(
+    text: str,
+    *,
+    font_name: str,
+    font_size: int,
+    max_width: float,
+) -> tuple[str, ...]:
+    if not text:
+        return ("",)
+    if stringWidth(text, font_name, font_size) <= max_width:
+        return (text,)
+
+    lines: list[str] = []
+    remaining = text
+    while remaining:
+        split = len(remaining)
+        while (
+            split > 1
+            and stringWidth(
+                remaining[:split],
+                font_name,
+                font_size,
+            )
+            > max_width
+        ):
+            split -= 1
+        if split == 1 and stringWidth(
+            remaining[:1],
+            font_name,
+            font_size,
+        ) > max_width:
+            raise PaperReflectionPdfError(
+                "Printable Reflection target identifier cannot fit on the page."
+            )
+        lines.append(remaining[:split])
+        remaining = remaining[split:]
+    return tuple(lines)
 
 
 def _qr_image(payload: str) -> ImageReader:
@@ -301,6 +362,7 @@ def _wrap_text(
 __all__ = [
     "PAPER_REFLECTION_PDF_FILENAME",
     "PaperReflectionPdfError",
+    "exact_curated_target_lines",
     "reflection_pdf_path",
     "render_persisted_reflection_pdf",
 ]

@@ -14,6 +14,7 @@ from vitrine.paper_reflection_packet import (
     issue_paper_reflection_packet,
     render_issued_paper_reflection_packet,
 )
+from vitrine.paper_reflection_pdf import exact_curated_target_lines
 from vitrine.teacher_presentation import build_teacher_portfolio_overview
 
 
@@ -75,3 +76,21 @@ def test_issue_packet_persists_routes_and_renders_pdf(
     assert replay.created_registration_paths == ()
     assert replay.reused_registration_paths == packet.registration_paths
     assert replay.pdf_path.read_bytes().startswith(b"%PDF")
+
+def test_exact_curated_target_lines_preserve_frozen_target_identity() -> None:
+    targets = (
+        CurationTargetRef(
+            target_kind="portfolio",
+            target_id="portfolio_alpha",
+        ),
+        CurationTargetRef(
+            target_kind="portfolio",
+            target_id="portfolio_beta",
+        ),
+    )
+
+    assert exact_curated_target_lines(targets) == (
+        "Exact curated targets (2):",
+        "Target 1: portfolio:portfolio_alpha",
+        "Target 2: portfolio:portfolio_beta",
+    )
