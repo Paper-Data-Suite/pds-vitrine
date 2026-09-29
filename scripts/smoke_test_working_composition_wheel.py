@@ -233,7 +233,7 @@ commit_record_batch(
 
 before = load_current_state(workspace).state_revision
 preparation = prepare_working_composition(workspace, portfolio.portfolio_id)
-assert WORKING_COMPOSITION_CONTRACT_VERSION == "vitrine_guided_working_composition_v1"
+assert WORKING_COMPOSITION_CONTRACT_VERSION == "vitrine_guided_working_composition_v2"
 assert load_current_state(workspace).state_revision == before
 assert preparation.observed_state_revision == before
 assert preparation.observed_composition_pointer_revision is None

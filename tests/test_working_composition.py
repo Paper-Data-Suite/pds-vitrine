@@ -9,6 +9,7 @@ import vitrine.curation_services as curation_services
 import vitrine.working_composition as working_composition
 from scripts.curation_fixture_support import (
     ACTOR,
+    APPROVAL_REQUIREMENT_ID,
     REFLECTION_REQUIREMENT_ID,
     STUDENT_ACTOR,
     StaticCurationAuthorityGate,
@@ -30,8 +31,10 @@ from vitrine.curation_services import (
 )
 from vitrine.curation_state import project_curation_state
 from vitrine.models import (
+    CurationRevisionRef,
     CurationTargetRef,
     PortfolioPlacement,
+    PortfolioReflection,
     PortfolioSelection,
     WorkingPortfolioCompositionInventory,
     WorkingPortfolioCompositionPointerRevision,
@@ -803,3 +806,185 @@ def test_canonical_prepared_guard_checks_derivation_before_authority(
     assert gate.requests == []
     assert load_current_state(setup.workspace).state_revision == before
 
+
+
+def test_issue100_v2_projects_exact_requirement_backed_reflection_read_only(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    baseline, _ = _select_and_place(setup, "evidence_selected", "baseline")
+    later, _ = _select_and_place(setup, "evidence_approved", "later_work")
+    result = create_reflection(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        reflection_requirement_id=REFLECTION_REQUIREMENT_ID,
+        prompt_id="growth_prompt_issue100",
+        prompt_version="1",
+        prompt_snapshot="Compare the exact curated baseline and later work.",
+        author=STUDENT_ACTOR,
+        target_scope="comparison_set",
+        target_references=(
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=baseline.selection_id,
+                semantic_role="baseline",
+            ),
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=later.selection_id,
+                semantic_role="later",
+            ),
+        ),
+        content="Synthetic student interpretation only.",
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+        id_factory=setup.ids,
+    )
+    reflection = next(
+        item for item in result.records if isinstance(item, PortfolioReflection)
+    )
+    before = load_current_state(setup.workspace).state_revision
+
+    preparation = prepare_working_composition(setup.workspace, setup.portfolio_id)
+
+    assert WORKING_COMPOSITION_CONTRACT_VERSION == (
+        "vitrine_guided_working_composition_v2"
+    )
+    assert preparation.contract_version == WORKING_COMPOSITION_CONTRACT_VERSION
+    assert load_current_state(setup.workspace).state_revision == before
+    assert len(preparation.requirement_contents) == 1
+    content = preparation.requirement_contents[0]
+    assert content.content_class == "requirement_backed"
+    assert content.content_kind == "reflection"
+    assert content.record_kind == "reflection"
+    assert content.record_id == reflection.reflection_id
+    assert content.record_revision == reflection.reflection_revision
+    assert content.requirement_id == REFLECTION_REQUIREMENT_ID
+    assert content.requirement_kind == "reflection"
+    assert content.requirement_obligation == "required"
+    assert content.satisfaction_class == "reflection_presence"
+    assert content.scope_kind == "portfolio"
+    assert content.scope_reference is None
+    assert content.section_id is None
+    assert content.portfolio_id == setup.portfolio_id
+    assert content.portfolio_subject_id == reflection.portfolio_subject_id
+    assert content.profile_binding_id == setup.profile_binding_id
+    assert content.profile_revision_id == reflection.profile_revision.portfolio_profile_id
+    assert content.profile_revision_number == reflection.profile_revision.profile_revision
+    assert content.content_state == "available"
+    assert content.prompt_id == reflection.prompt_id
+    assert content.prompt_version == reflection.prompt_version
+    assert content.content_mode == reflection.content_mode
+    assert CurationRevisionRef(
+        record_kind="reflection",
+        record_id=reflection.reflection_id,
+        revision=reflection.reflection_revision,
+    ) in preparation.payload.included_curation_revisions
+    assert reflection.reflection_id not in preparation.payload.placement_ids
+    assert APPROVAL_REQUIREMENT_ID not in {
+        item.requirement_id for item in preparation.requirement_contents
+    }
+
+
+def test_issue100_requirement_content_section_mapping_uses_explicit_scope(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    baseline, _ = _select_and_place(setup, "evidence_selected", "baseline")
+    later, _ = _select_and_place(setup, "evidence_approved", "later_work")
+    create_reflection(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        reflection_requirement_id=REFLECTION_REQUIREMENT_ID,
+        prompt_id="growth_prompt_scope",
+        prompt_version="1",
+        prompt_snapshot="Compare the exact curated baseline and later work.",
+        author=STUDENT_ACTOR,
+        target_scope="comparison_set",
+        target_references=(
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=baseline.selection_id,
+                semantic_role="baseline",
+            ),
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=later.selection_id,
+                semantic_role="later",
+            ),
+        ),
+        content="Synthetic student interpretation only.",
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+        id_factory=setup.ids,
+    )
+    records = load_current_records(setup.workspace)
+    state = project_curation_state(records)
+    derivation = derive_working_composition(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+    )
+    profile = working_composition._exact_profile(state, derivation)
+    original = next(
+        item
+        for item in state.profile_requirements
+        if item.requirement_id == REFLECTION_REQUIREMENT_ID
+    )
+    scoped = replace(
+        original,
+        title="Misleading Later Work label must not control section mapping",
+        statement="Prose mentions Later Work but explicit scope is Baseline.",
+        scope_kind="section",
+        scope_reference="baseline",
+    )
+    projected = replace(
+        state,
+        profile_requirements=tuple(
+            scoped if item is original else item
+            for item in state.profile_requirements
+        ),
+    )
+
+    contents = working_composition._requirement_content_summaries(
+        projected, profile, derivation
+    )
+
+    assert len(contents) == 1
+    assert contents[0].scope_kind == "section"
+    assert contents[0].scope_reference == "baseline"
+    assert contents[0].section_id == "baseline"
+
+
+def test_issue100_requirement_content_missing_exact_revision_fails_closed(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    state = project_curation_state(load_current_records(setup.workspace))
+    derivation = derive_working_composition(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+    )
+    profile = working_composition._exact_profile(state, derivation)
+    broken = replace(
+        derivation,
+        included_curation_revisions=(
+            CurationRevisionRef(
+                record_kind="reflection",
+                record_id="reflection_missing_issue100",
+                revision=1,
+            ),
+        ),
+    )
+
+    with pytest.raises(CurationWorkflowError) as exc_info:
+        working_composition._requirement_content_summaries(
+            state, profile, broken
+        )
+
+    assert exc_info.value.code == "curation.composition_inconsistent"
+    assert exc_info.value.stage == "preparation"
+    assert "unavailable or ambiguous" in str(exc_info.value)

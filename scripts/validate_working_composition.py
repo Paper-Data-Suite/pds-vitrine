@@ -21,6 +21,7 @@ from vitrine.working_composition import (
     WORKING_COMPOSITION_ERROR_CODES,
     WorkingCompositionPayloadPreview,
     WorkingCompositionPreparation,
+    WorkingCompositionRequirementContentSummary,
     WorkingCompositionSectionSummary,
     WorkingCompositionSourceObservation,
     freeze_prepared_working_composition,
@@ -149,8 +150,8 @@ def _validate_no_durable_preparation_record() -> None:
 
 
 def validate(*, run_focused_tests: bool = True) -> None:
-    if WORKING_COMPOSITION_CONTRACT_VERSION != "vitrine_guided_working_composition_v1":
-        raise RuntimeError("guided Working Composition contract identity changed")
+    if WORKING_COMPOSITION_CONTRACT_VERSION != "vitrine_guided_working_composition_v2":
+        raise RuntimeError("guided Working Composition v2 contract identity changed")
 
     expected_statuses = frozenset(
         {
@@ -193,6 +194,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "selections",
         "unplaced_selection_ids",
         "requirements",
+        "requirement_contents",
         "source_observations",
         "reviews",
         "audience_rules",
@@ -225,6 +227,36 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "placements",
     }.issubset(section_fields):
         raise RuntimeError("section/Arrangement explanation lost exact ordering metadata")
+
+    requirement_content_fields = {
+        field.name for field in fields(WorkingCompositionRequirementContentSummary)
+    }
+    if requirement_content_fields != {
+        "content_class",
+        "content_kind",
+        "record_kind",
+        "record_id",
+        "record_revision",
+        "requirement_id",
+        "requirement_kind",
+        "requirement_obligation",
+        "satisfaction_class",
+        "scope_kind",
+        "scope_reference",
+        "section_id",
+        "portfolio_id",
+        "portfolio_subject_id",
+        "profile_binding_id",
+        "profile_revision_id",
+        "profile_revision_number",
+        "content_state",
+        "prompt_id",
+        "prompt_version",
+        "content_mode",
+    }:
+        raise RuntimeError(
+            "Working Composition requirement-backed content contract changed"
+        )
 
     source_fields = {field.name for field in fields(WorkingCompositionSourceObservation)}
     if source_fields != {
@@ -324,6 +356,10 @@ def validate(*, run_focused_tests: bool = True) -> None:
         'requirement.requirement_kind == "audience"',
         "note_to_persist",
         "hashlib.sha256",
+        "_requirement_content_summaries(",
+        'reference.record_kind != "reflection"',
+        'requirement.satisfaction_class != "reflection_presence"',
+        "requirement.scope_reference",
     )
     _require_text(
         menu_path,
