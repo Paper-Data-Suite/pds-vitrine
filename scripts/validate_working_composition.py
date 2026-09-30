@@ -487,7 +487,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
         repository_validator,
         "scripts/validate_working_composition.py",
         "scripts/smoke_test_working_composition_wheel.py",
-        "Working Composition v2 requirement content",
+        "guided Working Composition",
     )
 
     if run_focused_tests:
