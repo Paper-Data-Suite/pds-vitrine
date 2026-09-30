@@ -1,4 +1,4 @@
-"""Smoke issue #67 guided Working Composition from installed Core/Vitrine wheels."""
+"""Smoke issue #100 Working Composition v2 from installed Core/Vitrine wheels."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ def _run(command: list[str], *, cwd: Path, env: dict[str, str]) -> str:
     if result.returncode != 0:
         detail = result.stderr.strip() or result.stdout.strip() or "(no child output)"
         raise RuntimeError(
-            "guided Working Composition installed command failed "
+            "Working Composition v2 installed command failed "
             f"with exit code {result.returncode}:\n{detail}"
         )
     return result.stdout
@@ -69,6 +69,7 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
 
         code = r"""
 import importlib.util
+import io
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -79,10 +80,14 @@ from vitrine import cli
 from vitrine.curation_services import (
     CurationAuthorityDecision,
     CurationAuthorityRequest,
+    create_reflection,
+    revise_reflection,
 )
 from vitrine.models import (
     ActorAttribution,
+    CurationTargetRef,
     Portfolio,
+    PortfolioReflection,
     PortfolioProfileBinding,
     PortfolioProfileFamily,
     PortfolioProfileLifecycleEvent,
@@ -98,6 +103,7 @@ from vitrine.working_composition import (
     WORKING_COMPOSITION_CONTRACT_VERSION,
     freeze_prepared_working_composition,
     prepare_working_composition,
+    resolve_working_composition_requirement_contents,
 )
 
 NOW = datetime(2026, 9, 7, 22, 0, tzinfo=timezone.utc)
@@ -168,6 +174,18 @@ sections = (
         required_relationship_kinds=(),
         reflection_requirement="none",
     ),
+    ProfileSectionDefinition(
+        section_id="reflection",
+        label="Comparison Reflection",
+        purpose="Student comparison Reflection content.",
+        order=3,
+        obligation="required",
+        minimum_placements=0,
+        maximum_placements=0,
+        allowed_candidate_kinds=(),
+        required_relationship_kinds=(),
+        reflection_requirement="required",
+    ),
 )
 profile = PortfolioProfileRevision(
     portfolio_profile_id="profile_wheel_smoke",
@@ -183,7 +201,7 @@ profile = PortfolioProfileRevision(
             audience_rule_id="student_internal",
             audience_class="student",
             purpose="Student-facing future Snapshot constraint.",
-            allowed_content_classes=("student_work",),
+            allowed_content_classes=("student_work", "reflection"),
             prohibited_content_classes=("private_teacher_note",),
             required_review_classes=("privacy_review",),
             presentation_class="student_portfolio",
@@ -204,6 +222,19 @@ requirement = PortfolioProfileRequirement(
     scope_kind="section",
     satisfaction_class="placement_cardinality",
     scope_reference="required_evidence",
+    authority_references=("wheel_smoke_policy",),
+)
+reflection_requirement = PortfolioProfileRequirement(
+    portfolio_profile_id=profile.portfolio_profile_id,
+    profile_revision=profile.profile_revision,
+    requirement_id="comparison_reflection",
+    requirement_kind="reflection",
+    obligation="required",
+    title="Comparison Reflection",
+    statement="Student provides one exact comparison Reflection.",
+    scope_kind="section",
+    satisfaction_class="reflection_presence",
+    scope_reference="reflection",
     authority_references=("wheel_smoke_policy",),
 )
 lifecycle = PortfolioProfileLifecycleEvent(
@@ -227,8 +258,40 @@ binding = PortfolioProfileBinding(
 
 commit_record_batch(
     workspace,
-    (subject, portfolio, family, profile, requirement, lifecycle, binding),
+    (
+        subject,
+        portfolio,
+        family,
+        profile,
+        requirement,
+        reflection_requirement,
+        lifecycle,
+        binding,
+    ),
     expected_state_revision=None,
+)
+
+reflection_result = create_reflection(
+    workspace,
+    portfolio_id=portfolio.portfolio_id,
+    reflection_requirement_id=reflection_requirement.requirement_id,
+    prompt_id="wheel_smoke_reflection_prompt",
+    prompt_version="1",
+    prompt_snapshot="Compare the exact evidence.",
+    author=ACTOR,
+    target_scope="section",
+    target_references=(
+        CurationTargetRef(target_kind="section", target_id="reflection"),
+    ),
+    content="Exact installed-wheel Reflection revision one.",
+    expected_state_revision=load_current_state(workspace).state_revision,
+    authority_gate=Gate(),
+    id_factory=lambda _prefix: "reflection_wheel_smoke",
+)
+reflection = next(
+    item
+    for item in reflection_result.records
+    if isinstance(item, PortfolioReflection)
 )
 
 before = load_current_state(workspace).state_revision
@@ -243,7 +306,15 @@ assert "section_minimum_missing" in preparation.payload.unresolved_obligation_co
 assert tuple(item.section_id for item in preparation.sections) == (
     "required_evidence",
     "optional_context",
+    "reflection",
 )
+assert len(preparation.requirement_contents) == 1
+reflection_content = preparation.requirement_contents[0]
+assert reflection_content.record_id == reflection.reflection_id
+assert reflection_content.record_revision == 1
+assert reflection_content.requirement_id == reflection_requirement.requirement_id
+assert reflection_content.section_id == "reflection"
+assert reflection.reflection_id not in preparation.payload.placement_ids
 required_summary = next(
     item
     for item in preparation.requirements
@@ -283,6 +354,28 @@ reused = freeze_prepared_working_composition(
 assert reused.disposition == "existing"
 assert load_current_state(workspace).state_revision == before_replay
 
+cli_output = io.StringIO()
+assert (
+    cli.main(
+        [
+            "composition",
+            "prepare",
+            portfolio.portfolio_id,
+            "--workspace-root",
+            str(workspace),
+        ],
+        output=cli_output,
+        error=io.StringIO(),
+    )
+    == 0
+)
+cli_text = cli_output.getvalue()
+assert "Contract: vitrine_guided_working_composition_v2" in cli_text
+assert "Requirement-backed content:" in cli_text
+assert "reflection:reflection_wheel_smoke@1" in cli_text
+assert "Comparison Reflection (reflection) placement-role=requirement-backed" in cli_text
+assert "Comparison Reflection (reflection) placements=0" not in cli_text
+
 parser = cli.build_parser()
 assert (
     parser.parse_args(
@@ -308,6 +401,32 @@ parsed_freeze = parser.parse_args(
 assert parsed_freeze.composition_command == "freeze"
 assert parsed_freeze.expected_composition_pointer_revision == "1"
 
+revised = revise_reflection(
+    workspace,
+    portfolio_id=portfolio.portfolio_id,
+    reflection_id=reflection.reflection_id,
+    expected_reflection_revision=1,
+    author=ACTOR,
+    content="Exact installed-wheel Reflection revision two.",
+    expected_state_revision=load_current_state(workspace).state_revision,
+    authority_gate=Gate(),
+)
+assert any(
+    isinstance(item, PortfolioReflection) and item.reflection_revision == 2
+    for item in revised.records
+)
+current_content = resolve_working_composition_requirement_contents(
+    workspace, portfolio.portfolio_id
+)
+historical_content = resolve_working_composition_requirement_contents(
+    workspace,
+    portfolio.portfolio_id,
+    composition_revision=1,
+)
+assert tuple(item.record_revision for item in current_content) == (2,)
+assert tuple(item.record_revision for item in historical_content) == (1,)
+assert current_content[0].record_id == historical_content[0].record_id
+
 for name in ("scoreform", "quillan", "concord", "portia", "meridian"):
     assert importlib.util.find_spec(name) is None
 """
@@ -325,11 +444,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         smoke(args.vitrine_wheel, args.core_wheel)
-        print("PASS isolated guided Working Composition wheel smoke test")
+        print("PASS isolated Working Composition v2 wheel smoke test")
         return 0
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(
-            f"Guided Working Composition wheel smoke test failed: {error}",
+            f"Working Composition v2 wheel smoke test failed: {error}",
             file=sys.stderr,
         )
         return 1

@@ -6,10 +6,13 @@ from pathlib import Path
 
 from scripts.curation_fixture_support import (
     ACTOR,
+    REFLECTION_REQUIREMENT_ID,
     StaticCurationAuthorityGate,
     build_curation_fixture_workspace,
 )
 from vitrine import cli
+from vitrine.curation_services import create_reflection
+from vitrine.models import CurationTargetRef
 from vitrine.storage import load_current_records, load_current_state
 from vitrine.workflow_context import default_workflow_dependencies
 from vitrine.workflow_views import show_composition
@@ -86,7 +89,7 @@ def test_composition_prepare_cli_is_read_only_and_prints_exact_review_token(
     text = output.getvalue()
     assert after_state == before_state
     assert after_records == before_records
-    assert "Contract: vitrine_guided_working_composition_v1" in text
+    assert "Contract: vitrine_guided_working_composition_v2" in text
     assert f"Observed state revision: {before_state}" in text
     assert "Observed Composition pointer revision: none" in text
     assert "Disposition: create_initial" in text
@@ -230,3 +233,62 @@ def test_composition_freeze_cli_rejects_pointer_expectation_without_inference(
     assert error.getvalue().startswith(
         "working_composition.composition_pointer_changed:"
     )
+
+def test_issue100_composition_prepare_cli_reports_exact_requirement_backed_content(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    result = create_reflection(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        reflection_requirement_id=REFLECTION_REQUIREMENT_ID,
+        prompt_id="issue100_cli_prompt",
+        prompt_version="1",
+        prompt_snapshot="Compare the exact evidence.",
+        author=ACTOR,
+        target_scope="portfolio",
+        target_references=(
+            CurationTargetRef(
+                target_kind="portfolio",
+                target_id=setup.portfolio_id,
+            ),
+        ),
+        content="Exact CLI Reflection.",
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+        id_factory=lambda _prefix: "reflection_cli_exact",
+    )
+    assert result.disposition == "created"
+    before_state = load_current_state(setup.workspace).state_revision
+    before_records = load_current_records(setup.workspace)
+    output = io.StringIO()
+
+    assert (
+        cli.main(
+            [
+                "composition",
+                "prepare",
+                setup.portfolio_id,
+                "--workspace-root",
+                str(setup.workspace),
+            ],
+            output=output,
+            error=io.StringIO(),
+        )
+        == 0
+    )
+
+    text = output.getvalue()
+    assert load_current_state(setup.workspace).state_revision == before_state
+    assert load_current_records(setup.workspace) == before_records
+    assert "Contract: vitrine_guided_working_composition_v2" in text
+    assert "Requirement-backed content:" in text
+    assert "Requirement reflection_growth_comparison:" in text
+    assert "reflection:reflection_cli_exact@1" in text
+    assert "section=(portfolio-level)" in text
+    assert "Other non-content Profile requirements:" in text
+    assert "approval_teacher_review" in text
+    placement_line = next(
+        line for line in text.splitlines() if line.startswith("Placement IDs:")
+    )
+    assert "reflection_cli_exact" not in placement_line

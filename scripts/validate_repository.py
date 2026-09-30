@@ -88,7 +88,7 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
-        "guided Working Composition",
+        "Working Composition v2 requirement content",
         (
             "scripts/validate_working_composition.py",
             "--skip-focused-tests",
@@ -428,7 +428,7 @@ def validate(
                     "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
                 ),
                 (
-                    "guided Working Composition",
+                    "Working Composition v2 requirement content",
                     "scripts/smoke_test_working_composition_wheel.py",
                 ),
                 (

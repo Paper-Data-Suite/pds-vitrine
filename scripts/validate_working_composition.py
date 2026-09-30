@@ -1,4 +1,4 @@
-"""Validate the issue #67 guided Working Composition contract."""
+"""Validate Working Composition v2 and Issue #100 requirement content."""
 
 from __future__ import annotations
 
@@ -37,6 +37,8 @@ FOCUSED_TESTS = (
     "tests/test_working_composition_menu.py",
     "tests/test_working_composition_cli.py",
     "tests/test_working_composition_acceptance_matrix.py",
+    "tests/test_current_portfolio_reflection.py",
+    "tests/test_current_portfolio_build_planning.py",
     "tests/test_portfolio_menu.py",
     "tests/test_workflow_cli.py",
     "tests/test_curation_services.py",
@@ -72,8 +74,10 @@ FORBIDDEN_GUIDED_CALLS = {
 
 REQUIRED_DOCS = (
     "docs/contracts/guided-working-composition-v1.md",
+    "docs/contracts/guided-working-composition-v2.md",
     "docs/development/guided-working-composition.md",
     "docs/validation/issue-67-guided-working-composition-validation.md",
+    "docs/validation/issue-100-working-composition-requirement-content-validation.md",
 )
 
 
@@ -395,7 +399,34 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "--expected-state-revision",
         "--expected-composition-pointer-revision",
         "freeze_prepared_working_composition(",
+        "Requirement-backed content:",
+        "Other non-content Profile requirements:",
+        "placement-role=requirement-backed",
+        "preparation.requirement_contents",
     )
+
+    acceptance_path = ROOT / "tests" / "test_working_composition_acceptance_matrix.py"
+    _require_text(
+        acceptance_path,
+        "test_acceptance_issue100_requirement_backed_reflection_is_exact_content_not_placement",
+        "resolve_working_composition_requirement_contents(",
+        "create_successor",
+    )
+
+    current_portfolio_path = ROOT / "vitrine" / "current_portfolio_build.py"
+    _require_text(
+        current_portfolio_path,
+        "preparation.requirement_contents",
+        "content.requirement_id",
+        "content.section_id",
+    )
+    current_portfolio_source = current_portfolio_path.read_text(encoding="utf-8")
+    for forbidden in ("def _reflection_requirement(", "def _reflection_section("):
+        if forbidden in current_portfolio_source:
+            raise RuntimeError(
+                "Current Portfolio reintroduced duplicate Reflection semantics: "
+                f"{forbidden}"
+            )
 
     _validate_no_durable_preparation_record()
 
@@ -418,7 +449,24 @@ def validate(*, run_focused_tests: bool = True) -> None:
 
     for relative in REQUIRED_DOCS:
         if not (ROOT / relative).is_file():
-            raise RuntimeError(f"missing #67 documentation: {relative}")
+            raise RuntimeError(f"missing Working Composition documentation: {relative}")
+
+    docs_index = ROOT / "docs" / "README.md"
+    _require_text(
+        docs_index,
+        "contracts/guided-working-composition-v2.md",
+        "validation/issue-100-working-composition-requirement-content-validation.md",
+    )
+
+    smoke_test = ROOT / "scripts" / "smoke_test_working_composition_wheel.py"
+    _require_text(
+        smoke_test,
+        "vitrine_guided_working_composition_v2",
+        "PortfolioReflection",
+        "Requirement-backed content:",
+        "resolve_working_composition_requirement_contents",
+        "composition_revision=1",
+    )
 
     package_check = ROOT / "scripts" / "check_package.py"
     _require_text(
@@ -427,6 +475,8 @@ def validate(*, run_focused_tests: bool = True) -> None:
         '"vitrine/working_composition_menu.py"',
         '"vitrine/working_composition_cli.py"',
         '"docs/contracts/guided-working-composition-v1.md"',
+        '"docs/contracts/guided-working-composition-v2.md"',
+        '"docs/validation/issue-100-working-composition-requirement-content-validation.md"',
         '"scripts/validate_working_composition.py"',
         '"scripts/smoke_test_working_composition_wheel.py"',
         '"tests/test_working_composition_acceptance_matrix.py"',
@@ -437,6 +487,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
         repository_validator,
         "scripts/validate_working_composition.py",
         "scripts/smoke_test_working_composition_wheel.py",
+        "Working Composition v2 requirement content",
     )
 
     if run_focused_tests:
