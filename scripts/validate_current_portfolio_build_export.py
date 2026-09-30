@@ -412,9 +412,23 @@ def validate(*, run_focused_tests: bool = True) -> None:
         'omission_reason = "audience_prohibited"',
         'materialization_kind="generated_vitrine"',
         "for section in preparation.sections:",
+        "preparation.requirement_contents",
+        "WorkingCompositionRequirementContentSummary",
+        "requirement_content=context.requirement_content",
         "hashlib.sha256",
     )
-    if "retained_source_path" in build_path.read_text(encoding="utf-8"):
+    build_source = build_path.read_text(encoding="utf-8")
+    for forbidden in (
+        "def _reflection_requirement(",
+        "def _reflection_section(",
+    ):
+        if forbidden in build_source:
+            raise RuntimeError(
+                "Current Portfolio must consume shared Working Composition "
+                f"Reflection semantics instead of reintroducing {forbidden}"
+            )
+
+    if "retained_source_path" in build_source:
         raise RuntimeError(
             "Current Portfolio planner must not infer ScoreForm retained paths"
         )

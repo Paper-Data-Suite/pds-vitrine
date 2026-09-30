@@ -51,7 +51,7 @@ from vitrine.working_composition import (
     WorkingCompositionPayloadPreview,
     WorkingCompositionPlacementSummary,
     WorkingCompositionPreparation,
-    WorkingCompositionRequirementSummary,
+    WorkingCompositionRequirementContentSummary,
     WorkingCompositionReviewSummary,
     WorkingCompositionSectionSummary,
     WorkingCompositionSelectionSummary,
@@ -1068,80 +1068,139 @@ def _text_sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+def _reflection_context_error(message: str) -> CurrentPortfolioBuildError:
+    return CurrentPortfolioBuildError(
+        "current_portfolio_build.reflection_context_invalid",
+        message,
+    )
+
+
+def _shared_reflection_contents(
+    preparation: WorkingCompositionPreparation,
+) -> tuple[WorkingCompositionRequirementContentSummary, ...]:
+    values: list[WorkingCompositionRequirementContentSummary] = []
+    for content in preparation.requirement_contents:
+        if content.content_kind != "reflection":
+            continue
+        if (
+            content.content_class != "requirement_backed"
+            or content.record_kind != "reflection"
+            or content.requirement_kind != "reflection"
+            or content.satisfaction_class != "reflection_presence"
+        ):
+            raise _reflection_context_error(
+                "Working Composition Reflection content has unsupported semantic "
+                "classification."
+            )
+        values.append(content)
+
+    frozen_refs = tuple(
+        (reference.record_id, reference.revision)
+        for reference in preparation.payload.included_curation_revisions
+        if reference.record_kind == "reflection"
+    )
+    shared_refs = tuple(
+        (content.record_id, content.record_revision) for content in values
+    )
+    if shared_refs != frozen_refs:
+        raise _reflection_context_error(
+            "Working Composition shared Reflection content does not match the exact "
+            "frozen curation revision inventory."
+        )
+    return tuple(values)
+
+
 def _exact_frozen_reflection(
     records: tuple[object, ...],
     preparation: WorkingCompositionPreparation,
-    reflection_id: str,
-    reflection_revision: int,
+    content: WorkingCompositionRequirementContentSummary,
 ) -> PortfolioReflection:
-    reflection = _one_record(
-        records,
-        PortfolioReflection,
-        lambda item: item.reflection_id == reflection_id
-        and item.reflection_revision == reflection_revision,
-        "Exact frozen Portfolio Reflection revision is unavailable.",
-    )
-    assert isinstance(reflection, PortfolioReflection)
-    expected_profile = (
+    expected_context = (
+        preparation.portfolio_id,
+        preparation.portfolio_subject_id,
+        preparation.profile_binding_id,
         preparation.profile_revision_id,
         preparation.profile_revision_number,
     )
-    actual_profile = (
+    projected_context = (
+        content.portfolio_id,
+        content.portfolio_subject_id,
+        content.profile_binding_id,
+        content.profile_revision_id,
+        content.profile_revision_number,
+    )
+    if projected_context != expected_context:
+        raise _reflection_context_error(
+            "Working Composition shared Reflection content belongs to another "
+            "Portfolio, Subject, Binding, or Profile revision."
+        )
+
+    matches = tuple(
+        item
+        for item in records
+        if isinstance(item, PortfolioReflection)
+        and item.reflection_id == content.record_id
+        and item.reflection_revision == content.record_revision
+    )
+    if len(matches) != 1:
+        raise _reflection_context_error(
+            "Exact frozen Portfolio Reflection revision from Working Composition "
+            "content is unavailable or ambiguous."
+        )
+    reflection = matches[0]
+    actual_context = (
+        reflection.portfolio_id,
+        reflection.portfolio_subject_id,
+        reflection.profile_binding_id,
         reflection.profile_revision.portfolio_profile_id,
         reflection.profile_revision.profile_revision,
     )
+    if actual_context != expected_context:
+        raise _reflection_context_error(
+            "Exact frozen Portfolio Reflection belongs to another Portfolio, "
+            "Subject, Binding, or Profile revision."
+        )
     if (
-        reflection.portfolio_id != preparation.portfolio_id
-        or reflection.portfolio_subject_id != preparation.portfolio_subject_id
-        or reflection.profile_binding_id != preparation.profile_binding_id
-        or actual_profile != expected_profile
+        reflection.reflection_requirement_id != content.requirement_id
+        or reflection.prompt_id != content.prompt_id
+        or reflection.prompt_version != content.prompt_version
+        or reflection.content_mode != content.content_mode
     ):
-        raise CurrentPortfolioBuildError(
-            "current_portfolio_build.reflection_context_invalid",
-            "Frozen Portfolio Reflection belongs to another Portfolio/Profile context.",
+        raise _reflection_context_error(
+            "Exact frozen Portfolio Reflection disagrees with the shared Working "
+            "Composition content projection."
         )
     return reflection
 
 
-def _reflection_requirement(
+def _shared_reflection_section(
     preparation: WorkingCompositionPreparation,
-    reflection: PortfolioReflection,
-) -> WorkingCompositionRequirementSummary:
-    requirements = tuple(
-        item
-        for item in preparation.requirements
-        if item.requirement_id == reflection.reflection_requirement_id
-        and item.requirement_kind == "reflection"
-    )
-    if len(requirements) != 1:
-        raise CurrentPortfolioBuildError(
-            "current_portfolio_build.reflection_context_invalid",
-            "Frozen Portfolio Reflection requirement does not resolve uniquely.",
-        )
-    return requirements[0]
-
-
-def _reflection_section(
-    preparation: WorkingCompositionPreparation,
-    requirement: WorkingCompositionRequirementSummary,
+    content: WorkingCompositionRequirementContentSummary,
 ) -> WorkingCompositionSectionSummary | None:
-    if requirement.scope_kind != "section":
+    if content.section_id is None:
+        if content.scope_kind == "section":
+            raise _reflection_context_error(
+                "Section-scoped Working Composition Reflection content lacks an "
+                "exact resolved section."
+            )
         return None
-    if requirement.scope_reference is None:
-        raise CurrentPortfolioBuildError(
-            "current_portfolio_build.reflection_context_invalid",
-            "Section-scoped Reflection requirement lacks an exact section reference.",
+    if (
+        content.scope_kind != "section"
+        or content.scope_reference != content.section_id
+    ):
+        raise _reflection_context_error(
+            "Working Composition Reflection section mapping is internally "
+            "inconsistent."
         )
     matches = tuple(
         section
         for section in preparation.sections
-        if section.section_id == requirement.scope_reference
+        if section.section_id == content.section_id
     )
     if len(matches) != 1:
-        raise CurrentPortfolioBuildError(
-            "current_portfolio_build.reflection_context_invalid",
-            "Frozen Portfolio Reflection requirement references an unavailable "
-            "section.",
+        raise _reflection_context_error(
+            "Working Composition Reflection content references an unavailable "
+            "section."
         )
     return matches[0]
 
@@ -1149,7 +1208,7 @@ def _reflection_section(
 @dataclass(frozen=True, slots=True)
 class _FrozenReflectionContext:
     reflection: PortfolioReflection
-    requirement: WorkingCompositionRequirementSummary
+    requirement_content: WorkingCompositionRequirementContentSummary
     section: WorkingCompositionSectionSummary | None
 
 
@@ -1158,29 +1217,13 @@ def _frozen_reflection_contexts(
     preparation: WorkingCompositionPreparation,
 ) -> tuple[_FrozenReflectionContext, ...]:
     values: list[_FrozenReflectionContext] = []
-    seen: set[tuple[str, int]] = set()
-    for reference in preparation.payload.included_curation_revisions:
-        if reference.record_kind != "reflection":
-            continue
-        key = (reference.record_id, reference.revision)
-        if key in seen:
-            raise CurrentPortfolioBuildError(
-                "current_portfolio_build.reflection_context_invalid",
-                "Frozen Working Composition repeats a Reflection revision.",
-            )
-        seen.add(key)
-        reflection = _exact_frozen_reflection(
-            records,
-            preparation,
-            reference.record_id,
-            reference.revision,
-        )
-        requirement = _reflection_requirement(preparation, reflection)
+    for content in _shared_reflection_contents(preparation):
+        reflection = _exact_frozen_reflection(records, preparation, content)
         values.append(
             _FrozenReflectionContext(
                 reflection=reflection,
-                requirement=requirement,
-                section=_reflection_section(preparation, requirement),
+                requirement_content=content,
+                section=_shared_reflection_section(preparation, content),
             )
         )
     return tuple(values)
@@ -1188,7 +1231,7 @@ def _frozen_reflection_contexts(
 def _reflection_semantic_value(
     *,
     preparation: WorkingCompositionPreparation,
-    requirement: WorkingCompositionRequirementSummary,
+    requirement_content: WorkingCompositionRequirementContentSummary,
     section: WorkingCompositionSectionSummary | None,
     position_in_section: int | None,
     reflection: PortfolioReflection,
@@ -1202,14 +1245,14 @@ def _reflection_semantic_value(
         "profile_revision_id": preparation.profile_revision_id,
         "profile_revision_number": preparation.profile_revision_number,
         "composition_revision": preparation.current_composition_revision,
-        "requirement_scope_kind": requirement.scope_kind,
-        "requirement_scope_reference": requirement.scope_reference,
+        "requirement_scope_kind": requirement_content.scope_kind,
+        "requirement_scope_reference": requirement_content.scope_reference,
         "section_id": None if section is None else section.section_id,
         "section_order": None if section is None else section.order,
         "position_in_section": position_in_section,
         "reflection_id": reflection.reflection_id,
         "reflection_revision": reflection.reflection_revision,
-        "reflection_requirement_id": reflection.reflection_requirement_id,
+        "reflection_requirement_id": requirement_content.requirement_id,
         "prompt_id": reflection.prompt_id,
         "prompt_version": reflection.prompt_version,
         "prompt_snapshot_sha256": _text_sha256(reflection.prompt_snapshot),
@@ -1288,7 +1331,7 @@ def _planned_reflection_item(
     preparation: WorkingCompositionPreparation,
     rule: WorkingCompositionAudienceSummary,
     required_review_ids: tuple[str, ...],
-    requirement: WorkingCompositionRequirementSummary,
+    requirement_content: WorkingCompositionRequirementContentSummary,
     section: WorkingCompositionSectionSummary | None,
     reflection: PortfolioReflection,
     records: tuple[object, ...],
@@ -1305,7 +1348,7 @@ def _planned_reflection_item(
         paper_materialization_error = str(error)
     semantic_value = _reflection_semantic_value(
         preparation=preparation,
-        requirement=requirement,
+        requirement_content=requirement_content,
         section=section,
         position_in_section=position_in_section,
         reflection=reflection,
@@ -1417,7 +1460,7 @@ def _planned_reflection_item(
             position_in_section=position_in_section,
             reflection_id=reflection.reflection_id,
             reflection_revision=reflection.reflection_revision,
-            reflection_requirement_id=reflection.reflection_requirement_id,
+            reflection_requirement_id=requirement_content.requirement_id,
             prompt_id=reflection.prompt_id,
             prompt_version=reflection.prompt_version,
             prompt_snapshot_sha256=_text_sha256(reflection.prompt_snapshot),
@@ -1528,7 +1571,7 @@ def _planned_items(
                 preparation=preparation,
                 rule=rule,
                 required_review_ids=review_ids,
-                requirement=context.requirement,
+                requirement_content=context.requirement_content,
                 section=section,
                 reflection=context.reflection,
                 records=records,
@@ -1548,7 +1591,7 @@ def _planned_items(
             preparation=preparation,
             rule=rule,
             required_review_ids=review_ids,
-            requirement=context.requirement,
+            requirement_content=context.requirement_content,
             section=None,
             reflection=context.reflection,
             records=records,
