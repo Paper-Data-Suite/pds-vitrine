@@ -131,6 +131,7 @@ def _preparation(
         selections=(selection,),
         unplaced_selection_ids=(),
         requirements=(requirement,),
+        requirement_contents=(),
         source_observations=(source,),
         reviews=(),
         audience_rules=(audience,),
@@ -479,3 +480,186 @@ def test_guided_menu_reads_exact_historical_composition_revision(
     assert "Working Composition revision 2" in rendered
     assert "Revision: 2" in rendered
     assert "Profile Binding:" not in rendered
+
+
+def _issue100_reflection_preparation(*, recorded: bool) -> SimpleNamespace:
+    preparation = _preparation(
+        unresolved=() if recorded else ("reflection_required",)
+    )
+    reflection_section = SimpleNamespace(
+        section_id="reflection",
+        label="Comparison Reflection",
+        purpose="Student compares the curated evidence.",
+        order=2,
+        obligation="required",
+        minimum_placements=0,
+        maximum_placements=0,
+        active_placement_count=0,
+        current_arrangement_id=None,
+        current_arrangement_revision=None,
+        current_arrangement_pointer_revision=None,
+        placements=(),
+    )
+    reflection_requirement = SimpleNamespace(
+        requirement_id="comparison_reflection",
+        title="Student comparison reflection",
+        statement="Student authors one comparison reflection.",
+        requirement_kind="reflection",
+        obligation="required",
+        scope_kind="section",
+        scope_reference="reflection",
+        satisfaction_class="reflection_presence",
+        status=("satisfied_current_curation" if recorded else "unresolved_missing"),
+        related_to_frozen_inventory=True,
+        associated_unresolved_obligation_codes=(
+            () if recorded else ("reflection_required",)
+        ),
+    )
+    approval_requirement = SimpleNamespace(
+        requirement_id="teacher_review",
+        title="Teacher review",
+        statement="Teacher review is an explicit workflow obligation.",
+        requirement_kind="approval",
+        obligation="required",
+        scope_kind="portfolio",
+        scope_reference=None,
+        satisfaction_class="curation_review",
+        status="unresolved_missing",
+        related_to_frozen_inventory=True,
+        associated_unresolved_obligation_codes=("approval_required",),
+    )
+    content = SimpleNamespace(
+        content_class="requirement_backed",
+        content_kind="reflection",
+        record_kind="reflection",
+        record_id="reflection_exact",
+        record_revision=2,
+        requirement_id="comparison_reflection",
+        requirement_kind="reflection",
+        requirement_obligation="required",
+        satisfaction_class="reflection_presence",
+        scope_kind="section",
+        scope_reference="reflection",
+        section_id="reflection",
+        portfolio_id="portfolio_exact",
+        portfolio_subject_id="subject_exact",
+        profile_binding_id="binding_exact",
+        profile_revision_id="profile_exact",
+        profile_revision_number=1,
+        content_state="available",
+        prompt_id="comparison_prompt",
+        prompt_version="1",
+        content_mode="external_reference",
+    )
+    preparation.sections = preparation.sections + (reflection_section,)
+    preparation.requirements = preparation.requirements + (
+        reflection_requirement,
+        approval_requirement,
+    )
+    preparation.requirement_contents = (content,) if recorded else ()
+    return preparation
+
+
+def test_issue100_portfolio_content_renders_reflection_without_zero_of_zero() -> None:
+    preparation = _issue100_reflection_preparation(recorded=True)
+    output = io.StringIO()
+
+    working_composition_menu._render_portfolio_content(output, preparation)
+
+    text = output.getvalue()
+    assert "Portfolio content" in text
+    assert "1. Baseline — Required" in text
+    assert "Exact Work" in text
+    assert "2. Comparison Reflection — Required" in text
+    assert "Student Reflection — Recorded" in text
+    assert "Requirement satisfied" in text
+    assert "Format: External Reference" in text
+    assert "0 placed" not in text
+    assert "minimum 0" not in text
+    assert "limit 0" not in text
+    assert "reflection_exact" not in text
+    assert "comparison_reflection" not in text
+
+
+def test_issue100_missing_reflection_is_presented_as_obligation_not_empty_section() -> None:
+    preparation = _issue100_reflection_preparation(recorded=False)
+    output = io.StringIO()
+
+    working_composition_menu._render_portfolio_content(output, preparation)
+
+    text = output.getvalue()
+    assert "Comparison Reflection — Required" in text
+    assert "Student Reflection — Needed" in text
+    assert "No Reflection has been recorded for this requirement." in text
+    assert "0 placed" not in text
+    assert "minimum 0" not in text
+    assert "limit 0" not in text
+
+
+def test_issue100_other_requirements_exclude_content_and_section_cardinality() -> None:
+    preparation = _issue100_reflection_preparation(recorded=False)
+    output = io.StringIO()
+
+    working_composition_menu._render_other_requirements(output, preparation)
+
+    text = output.getvalue()
+    assert "Other Profile requirements" in text
+    assert "Teacher review — Required" in text
+    assert "Status: Unresolved Missing" in text
+    assert "Baseline evidence" not in text
+    assert "Student comparison reflection" not in text
+    assert "not inserted as student Portfolio content" in text
+
+
+def test_issue100_portfolio_scoped_reflection_remains_portfolio_level_content() -> None:
+    preparation = _issue100_reflection_preparation(recorded=True)
+    reflection_requirement = preparation.requirements[-2]
+    preparation.requirements = preparation.requirements[:-2] + (
+        SimpleNamespace(
+            **{
+                **reflection_requirement.__dict__,
+                "scope_kind": "portfolio",
+                "scope_reference": None,
+            }
+        ),
+        preparation.requirements[-1],
+    )
+    content = preparation.requirement_contents[0]
+    preparation.requirement_contents = (
+        SimpleNamespace(
+            **{
+                **content.__dict__,
+                "scope_kind": "portfolio",
+                "scope_reference": None,
+                "section_id": None,
+            }
+        ),
+    )
+    output = io.StringIO()
+
+    working_composition_menu._render_portfolio_content(output, preparation)
+
+    text = output.getvalue()
+    assert "Portfolio-level content" in text
+    assert "Student comparison reflection — Required" in text
+    assert "Student Reflection — Recorded" in text
+    reflection_section = text.split("2. Comparison Reflection — Required", 1)[1]
+    reflection_section = reflection_section.split("Portfolio-level content", 1)[0]
+    assert "Student Reflection — Recorded" not in reflection_section
+
+
+def test_issue100_technical_details_preserve_reflection_and_zero_capacity_provenance() -> None:
+    preparation = _issue100_reflection_preparation(recorded=True)
+    output = io.StringIO()
+
+    working_composition_menu._render_preparation_technical_details(
+        output, preparation
+    )
+
+    text = output.getvalue()
+    assert "Requirement-backed content provenance" in text
+    assert "reflection reflection_exact revision 2" in text
+    assert "requirement=comparison_reflection" in text
+    assert "scope=section:reflection; section=reflection" in text
+    assert "Comparison Reflection (reflection)" in text
+    assert "Placement cardinality: active 0; minimum 0; maximum 0" in text
