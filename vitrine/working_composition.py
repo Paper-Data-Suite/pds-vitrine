@@ -61,6 +61,7 @@ WORKING_COMPOSITION_ERROR_CODES: Final[frozenset[str]] = frozenset(
         "working_composition.composition_pointer_changed",
         "working_composition.source_state_changed",
         "working_composition.preparation_mismatch",
+        "working_composition.content_resolution_invalid",
     }
 )
 
@@ -173,6 +174,17 @@ class WorkingCompositionRequirementContentSummary:
     prompt_id: str
     prompt_version: str
     content_mode: str
+
+
+@dataclass(frozen=True, slots=True)
+class _WorkingCompositionRequirementContentContext:
+    portfolio_id: str
+    portfolio_subject_id: str
+    profile_binding_id: str
+    profile_revision_id: str
+    profile_revision_number: int
+    included_curation_revisions: tuple[CurationRevisionRef, ...]
+    related_profile_requirement_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -639,7 +651,7 @@ def _composition_content_error(message: str) -> CurationWorkflowError:
 
 def _exact_requirement_content_reflection(
     state: CurationState,
-    derivation: WorkingCompositionDerivation,
+    context: _WorkingCompositionRequirementContentContext,
     reference: CurationRevisionRef,
 ) -> PortfolioReflection:
     matches = tuple(
@@ -650,27 +662,27 @@ def _exact_requirement_content_reflection(
     )
     if len(matches) != 1:
         raise _composition_content_error(
-            "Exact Portfolio Reflection revision from the Composition derivation "
-            "is unavailable or ambiguous."
+            "Exact Portfolio Reflection revision from the Composition content "
+            "context is unavailable or ambiguous."
         )
     reflection = matches[0]
     expected_profile = (
-        derivation.profile_revision_id,
-        derivation.profile_revision_number,
+        context.profile_revision_id,
+        context.profile_revision_number,
     )
     actual_profile = (
         reflection.profile_revision.portfolio_profile_id,
         reflection.profile_revision.profile_revision,
     )
     if (
-        reflection.portfolio_id != derivation.portfolio_id
-        or reflection.portfolio_subject_id != derivation.portfolio_subject_id
-        or reflection.profile_binding_id != derivation.profile_binding_id
+        reflection.portfolio_id != context.portfolio_id
+        or reflection.portfolio_subject_id != context.portfolio_subject_id
+        or reflection.profile_binding_id != context.profile_binding_id
         or actual_profile != expected_profile
     ):
         raise _composition_content_error(
-            "Portfolio Reflection from the Composition derivation belongs to "
-            "another Portfolio, Subject, Binding, or Profile revision."
+            "Portfolio Reflection from the Composition content context belongs "
+            "to another Portfolio, Subject, Binding, or Profile revision."
         )
     return reflection
 
@@ -678,7 +690,7 @@ def _exact_requirement_content_reflection(
 def _exact_requirement_content_requirement(
     state: CurationState,
     profile: PortfolioProfileRevision,
-    derivation: WorkingCompositionDerivation,
+    context: _WorkingCompositionRequirementContentContext,
     reflection: PortfolioReflection,
 ) -> PortfolioProfileRequirement:
     matches = tuple(
@@ -701,10 +713,10 @@ def _exact_requirement_content_requirement(
             "Portfolio Reflection requirement lacks supported explicit "
             "reflection/reflection_presence semantics."
         )
-    if requirement.requirement_id not in derivation.related_profile_requirement_ids:
+    if requirement.requirement_id not in context.related_profile_requirement_ids:
         raise _composition_content_error(
             "Portfolio Reflection requirement is not related by the exact "
-            "Composition derivation."
+            "Composition content context."
         )
     return requirement
 
@@ -733,28 +745,38 @@ def _requirement_content_section_id(
     return matches[0].section_id
 
 
-def _requirement_content_summaries(
+def _resolve_requirement_content_summaries(
     state: CurationState,
     profile: PortfolioProfileRevision,
-    derivation: WorkingCompositionDerivation,
+    context: _WorkingCompositionRequirementContentContext,
 ) -> tuple[WorkingCompositionRequirementContentSummary, ...]:
-    """Project exact requirement-backed content without inventing Placements."""
+    """Resolve exact requirement-backed content from one explicit context."""
+    if (
+        profile.portfolio_profile_id != context.profile_revision_id
+        or profile.profile_revision != context.profile_revision_number
+    ):
+        raise _composition_content_error(
+            "Composition content Profile revision does not match its exact context."
+        )
     summaries: list[WorkingCompositionRequirementContentSummary] = []
     seen: set[tuple[str, int]] = set()
-    for reference in derivation.included_curation_revisions:
+    # Preserve exact derivation/inventory enumeration. This is deterministic
+    # representation only; it is not Portfolio presentation priority.
+    for reference in context.included_curation_revisions:
         if reference.record_kind != "reflection":
             continue
         key = (reference.record_id, reference.revision)
         if key in seen:
             raise _composition_content_error(
-                "Composition derivation repeats the same Portfolio Reflection revision."
+                "Composition content context repeats the same Portfolio Reflection "
+                "revision."
             )
         seen.add(key)
         reflection = _exact_requirement_content_reflection(
-            state, derivation, reference
+            state, context, reference
         )
         requirement = _exact_requirement_content_requirement(
-            state, profile, derivation, reflection
+            state, profile, context, reflection
         )
         section_id = _requirement_content_section_id(profile, requirement)
         summaries.append(
@@ -787,6 +809,146 @@ def _requirement_content_summaries(
             )
         )
     return tuple(summaries)
+
+
+def _requirement_content_context_from_derivation(
+    derivation: WorkingCompositionDerivation,
+) -> _WorkingCompositionRequirementContentContext:
+    return _WorkingCompositionRequirementContentContext(
+        portfolio_id=derivation.portfolio_id,
+        portfolio_subject_id=derivation.portfolio_subject_id,
+        profile_binding_id=derivation.profile_binding_id,
+        profile_revision_id=derivation.profile_revision_id,
+        profile_revision_number=derivation.profile_revision_number,
+        included_curation_revisions=derivation.included_curation_revisions,
+        related_profile_requirement_ids=derivation.related_profile_requirement_ids,
+    )
+
+
+def _requirement_content_summaries(
+    state: CurationState,
+    profile: PortfolioProfileRevision,
+    derivation: WorkingCompositionDerivation,
+) -> tuple[WorkingCompositionRequirementContentSummary, ...]:
+    """Project current derivation content through the shared exact resolver."""
+    return _resolve_requirement_content_summaries(
+        state,
+        profile,
+        _requirement_content_context_from_derivation(derivation),
+    )
+
+
+def _resolve_frozen_requirement_contents(
+    workspace_root: str | Path,
+    portfolio_id: str,
+    composition_revision: int,
+) -> tuple[WorkingCompositionRequirementContentSummary, ...]:
+    try:
+        _, records = load_current_records_with_state(workspace_root)
+    except (VitrineStorageNotFoundError, VitrineStorageError) as error:
+        raise WorkingCompositionError(
+            "working_composition.context_not_found",
+            "Vitrine canonical state is unavailable for frozen Composition content.",
+        ) from error
+
+    state = project_curation_state(records)
+    compositions = tuple(
+        item
+        for item in state.compositions
+        if item.portfolio_id == portfolio_id
+        and item.composition_revision == composition_revision
+    )
+    if len(compositions) != 1:
+        raise WorkingCompositionError(
+            "working_composition.content_resolution_invalid",
+            "Exact frozen Working Composition revision is unavailable or ambiguous.",
+        )
+    composition = compositions[0]
+
+    inventories = tuple(
+        item
+        for item in state.composition_inventories
+        if item.portfolio_id == composition.portfolio_id
+        and item.composition_revision == composition.composition_revision
+        and item.profile_binding_id == composition.profile_binding_id
+    )
+    if len(inventories) != 1:
+        raise WorkingCompositionError(
+            "working_composition.content_resolution_invalid",
+            "Exact frozen Working Composition Inventory is unavailable or ambiguous.",
+        )
+    inventory = inventories[0]
+    if inventory.profile_revision != composition.profile_revision:
+        raise WorkingCompositionError(
+            "working_composition.content_resolution_invalid",
+            "Frozen Working Composition and Inventory disagree on Profile revision.",
+        )
+
+    bindings = tuple(
+        item
+        for item in state.profile_bindings
+        if item.profile_binding_id == composition.profile_binding_id
+        and item.portfolio_id == composition.portfolio_id
+        and item.profile_revision == composition.profile_revision
+    )
+    if len(bindings) != 1:
+        raise WorkingCompositionError(
+            "working_composition.content_resolution_invalid",
+            "Frozen Working Composition Profile Binding is unavailable or inconsistent.",
+        )
+
+    profiles = tuple(
+        item
+        for item in state.profile_revisions
+        if item.portfolio_profile_id
+        == composition.profile_revision.portfolio_profile_id
+        and item.profile_revision == composition.profile_revision.profile_revision
+    )
+    if len(profiles) != 1:
+        raise WorkingCompositionError(
+            "working_composition.content_resolution_invalid",
+            "Frozen Working Composition Profile revision is unavailable or ambiguous.",
+        )
+    profile = profiles[0]
+    context = _WorkingCompositionRequirementContentContext(
+        portfolio_id=composition.portfolio_id,
+        portfolio_subject_id=composition.portfolio_subject_id,
+        profile_binding_id=composition.profile_binding_id,
+        profile_revision_id=composition.profile_revision.portfolio_profile_id,
+        profile_revision_number=composition.profile_revision.profile_revision,
+        included_curation_revisions=inventory.included_curation_revisions,
+        related_profile_requirement_ids=inventory.related_profile_requirement_ids,
+    )
+    try:
+        return _resolve_requirement_content_summaries(state, profile, context)
+    except CurationWorkflowError as error:
+        if error.code == "curation.composition_inconsistent":
+            raise WorkingCompositionError(
+                "working_composition.content_resolution_invalid",
+                str(error),
+            ) from error
+        raise
+
+
+def resolve_working_composition_requirement_contents(
+    workspace_root: str | Path,
+    portfolio_id: str,
+    *,
+    composition_revision: int | None = None,
+) -> tuple[WorkingCompositionRequirementContentSummary, ...]:
+    """Resolve current preparation or an exact frozen Composition revision."""
+    if composition_revision is None:
+        return prepare_working_composition(
+            workspace_root, portfolio_id
+        ).requirement_contents
+    if composition_revision <= 0:
+        raise WorkingCompositionError(
+            "working_composition.invalid_request",
+            "Composition revision must be a positive integer.",
+        )
+    return _resolve_frozen_requirement_contents(
+        workspace_root, portfolio_id, composition_revision
+    )
 
 
 def _source_observations(
@@ -1225,4 +1387,5 @@ __all__ = [
     "WorkingCompositionSourceObservation",
     "freeze_prepared_working_composition",
     "prepare_working_composition",
+    "resolve_working_composition_requirement_contents",
 ]

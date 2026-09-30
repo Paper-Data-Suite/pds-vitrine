@@ -26,6 +26,7 @@ from vitrine.working_composition import (
     WorkingCompositionSourceObservation,
     freeze_prepared_working_composition,
     prepare_working_composition,
+    resolve_working_composition_requirement_contents,
 )
 from vitrine.working_composition_cli import WORKING_COMPOSITION_CLI_COMMANDS
 
@@ -174,6 +175,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "working_composition.composition_pointer_changed",
         "working_composition.source_state_changed",
         "working_composition.preparation_mismatch",
+        "working_composition.content_resolution_invalid",
     }
     if not expected_errors.issubset(WORKING_COMPOSITION_ERROR_CODES):
         raise RuntimeError("guided Working Composition error vocabulary is incomplete")
@@ -297,9 +299,23 @@ def validate(*, run_focused_tests: bool = True) -> None:
             prepare_working_composition,
             freeze_prepared_working_composition,
             create_working_composition,
+            resolve_working_composition_requirement_contents,
         )
     ):
         raise RuntimeError("guided Working Composition callable surface is incomplete")
+
+    resolver_source = inspect.getsource(
+        resolve_working_composition_requirement_contents
+    )
+    for marker in (
+        "composition_revision is None",
+        "prepare_working_composition(",
+        "_resolve_frozen_requirement_contents(",
+    ):
+        if marker not in resolver_source:
+            raise RuntimeError(
+                f"Working Composition content resolver lost shared-path marker: {marker}"
+            )
 
     preparation_source = inspect.getsource(prepare_working_composition)
     if "derive_working_composition(" not in preparation_source:
@@ -357,6 +373,9 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "note_to_persist",
         "hashlib.sha256",
         "_requirement_content_summaries(",
+        "_resolve_requirement_content_summaries(",
+        "_resolve_frozen_requirement_contents(",
+        "resolve_working_composition_requirement_contents(",
         'reference.record_kind != "reflection"',
         'requirement.satisfaction_class != "reflection_presence"',
         "requirement.scope_reference",
