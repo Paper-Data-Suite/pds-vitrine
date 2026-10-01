@@ -114,7 +114,7 @@ def _working(
         ),
     )
     return WorkingCompositionPreparation(
-        contract_version="vitrine_guided_working_composition_v1",
+        contract_version="vitrine_guided_working_composition_v2",
         observed_state_revision=11,
         portfolio_id="portfolio_1",
         portfolio_subject_id="subject_1",

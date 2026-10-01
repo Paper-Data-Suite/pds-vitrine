@@ -1,4 +1,4 @@
-"""Validate the issue #67 guided Working Composition contract."""
+"""Validate Working Composition v2 and Issue #100 requirement content."""
 
 from __future__ import annotations
 
@@ -21,10 +21,12 @@ from vitrine.working_composition import (
     WORKING_COMPOSITION_ERROR_CODES,
     WorkingCompositionPayloadPreview,
     WorkingCompositionPreparation,
+    WorkingCompositionRequirementContentSummary,
     WorkingCompositionSectionSummary,
     WorkingCompositionSourceObservation,
     freeze_prepared_working_composition,
     prepare_working_composition,
+    resolve_working_composition_requirement_contents,
 )
 from vitrine.working_composition_cli import WORKING_COMPOSITION_CLI_COMMANDS
 
@@ -35,6 +37,8 @@ FOCUSED_TESTS = (
     "tests/test_working_composition_menu.py",
     "tests/test_working_composition_cli.py",
     "tests/test_working_composition_acceptance_matrix.py",
+    "tests/test_current_portfolio_reflection.py",
+    "tests/test_current_portfolio_build_planning.py",
     "tests/test_portfolio_menu.py",
     "tests/test_workflow_cli.py",
     "tests/test_curation_services.py",
@@ -70,8 +74,10 @@ FORBIDDEN_GUIDED_CALLS = {
 
 REQUIRED_DOCS = (
     "docs/contracts/guided-working-composition-v1.md",
+    "docs/contracts/guided-working-composition-v2.md",
     "docs/development/guided-working-composition.md",
     "docs/validation/issue-67-guided-working-composition-validation.md",
+    "docs/validation/issue-100-working-composition-requirement-content-validation.md",
 )
 
 
@@ -149,8 +155,8 @@ def _validate_no_durable_preparation_record() -> None:
 
 
 def validate(*, run_focused_tests: bool = True) -> None:
-    if WORKING_COMPOSITION_CONTRACT_VERSION != "vitrine_guided_working_composition_v1":
-        raise RuntimeError("guided Working Composition contract identity changed")
+    if WORKING_COMPOSITION_CONTRACT_VERSION != "vitrine_guided_working_composition_v2":
+        raise RuntimeError("guided Working Composition v2 contract identity changed")
 
     expected_statuses = frozenset(
         {
@@ -173,6 +179,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "working_composition.composition_pointer_changed",
         "working_composition.source_state_changed",
         "working_composition.preparation_mismatch",
+        "working_composition.content_resolution_invalid",
     }
     if not expected_errors.issubset(WORKING_COMPOSITION_ERROR_CODES):
         raise RuntimeError("guided Working Composition error vocabulary is incomplete")
@@ -193,6 +200,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "selections",
         "unplaced_selection_ids",
         "requirements",
+        "requirement_contents",
         "source_observations",
         "reviews",
         "audience_rules",
@@ -225,6 +233,36 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "placements",
     }.issubset(section_fields):
         raise RuntimeError("section/Arrangement explanation lost exact ordering metadata")
+
+    requirement_content_fields = {
+        field.name for field in fields(WorkingCompositionRequirementContentSummary)
+    }
+    if requirement_content_fields != {
+        "content_class",
+        "content_kind",
+        "record_kind",
+        "record_id",
+        "record_revision",
+        "requirement_id",
+        "requirement_kind",
+        "requirement_obligation",
+        "satisfaction_class",
+        "scope_kind",
+        "scope_reference",
+        "section_id",
+        "portfolio_id",
+        "portfolio_subject_id",
+        "profile_binding_id",
+        "profile_revision_id",
+        "profile_revision_number",
+        "content_state",
+        "prompt_id",
+        "prompt_version",
+        "content_mode",
+    }:
+        raise RuntimeError(
+            "Working Composition requirement-backed content contract changed"
+        )
 
     source_fields = {field.name for field in fields(WorkingCompositionSourceObservation)}
     if source_fields != {
@@ -265,9 +303,23 @@ def validate(*, run_focused_tests: bool = True) -> None:
             prepare_working_composition,
             freeze_prepared_working_composition,
             create_working_composition,
+            resolve_working_composition_requirement_contents,
         )
     ):
         raise RuntimeError("guided Working Composition callable surface is incomplete")
+
+    resolver_source = inspect.getsource(
+        resolve_working_composition_requirement_contents
+    )
+    for marker in (
+        "composition_revision is None",
+        "prepare_working_composition(",
+        "_resolve_frozen_requirement_contents(",
+    ):
+        if marker not in resolver_source:
+            raise RuntimeError(
+                f"Working Composition content resolver lost shared-path marker: {marker}"
+            )
 
     preparation_source = inspect.getsource(prepare_working_composition)
     if "derive_working_composition(" not in preparation_source:
@@ -324,6 +376,13 @@ def validate(*, run_focused_tests: bool = True) -> None:
         'requirement.requirement_kind == "audience"',
         "note_to_persist",
         "hashlib.sha256",
+        "_requirement_content_summaries(",
+        "_resolve_requirement_content_summaries(",
+        "_resolve_frozen_requirement_contents(",
+        "resolve_working_composition_requirement_contents(",
+        'reference.record_kind != "reflection"',
+        'requirement.satisfaction_class != "reflection_presence"',
+        "requirement.scope_reference",
     )
     _require_text(
         menu_path,
@@ -340,7 +399,34 @@ def validate(*, run_focused_tests: bool = True) -> None:
         "--expected-state-revision",
         "--expected-composition-pointer-revision",
         "freeze_prepared_working_composition(",
+        "Requirement-backed content:",
+        "Other non-content Profile requirements:",
+        "placement-role=requirement-backed",
+        "preparation.requirement_contents",
     )
+
+    acceptance_path = ROOT / "tests" / "test_working_composition_acceptance_matrix.py"
+    _require_text(
+        acceptance_path,
+        "test_acceptance_issue100_requirement_backed_reflection_is_exact_content_not_placement",
+        "resolve_working_composition_requirement_contents(",
+        "create_successor",
+    )
+
+    current_portfolio_path = ROOT / "vitrine" / "current_portfolio_build.py"
+    _require_text(
+        current_portfolio_path,
+        "preparation.requirement_contents",
+        "content.requirement_id",
+        "content.section_id",
+    )
+    current_portfolio_source = current_portfolio_path.read_text(encoding="utf-8")
+    for forbidden in ("def _reflection_requirement(", "def _reflection_section("):
+        if forbidden in current_portfolio_source:
+            raise RuntimeError(
+                "Current Portfolio reintroduced duplicate Reflection semantics: "
+                f"{forbidden}"
+            )
 
     _validate_no_durable_preparation_record()
 
@@ -363,7 +449,24 @@ def validate(*, run_focused_tests: bool = True) -> None:
 
     for relative in REQUIRED_DOCS:
         if not (ROOT / relative).is_file():
-            raise RuntimeError(f"missing #67 documentation: {relative}")
+            raise RuntimeError(f"missing Working Composition documentation: {relative}")
+
+    docs_index = ROOT / "docs" / "README.md"
+    _require_text(
+        docs_index,
+        "contracts/guided-working-composition-v2.md",
+        "validation/issue-100-working-composition-requirement-content-validation.md",
+    )
+
+    smoke_test = ROOT / "scripts" / "smoke_test_working_composition_wheel.py"
+    _require_text(
+        smoke_test,
+        "vitrine_guided_working_composition_v2",
+        "PortfolioReflection",
+        "Requirement-backed content:",
+        "resolve_working_composition_requirement_contents",
+        "composition_revision=1",
+    )
 
     package_check = ROOT / "scripts" / "check_package.py"
     _require_text(
@@ -372,6 +475,8 @@ def validate(*, run_focused_tests: bool = True) -> None:
         '"vitrine/working_composition_menu.py"',
         '"vitrine/working_composition_cli.py"',
         '"docs/contracts/guided-working-composition-v1.md"',
+        '"docs/contracts/guided-working-composition-v2.md"',
+        '"docs/validation/issue-100-working-composition-requirement-content-validation.md"',
         '"scripts/validate_working_composition.py"',
         '"scripts/smoke_test_working_composition_wheel.py"',
         '"tests/test_working_composition_acceptance_matrix.py"',
@@ -382,6 +487,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
         repository_validator,
         "scripts/validate_working_composition.py",
         "scripts/smoke_test_working_composition_wheel.py",
+        "guided Working Composition",
     )
 
     if run_focused_tests:

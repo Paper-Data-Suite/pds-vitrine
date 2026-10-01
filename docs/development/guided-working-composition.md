@@ -75,6 +75,41 @@ single semantic source for both preview and write behavior.
 When changing Composition semantics, update the shared derivation rather than
 adding presentation-specific reimplementation.
 
+## v2 requirement-backed content semantics
+
+Issue #100 advances the transient contract to
+`vitrine_guided_working_composition_v2`. Durable Composition records remain
+unchanged.
+
+Use `WorkingCompositionPreparation.requirement_contents` or
+`resolve_working_composition_requirement_contents(...)` when code needs exact
+Portfolio-content semantics for Reflection. Do not rediscover Reflection meaning
+from titles, statements, labels, timestamps, or opaque IDs.
+
+The supported v2 Reflection chain is:
+
+```text
+exact CurationRevisionRef
+-> exact PortfolioReflection revision
+-> exact reflection_requirement_id
+-> exact Profile requirement
+-> exact explicit scope
+```
+
+Current resolution and frozen historical resolution share the same semantic
+resolver. Historical callers must provide the exact Composition revision and
+must never substitute the current Reflection head for a frozen older revision.
+
+Current Portfolio may resolve the exact canonical Reflection record for byte and
+paper materialization details, but requirement and section meaning must come
+from the shared Working Composition projection.
+
+A zero-capacity section with an explicit section-scoped Reflection requirement
+is requirement-backed content, not an empty Placement section. Approval, audience
+review, privacy, rights, accessibility, and unknown policy/workflow requirements
+must remain non-content unless a supported explicit content semantic says
+otherwise.
+
 ## Requirement explanation
 
 Requirement status is derived only from explicit fields such as

@@ -9,6 +9,7 @@ import vitrine.curation_services as curation_services
 import vitrine.working_composition as working_composition
 from scripts.curation_fixture_support import (
     ACTOR,
+    APPROVAL_REQUIREMENT_ID,
     REFLECTION_REQUIREMENT_ID,
     STUDENT_ACTOR,
     StaticCurationAuthorityGate,
@@ -26,23 +27,31 @@ from vitrine.curation_services import (
     place_selection,
     reorder_section,
     review_curation_target,
+    revise_reflection,
     select_candidate_directly,
 )
 from vitrine.curation_state import project_curation_state
 from vitrine.models import (
+    CurationRevisionRef,
     CurationTargetRef,
     PortfolioPlacement,
+    PortfolioReflection,
     PortfolioSelection,
     WorkingPortfolioCompositionInventory,
     WorkingPortfolioCompositionPointerRevision,
     WorkingPortfolioCompositionRevision,
 )
-from vitrine.storage import load_current_records, load_current_state
+from vitrine.storage import (
+    load_current_records,
+    load_current_records_with_state,
+    load_current_state,
+)
 from vitrine.working_composition import (
     WORKING_COMPOSITION_CONTRACT_VERSION,
     WorkingCompositionError,
     freeze_prepared_working_composition,
     prepare_working_composition,
+    resolve_working_composition_requirement_contents,
 )
 
 
@@ -803,3 +812,463 @@ def test_canonical_prepared_guard_checks_derivation_before_authority(
     assert gate.requests == []
     assert load_current_state(setup.workspace).state_revision == before
 
+
+
+def test_issue100_v2_projects_exact_requirement_backed_reflection_read_only(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    baseline, _ = _select_and_place(setup, "evidence_selected", "baseline")
+    later, _ = _select_and_place(setup, "evidence_approved", "later_work")
+    result = create_reflection(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        reflection_requirement_id=REFLECTION_REQUIREMENT_ID,
+        prompt_id="growth_prompt_issue100",
+        prompt_version="1",
+        prompt_snapshot="Compare the exact curated baseline and later work.",
+        author=STUDENT_ACTOR,
+        target_scope="comparison_set",
+        target_references=(
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=baseline.selection_id,
+                semantic_role="baseline",
+            ),
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=later.selection_id,
+                semantic_role="later",
+            ),
+        ),
+        content="Synthetic student interpretation only.",
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+        id_factory=setup.ids,
+    )
+    reflection = next(
+        item for item in result.records if isinstance(item, PortfolioReflection)
+    )
+    before = load_current_state(setup.workspace).state_revision
+
+    preparation = prepare_working_composition(setup.workspace, setup.portfolio_id)
+
+    assert WORKING_COMPOSITION_CONTRACT_VERSION == (
+        "vitrine_guided_working_composition_v2"
+    )
+    assert preparation.contract_version == WORKING_COMPOSITION_CONTRACT_VERSION
+    assert load_current_state(setup.workspace).state_revision == before
+    assert len(preparation.requirement_contents) == 1
+    content = preparation.requirement_contents[0]
+    assert content.content_class == "requirement_backed"
+    assert content.content_kind == "reflection"
+    assert content.record_kind == "reflection"
+    assert content.record_id == reflection.reflection_id
+    assert content.record_revision == reflection.reflection_revision
+    assert content.requirement_id == REFLECTION_REQUIREMENT_ID
+    assert content.requirement_kind == "reflection"
+    assert content.requirement_obligation == "required"
+    assert content.satisfaction_class == "reflection_presence"
+    assert content.scope_kind == "portfolio"
+    assert content.scope_reference is None
+    assert content.section_id is None
+    assert content.portfolio_id == setup.portfolio_id
+    assert content.portfolio_subject_id == reflection.portfolio_subject_id
+    assert content.profile_binding_id == setup.profile_binding_id
+    assert content.profile_revision_id == reflection.profile_revision.portfolio_profile_id
+    assert content.profile_revision_number == reflection.profile_revision.profile_revision
+    assert content.content_state == "available"
+    assert content.prompt_id == reflection.prompt_id
+    assert content.prompt_version == reflection.prompt_version
+    assert content.content_mode == reflection.content_mode
+    assert CurationRevisionRef(
+        record_kind="reflection",
+        record_id=reflection.reflection_id,
+        revision=reflection.reflection_revision,
+    ) in preparation.payload.included_curation_revisions
+    assert reflection.reflection_id not in preparation.payload.placement_ids
+    assert APPROVAL_REQUIREMENT_ID not in {
+        item.requirement_id for item in preparation.requirement_contents
+    }
+
+
+def test_issue100_requirement_content_section_mapping_uses_explicit_scope(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    baseline, _ = _select_and_place(setup, "evidence_selected", "baseline")
+    later, _ = _select_and_place(setup, "evidence_approved", "later_work")
+    create_reflection(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        reflection_requirement_id=REFLECTION_REQUIREMENT_ID,
+        prompt_id="growth_prompt_scope",
+        prompt_version="1",
+        prompt_snapshot="Compare the exact curated baseline and later work.",
+        author=STUDENT_ACTOR,
+        target_scope="comparison_set",
+        target_references=(
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=baseline.selection_id,
+                semantic_role="baseline",
+            ),
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=later.selection_id,
+                semantic_role="later",
+            ),
+        ),
+        content="Synthetic student interpretation only.",
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+        id_factory=setup.ids,
+    )
+    records = load_current_records(setup.workspace)
+    state = project_curation_state(records)
+    derivation = derive_working_composition(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+    )
+    profile = working_composition._exact_profile(state, derivation)
+    original = next(
+        item
+        for item in state.profile_requirements
+        if item.requirement_id == REFLECTION_REQUIREMENT_ID
+    )
+    scoped = replace(
+        original,
+        title="Misleading Later Work label must not control section mapping",
+        statement="Prose mentions Later Work but explicit scope is Baseline.",
+        scope_kind="section",
+        scope_reference="baseline",
+    )
+    projected = replace(
+        state,
+        profile_requirements=tuple(
+            scoped if item is original else item
+            for item in state.profile_requirements
+        ),
+    )
+
+    contents = working_composition._requirement_content_summaries(
+        projected, profile, derivation
+    )
+
+    assert len(contents) == 1
+    assert contents[0].scope_kind == "section"
+    assert contents[0].scope_reference == "baseline"
+    assert contents[0].section_id == "baseline"
+
+
+def test_issue100_requirement_content_missing_exact_revision_fails_closed(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    state = project_curation_state(load_current_records(setup.workspace))
+    derivation = derive_working_composition(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+    )
+    profile = working_composition._exact_profile(state, derivation)
+    broken = replace(
+        derivation,
+        included_curation_revisions=(
+            CurationRevisionRef(
+                record_kind="reflection",
+                record_id="reflection_missing_issue100",
+                revision=1,
+            ),
+        ),
+    )
+
+    with pytest.raises(CurationWorkflowError) as exc_info:
+        working_composition._requirement_content_summaries(
+            state, profile, broken
+        )
+
+    assert exc_info.value.code == "curation.composition_inconsistent"
+    assert exc_info.value.stage == "preparation"
+    assert "unavailable or ambiguous" in str(exc_info.value)
+
+
+def _issue100_create_reflection(
+    setup: object,
+    baseline: PortfolioSelection,
+    later: PortfolioSelection,
+    *,
+    prompt_id: str,
+    content: str,
+) -> PortfolioReflection:
+    result = create_reflection(
+        getattr(setup, "workspace"),
+        portfolio_id=getattr(setup, "portfolio_id"),
+        reflection_requirement_id=REFLECTION_REQUIREMENT_ID,
+        prompt_id=prompt_id,
+        prompt_version="1",
+        prompt_snapshot="Compare the exact curated baseline and later work.",
+        author=STUDENT_ACTOR,
+        target_scope="comparison_set",
+        target_references=(
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=baseline.selection_id,
+                semantic_role="baseline",
+            ),
+            CurationTargetRef(
+                target_kind="selection",
+                target_id=later.selection_id,
+                semantic_role="later",
+            ),
+        ),
+        content=content,
+        expected_state_revision=load_current_state(
+            getattr(setup, "workspace")
+        ).state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+        id_factory=getattr(setup, "ids"),
+    )
+    return next(
+        item for item in result.records if isinstance(item, PortfolioReflection)
+    )
+
+
+def test_issue100_current_and_historical_content_pin_exact_reflection_revision(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    baseline, _ = _select_and_place(setup, "evidence_selected", "baseline")
+    later, _ = _select_and_place(setup, "evidence_approved", "later_work")
+    reflection_v1 = _issue100_create_reflection(
+        setup,
+        baseline,
+        later,
+        prompt_id="issue100_history",
+        content="First exact Reflection revision.",
+    )
+    prepared_v1 = prepare_working_composition(setup.workspace, setup.portfolio_id)
+    frozen = create_working_composition(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        created_by=ACTOR,
+        expected_state_revision=prepared_v1.observed_state_revision,
+        expected_composition_pointer_revision=(
+            prepared_v1.observed_composition_pointer_revision
+        ),
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+        id_factory=setup.ids,
+    )
+    assert frozen.disposition == "created"
+
+    revised = revise_reflection(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        reflection_id=reflection_v1.reflection_id,
+        expected_reflection_revision=reflection_v1.reflection_revision,
+        author=STUDENT_ACTOR,
+        content="Second exact Reflection revision.",
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+    )
+    reflection_v2 = next(
+        item for item in revised.records if isinstance(item, PortfolioReflection)
+    )
+    assert reflection_v2.reflection_revision == 2
+
+    current = resolve_working_composition_requirement_contents(
+        setup.workspace, setup.portfolio_id
+    )
+    historical = resolve_working_composition_requirement_contents(
+        setup.workspace,
+        setup.portfolio_id,
+        composition_revision=1,
+    )
+    prepared_v2 = prepare_working_composition(setup.workspace, setup.portfolio_id)
+
+    assert [(item.record_id, item.record_revision) for item in current] == [
+        (reflection_v2.reflection_id, 2)
+    ]
+    assert [(item.record_id, item.record_revision) for item in historical] == [
+        (reflection_v1.reflection_id, 1)
+    ]
+    assert prepared_v2.disposition == "create_successor"
+    assert prepared_v2.current_composition_revision == 1
+    assert prepared_v2.predicted_composition_revision == 2
+    assert prepared_v2.requirement_contents == current
+
+
+def test_issue100_multiple_reflection_series_are_not_collapsed_or_ranked(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    baseline, _ = _select_and_place(setup, "evidence_selected", "baseline")
+    later, _ = _select_and_place(setup, "evidence_approved", "later_work")
+    first = _issue100_create_reflection(
+        setup,
+        baseline,
+        later,
+        prompt_id="issue100_multiple_a",
+        content="First independent Reflection series.",
+    )
+    second = _issue100_create_reflection(
+        setup,
+        baseline,
+        later,
+        prompt_id="issue100_multiple_b",
+        content="Second independent Reflection series.",
+    )
+    preparation = prepare_working_composition(setup.workspace, setup.portfolio_id)
+    create_working_composition(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        created_by=ACTOR,
+        expected_state_revision=preparation.observed_state_revision,
+        expected_composition_pointer_revision=(
+            preparation.observed_composition_pointer_revision
+        ),
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+        id_factory=setup.ids,
+    )
+
+    historical = resolve_working_composition_requirement_contents(
+        setup.workspace,
+        setup.portfolio_id,
+        composition_revision=1,
+    )
+
+    assert len(historical) == 2
+    assert {
+        (item.record_id, item.record_revision, item.requirement_id)
+        for item in historical
+    } == {
+        (first.reflection_id, 1, REFLECTION_REQUIREMENT_ID),
+        (second.reflection_id, 1, REFLECTION_REQUIREMENT_ID),
+    }
+
+
+def test_issue100_historical_content_rejects_context_mismatch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    baseline, _ = _select_and_place(setup, "evidence_selected", "baseline")
+    later, _ = _select_and_place(setup, "evidence_approved", "later_work")
+    reflection = _issue100_create_reflection(
+        setup,
+        baseline,
+        later,
+        prompt_id="issue100_context_mismatch",
+        content="Exact frozen Reflection.",
+    )
+    preparation = prepare_working_composition(setup.workspace, setup.portfolio_id)
+    create_working_composition(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        created_by=ACTOR,
+        expected_state_revision=preparation.observed_state_revision,
+        expected_composition_pointer_revision=(
+            preparation.observed_composition_pointer_revision
+        ),
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+        id_factory=setup.ids,
+    )
+    current, records = load_current_records_with_state(setup.workspace)
+    tampered = tuple(
+        replace(item, portfolio_subject_id="subject_issue100_mismatch")
+        if isinstance(item, PortfolioReflection)
+        and item.reflection_id == reflection.reflection_id
+        and item.reflection_revision == reflection.reflection_revision
+        else item
+        for item in records
+    )
+    monkeypatch.setattr(
+        working_composition,
+        "load_current_records_with_state",
+        lambda workspace_root: (current, tampered),
+    )
+
+    with pytest.raises(WorkingCompositionError) as exc_info:
+        resolve_working_composition_requirement_contents(
+            setup.workspace,
+            setup.portfolio_id,
+            composition_revision=1,
+        )
+
+    assert exc_info.value.code == "working_composition.content_resolution_invalid"
+    assert "another Portfolio, Subject, Binding, or Profile revision" in str(
+        exc_info.value
+    )
+
+
+def test_issue100_historical_missing_revision_never_substitutes_current_head(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    baseline, _ = _select_and_place(setup, "evidence_selected", "baseline")
+    later, _ = _select_and_place(setup, "evidence_approved", "later_work")
+    reflection_v1 = _issue100_create_reflection(
+        setup,
+        baseline,
+        later,
+        prompt_id="issue100_missing_history",
+        content="Frozen first Reflection revision.",
+    )
+    preparation = prepare_working_composition(setup.workspace, setup.portfolio_id)
+    create_working_composition(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        created_by=ACTOR,
+        expected_state_revision=preparation.observed_state_revision,
+        expected_composition_pointer_revision=(
+            preparation.observed_composition_pointer_revision
+        ),
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+        id_factory=setup.ids,
+    )
+    revise_reflection(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        reflection_id=reflection_v1.reflection_id,
+        expected_reflection_revision=1,
+        author=STUDENT_ACTOR,
+        content="Current second Reflection revision.",
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+        clock=fixed_clock,
+    )
+    current, records = load_current_records_with_state(setup.workspace)
+    without_frozen_revision = tuple(
+        item
+        for item in records
+        if not (
+            isinstance(item, PortfolioReflection)
+            and item.reflection_id == reflection_v1.reflection_id
+            and item.reflection_revision == 1
+        )
+    )
+    monkeypatch.setattr(
+        working_composition,
+        "load_current_records_with_state",
+        lambda workspace_root: (current, without_frozen_revision),
+    )
+
+    with pytest.raises(WorkingCompositionError) as exc_info:
+        resolve_working_composition_requirement_contents(
+            setup.workspace,
+            setup.portfolio_id,
+            composition_revision=1,
+        )
+
+    assert exc_info.value.code == "working_composition.content_resolution_invalid"
+    assert "unavailable or ambiguous" in str(exc_info.value)

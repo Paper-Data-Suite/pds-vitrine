@@ -17,6 +17,8 @@ from vitrine.workflow_views import CompositionView, WorkflowViewError, show_comp
 from vitrine.working_composition import (
     WorkingCompositionError,
     WorkingCompositionPreparation,
+    WorkingCompositionRequirementContentSummary,
+    WorkingCompositionRequirementSummary,
     freeze_prepared_working_composition,
     prepare_working_composition,
 )
@@ -222,36 +224,176 @@ def _composition_view_menu(
         _pause(input_fn)
 
 
-def _render_sections(output: TextIO, preparation: WorkingCompositionPreparation) -> None:
-    _write(output, "Sections and order", "")
-    for section in preparation.sections:
-        maximum = (
-            "no maximum"
-            if section.maximum_placements is None
-            else f"limit {section.maximum_placements}"
+def _is_requirement_backed_content_requirement(
+    requirement: WorkingCompositionRequirementSummary,
+) -> bool:
+    return (
+        requirement.requirement_kind == "reflection"
+        and requirement.satisfaction_class == "reflection_presence"
+    )
+
+
+def _is_section_cardinality_requirement(
+    requirement: WorkingCompositionRequirementSummary,
+) -> bool:
+    return (
+        requirement.requirement_kind == "section"
+        and requirement.satisfaction_class == "placement_cardinality"
+    )
+
+
+def _requirement_contents_for(
+    preparation: WorkingCompositionPreparation,
+    requirement: WorkingCompositionRequirementSummary,
+) -> tuple[WorkingCompositionRequirementContentSummary, ...]:
+    return tuple(
+        item
+        for item in preparation.requirement_contents
+        if item.requirement_id == requirement.requirement_id
+    )
+
+
+def _reflection_requirements_for_section(
+    preparation: WorkingCompositionPreparation,
+    section_id: str,
+) -> tuple[WorkingCompositionRequirementSummary, ...]:
+    return tuple(
+        requirement
+        for requirement in preparation.requirements
+        if _is_requirement_backed_content_requirement(requirement)
+        and requirement.scope_kind == "section"
+        and requirement.scope_reference == section_id
+    )
+
+
+def _portfolio_reflection_requirements(
+    preparation: WorkingCompositionPreparation,
+) -> tuple[WorkingCompositionRequirementSummary, ...]:
+    return tuple(
+        requirement
+        for requirement in preparation.requirements
+        if _is_requirement_backed_content_requirement(requirement)
+        and requirement.scope_kind != "section"
+    )
+
+
+def _render_reflection_requirement(
+    output: TextIO,
+    requirement: WorkingCompositionRequirementSummary,
+    contents: tuple[WorkingCompositionRequirementContentSummary, ...],
+    *,
+    indent: str,
+) -> None:
+    if contents:
+        if len(contents) == 1:
+            _write(output, f"{indent}Student Reflection — Recorded")
+        else:
+            _write(
+                output,
+                f"{indent}Student Reflection — {len(contents)} recorded responses",
+            )
+        if requirement.status == "satisfied_current_curation":
+            _write(output, f"{indent}Requirement satisfied")
+        else:
+            _write(
+                output,
+                f"{indent}Requirement status: {teacher_term(requirement.status)}",
+            )
+        modes = tuple(sorted({item.content_mode for item in contents}))
+        if modes:
+            _write(
+                output,
+                f"{indent}Format: "
+                + ", ".join(teacher_term(item) for item in modes),
+            )
+        return
+
+    if requirement.status in {"unresolved_missing", "conditional_unresolved"}:
+        _write(
+            output,
+            f"{indent}Student Reflection — Needed",
+            f"{indent}No Reflection has been recorded for this requirement.",
         )
+        return
+    if requirement.status == "optional_absent":
+        _write(output, f"{indent}Student Reflection — Optional; not recorded")
+        return
+    _write(
+        output,
+        f"{indent}Student Reflection — Not represented",
+        f"{indent}Requirement status: {teacher_term(requirement.status)}",
+    )
+
+
+def _render_portfolio_content(
+    output: TextIO,
+    preparation: WorkingCompositionPreparation,
+) -> None:
+    _write(output, "Portfolio content", "")
+    for section in preparation.sections:
         _write(
             output,
             f"{section.order}. {section.label} — "
             f"{teacher_term(section.obligation)}",
             f"   {section.purpose}",
-            f"   {section.active_placement_count} placed; "
-            f"minimum {section.minimum_placements}; {maximum}",
         )
-        for position, placement in enumerate(section.placements, 1):
-            title = placement.display_title or placement.candidate_display_snapshot
-            _write(
-                output,
-                f"   {position}. {title}",
-                f"      Status: "
-                f"{teacher_term(placement.candidate_condition_state)}",
-            )
-            if placement.unresolved_condition_codes:
+
+        if section.maximum_placements != 0:
+            if section.placements:
+                for placement in section.placements:
+                    title = placement.display_title or placement.candidate_display_snapshot
+                    _write(
+                        output,
+                        f"   {title}",
+                        "      Status: "
+                        f"{teacher_term(placement.candidate_condition_state)}",
+                    )
+                    if placement.unresolved_condition_codes:
+                        _write(
+                            output,
+                            "      Needs attention: "
+                            f"{_teacher_codes(placement.unresolved_condition_codes)}",
+                        )
+            elif section.minimum_placements > 0:
                 _write(
                     output,
-                    "      Needs attention: "
-                    f"{_teacher_codes(placement.unresolved_condition_codes)}",
+                    "   Evidence needed — no Portfolio evidence is currently placed.",
                 )
+            else:
+                _write(output, "   No evidence selected.")
+
+        reflection_requirements = _reflection_requirements_for_section(
+            preparation, section.section_id
+        )
+        for requirement in reflection_requirements:
+            _render_reflection_requirement(
+                output,
+                requirement,
+                _requirement_contents_for(preparation, requirement),
+                indent="   ",
+            )
+
+        if section.maximum_placements == 0 and not reflection_requirements:
+            if section.obligation == "prohibited":
+                _write(output, "   No Portfolio content is permitted in this section.")
+            else:
+                _write(output, "   This section does not accept Placement-backed evidence.")
+
+    portfolio_requirements = _portfolio_reflection_requirements(preparation)
+    if portfolio_requirements:
+        _write(output, "", "Portfolio-level content")
+        for requirement in portfolio_requirements:
+            _write(
+                output,
+                f"- {requirement.title} — {teacher_term(requirement.obligation)}",
+            )
+            _render_reflection_requirement(
+                output,
+                requirement,
+                _requirement_contents_for(preparation, requirement),
+                indent="  ",
+            )
+
     if preparation.unplaced_selection_ids:
         _write(
             output,
@@ -264,17 +406,25 @@ def _render_sections(output: TextIO, preparation: WorkingCompositionPreparation)
         )
 
 
-def _render_requirements(
+def _render_other_requirements(
     output: TextIO,
     preparation: WorkingCompositionPreparation,
 ) -> None:
-    _write(output, "Profile requirements", "")
-    for requirement in preparation.requirements:
+    requirements = tuple(
+        requirement
+        for requirement in preparation.requirements
+        if not _is_requirement_backed_content_requirement(requirement)
+        and not _is_section_cardinality_requirement(requirement)
+    )
+    _write(output, "Other Profile requirements", "")
+    if not requirements:
+        _write(output, "No additional non-content Profile requirements apply.")
+        return
+    for requirement in requirements:
         _write(
             output,
             f"- {requirement.title} — {teacher_term(requirement.obligation)}",
-            f"  {teacher_term(requirement.requirement_kind)}; "
-            f"{teacher_term(requirement.status)}",
+            f"  Status: {teacher_term(requirement.status)}",
         )
         if requirement.associated_unresolved_obligation_codes:
             _write(
@@ -285,8 +435,9 @@ def _render_requirements(
     _write(
         output,
         "",
-        "Requirement status uses explicit machine-readable Profile semantics.",
-        "Profile prose is not parsed into hidden policy.",
+        "These requirements describe policy or workflow state; they are not "
+        "inserted as student Portfolio content.",
+        "Requirement meaning comes from explicit Profile semantics, not title or prose.",
     )
 
 
@@ -397,9 +548,17 @@ def _render_preparation_technical_details(
     if preparation.sections:
         _write(output, "Section / Arrangement provenance")
         for section in preparation.sections:
+            maximum = (
+                "unbounded"
+                if section.maximum_placements is None
+                else str(section.maximum_placements)
+            )
             _write(
                 output,
                 f"- {section.label} ({section.section_id})",
+                "  Placement cardinality: "
+                f"active {section.active_placement_count}; "
+                f"minimum {section.minimum_placements}; maximum {maximum}",
                 "  Arrangement: "
                 f"{section.current_arrangement_id or '(none)'}; revision "
                 f"{section.current_arrangement_revision or '(none)'}; pointer "
@@ -414,6 +573,23 @@ def _render_preparation_technical_details(
                     f"  Condition: {placement.candidate_condition_state}; "
                     f"unresolved {_codes(placement.unresolved_condition_codes)}",
                 )
+        _write(output, "")
+    if preparation.requirement_contents:
+        _write(output, "Requirement-backed content provenance")
+        for content in preparation.requirement_contents:
+            _write(
+                output,
+                f"- {content.record_kind} {content.record_id} "
+                f"revision {content.record_revision}",
+                f"  requirement={content.requirement_id}; "
+                f"kind={content.requirement_kind}; "
+                f"satisfaction={content.satisfaction_class}",
+                f"  scope={content.scope_kind}:"
+                f"{content.scope_reference or '(none)'}; "
+                f"section={content.section_id or '(portfolio-level)'}",
+                f"  content mode={content.content_mode}; "
+                f"prompt={content.prompt_id}:{content.prompt_version}",
+            )
         _write(output, "")
     if preparation.requirements:
         _write(output, "Profile requirement provenance")
@@ -595,8 +771,8 @@ def _review_preparation(
             "Unresolved obligations: "
             f"{_teacher_codes(preparation.payload.unresolved_obligation_codes)}",
             "",
-            "1. Sections and order",
-            "2. Requirements and unresolved items",
+            "1. Portfolio content",
+            "2. Other Profile requirements",
             "3. Source currentness",
             "4. Reviews and follow-up",
             "5. Audience constraints",
@@ -616,6 +792,9 @@ def _review_preparation(
                 "Working Composition Help",
                 "",
                 "Preparation is read-only and creates no canonical record.",
+                "Portfolio content includes Placement-backed evidence and explicit "
+                "requirement-backed content such as student Reflection.",
+                "A student Reflection remains a Reflection; it is not a Placement.",
                 "Coherent does not mean approved or disclosure-ready.",
                 "Unresolved obligations are preserved rather than silently cleared.",
                 "Working Composition is not an Audience Context or Snapshot.",
@@ -627,9 +806,9 @@ def _review_preparation(
             return
         clear_fn()
         if choice == "1":
-            _render_sections(output, preparation)
+            _render_portfolio_content(output, preparation)
         elif choice == "2":
-            _render_requirements(output, preparation)
+            _render_other_requirements(output, preparation)
         elif choice == "3":
             _render_sources(output, preparation)
         elif choice == "4":

@@ -6,7 +6,10 @@ from datetime import datetime, timezone
 
 import pytest
 
-from vitrine.current_portfolio_build import prepare_current_portfolio_build
+from vitrine.current_portfolio_build import (
+    CurrentPortfolioBuildError,
+    prepare_current_portfolio_build,
+)
 from vitrine.current_portfolio_reflection import (
     CURRENT_PORTFOLIO_REFLECTION_MEDIA_TYPE,
     CURRENT_PORTFOLIO_REFLECTION_RENDERER_CONTRACT_VERSION,
@@ -34,6 +37,7 @@ from vitrine.working_composition import (
     WorkingCompositionAudienceSummary,
     WorkingCompositionPayloadPreview,
     WorkingCompositionPreparation,
+    WorkingCompositionRequirementContentSummary,
     WorkingCompositionRequirementSummary,
     WorkingCompositionSectionSummary,
 )
@@ -164,6 +168,40 @@ def _requirement(
     )
 
 
+def _requirement_content(
+    reflection: PortfolioReflection,
+    requirement: WorkingCompositionRequirementSummary,
+) -> WorkingCompositionRequirementContentSummary:
+    section_id = (
+        requirement.scope_reference
+        if requirement.scope_kind == "section"
+        else None
+    )
+    return WorkingCompositionRequirementContentSummary(
+        content_class="requirement_backed",
+        content_kind="reflection",
+        record_kind="reflection",
+        record_id=reflection.reflection_id,
+        record_revision=reflection.reflection_revision,
+        requirement_id=requirement.requirement_id,
+        requirement_kind=requirement.requirement_kind,
+        requirement_obligation=requirement.obligation,
+        satisfaction_class=requirement.satisfaction_class,
+        scope_kind=requirement.scope_kind,
+        scope_reference=requirement.scope_reference,
+        section_id=section_id,
+        portfolio_id=reflection.portfolio_id,
+        portfolio_subject_id=reflection.portfolio_subject_id,
+        profile_binding_id=reflection.profile_binding_id,
+        profile_revision_id=reflection.profile_revision.portfolio_profile_id,
+        profile_revision_number=reflection.profile_revision.profile_revision,
+        content_state="available",
+        prompt_id=reflection.prompt_id,
+        prompt_version=reflection.prompt_version,
+        content_mode=reflection.content_mode,
+    )
+
+
 def _working(
     reflections: tuple[PortfolioReflection, ...],
     *,
@@ -185,8 +223,15 @@ def _working(
     requirement_values = (
         (_requirement(),) if requirements is None else requirements
     )
+    requirement_by_id = {
+        item.requirement_id: item for item in requirement_values
+    }
+    requirement_contents = tuple(
+        _requirement_content(item, requirement_by_id[item.reflection_requirement_id])
+        for item in reflections
+    )
     return WorkingCompositionPreparation(
-        contract_version="vitrine_guided_working_composition_v1",
+        contract_version="vitrine_guided_working_composition_v2",
         observed_state_revision=7,
         portfolio_id="portfolio_1",
         portfolio_subject_id="subject_1",
@@ -222,6 +267,7 @@ def _working(
         requested_composition_note=None,
         composition_note_will_persist=False,
         preparation_fingerprint="a" * 64,
+        requirement_contents=requirement_contents,
     )
 
 
@@ -459,3 +505,73 @@ def test_annotation_inventory_reference_does_not_become_generated_document(
 
     assert prepared.generated_reflections == ()
     assert prepared.snapshot_entry_plans == ()
+
+
+def test_current_portfolio_uses_shared_working_composition_reflection_mapping(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reflection = _reflection()
+    working = _working((reflection,))
+    contradictory_requirement = replace(
+        _requirement(),
+        scope_kind="portfolio",
+        scope_reference=None,
+    )
+    working = replace(working, requirements=(contradictory_requirement,))
+    _patch(monkeypatch, working, (reflection,))
+
+    prepared = prepare_current_portfolio_build(
+        ".",
+        "portfolio_1",
+        audience_rule_id="rule_1",
+    )
+
+    assert len(prepared.generated_reflections) == 1
+    generated = prepared.generated_reflections[0]
+    assert generated.section_id == "reflection"
+    assert generated.position_in_section == 1
+    assert generated.reflection_requirement_id == "reflection_requirement"
+    assert generated.supported is True
+    assert "unsupported_reflection_placement" not in prepared.blocking_reasons
+
+
+def test_current_portfolio_rejects_missing_shared_content_for_frozen_reflection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reflection = _reflection()
+    working = replace(_working((reflection,)), requirement_contents=())
+    _patch(monkeypatch, working, (reflection,))
+
+    with pytest.raises(CurrentPortfolioBuildError) as captured:
+        prepare_current_portfolio_build(
+            ".",
+            "portfolio_1",
+            audience_rule_id="rule_1",
+        )
+
+    assert captured.value.code == "current_portfolio_build.reflection_context_invalid"
+    assert "shared Reflection content" in str(captured.value)
+
+
+def test_current_portfolio_preserves_multiple_shared_reflection_records(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first = _reflection()
+    second = replace(first, reflection_id="reflection_2")
+    working = _working((first, second))
+    _patch(monkeypatch, working, (first, second))
+
+    prepared = prepare_current_portfolio_build(
+        ".",
+        "portfolio_1",
+        audience_rule_id="rule_1",
+    )
+
+    assert [item.reflection_id for item in prepared.generated_reflections] == [
+        "reflection_1",
+        "reflection_2",
+    ]
+    assert [item.position_in_section for item in prepared.generated_reflections] == [
+        1,
+        2,
+    ]

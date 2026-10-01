@@ -207,8 +207,85 @@ def _print_preparation(
         f"{', '.join(payload.related_profile_requirement_ids) or '(none)'}",
         file=output,
     )
-    print("Sections:", file=output)
+
+    content_requirements = tuple(
+        item
+        for item in preparation.requirements
+        if item.requirement_kind == "reflection"
+        and item.satisfaction_class == "reflection_presence"
+    )
+    print("Requirement-backed content:", file=output)
+    if not content_requirements:
+        print("  (none)", file=output)
+    for requirement in content_requirements:
+        scope = (
+            f"{requirement.scope_kind}:"
+            f"{requirement.scope_reference or '(none)'}"
+        )
+        print(
+            f"  Requirement {requirement.requirement_id}: "
+            f"status={requirement.status}; scope={scope}",
+            file=output,
+        )
+        matches = tuple(
+            item
+            for item in preparation.requirement_contents
+            if item.requirement_id == requirement.requirement_id
+        )
+        if not matches:
+            print("    content=(none)", file=output)
+        for content in matches:
+            print(
+                f"    {content.record_kind}:{content.record_id}"
+                f"@{content.record_revision}; "
+                f"section={content.section_id or '(portfolio-level)'}; "
+                f"state={content.content_state}; mode={content.content_mode}",
+                file=output,
+            )
+
+    other_requirements = tuple(
+        item
+        for item in preparation.requirements
+        if not (
+            item.requirement_kind == "reflection"
+            and item.satisfaction_class == "reflection_presence"
+        )
+        and not (
+            item.requirement_kind == "section"
+            and item.satisfaction_class == "placement_cardinality"
+        )
+    )
+    print("Other non-content Profile requirements:", file=output)
+    if not other_requirements:
+        print("  (none)", file=output)
+    for requirement in other_requirements:
+        print(
+            f"  {requirement.requirement_id}: "
+            f"kind={requirement.requirement_kind}; status={requirement.status}",
+            file=output,
+        )
+
+    print("Section / Placement state:", file=output)
     for section in preparation.sections:
+        section_reflection_requirements = tuple(
+            item
+            for item in content_requirements
+            if item.scope_kind == "section"
+            and item.scope_reference == section.section_id
+        )
+        if (
+            section.minimum_placements == 0
+            and section.maximum_placements == 0
+            and section_reflection_requirements
+        ):
+            print(
+                f"  {section.order}. {section.label} ({section.section_id}) "
+                "placement-role=requirement-backed; "
+                f"arrangement={section.current_arrangement_id or 'none'}; "
+                f"pointer={_pointer_label(section.current_arrangement_pointer_revision)}",
+                file=output,
+            )
+            continue
         maximum = (
             "unbounded"
             if section.maximum_placements is None

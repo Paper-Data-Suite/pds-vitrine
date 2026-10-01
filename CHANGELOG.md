@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #100 completes Working Composition v2 requirement-backed content semantics: exact Reflection revision -> Profile requirement -> explicit scope projection, current/historical revision pinning, content-first teacher and CLI presentation, shared Current Portfolio handoff, installed-wheel acceptance, package guards, and v2 contract/validation documentation without turning Reflection into Placement.
+
 - Issue #98 Slice 13 closes guided-menu interaction qualification with the `vitrine_guided_menu_interaction_v1` contract/development/validation documentation, dedicated validator and regression test, package guards, repository-gate integration, Mypy coverage, and isolated installed-wheel interaction smoke.
 
 - Issue #98 Slice 12 moves top-level Workspace Settings mutations onto the shared case-insensitive exact/retryable confirmation contract: SET, CREATE, and RESET now clear/redraw their current review on mismatch and redraw the result after success without changing workspace resolution or persistence semantics.

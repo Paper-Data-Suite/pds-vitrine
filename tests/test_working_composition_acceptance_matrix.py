@@ -10,6 +10,7 @@ import vitrine.working_composition as working_composition
 from scripts.curation_fixture_support import (
     ACTOR,
     APPROVAL_REQUIREMENT_ID,
+    REFLECTION_REQUIREMENT_ID,
     CurationFixtureWorkspace,
     StaticCurationAuthorityGate,
     build_curation_fixture_workspace,
@@ -26,9 +27,11 @@ from vitrine.curation_services import (
     CurationWorkflowError,
     WorkingCompositionSourceCurrentness,
     create_annotation,
+    create_reflection,
     reorder_section,
     review_curation_target,
     revise_annotation,
+    revise_reflection,
 )
 from vitrine.curation_state import project_curation_state
 from vitrine.models import (
@@ -37,6 +40,7 @@ from vitrine.models import (
     CurationTargetRef,
     PortfolioCandidate,
     PortfolioPlacement,
+    PortfolioReflection,
     PortfolioSelection,
     WorkingPortfolioCompositionInventory,
     WorkingPortfolioCompositionPointerRevision,
@@ -49,6 +53,7 @@ from vitrine.working_composition import (
     WorkingCompositionError,
     freeze_prepared_working_composition,
     prepare_working_composition,
+    resolve_working_composition_requirement_contents,
 )
 
 
@@ -640,3 +645,96 @@ def test_acceptance_cli_prepared_freeze_rejects_stale_vitrine_state_without_auth
     assert gate.requests == []
     assert load_current_state(setup.workspace).state_revision == before_state
     assert load_current_records(setup.workspace) == before_records
+
+def test_acceptance_issue100_requirement_backed_reflection_is_exact_content_not_placement(
+    tmp_path: Path,
+) -> None:
+    setup = build_curation_fixture_workspace(tmp_path)
+    created = create_reflection(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        reflection_requirement_id=REFLECTION_REQUIREMENT_ID,
+        prompt_id="issue100_acceptance_prompt",
+        prompt_version="1",
+        prompt_snapshot="Compare the frozen evidence.",
+        author=ACTOR,
+        target_scope="portfolio",
+        target_references=(
+            CurationTargetRef(
+                target_kind="portfolio",
+                target_id=setup.portfolio_id,
+            ),
+        ),
+        content="Reflection revision one.",
+        expected_state_revision=setup.state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+        id_factory=lambda _prefix: "reflection_issue100_acceptance",
+    )
+    reflection = next(
+        item for item in created.records if isinstance(item, PortfolioReflection)
+    )
+
+    first = prepare_working_composition(setup.workspace, setup.portfolio_id)
+    assert len(first.requirement_contents) == 1
+    content = first.requirement_contents[0]
+    assert content.record_id == reflection.reflection_id
+    assert content.record_revision == 1
+    assert content.requirement_id == REFLECTION_REQUIREMENT_ID
+    assert content.scope_kind == "portfolio"
+    assert content.section_id is None
+    assert reflection.reflection_id not in first.payload.placement_ids
+    assert APPROVAL_REQUIREMENT_ID not in {
+        item.requirement_id for item in first.requirement_contents
+    }
+
+    frozen = freeze_prepared_working_composition(
+        setup.workspace,
+        first,
+        created_by=ACTOR,
+        authority_gate=StaticCurationAuthorityGate(),
+    )
+    assert frozen.disposition == "created"
+    view = show_composition(setup.workspace, setup.portfolio_id)
+    assert view.composition is not None
+    assert view.composition.composition_revision == 1
+    assert view.inventory is not None
+    assert any(
+        item.record_kind == "reflection"
+        and item.record_id == reflection.reflection_id
+        and item.revision == 1
+        for item in view.inventory.included_curation_revisions
+    )
+
+    revised = revise_reflection(
+        setup.workspace,
+        portfolio_id=setup.portfolio_id,
+        reflection_id=reflection.reflection_id,
+        expected_reflection_revision=1,
+        author=ACTOR,
+        content="Reflection revision two.",
+        expected_state_revision=load_current_state(setup.workspace).state_revision,
+        authority_gate=StaticCurationAuthorityGate(),
+    )
+    revised_reflection = next(
+        item for item in revised.records if isinstance(item, PortfolioReflection)
+    )
+    assert revised_reflection.reflection_revision == 2
+
+    current = resolve_working_composition_requirement_contents(
+        setup.workspace,
+        setup.portfolio_id,
+    )
+    historical = resolve_working_composition_requirement_contents(
+        setup.workspace,
+        setup.portfolio_id,
+        composition_revision=1,
+    )
+    assert tuple(item.record_revision for item in current) == (2,)
+    assert tuple(item.record_revision for item in historical) == (1,)
+    assert historical[0].record_id == current[0].record_id
+
+    successor = prepare_working_composition(setup.workspace, setup.portfolio_id)
+    assert successor.disposition == "create_successor"
+    assert tuple(
+        item.record_revision for item in successor.requirement_contents
+    ) == (2,)
