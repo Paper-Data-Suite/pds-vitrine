@@ -182,7 +182,7 @@ sections = (
         obligation="required",
         minimum_placements=0,
         maximum_placements=0,
-        allowed_candidate_kinds=(),
+        allowed_candidate_kinds=("student_work",),
         required_relationship_kinds=(),
         reflection_requirement="required",
     ),
