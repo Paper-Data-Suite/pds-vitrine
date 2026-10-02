@@ -62,9 +62,13 @@ from .models import (
     VitrineStoreMarker,
 )
 from .paths import (
+    bounded_record_identity_path,
+    bounded_record_revision_path,
+    bounded_record_revisions_path,
+    bounded_records_root,
     current_state_path,
     locks_root,
-    record_revision_path,
+    record_identity_path,
     record_revisions_path,
     records_root,
     state_revision_path,
@@ -191,6 +195,70 @@ def load_store_marker(root: str | Path) -> VitrineStoreMarker:
     return cast(VitrineStoreMarker, marker)
 
 
+def _path_entry_exists(root: str | Path, path: Path) -> bool:
+    try:
+        return os.path.lexists(path)
+    except OSError as error:
+        raise VitrineStorageReadError(
+            f"could not inspect canonical path {_relative(root, path)}: {error}"
+        ) from error
+
+
+def _legacy_record_identity_can_exist(key: VitrineStorageRecordKey) -> bool:
+    # PDS identifiers are ASCII. A component beyond common filesystem NAME_MAX
+    # could not have been created by the historical direct-identity writer.
+    return all(len(segment) <= 255 for segment in key.identity_segments)
+
+
+def _record_identity_presence(
+    root: str | Path,
+    key: VitrineStorageRecordKey,
+) -> tuple[bool, bool]:
+    bounded = bounded_record_identity_path(root, key)
+    bounded_exists = _path_entry_exists(root, bounded)
+
+    legacy_exists = False
+    if _legacy_record_identity_can_exist(key):
+        legacy_exists = _path_entry_exists(root, record_identity_path(root, key))
+
+    if legacy_exists and bounded_exists:
+        raise VitrineStorageIntegrityError(
+            "record identity has both legacy and bounded custody: "
+            f"{key.record_type}:{'/'.join(key.identity_segments)}."
+        )
+    return legacy_exists, bounded_exists
+
+
+def _resolved_record_revisions_path(
+    root: str | Path,
+    key: VitrineStorageRecordKey,
+) -> Path:
+    legacy_exists, bounded_exists = _record_identity_presence(root, key)
+    if legacy_exists:
+        return record_revisions_path(root, key)
+    if bounded_exists:
+        return bounded_record_revisions_path(root, key)
+    return bounded_record_revisions_path(root, key)
+
+
+def resolve_record_revision_path(
+    root: str | Path,
+    key: VitrineStorageRecordKey,
+    storage_revision: int,
+) -> Path:
+    """Resolve the exact stored revision path without rewriting historical custody."""
+
+    if (
+        isinstance(storage_revision, bool)
+        or not isinstance(storage_revision, int)
+        or storage_revision < 1
+    ):
+        raise VitrineStorageValidationError(
+            "storage_revision must be a positive non-Boolean integer."
+        )
+    return _resolved_record_revisions_path(root, key) / f"{storage_revision}.json"
+
+
 def _decode_record_revision(
     root: str | Path,
     path: Path,
@@ -231,7 +299,7 @@ def load_record_revision(
     key: VitrineStorageRecordKey,
     storage_revision: int,
 ) -> tuple[VitrineRecord, VitrineRecordRevision]:
-    path = record_revision_path(root, key, storage_revision)
+    path = resolve_record_revision_path(root, key, storage_revision)
     data = read_canonical_bytes(root, path, missing=True)
     return _decode_record_revision(root, path, key, storage_revision, data)
 
@@ -255,7 +323,8 @@ def list_record_revisions(
     root: str | Path, key: VitrineStorageRecordKey
 ) -> tuple[int, ...]:
     result: list[int] = []
-    for path in _visible(root, record_revisions_path(root, key), "record revisions"):
+    revisions_root = _resolved_record_revisions_path(root, key)
+    for path in _visible(root, revisions_root, "record revisions"):
         if (
             path.is_symlink()
             or not path.is_file()
@@ -312,8 +381,106 @@ def _walk_record_identity_dirs(
     return result
 
 
-def list_record_keys(root: str | Path) -> tuple[VitrineStorageRecordKey, ...]:
+def _bounded_record_key_from_identity_dir(
+    root: str | Path,
+    record_type: str,
+    identity_path: Path,
+) -> VitrineStorageRecordKey:
+    children = _visible(root, identity_path, "bounded record identity")
+    if tuple(item.name for item in children) != ("revisions",):
+        raise VitrineStorageIntegrityError(
+            f"unexpected bounded record identity contents: "
+            f"{_relative(root, identity_path)}"
+        )
+
+    revisions_root = children[0]
+    revision_paths = _visible(root, revisions_root, "bounded record revisions")
+    if not revision_paths:
+        raise VitrineStorageIntegrityError(
+            f"bounded record identity has no revisions: "
+            f"{_relative(root, identity_path)}"
+        )
+
+    keys: set[VitrineStorageRecordKey] = set()
+    for path in revision_paths:
+        if (
+            path.is_symlink()
+            or not path.is_file()
+            or path.suffix != ".json"
+            or not path.stem.isdigit()
+            or path.stem.startswith("0")
+        ):
+            raise VitrineStorageIntegrityError(
+                f"unexpected bounded record revision entry: {_relative(root, path)}"
+            )
+        revision = int(path.stem)
+        raw, data = _parse(
+            root,
+            path,
+            record_revision_from_dict,
+            missing=True,
+        )
+        envelope = cast(VitrineRecordRevision, raw)
+        key = envelope.key
+        if key.record_type != record_type:
+            raise VitrineStorageIntegrityError(
+                "bounded record directory type disagrees with its envelope."
+            )
+        if bounded_record_identity_path(root, key) != identity_path:
+            raise VitrineStorageIntegrityError(
+                "bounded record custody token disagrees with its envelope identity."
+            )
+        _decode_record_revision(root, path, key, revision, data)
+        keys.add(key)
+
+    if len(keys) != 1:
+        raise VitrineStorageIntegrityError(
+            "bounded record identity contains more than one semantic key."
+        )
+    return next(iter(keys))
+
+
+def _list_bounded_record_keys(
+    root: str | Path,
+) -> tuple[VitrineStorageRecordKey, ...]:
     result: list[VitrineStorageRecordKey] = []
+    for type_path in _visible(
+        root,
+        bounded_records_root(root),
+        "bounded record types",
+    ):
+        if type_path.is_symlink() or not type_path.is_dir():
+            raise VitrineStorageIntegrityError(
+                f"unexpected bounded record-type entry: {_relative(root, type_path)}"
+            )
+        try:
+            descriptor_for_record_type(type_path.name)
+        except ValueError as error:
+            raise VitrineStorageIntegrityError(
+                f"unexpected bounded record type directory: {type_path.name}"
+            ) from error
+        for identity_path in _visible(
+            root,
+            type_path,
+            "bounded record identities",
+        ):
+            if identity_path.is_symlink() or not identity_path.is_dir():
+                raise VitrineStorageIntegrityError(
+                    f"unexpected bounded record identity entry: "
+                    f"{_relative(root, identity_path)}"
+                )
+            result.append(
+                _bounded_record_key_from_identity_dir(
+                    root,
+                    type_path.name,
+                    identity_path,
+                )
+            )
+    return tuple(sorted(result))
+
+
+def list_record_keys(root: str | Path) -> tuple[VitrineStorageRecordKey, ...]:
+    legacy: list[VitrineStorageRecordKey] = []
     for type_path in _visible(root, records_root(root), "record types"):
         if type_path.is_symlink() or not type_path.is_dir():
             raise VitrineStorageIntegrityError(
@@ -325,10 +492,17 @@ def list_record_keys(root: str | Path) -> tuple[VitrineStorageRecordKey, ...]:
             raise VitrineStorageIntegrityError(
                 f"unexpected record type directory: {type_path.name}"
             ) from error
-        result.extend(
+        legacy.extend(
             _walk_record_identity_dirs(root, type_path.name, type_path, 0, ())
         )
-    return tuple(sorted(result))
+
+    bounded = _list_bounded_record_keys(root)
+    combined = (*legacy, *bounded)
+    if len(set(combined)) != len(combined):
+        raise VitrineStorageIntegrityError(
+            "canonical record identity appears in both legacy and bounded custody."
+        )
+    return tuple(sorted(combined))
 
 
 def _graph_descriptors() -> tuple[Any, ...]:
@@ -485,8 +659,10 @@ def _load_state_records(
 ) -> tuple[VitrineRecord, ...]:
     records: list[VitrineRecord] = []
     for reference in state.records:
-        path = record_revision_path(
-            root, reference.key, reference.storage_revision
+        path = resolve_record_revision_path(
+            root,
+            reference.key,
+            reference.storage_revision,
         )
         data = read_canonical_bytes(root, path, missing=True)
         if _sha(data) != reference.sha256:
@@ -786,6 +962,7 @@ def _require_safe_storage_directories(root: str | Path) -> None:
         vitrine_root(workspace),
         state_root(workspace),
         records_root(workspace),
+        bounded_records_root(workspace),
         state_revisions_path(workspace),
         locks_root(workspace),
     )
@@ -1037,12 +1214,17 @@ def commit_record_batch(
         created_refs: list[VitrineRecordRevisionRef] = []
         for key, record in new_records:
             revision = 1
-            path = record_revision_path(workspace, key, revision)
-            if path.exists() or record_revisions_path(workspace, key).exists():
+            path = bounded_record_revision_path(workspace, key, revision)
+            legacy_exists, bounded_exists = _record_identity_presence(
+                workspace,
+                key,
+            )
+            if legacy_exists or bounded_exists:
                 raise VitrineStorageIntegrityError(
                     "orphan/colliding record history blocks commit: "
                     f"{key.record_type}:{'/'.join(key.identity_segments)}."
                 )
+            _require_no_symlink_ancestors(workspace, path.parent)
             try:
                 path.parent.mkdir(parents=True, exist_ok=False)
             except FileExistsError as error:

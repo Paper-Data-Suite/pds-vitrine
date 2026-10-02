@@ -54,8 +54,10 @@ existing direct-identity histories:  F
 PDS identifier validation. Character safety is not a fixed filesystem-length
 budget.
 
-**Disposition:** Slice 2. New identities need bounded prospective custody while
-existing direct-identity histories remain readable and coherent.
+**Slice 2 status:** implemented. New semantic record identities use
+`state/records-bounded-v1/<record_type>/<bounded-token>/...`; historical
+direct-identity histories remain readable in place. Mixed legacy/new workspaces
+are supported, while duplicate custody for one semantic key fails closed.
 
 ## Snapshot staging
 

@@ -29,6 +29,11 @@ owned beneath the resolved PDS workspace rather than any one Core class work roo
           <identity segment>/...
             revisions/
               1.json
+      records-bounded-v1/
+        <record_type>/
+          vp1_<24-hex-token>/
+            revisions/
+              1.json
       revisions/
         <state_revision>.json
       current.json
@@ -39,8 +44,14 @@ owned beneath the resolved PDS workspace rather than any one Core class work roo
         catalog.lock
 ```
 
-Paths use opaque record identities only. Display names, student names, source
-text, assignment titles, and privacy metadata never form canonical paths.
+`state/records/...` is the historical direct-identity layout and remains readable
+without migration. New semantic record identities are written beneath
+`state/records-bounded-v1/...` using the issue #111 bounded custody-token policy.
+The exact durable `VitrineStorageRecordKey` remains in the revision envelope and
+state references; the bounded token is only filesystem serialization.
+
+Display names, student names, source text, assignment titles, and privacy
+metadata never form canonical custody paths.
 
 ## Record keys and revisions
 
@@ -63,6 +74,22 @@ existing key with identical content is replay; an existing key with different
 content conflicts. Corrections and replacements therefore create new domain
 successor records rather than a second storage revision of the old semantic key.
 Ordinary v1 canonical history contains storage revision `1` for every key.
+
+Issue #111 adds reader/writer asymmetry without changing the storage schema or
+record-key contract:
+
+```text
+reader:
+    resolve a semantic key from its historical direct-identity custody
+    or its bounded prospective custody
+
+writer:
+    create only bounded prospective custody for a new semantic key
+```
+
+A semantic key may not exist in both layouts. Dual custody is ambiguous and
+fails closed. Existing direct-identity histories are never renamed or copied
+merely because a bounded writer is available.
 
 ## State revisions and current selection
 

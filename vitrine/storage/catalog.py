@@ -31,7 +31,6 @@ from .paths import (
     catalog_lock_path,
     catalog_path,
     current_state_path,
-    record_revision_path,
     state_revision_path,
     state_root,
     store_marker_path,
@@ -49,6 +48,7 @@ from .store import (
     load_store_marker,
     read_canonical_bytes,
     require_regular_nonsymlink_file,
+    resolve_record_revision_path,
 )
 
 CATALOG_APPLICATION_ID = 0x5654524E
@@ -72,7 +72,7 @@ def canonical_source_inventory(
     paths: list[Path] = [store_marker_path(root)]
     for key in list_record_keys(root):
         for revision in list_record_revisions(root, key):
-            paths.append(record_revision_path(root, key, revision))
+            paths.append(resolve_record_revision_path(root, key, revision))
     for revision in list_state_revisions(root):
         paths.append(state_revision_path(root, revision))
     paths.append(current_state_path(root))
@@ -264,7 +264,7 @@ def rebuild_catalog(root: str | Path) -> Path:
             for key in keys:
                 identity_text = _identity_text(key)
                 for revision in list_record_revisions(root, key):
-                    path = record_revision_path(root, key, revision)
+                    path = resolve_record_revision_path(root, key, revision)
                     data = read_canonical_bytes(root, path, missing=True)
                     sha = hashlib.sha256(data).hexdigest()
                     connection.execute(

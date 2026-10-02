@@ -144,10 +144,24 @@ writer:
     create only the bounded prospective form
 ```
 
-Slice 1 supplies the writer primitives only.
+Slice 1 supplied the writer primitives.
 
-Later slices will apply them to canonical storage and Snapshot custody while
-preserving existing path histories without migration.
+Slice 2 applies the bounded custody token to **new canonical record identities**
+under:
+
+```text
+state/records-bounded-v1/<record_type>/<bounded-token>/revisions/1.json
+```
+
+The historical direct-identity `state/records/...` layout remains readable and
+is not migrated. A semantic key found in both layouts fails closed. Canonical
+record envelopes and state references retain the exact `VitrineStorageRecordKey`;
+the token never becomes domain identity.
+
+Canonical inventory and catalog rebuilds resolve the exact stored revision path
+rather than reconstructing the historical writer serialization.
+
+Snapshot custody remains unchanged until Slice 3.
 
 ## Relationship to Core 0.6.4
 

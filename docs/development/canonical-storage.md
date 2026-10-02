@@ -52,6 +52,12 @@ historical_state, digest, historical_graph = load_state_revision(workspace_root,
 Current and historical reads use canonical JSON only. They do not require or
 create SQLite.
 
+Issue #111 preserves historical direct-identity record paths while new record
+identities use bounded custody. Use `resolve_record_revision_path(...)` when a
+caller needs the exact canonical file for a semantic key. The historical
+`record_revision_path(...)` helper continues to describe the legacy layout and
+must not be used to reconstruct the current writer path.
+
 ## Audit
 
 ```python
