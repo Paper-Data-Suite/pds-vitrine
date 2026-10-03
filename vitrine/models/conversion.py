@@ -72,6 +72,7 @@ from .paper_reflection_authorship import (
     ReflectionAuthorshipConfirmation,
     ReflectionPaperFinalization,
 )
+from .presentations import PortfolioPresentationArtifact
 from .profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -127,6 +128,7 @@ VitrineRecord: TypeAlias = (
     | PortfolioCandidate
     | PortfolioSelection
     | PortfolioPlacement
+    | PortfolioPresentationArtifact
     | SectionArrangementRevision
     | WorkingPortfolioCompositionRevision
     | SelectionProposal

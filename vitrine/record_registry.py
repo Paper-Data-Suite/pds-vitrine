@@ -48,6 +48,7 @@ from vitrine.models.paper_reflection_authorship import (
     ReflectionAuthorshipConfirmation,
     ReflectionPaperFinalization,
 )
+from vitrine.models.presentations import PortfolioPresentationArtifact
 from vitrine.models.profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -414,6 +415,12 @@ RECORD_DESCRIPTORS: tuple[RecordDescriptor, ...] = (
         SnapshotExportArtifact,
         None,
         ("snapshot_export_artifact_id",),
+    ),
+    RecordDescriptor(
+        "portfolio_presentation_artifact",
+        PortfolioPresentationArtifact,
+        None,
+        ("presentation_artifact_id",),
     ),
     RecordDescriptor(
         "snapshot_current_pointer_revision",

@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #101 Slice 1 adds the immutable student Portfolio Presentation Artifact contract and producer-independent exact read-only preparation over one verified sealed Snapshot Edition/technical Export, preserving reference-only and omitted evidence while consuming the shared #111 bounded custody, section-directory, filename, and collision policy without rendering HTML/PDF yet.
+
 - Issue #100 completes Working Composition v2 requirement-backed content semantics: exact Reflection revision -> Profile requirement -> explicit scope projection, current/historical revision pinning, content-first teacher and CLI presentation, shared Current Portfolio handoff, installed-wheel acceptance, package guards, and v2 contract/validation documentation without turning Reflection into Placement.
 
 - Issue #98 Slice 13 closes guided-menu interaction qualification with the `vitrine_guided_menu_interaction_v1` contract/development/validation documentation, dedicated validator and regression test, package guards, repository-gate integration, Mypy coverage, and isolated installed-wheel interaction smoke.
