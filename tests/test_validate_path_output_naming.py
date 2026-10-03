@@ -21,3 +21,7 @@ def test_issue111_core_qualification_is_exact_released_064() -> None:
 
 def test_issue111_keeps_vitrine_core_dependency_floor_at_063() -> None:
     validator._validate_package_boundary()
+
+
+def test_issue111_ci_uses_064_without_rewriting_frozen_issue71() -> None:
+    validator._validate_ci_qualification_anchor()

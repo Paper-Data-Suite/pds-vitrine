@@ -42,6 +42,10 @@ pds-core>=0.6.3,<0.7
 because Issue #111 does not consume a Core 0.6.4-only API. Core 0.6.4 is the exact
 qualification target, not a new semantic dependency floor.
 
+The active compatibility and complete-qualification CI jobs download and
+authenticate Core 0.6.4. The separate Issue #71 live installed acceptance job
+remains intentionally frozen on its audited Core 0.6.3 artifact.
+
 ## Automated qualification
 
 Focused source qualification:

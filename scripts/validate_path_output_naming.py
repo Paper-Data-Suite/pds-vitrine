@@ -183,6 +183,37 @@ def _validate_core_qualification_anchor() -> None:
         )
 
 
+def _validate_ci_qualification_anchor() -> None:
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    marker = "\n  live_installed_acceptance:\n"
+    if marker not in workflow:
+        raise RuntimeError("CI workflow is missing the live installed acceptance boundary")
+    active, frozen = workflow.split(marker, 1)
+
+    if "0.6.3" in active:
+        raise RuntimeError(
+            "active CI compatibility/qualification jobs still reference Core 0.6.3"
+        )
+    for required in (
+        "pds_core-0.6.4-py3-none-any.whl",
+        "releases/download/v0.6.4/pds_core-0.6.4-py3-none-any.whl",
+    ):
+        if active.count(required) < 2:
+            raise RuntimeError(
+                f"active CI compatibility/qualification jobs are missing Core 0.6.4: "
+                f"{required}"
+            )
+
+    if "pds_core-0.6.3-py3-none-any.whl" not in frozen:
+        raise RuntimeError(
+            "frozen issue #71 live installed acceptance lost its audited Core 0.6.3 wheel"
+        )
+    if "releases/download/v0.6.3/pds_core-0.6.3-py3-none-any.whl" not in frozen:
+        raise RuntimeError(
+            "frozen issue #71 live installed acceptance lost its audited Core 0.6.3 URL"
+        )
+
+
 def validate(*, run_focused_tests: bool = True) -> None:
     _validate_policy_constants()
 
@@ -195,6 +226,7 @@ def validate(*, run_focused_tests: bool = True) -> None:
 
     _validate_package_boundary()
     _validate_core_qualification_anchor()
+    _validate_ci_qualification_anchor()
 
     _require_text(
         ROOT / "docs/README.md",

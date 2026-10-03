@@ -80,7 +80,7 @@ def verify_installed_core() -> None:
     version = importlib.metadata.version(CORE_DISTRIBUTION_NAME)
     if version != EXPECTED_CORE_VERSION:
         raise CoreVerificationError(
-            f"Installed pds-core must be exactly 0.6.3; found {version}."
+            f"Installed pds-core must be exactly {EXPECTED_CORE_VERSION}; found {version}."
         )
     import pds_core
 
