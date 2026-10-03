@@ -19,6 +19,7 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/attention_cli.py",
     "vitrine/attention_menu.py",
     "vitrine/operations_provider.py",
+    "vitrine/path_policy.py",
     "vitrine/pds_operations.py",
     "vitrine/audience_services.py",
     "vitrine/cli.py",
@@ -477,6 +478,17 @@ REQUIRED_SDIST_FILES = {
     "vitrine/pds_module.py",
     "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
     "tests/test_paper_reflection_installed_acceptance.py",
+    "docs/contracts/vitrine-path-output-naming-v1.md",
+    "docs/development/vitrine-path-surface-audit.md",
+    "docs/validation/issue-111-path-output-naming-validation.md",
+    "scripts/validate_path_output_naming.py",
+    "scripts/smoke_test_path_output_naming_wheel.py",
+    "tests/test_path_policy_issue111.py",
+    "tests/test_storage_bounded_paths_issue111.py",
+    "tests/test_snapshot_bounded_custody_issue111.py",
+    "tests/test_path_regressions_issue111.py",
+    "tests/test_presentation_path_policy_issue111.py",
+    "tests/test_validate_path_output_naming.py",
 }
 
 

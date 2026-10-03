@@ -193,6 +193,7 @@ fixtures/representative-portfolios/
 - [Issue #96 Candidate Evidence Review validation](validation/issue-96-candidate-evidence-review-validation.md) — A-N focused acceptance, suppressed-preview privacy regression, exact preview/public-API guards, package/repository wiring, and the handoff to installed acceptance.
 - [Issue #98 Guided Menu Interactions validation](validation/issue-98-guided-menu-interactions-validation.md) — controlled confirmation/cardinality acceptance, cross-menu transition coverage, package guards, isolated Core+Vitrine wheel smoke, and complete repository qualification.
 
+- [Issue #111 bounded path/output naming validation](validation/issue-111-path-output-naming-validation.md) — focused path policy/storage/Snapshot/paper qualification, package guards, and exact Core 0.6.4 installed-wheel acceptance.
 - [Issue #71 live installed cross-producer acceptance validation](validation/issue-71-live-installed-cross-producer-acceptance-validation.md) — exact released-wheel authentication, live producer/Candidate/curation/Snapshot acceptance, negative currentness/authorization matrix, custody/tamper/historical verification, and producer-independent sealed verification.
 
 ## Authority

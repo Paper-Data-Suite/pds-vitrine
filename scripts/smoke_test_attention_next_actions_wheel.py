@@ -193,7 +193,7 @@ def get_summary(report, code):
     return values[0] if values else None
 
 
-assert importlib.metadata.version("pds-core") == "0.6.3"
+assert importlib.metadata.version("pds-core") == "0.6.4"
 workspace = ensure_workspace_root(Path(sys.argv[1]), create=True)
 
 work_ref = ModuleWorkRef("scoreform", "class_attention", "work_attention")

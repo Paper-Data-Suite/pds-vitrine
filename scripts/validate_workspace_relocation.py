@@ -42,6 +42,7 @@ from vitrine.operations_provider import (
     evaluate_vitrine_attention_for_core,
     evaluate_vitrine_readiness,
 )
+from vitrine.snapshot_custody import snapshot_attempt_staging_root
 from vitrine.snapshot_distribution import (
     create_snapshot_directory_export,
     inspect_snapshot_attempt_recovery,
@@ -492,11 +493,10 @@ def _validate_recovery_state_relocation(base: Path) -> None:
     prepared = _prepare_attempt(base / "recovery")
     setup = prepared.setup
     residue = (
-        setup.workspace
-        / "vitrine"
-        / "snapshots"
-        / "staging"
-        / prepared.attempt_id
+        snapshot_attempt_staging_root(
+            setup.workspace,
+            prepared.attempt_id,
+        )
         / "content"
         / "relocation-residue.bin"
     )

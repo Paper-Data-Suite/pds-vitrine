@@ -7,6 +7,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Issue #111 bounds newly written Vitrine canonical and Snapshot custody components, preserves historical direct-identity paths without migration, qualifies existing Current Portfolio/paper path surfaces, finalizes the #101 presentation naming contract, and adds exact installed qualification against Core 0.6.4 while retaining the `pds-core>=0.6.3,<0.7` runtime dependency range.
+
 ### Added
 
 - Issue #100 completes Working Composition v2 requirement-backed content semantics: exact Reflection revision -> Profile requirement -> explicit scope projection, current/historical revision pinning, content-first teacher and CLI presentation, shared Current Portfolio handoff, installed-wheel acceptance, package guards, and v2 contract/validation documentation without turning Reflection into Placement.
