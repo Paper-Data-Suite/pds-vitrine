@@ -184,8 +184,10 @@ display labels:              E, deliberately excluded
 This is an existing good pattern. Display text does not enter deterministic
 entry IDs, target paths, or preparation fingerprints.
 
-**Disposition:** Preserve and regression-test in Slice 4. Do not replace this
-custody naming with human-readable #101 labels.
+**Slice 4 status:** regression-qualified. Current Portfolio source Entry
+paths remain semantic-digest paths with fixed 16-hex tokens; extreme semantic
+identifiers and display labels do not expand the generated leaf. #101 must not
+replace these custody paths with presentation labels.
 
 ## Paper Reflection printable PDF
 
@@ -217,7 +219,9 @@ temporary render leaf:              B
 leaf is fixed. `class_id` belongs to the shared/Core class hierarchy and must not
 be remapped by Vitrine.
 
-**Disposition:** Preserve and regression-test in Slice 4.
+**Slice 4 status:** regression-qualified. The final paper Reflection PDF
+leaf remains fixed, the temporary render leaf remains bounded, and student
+display names do not enter either filesystem name.
 
 ## Paper Reflection retained-source materialization
 

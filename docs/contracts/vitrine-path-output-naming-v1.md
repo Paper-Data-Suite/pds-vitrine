@@ -192,6 +192,28 @@ retained-source names.
 Final issue #111 qualification uses the exact published Core 0.6.4 artifact, but
 the Vitrine path policy is a Vitrine-owned contract.
 
+## Slice 4 regression boundary
+
+Issue #111 Slice 4 deliberately adds no new custody schema.
+
+It locks in the path surfaces that were already structurally safe:
+
+- Current Portfolio source Entry paths use a fixed 16-hex semantic digest leaf;
+- Current Portfolio Reflection paths use a fixed 16-hex semantic digest leaf;
+- display labels, Candidate IDs, Placement IDs, source locators, and other long
+  semantic values may affect the digest input but do not expand the generated
+  filename;
+- paper Reflection output remains the fixed
+  `student_reflection_response.pdf` leaf;
+- the paper renderer's temporary leaf remains fixed-stem plus a bounded random
+  token;
+- Core retained-source provenance is consumed from the exact persisted
+  `retained_source_relative_path` with Python byte I/O and SHA-256 verification,
+  without reconstructing or renaming the Core-owned filename.
+
+Representative deep Windows path geometry is tested without making correctness
+depend on the host actually exceeding a platform path-length threshold.
+
 ## Relationship to issue #101
 
 Issue #101 may use readable filenames, but must consume this bounded policy
