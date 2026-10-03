@@ -18,16 +18,19 @@ from vitrine.models.common import (
     require_positive_int,
 )
 from vitrine.models.errors import VitrineModelValidationError
+from vitrine.path_policy import build_bounded_custody_token
 from vitrine.storage.paths import safe_vitrine_descendant
 
 SNAPSHOT_PATH_POLICY_ID: Final[str] = "snapshot_path_v1"
 SNAPSHOT_DIGEST_POLICY_ID: Final[str] = "snapshot_digest_v1"
 SNAPSHOT_SERIES_LOCK_CONTRACT_VERSION: Final[str] = "snapshot_series_lock_v1"
+SNAPSHOT_CUSTODY_POLICY_ID: Final[str] = "vitrine_snapshot_custody_v1"
 
 SNAPSHOT_CUSTODY_CODES: Final[frozenset[str]] = frozenset(
     {
         "snapshot.path_invalid",
         "snapshot.path_collision",
+        "snapshot.custody_conflict",
         "snapshot.staging_conflict",
         "snapshot.staging_invalid",
         "snapshot.entry_write_failed",
@@ -106,49 +109,328 @@ def snapshot_root(root: str | Path) -> Path:
 
 
 def snapshot_staging_root(root: str | Path) -> Path:
+    """Return the historical direct-identity staging root."""
+
     return safe_vitrine_descendant(root, "snapshots/staging")
 
 
+def bounded_snapshot_staging_root(root: str | Path) -> Path:
+    return safe_vitrine_descendant(root, "snapshots/staging-bounded-v1")
+
+
 def snapshot_editions_root(root: str | Path) -> Path:
+    """Return the historical direct-identity Edition root."""
+
     return safe_vitrine_descendant(root, "snapshots/editions")
 
 
-def snapshot_edition_root(
-    root: str | Path, snapshot_series_id: str, edition_number: int
+def bounded_snapshot_editions_root(root: str | Path) -> Path:
+    return safe_vitrine_descendant(root, "snapshots/editions-bounded-v1")
+
+
+def snapshot_exports_root(root: str | Path) -> Path:
+    """Return the historical direct-identity Export root."""
+
+    return safe_vitrine_descendant(root, "snapshots/exports")
+
+
+def bounded_snapshot_exports_root(root: str | Path) -> Path:
+    return safe_vitrine_descendant(root, "snapshots/exports-bounded-v1")
+
+
+def snapshot_locks_root(root: str | Path) -> Path:
+    """Return the historical direct-identity Series-lock root."""
+
+    return safe_vitrine_descendant(root, "snapshots/.locks")
+
+
+def bounded_snapshot_locks_root(root: str | Path) -> Path:
+    return safe_vitrine_descendant(root, "snapshots/.locks-bounded-v1")
+
+
+def _path_entry_exists(path: Path) -> bool:
+    try:
+        return os.path.lexists(path)
+    except OSError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid",
+            "Snapshot custody path could not be inspected safely.",
+        ) from error
+
+
+def _legacy_component_possible(value: str) -> bool:
+    return len(value.encode("utf-8")) <= 255
+
+
+def _resolve_legacy_or_bounded(
+    *,
+    legacy: Path | None,
+    bounded: Path,
+    subject: str,
+) -> Path:
+    legacy_exists = legacy is not None and _path_entry_exists(legacy)
+    bounded_exists = _path_entry_exists(bounded)
+    if legacy_exists and bounded_exists:
+        raise SnapshotCustodyError(
+            "snapshot.custody_conflict",
+            f"{subject} has both legacy and bounded custody.",
+        )
+    if legacy_exists:
+        assert legacy is not None
+        return legacy
+    return bounded
+
+
+def legacy_snapshot_attempt_staging_root(
+    root: str | Path,
+    snapshot_build_attempt_id: str,
 ) -> Path:
     try:
-        snapshot_series_id = require_identifier(snapshot_series_id, "snapshot_series_id")
-        edition_number = require_positive_int(edition_number, "edition_number")
+        attempt_id = require_identifier(
+            snapshot_build_attempt_id,
+            "snapshot_build_attempt_id",
+        )
+    except VitrineModelValidationError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid", "Snapshot Attempt identity is invalid."
+        ) from error
+    return safe_vitrine_descendant(root, f"snapshots/staging/{attempt_id}")
+
+
+def bounded_snapshot_attempt_staging_root(
+    root: str | Path,
+    snapshot_build_attempt_id: str,
+) -> Path:
+    try:
+        attempt_id = require_identifier(
+            snapshot_build_attempt_id,
+            "snapshot_build_attempt_id",
+        )
+    except VitrineModelValidationError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid", "Snapshot Attempt identity is invalid."
+        ) from error
+    token = build_bounded_custody_token(
+        domain="snapshot-staging",
+        semantic_identity={"snapshot_build_attempt_id": attempt_id},
+    )
+    return bounded_snapshot_staging_root(root) / token
+
+
+def snapshot_attempt_staging_root(root: str | Path, attempt_id: str) -> Path:
+    try:
+        attempt_id = require_identifier(attempt_id, "snapshot_build_attempt_id")
+    except VitrineModelValidationError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid", "Snapshot Attempt identity is invalid."
+        ) from error
+    legacy = (
+        legacy_snapshot_attempt_staging_root(root, attempt_id)
+        if _legacy_component_possible(attempt_id)
+        else None
+    )
+    bounded = bounded_snapshot_attempt_staging_root(root, attempt_id)
+    return _resolve_legacy_or_bounded(
+        legacy=legacy,
+        bounded=bounded,
+        subject="Snapshot Attempt staging",
+    )
+
+
+def legacy_snapshot_edition_root(
+    root: str | Path,
+    snapshot_series_id: str,
+    edition_number: int,
+) -> Path:
+    try:
+        series_id = require_identifier(snapshot_series_id, "snapshot_series_id")
+        number = require_positive_int(edition_number, "edition_number")
     except VitrineModelValidationError as error:
         raise SnapshotCustodyError(
             "snapshot.path_invalid", "Snapshot Edition identity is invalid."
         ) from error
     return safe_vitrine_descendant(
-        root, f"snapshots/editions/{snapshot_series_id}/{edition_number}"
+        root,
+        f"snapshots/editions/{series_id}/{number}",
     )
 
 
-def snapshot_exports_root(root: str | Path) -> Path:
-    return safe_vitrine_descendant(root, "snapshots/exports")
-
-
-def snapshot_locks_root(root: str | Path) -> Path:
-    return safe_vitrine_descendant(root, "snapshots/.locks")
-
-
-
-def snapshot_series_lock_path(root: str | Path, snapshot_series_id: str) -> Path:
+def bounded_snapshot_edition_root(
+    root: str | Path,
+    snapshot_series_id: str,
+    edition_number: int,
+) -> Path:
     try:
-        snapshot_series_id = require_identifier(
-            snapshot_series_id, "snapshot_series_id"
-        )
+        series_id = require_identifier(snapshot_series_id, "snapshot_series_id")
+        number = require_positive_int(edition_number, "edition_number")
+    except VitrineModelValidationError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid", "Snapshot Edition identity is invalid."
+        ) from error
+    token = build_bounded_custody_token(
+        domain="snapshot-edition",
+        semantic_identity={
+            "snapshot_series_id": series_id,
+            "edition_number": number,
+        },
+    )
+    return bounded_snapshot_editions_root(root) / token
+
+
+def snapshot_edition_root(
+    root: str | Path,
+    snapshot_series_id: str,
+    edition_number: int,
+) -> Path:
+    try:
+        series_id = require_identifier(snapshot_series_id, "snapshot_series_id")
+        number = require_positive_int(edition_number, "edition_number")
+    except VitrineModelValidationError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid", "Snapshot Edition identity is invalid."
+        ) from error
+    legacy = (
+        legacy_snapshot_edition_root(root, series_id, number)
+        if _legacy_component_possible(series_id)
+        else None
+    )
+    bounded = bounded_snapshot_edition_root(root, series_id, number)
+    return _resolve_legacy_or_bounded(
+        legacy=legacy,
+        bounded=bounded,
+        subject="Snapshot Edition",
+    )
+
+
+def legacy_snapshot_series_lock_path(
+    root: str | Path,
+    snapshot_series_id: str,
+) -> Path:
+    try:
+        series_id = require_identifier(snapshot_series_id, "snapshot_series_id")
     except VitrineModelValidationError as error:
         raise SnapshotCustodyError(
             "snapshot.path_invalid", "Snapshot Series identity is invalid."
         ) from error
-    return safe_vitrine_descendant(
-        root, f"snapshots/.locks/{snapshot_series_id}.json"
+    return safe_vitrine_descendant(root, f"snapshots/.locks/{series_id}.json")
+
+
+def bounded_snapshot_series_lock_path(
+    root: str | Path,
+    snapshot_series_id: str,
+) -> Path:
+    try:
+        series_id = require_identifier(snapshot_series_id, "snapshot_series_id")
+    except VitrineModelValidationError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid", "Snapshot Series identity is invalid."
+        ) from error
+    token = build_bounded_custody_token(
+        domain="snapshot-series-lock",
+        semantic_identity={"snapshot_series_id": series_id},
     )
+    return bounded_snapshot_locks_root(root) / f"{token}.json"
+
+
+def snapshot_series_lock_path(root: str | Path, snapshot_series_id: str) -> Path:
+    try:
+        series_id = require_identifier(snapshot_series_id, "snapshot_series_id")
+    except VitrineModelValidationError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid", "Snapshot Series identity is invalid."
+        ) from error
+    legacy = (
+        legacy_snapshot_series_lock_path(root, series_id)
+        if _legacy_component_possible(series_id)
+        else None
+    )
+    bounded = bounded_snapshot_series_lock_path(root, series_id)
+    return _resolve_legacy_or_bounded(
+        legacy=legacy,
+        bounded=bounded,
+        subject="Snapshot Series lock",
+    )
+
+
+def legacy_snapshot_export_path(
+    root: str | Path,
+    *,
+    snapshot_series_id: str,
+    edition_number: int,
+    snapshot_export_artifact_id: str,
+) -> Path:
+    try:
+        series_id = require_identifier(snapshot_series_id, "snapshot_series_id")
+        number = require_positive_int(edition_number, "edition_number")
+        artifact_id = require_identifier(
+            snapshot_export_artifact_id,
+            "snapshot_export_artifact_id",
+        )
+    except VitrineModelValidationError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid", "Snapshot Export identity is invalid."
+        ) from error
+    return safe_vitrine_descendant(
+        root,
+        f"snapshots/exports/{series_id}/{number}/{artifact_id}",
+    )
+
+
+def bounded_snapshot_export_path(
+    root: str | Path,
+    *,
+    snapshot_series_id: str,
+    edition_number: int,
+    snapshot_export_artifact_id: str,
+) -> Path:
+    try:
+        series_id = require_identifier(snapshot_series_id, "snapshot_series_id")
+        number = require_positive_int(edition_number, "edition_number")
+        artifact_id = require_identifier(
+            snapshot_export_artifact_id,
+            "snapshot_export_artifact_id",
+        )
+    except VitrineModelValidationError as error:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid", "Snapshot Export identity is invalid."
+        ) from error
+    token = build_bounded_custody_token(
+        domain="snapshot-export",
+        semantic_identity={
+            "snapshot_series_id": series_id,
+            "edition_number": number,
+            "snapshot_export_artifact_id": artifact_id,
+        },
+    )
+    return bounded_snapshot_exports_root(root) / token
+
+
+def snapshot_export_path_from_relative(
+    root: str | Path,
+    relative_path: str,
+) -> Path:
+    """Resolve persisted historical/new Export custody without writer replay."""
+
+    normalized = normalize_snapshot_relative_path(relative_path)
+    parts = normalized.split("/")
+    legacy_shape = (
+        len(parts) == 5
+        and parts[0] == "snapshots"
+        and parts[1] == "exports"
+        and parts[3].isdigit()
+        and not parts[3].startswith("0")
+    )
+    bounded_shape = (
+        len(parts) == 3
+        and parts[0] == "snapshots"
+        and parts[1] == "exports-bounded-v1"
+    )
+    if not legacy_shape and not bounded_shape:
+        raise SnapshotCustodyError(
+            "snapshot.path_invalid",
+            "Snapshot Export path is outside supported historical/bounded custody.",
+        )
+    return safe_vitrine_descendant(root, normalized)
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -295,7 +577,8 @@ def acquire_snapshot_series_lock(
             "snapshot.build_lock_invalid",
             "Snapshot Series build lock request is invalid.",
         ) from error
-    lock_root = snapshot_locks_root(root)
+    path = snapshot_series_lock_path(root, snapshot_series_id)
+    lock_root = path.parent
     try:
         if lock_root.exists():
             _require_plain_directory(lock_root)
@@ -307,7 +590,6 @@ def acquire_snapshot_series_lock(
             "snapshot.build_lock_write_failed",
             "Snapshot Series lock directory could not be established safely.",
         ) from error
-    path = snapshot_series_lock_path(root, snapshot_series_id)
     payload = _series_lock_bytes(
         snapshot_series_id=snapshot_series_id,
         snapshot_build_attempt_id=snapshot_build_attempt_id,
@@ -393,16 +675,6 @@ def release_snapshot_series_lock(
             "Snapshot Series build lock could not be released.",
         ) from error
 
-def snapshot_attempt_staging_root(root: str | Path, attempt_id: str) -> Path:
-    try:
-        attempt_id = require_identifier(attempt_id, "snapshot_build_attempt_id")
-    except VitrineModelValidationError as error:
-        raise SnapshotCustodyError(
-            "snapshot.path_invalid", "Snapshot Attempt identity is invalid."
-        ) from error
-    return safe_vitrine_descendant(root, f"snapshots/staging/{attempt_id}")
-
-
 def _is_link_or_reparse(path: Path) -> bool:
     try:
         if path.is_symlink():
@@ -478,7 +750,7 @@ def create_snapshot_staging(
     """Create one exclusive noncanonical staging tree for an Attempt."""
 
     attempt_root = snapshot_attempt_staging_root(root, snapshot_build_attempt_id)
-    staging_root = snapshot_staging_root(root)
+    staging_root = attempt_root.parent
     try:
         staging_root.mkdir(parents=True, exist_ok=True)
     except OSError as error:
@@ -755,13 +1027,10 @@ def publish_snapshot_staging_as_edition(
     target = snapshot_edition_root(
         staging.workspace_root, snapshot_series_id, edition_number
     )
-    editions = snapshot_editions_root(staging.workspace_root)
-    series_root = target.parent
+    custody_root = target.parent
     try:
-        editions.mkdir(parents=True, exist_ok=True)
-        _require_plain_directory(editions)
-        series_root.mkdir(exist_ok=True)
-        _require_plain_directory(series_root)
+        custody_root.mkdir(parents=True, exist_ok=True)
+        _require_plain_directory(custody_root)
     except SnapshotCustodyError:
         raise
     except OSError as error:
@@ -794,15 +1063,28 @@ def publish_snapshot_staging_as_edition(
 
 
 __all__ = [
+    "SNAPSHOT_CUSTODY_POLICY_ID",
     "SNAPSHOT_DIGEST_POLICY_ID",
     "SNAPSHOT_PATH_POLICY_ID",
     "SNAPSHOT_SERIES_LOCK_CONTRACT_VERSION",
+    "bounded_snapshot_attempt_staging_root",
+    "bounded_snapshot_edition_root",
+    "bounded_snapshot_editions_root",
+    "bounded_snapshot_export_path",
+    "bounded_snapshot_exports_root",
+    "bounded_snapshot_locks_root",
+    "bounded_snapshot_series_lock_path",
+    "bounded_snapshot_staging_root",
     "SnapshotCustodyError",
     "SnapshotSeriesLockInspection",
     "SnapshotStagingArea",
     "acquire_snapshot_series_lock",
     "create_snapshot_staging",
     "inspect_snapshot_series_lock",
+    "legacy_snapshot_attempt_staging_root",
+    "legacy_snapshot_edition_root",
+    "legacy_snapshot_export_path",
+    "legacy_snapshot_series_lock_path",
     "load_snapshot_staging",
     "require_empty_snapshot_staging",
     "normalize_snapshot_relative_path",
@@ -812,6 +1094,7 @@ __all__ = [
     "snapshot_attempt_staging_root",
     "snapshot_edition_root",
     "snapshot_editions_root",
+    "snapshot_export_path_from_relative",
     "snapshot_exports_root",
     "snapshot_locks_root",
     "snapshot_path_collision_key",

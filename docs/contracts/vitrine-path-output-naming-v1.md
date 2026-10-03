@@ -161,7 +161,25 @@ the token never becomes domain identity.
 Canonical inventory and catalog rebuilds resolve the exact stored revision path
 rather than reconstructing the historical writer serialization.
 
-Snapshot custody remains unchanged until Slice 3.
+Slice 3 applies the same reader/writer asymmetry to Snapshot-owned custody.
+
+New staging, Edition, Series-lock, and directory-Export custody uses versioned
+bounded namespaces:
+
+```text
+snapshots/staging-bounded-v1/
+snapshots/editions-bounded-v1/
+snapshots/.locks-bounded-v1/
+snapshots/exports-bounded-v1/
+```
+
+Historical direct-identity custody remains readable without migration. Exact
+Snapshot IDs remain canonical state.
+
+`SnapshotExportArtifact.relative_path` is treated as persisted historical
+custody. Verification resolves that exact stored path instead of requiring a
+historical Export to equal today's writer serialization. New bounded-v1 Export
+paths additionally verify their deterministic custody token.
 
 ## Relationship to Core 0.6.4
 

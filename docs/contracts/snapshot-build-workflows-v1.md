@@ -204,26 +204,38 @@ Canonical custody paths must not use student names or other PII.
 
 ## Byte custody
 
-Snapshot bytes are outside canonical JSON state:
+Snapshot bytes are outside canonical JSON state.
+
+Historical direct-identity custody remains readable without migration:
 
 ```text
-<workspace>/vitrine/
-  state/
-  snapshots/
-    staging/<attempt-id>/
-      content/
-      internal/
-    editions/<series-id>/<edition-number>/
-      content/
-      internal/manifest.json
-    exports/<series-id>/<edition-number>/<export-artifact-id>/
-    .locks/<series-id>.json
+<workspace>/vitrine/snapshots/
+  staging/<attempt-id>/
+  editions/<series-id>/<edition-number>/
+  exports/<series-id>/<edition-number>/<export-artifact-id>/
+  .locks/<series-id>.json
 ```
+
+Issue #111 prospective writers use bounded Vitrine-owned custody:
+
+```text
+<workspace>/vitrine/snapshots/
+  staging-bounded-v1/vp1_<token>/
+  editions-bounded-v1/vp1_<token>/
+  exports-bounded-v1/vp1_<token>/
+  .locks-bounded-v1/vp1_<token>.json
+```
+
+Staging/Edition/Export contents retain the established `content/` and `internal/`
+contracts. Exact Snapshot IDs remain canonical records; the custody token is only
+filesystem serialization.
 
 Staging is noncanonical and never proves successful materialization or sealing.
 
 Edition and Export destinations are exclusively published and never merged or
-overwritten.
+overwritten. If legacy and bounded custody both claim one exact staging,
+Edition, or lock identity, resolution fails closed rather than selecting
+heuristically.
 
 ## Series/build lock
 
@@ -599,9 +611,13 @@ It verifies:
 - exact persisted Export Artifact;
 - underlying Edition verification;
 - included/excluded canonical Entry partition;
-- expected custody path;
+- the persisted historical/bounded `relative_path`;
+- bounded-v1 token consistency for new bounded Exports;
 - no missing, unexpected, linked, or unsafe files;
 - deterministic directory-inventory SHA-256.
+
+Historical direct-identity Export paths are not regenerated with the current
+writer. Their persisted `relative_path` remains historical canonical state.
 
 ## Current Edition pointer
 

@@ -79,7 +79,9 @@ existing staging paths:        F
 The current service factory normally emits a bounded prefix + UUID identity, but
 the path helper accepts the broader generic identifier contract.
 
-**Disposition:** Slice 3.
+**Slice 3 status:** implemented. New Attempt staging uses
+`staging-bounded-v1/<bounded-token>`. Historical direct-identity staging is
+reopened in place; dual custody fails closed.
 
 ## Snapshot Edition custody
 
@@ -101,7 +103,9 @@ existing Edition paths:   F
 Ordinary generated Series IDs are currently bounded in practice, but path safety
 must be a writer contract rather than an implementation coincidence.
 
-**Disposition:** Slice 3.
+**Slice 3 status:** implemented. New Edition custody uses
+`editions-bounded-v1/<bounded-token>`. Historical direct-identity Editions
+remain resolvable without migration.
 
 ## Snapshot Series locks
 
@@ -119,7 +123,9 @@ snapshot_series_id leaf:  C in the custody contract
 existing lock paths:      transient F where present
 ```
 
-**Disposition:** Slice 3.
+**Slice 3 status:** implemented. New Series locks use the
+`.locks-bounded-v1/<bounded-token>.json` namespace; historical locks remain
+inspectable/releasable in place.
 
 ## Snapshot directory Exports
 
@@ -146,9 +152,10 @@ SnapshotExportArtifact.relative_path: F
 identity serialization. That must be revisited before prospective writer
 serialization changes.
 
-**Disposition:** Slice 3. Historical `relative_path` remains historical truth;
-new writer policy must not invalidate an older valid Export merely because its
-path would now be serialized differently.
+**Slice 3 status:** implemented. New directory Exports use
+`exports-bounded-v1/<bounded-token>`. Verification resolves the persisted
+`SnapshotExportArtifact.relative_path`; historical direct-identity Exports are
+not reserialized with the current writer.
 
 ## Current Portfolio Snapshot entry paths
 

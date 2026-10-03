@@ -43,14 +43,22 @@ from vitrine.models.conversion import JsonValue
 from vitrine.models.errors import VitrineModelValidationError
 from vitrine.snapshot_custody import (
     SnapshotCustodyError,
+    bounded_snapshot_editions_root,
+    bounded_snapshot_export_path,
+    bounded_snapshot_exports_root,
+    bounded_snapshot_locks_root,
+    bounded_snapshot_staging_root,
     inspect_snapshot_series_lock,
     normalize_snapshot_relative_path,
     release_snapshot_series_lock,
     snapshot_attempt_staging_root,
     snapshot_edition_root,
     snapshot_editions_root,
+    snapshot_export_path_from_relative,
     snapshot_exports_root,
     snapshot_locks_root,
+    snapshot_root,
+    snapshot_series_lock_path,
     snapshot_staging_root,
 )
 from vitrine.snapshot_sealing import (
@@ -853,23 +861,30 @@ def verify_snapshot_export(
             "Snapshot Export included/excluded Entry partition is inconsistent.",
             stage="export_verification",
         )
-    export_root = (
-        snapshot_exports_root(root)
-        / artifact.snapshot_edition.snapshot_series_id
-        / str(artifact.snapshot_edition.edition_number)
-        / artifact.snapshot_export_artifact_id
-    )
-    expected_relative = (
-        f"snapshots/exports/{artifact.snapshot_edition.snapshot_series_id}/"
-        f"{artifact.snapshot_edition.edition_number}/"
-        f"{artifact.snapshot_export_artifact_id}"
-    )
-    if artifact.relative_path != expected_relative:
+    try:
+        export_root = snapshot_export_path_from_relative(
+            root,
+            artifact.relative_path,
+        )
+    except SnapshotCustodyError as error:
         raise SnapshotDistributionError(
             "snapshot_distribution.verification_failed",
-            "Snapshot Export Artifact custody path is inconsistent.",
+            "Snapshot Export Artifact custody path is invalid.",
             stage="export_verification",
+        ) from error
+    if artifact.relative_path.startswith("snapshots/exports-bounded-v1/"):
+        expected_bounded = bounded_snapshot_export_path(
+            root,
+            snapshot_series_id=artifact.snapshot_edition.snapshot_series_id,
+            edition_number=artifact.snapshot_edition.edition_number,
+            snapshot_export_artifact_id=artifact.snapshot_export_artifact_id,
         )
+        if export_root != expected_bounded:
+            raise SnapshotDistributionError(
+                "snapshot_distribution.verification_failed",
+                "Bounded Snapshot Export custody token is inconsistent.",
+                stage="export_verification",
+            )
     expected_paths = tuple(sorted(item.relative_path for item in included))
     if _content_inventory(export_root) != expected_paths:
         raise SnapshotDistributionError(
@@ -1049,11 +1064,9 @@ def create_snapshot_directory_export(
             snapshot_export_artifact_id=existing.snapshot_export_artifact_id,
             verified_at=generated,
         )
-        existing_path = (
-            snapshot_exports_root(root)
-            / existing.snapshot_edition.snapshot_series_id
-            / str(existing.snapshot_edition.edition_number)
-            / existing.snapshot_export_artifact_id
+        existing_path = snapshot_export_path_from_relative(
+            root,
+            existing.relative_path,
         )
         return SnapshotExportResult(
             state_revision=loaded.state_revision,
@@ -1061,14 +1074,13 @@ def create_snapshot_directory_export(
             export_path=existing_path,
         )
 
-    exports_root = snapshot_exports_root(root)
-    final_root = exports_root / snapshot_series_id / str(edition_number) / artifact_identity
-    temporary_root = (
-        exports_root
-        / snapshot_series_id
-        / str(edition_number)
-        / f".{artifact_identity}.staging"
+    final_root = bounded_snapshot_export_path(
+        root,
+        snapshot_series_id=snapshot_series_id,
+        edition_number=edition_number,
+        snapshot_export_artifact_id=artifact_identity,
     )
+    temporary_root = final_root.with_name(f".{final_root.name}.staging")
     edition_content = (
         snapshot_edition_root(root, snapshot_series_id, edition_number) / "content"
     )
@@ -1140,9 +1152,7 @@ def create_snapshot_directory_export(
             stage="export",
         )
 
-    relative_path = (
-        f"snapshots/exports/{snapshot_series_id}/{edition_number}/{artifact_identity}"
-    )
+    relative_path = final_root.relative_to(snapshot_root(root).parent).as_posix()
     artifact = SnapshotExportArtifact(
         snapshot_export_artifact_id=artifact_identity,
         snapshot_edition=edition.reference,
@@ -1385,6 +1395,136 @@ def _manifest_is_verified_for_edition(
         )
     except (SnapshotDistributionError, TypeError, ValueError):
         return False
+
+
+def _bounded_snapshot_custody_orphan_findings(
+    root: str | Path,
+    *,
+    attempts: dict[str, SnapshotBuildAttempt],
+    plans: dict[str, SnapshotBuildPlan],
+    editions: dict[tuple[str, int], SnapshotEdition],
+    exports: dict[str, SnapshotExportArtifact],
+) -> tuple[SnapshotCustodyFinding, ...]:
+    findings: list[SnapshotCustodyFinding] = []
+
+    expected_staging: set[Path] = set()
+    for attempt_id in attempts:
+        try:
+            expected_staging.add(snapshot_attempt_staging_root(root, attempt_id))
+        except SnapshotCustodyError:
+            continue
+    staging_root = bounded_snapshot_staging_root(root)
+    if staging_root.exists() and staging_root.is_dir() and _plain(staging_root):
+        try:
+            children = tuple(staging_root.iterdir())
+        except OSError:
+            children = ()
+        for child in children:
+            if child not in expected_staging:
+                findings.append(
+                    SnapshotCustodyFinding(
+                        code="snapshot.custody.orphan_staging",
+                        severity="warning",
+                        subject_kind="snapshot_staging",
+                        subject_id=child.name,
+                        summary=(
+                            "Bounded Snapshot staging custody has no canonical "
+                            "Build Attempt."
+                        ),
+                    )
+                )
+
+    expected_locks: set[Path] = set()
+    for plan in plans.values():
+        try:
+            expected_locks.add(
+                snapshot_series_lock_path(root, plan.snapshot_series_id)
+            )
+        except SnapshotCustodyError:
+            continue
+    lock_root = bounded_snapshot_locks_root(root)
+    if lock_root.exists() and lock_root.is_dir() and _plain(lock_root):
+        try:
+            children = tuple(lock_root.iterdir())
+        except OSError:
+            children = ()
+        for child in children:
+            if child not in expected_locks:
+                findings.append(
+                    SnapshotCustodyFinding(
+                        code="snapshot.custody.build_lock_present",
+                        severity="warning",
+                        subject_kind="snapshot_series",
+                        subject_id=child.stem,
+                        summary=(
+                            "Bounded Snapshot Series lock has no matching "
+                            "canonical Build Attempt context."
+                        ),
+                    )
+                )
+
+    expected_editions: set[Path] = set()
+    for series_id, edition_number in editions:
+        try:
+            expected_editions.add(
+                snapshot_edition_root(root, series_id, edition_number)
+            )
+        except SnapshotCustodyError:
+            continue
+    editions_root = bounded_snapshot_editions_root(root)
+    if editions_root.exists() and editions_root.is_dir() and _plain(editions_root):
+        try:
+            children = tuple(editions_root.iterdir())
+        except OSError:
+            children = ()
+        for child in children:
+            if child not in expected_editions:
+                findings.append(
+                    SnapshotCustodyFinding(
+                        code=(
+                            "snapshot.custody."
+                            "custody_edition_missing_canonical_state"
+                        ),
+                        severity="error",
+                        subject_kind="snapshot_edition_custody",
+                        subject_id=child.name,
+                        summary=(
+                            "Bounded Snapshot Edition custody has no canonical "
+                            "Edition record."
+                        ),
+                    )
+                )
+
+    expected_exports: set[Path] = set()
+    for artifact in exports.values():
+        try:
+            expected_exports.add(
+                snapshot_export_path_from_relative(root, artifact.relative_path)
+            )
+        except SnapshotCustodyError:
+            continue
+    exports_root = bounded_snapshot_exports_root(root)
+    if exports_root.exists() and exports_root.is_dir() and _plain(exports_root):
+        try:
+            children = tuple(exports_root.iterdir())
+        except OSError:
+            children = ()
+        for child in children:
+            if child not in expected_exports:
+                findings.append(
+                    SnapshotCustodyFinding(
+                        code="snapshot.custody.orphan_export",
+                        severity="warning",
+                        subject_kind="snapshot_export_custody",
+                        subject_id=child.name,
+                        summary=(
+                            "Bounded Snapshot Export custody has no canonical "
+                            "Export Artifact record."
+                        ),
+                    )
+                )
+
+    return tuple(findings)
 
 
 def inspect_snapshot_custody(root: str | Path) -> SnapshotCustodyAudit:
@@ -1702,6 +1842,15 @@ def inspect_snapshot_custody(root: str | Path) -> SnapshotCustodyAudit:
                             )
                         )
 
+    findings.extend(
+        _bounded_snapshot_custody_orphan_findings(
+            root,
+            attempts=attempts,
+            plans=plans,
+            editions=editions,
+            exports=exports,
+        )
+    )
     findings.sort(key=lambda item: (item.code, item.subject_kind, item.subject_id))
     return SnapshotCustodyAudit(
         canonical_state_revision=loaded.state_revision,
