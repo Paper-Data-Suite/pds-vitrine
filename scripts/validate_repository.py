@@ -15,6 +15,10 @@ from time import perf_counter
 VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("runtime models", ("scripts/validate_runtime_models.py",)),
     ("canonical storage", ("scripts/validate_canonical_storage.py",)),
+    (
+        "bounded Vitrine paths/output naming",
+        ("scripts/validate_path_output_naming.py", "--skip-focused-tests"),
+    ),
     ("Subject workflows", ("scripts/validate_subject_workflows.py",)),
     ("Profile workflows", ("scripts/validate_profile_workflows.py",)),
     ("starter Profiles", ("scripts/validate_starter_profiles.py",)),
@@ -452,6 +456,10 @@ def validate(
                     "scripts/smoke_test_operations_wheel.py",
                 ),
                 ("Snapshot", "scripts/smoke_test_snapshot_wheel.py"),
+                (
+                    "bounded Vitrine paths/output naming",
+                    "scripts/smoke_test_path_output_naming_wheel.py",
+                ),
             )
             for label, script in wheel_smokes:
                 _run(

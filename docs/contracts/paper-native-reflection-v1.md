@@ -88,6 +88,12 @@ Current Portfolio preparation resolves that relationship and copies exact
 digest-verified paper bytes. It does not parse arbitrary display text or pretend
 a Reflection is a `PortfolioPlacement`.
 
+Issue #111 preserves the Core/Vitrine path ownership boundary: Vitrine consumes
+the exact persisted `retained_source_relative_path`, reads the retained source
+through Python byte I/O, and verifies the stored SHA-256. It does not reconstruct
+the Core retained-source filename, rename historical retained evidence, or pass
+display/source names into Current Portfolio output naming.
+
 Final polished student-facing presentation remains owned by #101. Working
 Composition representation of non-Placement requirements remains owned by #100.
 Global Attention remains owned by #103.

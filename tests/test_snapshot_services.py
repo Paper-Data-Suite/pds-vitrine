@@ -35,6 +35,7 @@ from vitrine.models import (
 from vitrine.snapshot_custody import (
     SnapshotCustodyError,
     inspect_snapshot_series_lock,
+    snapshot_attempt_staging_root,
 )
 from vitrine.snapshot_distribution import (
     SnapshotDistributionError,
@@ -1210,11 +1211,10 @@ def test_unresolved_attempt_recovery_is_explicit_and_preserves_staging(
         include_generated=False,
     )
     residue = (
-        setup.workspace
-        / "vitrine"
-        / "snapshots"
-        / "staging"
-        / attempt.snapshot_build_attempt_id
+        snapshot_attempt_staging_root(
+            setup.workspace,
+            attempt.snapshot_build_attempt_id,
+        )
         / "content"
         / "residue.bin"
     )

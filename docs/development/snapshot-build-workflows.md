@@ -190,11 +190,20 @@ Never clear a lock because its timestamp appears old.
 
 ## Staging
 
-The Attempt staging root is:
+Historical Attempt staging may remain at:
 
 ```text
 vitrine/snapshots/staging/<attempt-id>/
 ```
+
+New issue #111 writers use:
+
+```text
+vitrine/snapshots/staging-bounded-v1/vp1_<token>/
+```
+
+Readers resolve either form without migration and reject dual custody for one
+exact Attempt.
 
 It contains only:
 

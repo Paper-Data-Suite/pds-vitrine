@@ -73,6 +73,19 @@ distribution remains Core-only. The routing/profile modules, Portfolio menu,
 and evidence/materialization path remain importable without the paper extra or
 sibling PDS producer packages.
 
+## Path-safety regression boundary
+
+Issue #111 adds regression coverage around the existing paper path behavior.
+
+`student_reflection_response.pdf` remains a fixed Vitrine-owned leaf. The
+temporary render destination uses that fixed stem plus a bounded random token;
+student display names and Reflection prompt text do not enter either name.
+
+Returned-paper Current Portfolio materialization follows the exact persisted
+Core `retained_source_relative_path`, reads bytes directly, and validates
+SHA-256. The reader does not regenerate Core's writer filename and does not
+require a native PDF/image library to open the retained path.
+
 ## Release qualification
 
 Repository qualification for #99 includes:

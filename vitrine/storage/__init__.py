@@ -59,11 +59,16 @@ from .models import (
     VitrineStoreMarker,
 )
 from .paths import (
+    bounded_record_identity_path,
+    bounded_record_revision_path,
+    bounded_record_revisions_path,
+    bounded_records_root,
     catalog_lock_path,
     catalog_path,
     current_state_path,
     derived_root,
     locks_root,
+    record_custody_token,
     record_identity_path,
     record_revision_path,
     record_revisions_path,
@@ -97,6 +102,7 @@ from .store import (
     load_state_records,
     load_state_revision,
     load_store_marker,
+    resolve_record_revision_path,
 )
 from .store import commit_record_batch as _commit_record_batch
 
@@ -229,6 +235,10 @@ __all__ = [
     "VitrineStorageWriteError",
     "VitrineStoreMarker",
     "audit_canonical_storage",
+    "bounded_record_identity_path",
+    "bounded_record_revision_path",
+    "bounded_record_revisions_path",
+    "bounded_records_root",
     "canonical_source_inventory",
     "catalog_lock_path",
     "catalog_path",
@@ -255,9 +265,11 @@ __all__ = [
     "locks_root",
     "query_catalog_records",
     "rebuild_catalog",
+    "record_custody_token",
     "record_identity_path",
     "record_revision_path",
     "record_revisions_path",
+    "resolve_record_revision_path",
     "records_root",
     "safe_vitrine_descendant",
     "source_inventory_digest",

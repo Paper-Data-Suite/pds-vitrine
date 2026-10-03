@@ -36,6 +36,7 @@ production authorization/delivery surfaces.
 - [Create Portfolio for Student v1](contracts/create-portfolio-for-student-v1.md) — exact Core roster selection, explicit cross-class Subject association, exact Profile choice, read-only planning, and one-batch guarded setup implemented by issue #65.
 - [Curation workflows v1](contracts/curation-workflows-v1.md) — explicit Proposal/Decision/Selection provenance, lifecycle, Placement/Arrangement pointers, Annotation, Reflection, Review, and immutable Composition state implemented by issue #34.
 - [Snapshot build workflows v1](contracts/snapshot-build-workflows-v1.md) — exact Composition-bound Request/Plan/Attempt execution, guarded byte custody, Series locks, exact source/render boundaries, deterministic Manifest/Seal/Edition creation, directory Export, verification, current pointer, and recovery implemented by issue #35.
+- [Vitrine path and output naming v1](contracts/vitrine-path-output-naming-v1.md) — issue #111 bounded Vitrine-owned custody tokens and human-readable output filename foundation, with prospective-writer versus historical-reader separation.
 - [Runtime-model development](development/runtime-models.md) — public imports, construction, conversion, fixtures, and validation commands.
 - [Canonical-storage development](development/canonical-storage.md) — persistence, historical reads, audits, catalogs, locks, and focused validation.
 - [Portfolio Subject workflow development](development/portfolio-subject-workflows.md) — application services, direct CLI, teacher menu, and workflow validation.
@@ -55,6 +56,7 @@ production authorization/delivery surfaces.
 - [Create Portfolio for Student development](development/create-portfolio-for-student.md) — planner-first orchestration, exact identity/Profile boundaries, atomic commit, teacher menu, CLI, and installed-wheel acceptance.
 - [Curation workflow development](development/curation-workflows.md) — guarded curation services, authority gate, pointer concurrency, revisioning, and Composition guidance.
 - [Snapshot build workflow development](development/snapshot-build-workflows.md) — Plan construction, exact provider/renderer boundaries, Series locking, sealing, Export verification, recovery, and validation.
+- [Vitrine path-surface audit](development/vitrine-path-surface-audit.md) — issue #111 ownership and path-budget audit for canonical storage, Snapshot custody, paper output, Current Portfolio paths, and the #101 handoff.
 - [Package foundation](development/package-foundation.md) — installable package, Core 0.6 dependency, CLI/menu shell, workspace delegation, packaging, and CI.
 - [Synthetic data policy](development/synthetic-data.md) — repository-wide test and fixture privacy rules.
 
@@ -191,6 +193,7 @@ fixtures/representative-portfolios/
 - [Issue #96 Candidate Evidence Review validation](validation/issue-96-candidate-evidence-review-validation.md) — A-N focused acceptance, suppressed-preview privacy regression, exact preview/public-API guards, package/repository wiring, and the handoff to installed acceptance.
 - [Issue #98 Guided Menu Interactions validation](validation/issue-98-guided-menu-interactions-validation.md) — controlled confirmation/cardinality acceptance, cross-menu transition coverage, package guards, isolated Core+Vitrine wheel smoke, and complete repository qualification.
 
+- [Issue #111 bounded path/output naming validation](validation/issue-111-path-output-naming-validation.md) — focused path policy/storage/Snapshot/paper qualification, package guards, and exact Core 0.6.4 installed-wheel acceptance.
 - [Issue #71 live installed cross-producer acceptance validation](validation/issue-71-live-installed-cross-producer-acceptance-validation.md) — exact released-wheel authentication, live producer/Candidate/curation/Snapshot acceptance, negative currentness/authorization matrix, custody/tamper/historical verification, and producer-independent sealed verification.
 
 ## Authority

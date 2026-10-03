@@ -103,7 +103,7 @@ from pds_core.workspace import ensure_workspace_root
 implicit_workspace = Path(sys.argv[1])
 explicit_workspace = Path(sys.argv[2])
 
-assert importlib.metadata.version("pds-core") == "0.6.3"
+assert importlib.metadata.version("pds-core") == "0.6.4"
 assert importlib.metadata.version("pds-vitrine") == "0.3.0"
 assert MODULE_OPERATIONS_CONTRACT_VERSION == "1"
 assert MODULE_OPERATIONS_ENTRY_POINT_GROUP == "paper_data_suite.module_operations"

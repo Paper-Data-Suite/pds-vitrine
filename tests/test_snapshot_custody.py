@@ -8,6 +8,7 @@ import pytest
 from vitrine.snapshot_custody import (
     SnapshotCustodyError,
     acquire_snapshot_series_lock,
+    bounded_snapshot_attempt_staging_root,
     create_snapshot_staging,
     inspect_snapshot_series_lock,
     load_snapshot_staging,
@@ -60,7 +61,10 @@ def test_snapshot_custody_layout_and_staging_are_workspace_scoped(tmp_path: Path
     assert snapshot_locks_root(tmp_path) == tmp_path.resolve() / "vitrine" / "snapshots" / ".locks"
 
     staging = create_snapshot_staging(tmp_path, "snapshot_attempt_1")
-    assert staging.root == snapshot_staging_root(tmp_path) / "snapshot_attempt_1"
+    assert staging.root == bounded_snapshot_attempt_staging_root(
+        tmp_path,
+        "snapshot_attempt_1",
+    )
     assert staging.content_root.is_dir()
     assert staging.internal_root.is_dir()
 

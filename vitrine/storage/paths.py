@@ -6,6 +6,8 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from pds_core.workspace import resolve_workspace_root
 
+from vitrine.path_policy import build_bounded_custody_token
+
 from .errors import VitrineStorageValidationError
 from .models import VitrineStorageRecordKey
 
@@ -59,7 +61,69 @@ def store_marker_path(root: str | Path) -> Path:
 
 
 def records_root(root: str | Path) -> Path:
+    """Return the historical direct-identity record root."""
+
     return safe_vitrine_descendant(root, "state/records")
+
+
+def bounded_records_root(root: str | Path) -> Path:
+    """Return the prospective bounded record-custody root."""
+
+    return safe_vitrine_descendant(root, "state/records-bounded-v1")
+
+
+def record_custody_token(key: VitrineStorageRecordKey) -> str:
+    """Return the bounded prospective custody token for one exact record key."""
+
+    if not isinstance(key, VitrineStorageRecordKey):
+        raise VitrineStorageValidationError("key must be VitrineStorageRecordKey.")
+    return build_bounded_custody_token(
+        domain="canonical-record",
+        semantic_identity={
+            "record_type": key.record_type,
+            "identity_segments": list(key.identity_segments),
+        },
+    )
+
+
+def bounded_record_identity_path(
+    root: str | Path,
+    key: VitrineStorageRecordKey,
+) -> Path:
+    if not isinstance(key, VitrineStorageRecordKey):
+        raise VitrineStorageValidationError("key must be VitrineStorageRecordKey.")
+    relative = "/".join(
+        (
+            "state",
+            "records-bounded-v1",
+            key.record_type,
+            record_custody_token(key),
+        )
+    )
+    return safe_vitrine_descendant(root, relative)
+
+
+def bounded_record_revisions_path(
+    root: str | Path,
+    key: VitrineStorageRecordKey,
+) -> Path:
+    return bounded_record_identity_path(root, key) / "revisions"
+
+
+def bounded_record_revision_path(
+    root: str | Path,
+    key: VitrineStorageRecordKey,
+    storage_revision: int,
+) -> Path:
+    if (
+        isinstance(storage_revision, bool)
+        or not isinstance(storage_revision, int)
+        or storage_revision < 1
+    ):
+        raise VitrineStorageValidationError(
+            "storage_revision must be a positive non-Boolean integer."
+        )
+    return bounded_record_revisions_path(root, key) / f"{storage_revision}.json"
 
 
 def record_identity_path(root: str | Path, key: VitrineStorageRecordKey) -> Path:
