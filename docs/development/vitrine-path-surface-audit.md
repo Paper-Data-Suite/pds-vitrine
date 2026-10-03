@@ -281,8 +281,12 @@ Issue #101 explicitly requires meaningful filenames and human-readable section
 presentation. Display labels must pass through the bounded presentation policy
 rather than becoming filesystem components verbatim.
 
-**Disposition:** Slice 5 finalizes reusable #101 naming/directory helpers. Issue
-#101 consumes that contract and owns the actual Portfolio presentation.
+**Slice 5 status:** implemented. The reusable #101 handoff now provides bounded
+readable filenames, bounded ordered section-directory names, deterministic
+semantic disambiguation, exact lowercase extension validation, Unicode-normalized
+portable output, privacy-minimized opaque identity, and fail-closed sibling
+collision validation. Issue #101 consumes these helpers and owns the actual
+Portfolio presentation.
 
 ## Slice ownership summary
 

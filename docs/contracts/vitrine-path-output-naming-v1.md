@@ -214,6 +214,65 @@ It locks in the path surfaces that were already structurally safe:
 Representative deep Windows path geometry is tested without making correctness
 depend on the host actually exceeding a platform path-length threshold.
 
+## Final #101 presentation naming handoff
+
+Slice 5 finalizes the reusable naming contract that issue #101 must consume.
+
+### Student-facing filenames
+
+`build_bounded_presentation_filename(...)` is the authoritative #101 filename
+primitive. It accepts only:
+
+```text
+preferred human-readable label
+semantic domain
+exact semantic identity/disambiguator
+exact lowercase media extension
+```
+
+The output is deterministic, portable ASCII, semantically disambiguated, and
+bounded to 96 bytes. Label truncation never removes the semantic disambiguator.
+Semantic identity contributes only through the digest and is not rendered into
+the readable name.
+
+### Student-facing section directories
+
+`build_bounded_presentation_directory_name(...)` provides the corresponding
+directory primitive.
+
+The v1 directory budget is 80 bytes. An optional ordinal is limited to 1..9999
+and is rendered as a minimum two-digit prefix, for example:
+
+```text
+01-selected-work-<16-hex>
+02-reflection-<16-hex>
+12-writing-growth-<16-hex>
+```
+
+The readable stem is normalized and truncated before the semantic
+disambiguator. Exact section identity remains structured state.
+
+### Collision handling
+
+`require_unique_presentation_components(...)` validates one sibling inventory
+using NFC + case-fold collision keys. A collision fails closed; callers must not
+silently overwrite, append randomness, or select one colliding item.
+
+The digest disambiguator resolves ordinary collisions caused by equal or
+truncated readable labels. The inventory check remains the final guard against
+an actual generated-component collision.
+
+### Privacy boundary
+
+The semantic identity may include student, source, Snapshot, or Artifact
+identifiers, but those values are never copied into the readable component.
+Only the deliberately supplied `preferred_label` is human-readable.
+
+Issue #101 should therefore use work/section labels that are intentionally
+student-facing and keep student identifiers, source locators, and custody IDs in
+structured manifests/index metadata unless a product requirement explicitly
+calls for their display.
+
 ## Relationship to issue #101
 
 Issue #101 may use readable filenames, but must consume this bounded policy
@@ -228,5 +287,3 @@ student-reflection-72ce184d.pdf
 
 while exact labels and identities remain in the Portfolio index, manifest, and
 canonical records.
-
-Slice 5 of issue #111 will finalize the #101-facing naming/directory helpers.

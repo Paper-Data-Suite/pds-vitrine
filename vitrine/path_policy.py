@@ -24,7 +24,9 @@ CUSTODY_TOKEN_MAX_LENGTH: Final[int] = (
 PRESENTATION_DISAMBIGUATOR_HEX_LENGTH: Final[int] = 16
 PRESENTATION_READABLE_STEM_MAX_LENGTH: Final[int] = 64
 PRESENTATION_FILENAME_MAX_LENGTH: Final[int] = 96
+PRESENTATION_DIRECTORY_MAX_LENGTH: Final[int] = 80
 PRESENTATION_EXTENSION_MAX_LENGTH: Final[int] = 10
+PRESENTATION_ORDINAL_MAX: Final[int] = 9999
 
 _DOMAIN_RE: Final[re.Pattern[str]] = re.compile(
     r"[a-z][a-z0-9_.:-]{0,63}\Z"
@@ -162,6 +164,92 @@ def build_bounded_presentation_filename(
     )
 
 
+def build_bounded_presentation_directory_name(
+    preferred_label: str,
+    *,
+    semantic_domain: str,
+    semantic_identity: object,
+    ordinal: int | None = None,
+) -> str:
+    """Build one readable, bounded, deterministic presentation directory name.
+
+    The readable label is presentation-only. Exact identity remains structured
+    canonical state and contributes only through a domain-separated digest.
+    """
+
+    if not isinstance(preferred_label, str):
+        raise VitrinePathPolicyError("preferred_label must be text.")
+    label = preferred_label.strip()
+    if not label:
+        raise VitrinePathPolicyError("preferred_label must be nonempty.")
+
+    if ordinal is not None:
+        if (
+            isinstance(ordinal, bool)
+            or not isinstance(ordinal, int)
+            or ordinal < 1
+            or ordinal > PRESENTATION_ORDINAL_MAX
+        ):
+            raise VitrinePathPolicyError(
+                "ordinal must be an integer from 1 through "
+                f"{PRESENTATION_ORDINAL_MAX}."
+            )
+
+    validated_semantic_domain = _validated_domain(semantic_domain)
+    digest = _canonical_digest(
+        domain="presentation-directory",
+        semantic_identity={
+            "semantic_domain": validated_semantic_domain,
+            "value": semantic_identity,
+            "ordinal": ordinal,
+        },
+    )
+    disambiguator = digest[:PRESENTATION_DISAMBIGUATOR_HEX_LENGTH]
+    ordinal_prefix = "" if ordinal is None else f"{ordinal:02d}-"
+    readable_budget = min(
+        PRESENTATION_READABLE_STEM_MAX_LENGTH,
+        PRESENTATION_DIRECTORY_MAX_LENGTH
+        - len(ordinal_prefix)
+        - len("-")
+        - PRESENTATION_DISAMBIGUATOR_HEX_LENGTH,
+    )
+    if readable_budget < 1:
+        raise AssertionError("presentation directory budget is internally invalid")
+
+    readable = _readable_slug(label)[:readable_budget].rstrip("-") or "item"
+    directory = f"{ordinal_prefix}{readable}-{disambiguator}"
+    return require_generated_component(
+        directory,
+        maximum=PRESENTATION_DIRECTORY_MAX_LENGTH,
+        field_name="presentation_directory",
+    )
+
+
+def require_unique_presentation_components(
+    components: tuple[str, ...],
+) -> tuple[str, ...]:
+    """Fail closed on portable case/Unicode collisions in one sibling set."""
+
+    if not isinstance(components, tuple):
+        raise VitrinePathPolicyError(
+            "presentation component inventory must be a tuple."
+        )
+    seen: set[str] = set()
+    for component in components:
+        if not isinstance(component, str) or not component:
+            raise VitrinePathPolicyError(
+                "presentation component inventory contains invalid text."
+            )
+        normalized = unicodedata.normalize("NFC", component)
+        collision_key = normalized.casefold()
+        if collision_key in seen:
+            raise VitrinePathPolicyError(
+                "presentation component inventory contains a portable collision."
+            )
+        seen.add(collision_key)
+    return components
+
+
 def require_generated_component(
     value: object,
     *,
@@ -198,13 +286,17 @@ __all__ = [
     "CUSTODY_TOKEN_HEX_LENGTH",
     "CUSTODY_TOKEN_MAX_LENGTH",
     "CUSTODY_TOKEN_PREFIX",
+    "PRESENTATION_DIRECTORY_MAX_LENGTH",
     "PRESENTATION_DISAMBIGUATOR_HEX_LENGTH",
     "PRESENTATION_EXTENSION_MAX_LENGTH",
     "PRESENTATION_FILENAME_MAX_LENGTH",
+    "PRESENTATION_ORDINAL_MAX",
     "PRESENTATION_READABLE_STEM_MAX_LENGTH",
     "VITRINE_PATH_POLICY_VERSION",
     "VitrinePathPolicyError",
     "build_bounded_custody_token",
+    "build_bounded_presentation_directory_name",
     "build_bounded_presentation_filename",
     "require_generated_component",
+    "require_unique_presentation_components",
 ]
