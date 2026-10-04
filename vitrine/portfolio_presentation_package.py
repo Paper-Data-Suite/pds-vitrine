@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import stat
 from dataclasses import dataclass
@@ -16,6 +17,7 @@ from vitrine.path_policy import (
     PRESENTATION_DIRECTORY_MAX_LENGTH,
     PRESENTATION_FILENAME_MAX_LENGTH,
     VitrinePathPolicyError,
+    build_bounded_custody_token,
     require_generated_component,
     require_unique_presentation_components,
 )
@@ -54,8 +56,14 @@ STUDENT_PORTFOLIO_FILE_PACKAGE_CONTRACT_VERSION: Final[str] = (
     "vitrine_student_portfolio_file_package_v1"
 )
 PRESENTATION_MANIFEST_FILENAME: Final[str] = "portfolio-presentation-manifest.json"
-_PRESENTATION_FILE_INVENTORY_CONTRACT_VERSION: Final[str] = (
+STUDENT_PORTFOLIO_FILE_INVENTORY_CONTRACT_VERSION: Final[str] = (
     "vitrine_student_portfolio_file_inventory_v1"
+)
+_PRESENTATION_STAGING_CUSTODY_DOMAIN: Final[str] = (
+    "portfolio-presentation-staging"
+)
+_PRESENTATION_PUBLICATION_LOCK_DOMAIN: Final[str] = (
+    "portfolio-presentation-publication-lock"
 )
 _INLINE_TEXT_MEDIA_TYPES: Final[frozenset[str]] = frozenset(
     {"text/markdown", "text/plain"}
@@ -67,6 +75,7 @@ PORTFOLIO_PRESENTATION_PACKAGE_ERROR_CODES: Final[frozenset[str]] = frozenset(
         "portfolio_presentation_package.preparation_invalid",
         "portfolio_presentation_package.verification_failed",
         "portfolio_presentation_package.custody_conflict",
+        "portfolio_presentation_package.staging_conflict",
         "portfolio_presentation_package.source_mismatch",
         "portfolio_presentation_package.render_failed",
         "portfolio_presentation_package.write_failed",
@@ -218,7 +227,7 @@ def _item_manifest_value(
 
 def _package_inventory_value(files: tuple[_CopiedFile, ...]) -> dict[str, object]:
     return {
-        "contract_version": _PRESENTATION_FILE_INVENTORY_CONTRACT_VERSION,
+        "contract_version": STUDENT_PORTFOLIO_FILE_INVENTORY_CONTRACT_VERSION,
         "files": [
             {
                 "relative_path": item.relative_path,
@@ -341,7 +350,7 @@ def _manifest_value(
             ),
         },
         "package_inventory": {
-            "contract_version": _PRESENTATION_FILE_INVENTORY_CONTRACT_VERSION,
+            "contract_version": STUDENT_PORTFOLIO_FILE_INVENTORY_CONTRACT_VERSION,
             "sha256": package_inventory_sha256,
             "file_count": package_file_count,
         },
@@ -414,6 +423,123 @@ def _verify_exact_export(
             stage="verification",
         )
     return verification
+
+
+def _presentation_staging_relative_path(presentation_artifact_id: str) -> str:
+    try:
+        token = build_bounded_custody_token(
+            domain=_PRESENTATION_STAGING_CUSTODY_DOMAIN,
+            semantic_identity={"presentation_artifact_id": presentation_artifact_id},
+        )
+        component = require_generated_component(
+            f"staging-{token}",
+            maximum=PRESENTATION_DIRECTORY_MAX_LENGTH,
+            field_name="presentation_staging_directory",
+        )
+    except VitrinePathPolicyError as error:
+        raise PortfolioPresentationPackageError(
+            "portfolio_presentation_package.preparation_invalid",
+            "Presentation staging custody could not be bounded safely.",
+            stage="custody",
+        ) from error
+    return f"{PORTFOLIO_PRESENTATION_CUSTODY_NAMESPACE}/{component}"
+
+
+def _presentation_publication_lock_relative_path(
+    presentation_artifact_id: str,
+) -> str:
+    try:
+        token = build_bounded_custody_token(
+            domain=_PRESENTATION_PUBLICATION_LOCK_DOMAIN,
+            semantic_identity={"presentation_artifact_id": presentation_artifact_id},
+        )
+        component = require_generated_component(
+            f"publication-{token}.lock",
+            maximum=PRESENTATION_DIRECTORY_MAX_LENGTH,
+            field_name="presentation_publication_lock",
+        )
+    except VitrinePathPolicyError as error:
+        raise PortfolioPresentationPackageError(
+            "portfolio_presentation_package.preparation_invalid",
+            "Presentation publication lock could not be bounded safely.",
+            stage="custody",
+        ) from error
+    return f"{PORTFOLIO_PRESENTATION_CUSTODY_NAMESPACE}/{component}"
+
+
+def clear_student_portfolio_file_package_staging(
+    root: str | Path,
+    *,
+    presentation_artifact_id: str,
+) -> bool:
+    """Clear only exact bounded staging/lock residue when final custody is absent."""
+
+    try:
+        artifact_id = require_identifier(
+            presentation_artifact_id, "presentation_artifact_id"
+        )
+        final_root = safe_vitrine_descendant(
+            root,
+            presentation_artifact_custody_relative_path(artifact_id),
+        )
+        staging_root = safe_vitrine_descendant(
+            root,
+            _presentation_staging_relative_path(artifact_id),
+        )
+        publication_lock = safe_vitrine_descendant(
+            root,
+            _presentation_publication_lock_relative_path(artifact_id),
+        )
+    except (
+        VitrineModelValidationError,
+        VitrineStorageValidationError,
+        PortfolioPresentationPreparationError,
+        PortfolioPresentationPackageError,
+    ) as error:
+        raise PortfolioPresentationPackageError(
+            "portfolio_presentation_package.preparation_invalid",
+            "Presentation staging recovery identity is invalid.",
+            stage="recovery",
+        ) from error
+
+    if os.path.lexists(final_root):
+        return False
+
+    cleaned = False
+    if os.path.lexists(staging_root):
+        if not staging_root.is_dir() or not _is_plain(staging_root):
+            raise PortfolioPresentationPackageError(
+                "portfolio_presentation_package.durability_uncertain",
+                "Presentation staging residue is unsafe and requires inspection.",
+                stage="recovery",
+            )
+        try:
+            shutil.rmtree(staging_root)
+        except OSError as error:
+            raise PortfolioPresentationPackageError(
+                "portfolio_presentation_package.durability_uncertain",
+                "Presentation staging residue could not be cleared safely.",
+                stage="recovery",
+            ) from error
+        cleaned = True
+
+    if os.path.lexists(publication_lock):
+        if not publication_lock.is_file() or not _is_plain(publication_lock):
+            raise PortfolioPresentationPackageError(
+                "portfolio_presentation_package.durability_uncertain",
+                "Presentation publication lock residue is unsafe and requires inspection.",
+                stage="recovery",
+            )
+        try:
+            publication_lock.unlink()
+        except OSError as error:
+            raise PortfolioPresentationPackageError(
+                "portfolio_presentation_package.durability_uncertain",
+                "Presentation publication lock residue could not be cleared safely.",
+                stage="recovery",
+            ) from error
+        cleaned = True
+    return cleaned
 
 
 def _rollback_partial(path: Path) -> None:
@@ -523,7 +649,13 @@ def create_student_portfolio_file_package(
             preparation.technical_export_relative_path,
         )
         relative_root = presentation_artifact_custody_relative_path(artifact_id)
+        staging_relative_root = _presentation_staging_relative_path(artifact_id)
+        publication_lock_relative = _presentation_publication_lock_relative_path(
+            artifact_id
+        )
         final_root = safe_vitrine_descendant(root, relative_root)
+        staging_root = safe_vitrine_descendant(root, staging_relative_root)
+        publication_lock = safe_vitrine_descendant(root, publication_lock_relative)
         namespace_root = safe_vitrine_descendant(
             root, PORTFOLIO_PRESENTATION_CUSTODY_NAMESPACE
         )
@@ -548,25 +680,31 @@ def create_student_portfolio_file_package(
             "Presentation custody namespace could not be created.",
             stage="custody",
         ) from error
-    if final_root.exists():
+    if os.path.lexists(final_root):
         raise PortfolioPresentationPackageError(
             "portfolio_presentation_package.custody_conflict",
             "Presentation custody already exists; create-only output will not overwrite it.",
             stage="custody",
         )
+    if os.path.lexists(staging_root):
+        raise PortfolioPresentationPackageError(
+            "portfolio_presentation_package.staging_conflict",
+            "Presentation staging already exists and requires explicit recovery inspection.",
+            stage="staging",
+        )
     try:
-        final_root.mkdir(parents=False, exist_ok=False)
+        staging_root.mkdir(parents=False, exist_ok=False)
     except FileExistsError as error:
         raise PortfolioPresentationPackageError(
-            "portfolio_presentation_package.custody_conflict",
-            "Presentation custody already exists; create-only output will not overwrite it.",
-            stage="custody",
+            "portfolio_presentation_package.staging_conflict",
+            "Presentation staging already exists and requires explicit recovery inspection.",
+            stage="staging",
         ) from error
     except OSError as error:
         raise PortfolioPresentationPackageError(
             "portfolio_presentation_package.write_failed",
-            "Presentation custody could not be created.",
-            stage="custody",
+            "Presentation staging custody could not be created.",
+            stage="staging",
         ) from error
 
     copied: list[_CopiedFile] = []
@@ -575,7 +713,7 @@ def create_student_portfolio_file_package(
     text_payloads_by_entry_plan: dict[str, bytes] = {}
     try:
         for section in preparation.sections:
-            section_root = final_root / section.presentation_directory_name
+            section_root = staging_root / section.presentation_directory_name
             section_root.mkdir(parents=False, exist_ok=False)
             for item in section.items:
                 if not item.export_file_available:
@@ -640,7 +778,7 @@ def create_student_portfolio_file_package(
                 stage="html",
             ) from error
 
-        html_path = final_root / html_render.filename
+        html_path = staging_root / html_render.filename
         with html_path.open("xb") as stream:
             stream.write(html_render.payload)
         html_file = _CopiedFile(
@@ -665,7 +803,7 @@ def create_student_portfolio_file_package(
             preparation,
             pdf_filename=pdf_render.filename,
         )
-        pdf_path = final_root / pdf_render.filename
+        pdf_path = staging_root / pdf_render.filename
         with pdf_path.open("xb") as stream:
             stream.write(pdf_render.payload)
         pdf_file = _CopiedFile(
@@ -687,14 +825,57 @@ def create_student_portfolio_file_package(
             package_file_count=len(package_files),
         )
         manifest_payload = _canonical_json_bytes(manifest_value)
-        manifest_path = final_root / PRESENTATION_MANIFEST_FILENAME
+        manifest_path = staging_root / PRESENTATION_MANIFEST_FILENAME
         with manifest_path.open("xb") as stream:
             stream.write(manifest_payload)
-    except PortfolioPresentationPackageError:
-        _rollback_partial(final_root)
+
+        publication_lock_created = False
+        try:
+            with publication_lock.open("xb") as stream:
+                publication_lock_created = True
+                stream.write(b"vitrine-presentation-publication-v1\n")
+            if os.path.lexists(final_root):
+                raise PortfolioPresentationPackageError(
+                    "portfolio_presentation_package.custody_conflict",
+                    "Presentation custody appeared before create-only publication.",
+                    stage="publication",
+                )
+            staging_root.rename(final_root)
+        except FileExistsError as error:
+            raise PortfolioPresentationPackageError(
+                "portfolio_presentation_package.staging_conflict",
+                "Presentation publication is already in progress or needs inspection.",
+                stage="publication",
+            ) from error
+        except PortfolioPresentationPackageError:
+            raise
+        except OSError as error:
+            raise PortfolioPresentationPackageError(
+                "portfolio_presentation_package.durability_uncertain",
+                "Complete presentation staging could not be published atomically.",
+                stage="publication",
+            ) from error
+        finally:
+            if publication_lock_created:
+                try:
+                    publication_lock.unlink()
+                except OSError as error:
+                    raise PortfolioPresentationPackageError(
+                        "portfolio_presentation_package.durability_uncertain",
+                        "Presentation publication completed or stopped, but its bounded lock could not be cleared.",
+                        stage="publication",
+                    ) from error
+    except PortfolioPresentationPackageError as error:
+        if (
+            error.code
+            != "portfolio_presentation_package.durability_uncertain"
+            and os.path.lexists(staging_root)
+        ):
+            _rollback_partial(staging_root)
         raise
     except (OSError, ValueError, TypeError) as error:
-        _rollback_partial(final_root)
+        if os.path.lexists(staging_root):
+            _rollback_partial(staging_root)
         raise PortfolioPresentationPackageError(
             "portfolio_presentation_package.write_failed",
             "Student Portfolio file package could not be written safely.",
@@ -724,7 +905,9 @@ def create_student_portfolio_file_package(
 __all__ = [
     "PORTFOLIO_PRESENTATION_PACKAGE_ERROR_CODES",
     "PRESENTATION_MANIFEST_FILENAME",
+    "STUDENT_PORTFOLIO_FILE_INVENTORY_CONTRACT_VERSION",
     "STUDENT_PORTFOLIO_FILE_PACKAGE_CONTRACT_VERSION",
+    "clear_student_portfolio_file_package_staging",
     "PortfolioPresentationPackageError",
     "StudentPortfolioFilePackageResult",
     "create_student_portfolio_file_package",

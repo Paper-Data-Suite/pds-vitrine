@@ -182,10 +182,10 @@ def _records() -> tuple[object, ...]:
         audience_rule_id="student_view",
         audience_class="student",
         purpose="Student portfolio review",
-        allowed_content_classes=("student_work", "assessment_summary"),
+        allowed_content_classes=("student_work", "assessment_summary", "portfolio_index"),
         prohibited_content_classes=(),
         required_review_classes=(),
-        presentation_class="showcase",
+        presentation_class="student_portfolio",
         retention_policy_reference=None,
     )
     profile = PortfolioProfileRevision(
@@ -231,10 +231,10 @@ def _records() -> tuple[object, ...]:
         audience_class="student",
         purpose="Student portfolio review",
         subject_scope="portfolio_subject",
-        allowed_content_classes=("student_work", "assessment_summary"),
+        allowed_content_classes=("student_work", "assessment_summary", "portfolio_index"),
         prohibited_content_classes=(),
         required_review_classes=(),
-        presentation_class="showcase",
+        presentation_class="student_portfolio",
         retention_policy_reference=None,
         created_at=NOW,
         created_by=ACTOR,
@@ -538,7 +538,7 @@ def test_preparation_uses_exact_sealed_history_and_never_imports_producers(
 
     assert prepared.student_display_name == "Jordan Lee"
     assert prepared.portfolio_title == "Senior Showcase"
-    assert prepared.audience_presentation_class == "showcase"
+    assert prepared.audience_presentation_class == "student_portfolio"
     assert prepared.presentation_class == "student_portfolio"
     assert prepared.snapshot_manifest_sha256 == D1.value
     assert prepared.snapshot_logical_inventory_sha256 == D2.value
@@ -597,3 +597,103 @@ def test_preparation_rejects_unknown_media_instead_of_inventing_extension(
 
     assert caught.value.code == "portfolio_presentation.unsupported_media"
     assert caught.value.stage == "media"
+
+def test_preparation_rejects_unsupported_presentation_class(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import vitrine.portfolio_presentation as module
+
+    records = tuple(
+        replace(item, presentation_class="showcase")
+        if isinstance(item, AudienceContext)
+        else replace(
+            item,
+            audience_rules=(
+                replace(item.audience_rules[0], presentation_class="showcase"),
+            ),
+        )
+        if isinstance(item, PortfolioProfileRevision)
+        else item
+        for item in _records()
+    )
+    monkeypatch.setattr(
+        module,
+        "verify_snapshot_export",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            snapshot_export_artifact_id="export_1",
+            snapshot_series_id="series_1",
+            edition_number=1,
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        "load_current_records_with_state",
+        lambda *_args, **_kwargs: (SimpleNamespace(state_revision=44), records),
+    )
+
+    with pytest.raises(module.PortfolioPresentationPreparationError) as caught:
+        module.prepare_student_portfolio_presentation(
+            Path("."),
+            snapshot_series_id="series_1",
+            edition_number=1,
+            snapshot_export_artifact_id="export_1",
+        )
+
+    assert caught.value.code == (
+        "portfolio_presentation.unsupported_presentation_class"
+    )
+    assert caught.value.stage == "audience"
+
+
+def test_preparation_requires_portfolio_index_audience_permission(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import vitrine.portfolio_presentation as module
+
+    records = tuple(
+        replace(
+            item,
+            allowed_content_classes=("student_work", "assessment_summary"),
+        )
+        if isinstance(item, AudienceContext)
+        else replace(
+            item,
+            audience_rules=(
+                replace(
+                    item.audience_rules[0],
+                    allowed_content_classes=(
+                        "student_work",
+                        "assessment_summary",
+                    ),
+                ),
+            ),
+        )
+        if isinstance(item, PortfolioProfileRevision)
+        else item
+        for item in _records()
+    )
+    monkeypatch.setattr(
+        module,
+        "verify_snapshot_export",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            snapshot_export_artifact_id="export_1",
+            snapshot_series_id="series_1",
+            edition_number=1,
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        "load_current_records_with_state",
+        lambda *_args, **_kwargs: (SimpleNamespace(state_revision=44), records),
+    )
+
+    with pytest.raises(module.PortfolioPresentationPreparationError) as caught:
+        module.prepare_student_portfolio_presentation(
+            Path("."),
+            snapshot_series_id="series_1",
+            edition_number=1,
+            snapshot_export_artifact_id="export_1",
+        )
+
+    assert caught.value.code == "portfolio_presentation.portfolio_index_prohibited"
+    assert caught.value.stage == "audience"

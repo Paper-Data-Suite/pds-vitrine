@@ -79,6 +79,8 @@ PORTFOLIO_PRESENTATION_PREPARATION_ERROR_CODES: Final[frozenset[str]] = frozense
         "portfolio_presentation.inventory_inconsistent",
         "portfolio_presentation.naming_failed",
         "portfolio_presentation.unsupported_media",
+        "portfolio_presentation.unsupported_presentation_class",
+        "portfolio_presentation.portfolio_index_prohibited",
     }
 )
 
@@ -452,6 +454,45 @@ def prepare_student_portfolio_presentation(
         or audience.profile_revision != edition.profile_revision
     ):
         raise _context_mismatch("Audience Context does not match the sealed Edition.")
+    matching_audience_rules = tuple(
+        item
+        for item in profile.audience_rules
+        if item.audience_rule_id == audience.audience_rule_id
+    )
+    if len(matching_audience_rules) != 1:
+        raise _context_mismatch(
+            "Audience Context does not resolve to one exact frozen Profile Audience Rule."
+        )
+    audience_rule = matching_audience_rules[0]
+    if (
+        audience.audience_class != audience_rule.audience_class
+        or audience.purpose != audience_rule.purpose
+        or audience.allowed_content_classes != audience_rule.allowed_content_classes
+        or audience.prohibited_content_classes
+        != audience_rule.prohibited_content_classes
+        or audience.required_review_classes != audience_rule.required_review_classes
+        or audience.presentation_class != audience_rule.presentation_class
+        or audience.retention_policy_reference
+        != audience_rule.retention_policy_reference
+    ):
+        raise _context_mismatch(
+            "Audience Context policy differs from its exact frozen Profile Audience Rule."
+        )
+    if audience_rule.presentation_class != STUDENT_PORTFOLIO_PRESENTATION_CLASS:
+        raise PortfolioPresentationPreparationError(
+            "portfolio_presentation.unsupported_presentation_class",
+            "The exact Audience Rule does not permit the student Portfolio renderer.",
+            stage="audience",
+        )
+    if (
+        "portfolio_index" not in audience_rule.allowed_content_classes
+        or "portfolio_index" in audience_rule.prohibited_content_classes
+    ):
+        raise PortfolioPresentationPreparationError(
+            "portfolio_presentation.portfolio_index_prohibited",
+            "The exact Audience Rule does not permit the Portfolio index layer.",
+            stage="audience",
+        )
     if (
         composition.portfolio_subject_id != edition.portfolio_subject_id
         or composition.profile_binding_id != edition.profile_binding_id

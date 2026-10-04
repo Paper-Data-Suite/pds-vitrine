@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #101 Slice 5 adds bounded presentation staging and create-only publication, deterministic renderer-sensitive Presentation identity, canonical `PortfolioPresentationArtifact` publication, producer-independent package/presentation verification, changed-byte/unexpected-file detection, exact idempotent reuse and durable-package recovery, `portfolio_index`/`student_portfolio` audience gating, Current Portfolio workflow integration, and explicit resume-from-existing-Edition/Export semantics without producer reacquisition or current-pointer advancement.
+
 - Issue #101 Slice 4 adds deterministic binder-ready student Portfolio PDF rendering through the isolated `paper` dependency surface, including exact-source PDF/raster/text rendering, literal Markdown treatment, explicit digital-attachment/reference-only/omitted print dispositions, bounded human PDF naming, PDF renderer/configuration manifest bindings, and package inventory integration while preserving exact source files separately. Permitted omissions remain machine-manifest-only rather than being reintroduced into ordinary HTML/PDF.
 
 - Issue #101 Slice 3 adds deterministic static offline `portfolio.html` rendering inside the same create-only presentation package, with exact Profile-order navigation, safely escaped student-facing text, local image previews, exact-text Reflection presentation, honest reference-only treatment, renderer/digest manifest bindings, and no scripts, external assets, network dependencies, or technical identity leakage into the ordinary HTML surface.

@@ -186,6 +186,12 @@ def _configuration_sha256(dependencies: _RendererDependencies) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def student_portfolio_pdf_renderer_configuration_sha256() -> str:
+    """Return the exact installed printable-renderer configuration digest."""
+
+    return _configuration_sha256(_load_renderer_dependencies())
+
+
 def _sha256(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
@@ -1028,4 +1034,5 @@ __all__ = [
     "StudentPortfolioPdfItemDisposition",
     "StudentPortfolioPdfRenderResult",
     "render_student_portfolio_pdf",
+    "student_portfolio_pdf_renderer_configuration_sha256",
 ]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final, TypeVar
 
@@ -34,6 +34,13 @@ from vitrine.models import (
     SnapshotEditionBuildProvenance,
     SnapshotExportPlan,
     SnapshotSeries,
+)
+from vitrine.portfolio_presentation import STUDENT_PORTFOLIO_PRESENTATION_CLASS
+from vitrine.portfolio_presentation_services import (
+    PortfolioPresentationBuildError,
+    PortfolioPresentationBuildResult,
+    build_student_portfolio_presentation,
+    resume_student_portfolio_presentation,
 )
 from vitrine.snapshot_distribution import (
     SnapshotDistributionError,
@@ -85,6 +92,7 @@ CURRENT_PORTFOLIO_EXECUTION_ERROR_CODES: Final[frozenset[str]] = frozenset(
         "current_portfolio_build.edition_verification_failed",
         "current_portfolio_build.export_failed",
         "current_portfolio_build.export_verification_failed",
+        "current_portfolio_build.presentation_failed",
         "current_portfolio_build.resume_invalid",
     }
 )
@@ -192,6 +200,12 @@ class CurrentPortfolioBuildExportResult:
     export_disposition: str
     export_directory_inventory_sha256: str
     export_path: Path
+    presentation_disposition: str = "not_evaluated"
+    presentation_artifact_id: str | None = None
+    presentation_relative_path: str | None = None
+    presentation_html_relative_path: str | None = None
+    presentation_pdf_relative_path: str | None = None
+    presentation_verified: bool = False
     current_pointer_advanced: bool = False
 
     def __post_init__(self) -> None:
@@ -203,6 +217,27 @@ class CurrentPortfolioBuildExportResult:
             raise ValueError("Edition number must be positive")
         if self.export_disposition not in {"created", "existing"}:
             raise ValueError("unsupported Export disposition")
+        if self.presentation_disposition not in {
+            "not_evaluated",
+            "unsupported",
+            "created",
+            "existing",
+            "recovered",
+        }:
+            raise ValueError("unsupported Presentation disposition")
+        presentation_paths = (
+            self.presentation_artifact_id,
+            self.presentation_relative_path,
+            self.presentation_html_relative_path,
+            self.presentation_pdf_relative_path,
+        )
+        if self.presentation_disposition in {"created", "existing", "recovered"}:
+            if any(value is None for value in presentation_paths):
+                raise ValueError("successful Presentation result is incomplete")
+            if not self.presentation_verified:
+                raise ValueError("successful Presentation result must be verified")
+        elif any(value is not None for value in presentation_paths) or self.presentation_verified:
+            raise ValueError("non-presentation result must not expose Presentation custody")
         if self.current_pointer_advanced:
             raise ValueError("Current Portfolio build/export must not advance pointer")
 
@@ -1361,7 +1396,7 @@ def execute_prepared_current_portfolio_build(
     authority_gate: SnapshotBuildAuthorityGate,
     source_providers: SnapshotSourceProviderRegistry | None = None,
 ) -> CurrentPortfolioBuildExportResult:
-    """Execute the exact reviewed Current Portfolio preparation end to end."""
+    """Execute exact Snapshot/Export custody, then the supported Presentation stage."""
 
     providers = source_providers or SnapshotSourceProviderRegistry()
     plan_execution = execute_prepared_current_portfolio_plan(
@@ -1370,13 +1405,119 @@ def execute_prepared_current_portfolio_build(
         actor=actor,
         source_providers=providers,
     )
-    return execute_current_portfolio_build_export(
+    snapshot_result = execute_current_portfolio_build_export(
         workspace_root,
         plan_execution,
         actor=actor,
         authority_gate=authority_gate,
         source_providers=providers,
     )
+    # Tests and third-party callers may replace the lower boundary with a sentinel.
+    # Production always returns CurrentPortfolioBuildExportResult here.
+    if not isinstance(snapshot_result, CurrentPortfolioBuildExportResult):
+        return snapshot_result
+
+    if (
+        preparation.selected_audience_rule.presentation_class
+        != STUDENT_PORTFOLIO_PRESENTATION_CLASS
+    ):
+        return replace(
+            snapshot_result,
+            presentation_disposition="unsupported",
+        )
+
+    try:
+        presentation = build_student_portfolio_presentation(
+            workspace_root,
+            snapshot_series_id=snapshot_result.snapshot_series_id,
+            edition_number=snapshot_result.edition_number,
+            snapshot_export_artifact_id=(
+                snapshot_result.snapshot_export_artifact_id
+            ),
+            generated_by=actor,
+        )
+    except PortfolioPresentationBuildError as error:
+        raise _execution_error(
+            "current_portfolio_build.presentation_failed",
+            "Snapshot Edition and technical Export are durable, but the student Portfolio presentation did not complete.",
+            stage="presentation",
+            underlying_code=error.underlying_code or error.code,
+            underlying_stage=error.underlying_stage or error.stage,
+            completed_stages=(
+                "audience_context",
+                "snapshot_series",
+                "build_request",
+                "build_plan",
+                "build_attempt",
+                "snapshot_edition",
+                "edition_verification",
+                "snapshot_export_artifact",
+                "export_verification",
+            ),
+            audience_context_id=snapshot_result.audience_context_id,
+            snapshot_series_id=snapshot_result.snapshot_series_id,
+            snapshot_build_request_id=snapshot_result.snapshot_build_request_id,
+            snapshot_build_plan_id=snapshot_result.snapshot_build_plan_id,
+            snapshot_build_attempt_id=snapshot_result.snapshot_build_attempt_id,
+            edition_number=snapshot_result.edition_number,
+            snapshot_export_artifact_id=(
+                snapshot_result.snapshot_export_artifact_id
+            ),
+            next_safe_action=(
+                error.next_safe_action or "resume_presentation_existing_edition"
+            ),
+        ) from error
+
+    return replace(
+        snapshot_result,
+        state_revision=presentation.state_revision,
+        presentation_disposition=presentation.disposition,
+        presentation_artifact_id=presentation.presentation_artifact_id,
+        presentation_relative_path=presentation.relative_path,
+        presentation_html_relative_path=presentation.html_relative_path,
+        presentation_pdf_relative_path=presentation.printable_pdf_relative_path,
+        presentation_verified=True,
+    )
+
+
+def resume_current_portfolio_presentation(
+    workspace_root: str | Path,
+    *,
+    snapshot_series_id: str,
+    edition_number: int,
+    snapshot_export_artifact_id: str,
+    actor: ActorAttribution,
+) -> PortfolioPresentationBuildResult:
+    """Resume only presentation from one exact durable Edition and verified Export."""
+
+    try:
+        return resume_student_portfolio_presentation(
+            workspace_root,
+            snapshot_series_id=snapshot_series_id,
+            edition_number=edition_number,
+            snapshot_export_artifact_id=snapshot_export_artifact_id,
+            generated_by=actor,
+        )
+    except PortfolioPresentationBuildError as error:
+        raise _execution_error(
+            "current_portfolio_build.presentation_failed",
+            "Student Portfolio presentation resume did not complete.",
+            stage="presentation_resume",
+            underlying_code=error.underlying_code or error.code,
+            underlying_stage=error.underlying_stage or error.stage,
+            completed_stages=(
+                "snapshot_edition",
+                "edition_verification",
+                "snapshot_export_artifact",
+                "export_verification",
+            ),
+            snapshot_series_id=snapshot_series_id,
+            edition_number=edition_number,
+            snapshot_export_artifact_id=snapshot_export_artifact_id,
+            next_safe_action=(
+                error.next_safe_action or "resume_presentation_existing_edition"
+            ),
+        ) from error
 
 
 def resume_current_portfolio_export(
@@ -1467,4 +1608,5 @@ __all__ = [
     "execute_prepared_current_portfolio_build",
     "execute_prepared_current_portfolio_plan",
     "resume_current_portfolio_export",
+    "resume_current_portfolio_presentation",
 ]

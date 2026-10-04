@@ -288,9 +288,55 @@ Slice 4 still does not publish the canonical `PortfolioPresentationArtifact`; Sl
 owns staging/create-only publication, recovery/idempotency, presentation verification,
 and Current Portfolio workflow integration.
 
+## Slice 5 — canonical publication, verification, workflow, and recovery
+
+Slice 5 makes the complete student presentation a durable derived artifact without moving
+presentation semantics into Snapshot sealing. Package generation writes first to one bounded
+artifact-specific staging directory under the presentation namespace. Only after exact source
+copying, deterministic HTML/PDF rendering, package inventory construction, and manifest write
+all complete does Vitrine rename that complete staging directory into final opaque create-only
+presentation custody. Ordinary render/write failures remove staging; an uncertain publication
+leaves bounded staging intact for explicit inspection rather than exposing a partial final package.
+
+The exact presentation identity is deterministic over the frozen presentation-preparation
+fingerprint and the composite renderer configuration. The composite configuration binds the
+presentation contract, file-package contract, static HTML renderer configuration, and exact PDF
+renderer configuration (including its dependency-version binding). An exact repeated request
+therefore resolves to the same Presentation identity. A materially changed renderer configuration
+resolves to a distinct identity and may point back to the latest exact-edition student Portfolio
+presentation as its predecessor; no successful predecessor is overwritten.
+
+Before any student Portfolio is generated, the frozen Audience Context must declare
+`presentation_class = student_portfolio` and must permit `portfolio_index`. Other presentation
+classes remain explicit unsupported dispositions at the Current Portfolio workflow boundary; they
+do not silently inherit student Portfolio semantics.
+
+After final package publication, Vitrine independently verifies the exact Snapshot Edition and
+technical Export, strict manifest bindings, bounded custody, section/item inventory, source-file
+digests/sizes, HTML/PDF renderer bindings and bytes, package inventory digest, section-directory
+inventory, and absence of unexpected files. Verification never consults Quillan, ScoreForm,
+Concord, Portia, Meridian, or any other producer. One changed presentation byte or unexpected file
+fails verification while leaving the sealed Snapshot Edition itself unaffected.
+
+Only a verified complete package is eligible for canonical `PortfolioPresentationArtifact`
+publication. The canonical record binds exact Edition/Export/Profile/Audience identity, opaque
+presentation custody, manifest/HTML/PDF/package digests, renderer identity/configuration, actor,
+and optional predecessor. A retry first verifies and reuses an exact existing canonical artifact.
+If a complete final package exists because canonical publication previously failed, Vitrine
+verifies and adopts that exact package instead of rerendering it. Canonical-state conflict after
+package publication reports `resume_presentation_existing_edition`; it does not rebuild the
+Snapshot or reacquire producer bytes.
+
+The ordinary Current Portfolio executor now continues after verified technical Export only for an
+exact `student_portfolio` audience: build/reuse Presentation, verify it, then report student-facing
+digital/printable availability in teacher language. Presentation failure is partial success: the
+Edition and technical Export remain durable and the error carries an exact presentation-resume
+action. Unsupported presentation classes still return successful Snapshot/Export custody with an
+explicit unsupported Presentation disposition. Presentation success never advances the Snapshot
+current pointer and never implies disclosure or delivery.
+
 ## Next slice
 
-Slice 5 should integrate presentation after exact Edition/technical Export verification,
-add bounded staging plus create-only publication, persist the completed Presentation
-Artifact, independently verify it, and provide exact resume/idempotency semantics without
-reacquiring producer bytes.
+Slice 6 should add installed-wheel acceptance, package/repository qualification, dedicated
+validation/smoke wiring, Core 0.6.4 qualification, and the final synthetic Improvement Portfolio
+end-to-end acceptance for the complete issue #101 boundary.
