@@ -27,6 +27,12 @@ from vitrine.portfolio_presentation import (
     StudentPortfolioPresentationPreparation,
     presentation_artifact_custody_relative_path,
 )
+from vitrine.portfolio_presentation_html import (
+    STUDENT_PORTFOLIO_HTML_FILENAME,
+    PortfolioPresentationHtmlError,
+    StudentPortfolioHtmlRenderResult,
+    render_student_portfolio_html,
+)
 from vitrine.snapshot_custody import (
     SnapshotCustodyError,
     snapshot_export_path_from_relative,
@@ -46,6 +52,9 @@ PRESENTATION_MANIFEST_FILENAME: Final[str] = "portfolio-presentation-manifest.js
 _PRESENTATION_FILE_INVENTORY_CONTRACT_VERSION: Final[str] = (
     "vitrine_student_portfolio_file_inventory_v1"
 )
+_INLINE_TEXT_MEDIA_TYPES: Final[frozenset[str]] = frozenset(
+    {"text/markdown", "text/plain"}
+)
 
 PORTFOLIO_PRESENTATION_PACKAGE_ERROR_CODES: Final[frozenset[str]] = frozenset(
     {
@@ -54,6 +63,7 @@ PORTFOLIO_PRESENTATION_PACKAGE_ERROR_CODES: Final[frozenset[str]] = frozenset(
         "portfolio_presentation_package.verification_failed",
         "portfolio_presentation_package.custody_conflict",
         "portfolio_presentation_package.source_mismatch",
+        "portfolio_presentation_package.render_failed",
         "portfolio_presentation_package.write_failed",
         "portfolio_presentation_package.durability_uncertain",
     }
@@ -61,7 +71,7 @@ PORTFOLIO_PRESENTATION_PACKAGE_ERROR_CODES: Final[frozenset[str]] = frozenset(
 
 
 class PortfolioPresentationPackageError(RuntimeError):
-    """Expected Slice 2 package failure with stable machine-readable metadata."""
+    """Expected student Portfolio package failure with stable machine metadata."""
 
     def __init__(self, code: str, message: str, *, stage: str) -> None:
         if code not in PORTFOLIO_PRESENTATION_PACKAGE_ERROR_CODES:
@@ -77,6 +87,8 @@ class StudentPortfolioFilePackageResult:
     relative_path: str
     manifest_relative_path: str
     manifest_sha256: str
+    html_relative_path: str
+    html_sha256: str
     package_inventory_sha256: str
     copied_file_paths: tuple[str, ...]
     reference_only_count: int
@@ -211,12 +223,28 @@ def _package_inventory_value(files: tuple[_CopiedFile, ...]) -> dict[str, object
     }
 
 
+def _html_manifest_value(
+    render: StudentPortfolioHtmlRenderResult,
+) -> dict[str, object]:
+    return {
+        "relative_path": render.filename,
+        "byte_size": render.byte_size,
+        "sha256": render.sha256,
+        "renderer_id": render.renderer_id,
+        "renderer_version": render.renderer_version,
+        "renderer_contract_version": render.renderer_contract_version,
+        "renderer_configuration_sha256": render.renderer_configuration_sha256,
+    }
+
+
 def _manifest_value(
     preparation: StudentPortfolioPresentationPreparation,
     *,
     presentation_artifact_id: str,
     copied_by_entry_plan: dict[str, _CopiedFile],
+    html_render: StudentPortfolioHtmlRenderResult,
     package_inventory_sha256: str,
+    package_file_count: int,
 ) -> dict[str, object]:
     sections: list[dict[str, object]] = []
     for section in preparation.sections:
@@ -276,9 +304,7 @@ def _manifest_value(
             ),
         },
         "technical_export": {
-            "snapshot_export_artifact_id": (
-                preparation.snapshot_export_artifact_id
-            ),
+            "snapshot_export_artifact_id": preparation.snapshot_export_artifact_id,
             "directory_inventory_sha256": (
                 preparation.technical_export_inventory_sha256
             ),
@@ -286,11 +312,11 @@ def _manifest_value(
         "package_inventory": {
             "contract_version": _PRESENTATION_FILE_INVENTORY_CONTRACT_VERSION,
             "sha256": package_inventory_sha256,
-            "file_count": len(copied_by_entry_plan),
+            "file_count": package_file_count,
         },
         "sections": sections,
         "generated_outputs": {
-            "html": None,
+            "html": _html_manifest_value(html_render),
             "printable_pdf": None,
         },
         "preparation_fingerprint": preparation.preparation_fingerprint,
@@ -370,61 +396,23 @@ def _rollback_partial(path: Path) -> None:
         ) from error
 
 
-def create_student_portfolio_file_package(
-    root: str | Path,
+def _validate_root_components(
     preparation: StudentPortfolioPresentationPreparation,
-    *,
-    presentation_artifact_id: str,
-) -> StudentPortfolioFilePackageResult:
-    """Create one bounded, create-only exact-byte student file package.
-
-    Slice 2 intentionally does not persist PortfolioPresentationArtifact because
-    that canonical record requires the later HTML and printable-PDF outputs.
-    """
-
-    _validate_preparation(preparation)
-    try:
-        artifact_id = require_identifier(
-            presentation_artifact_id, "presentation_artifact_id"
-        )
-    except VitrineModelValidationError as error:
-        raise PortfolioPresentationPackageError(
-            "portfolio_presentation_package.invalid_request",
-            "Portfolio presentation artifact identity is invalid.",
-            stage="request",
-        ) from error
-
-    verification = _verify_exact_export(root, preparation)
-    verified_paths = set(verification.verified_file_paths)
-    try:
-        export_root = snapshot_export_path_from_relative(
-            root,
-            preparation.technical_export_relative_path,
-        )
-        relative_root = presentation_artifact_custody_relative_path(artifact_id)
-        final_root = safe_vitrine_descendant(root, relative_root)
-        namespace_root = safe_vitrine_descendant(
-            root, PORTFOLIO_PRESENTATION_CUSTODY_NAMESPACE
-        )
-    except (
-        SnapshotCustodyError,
-        PortfolioPresentationPreparationError,
-        VitrineStorageValidationError,
-    ) as error:
-        raise PortfolioPresentationPackageError(
-            "portfolio_presentation_package.preparation_invalid",
-            "Presentation custody or exact technical Export custody is invalid.",
-            stage="custody",
-        ) from error
-
+) -> None:
     try:
         require_generated_component(
             PRESENTATION_MANIFEST_FILENAME,
             maximum=PRESENTATION_FILENAME_MAX_LENGTH,
             field_name="presentation_manifest_filename",
         )
+        require_generated_component(
+            STUDENT_PORTFOLIO_HTML_FILENAME,
+            maximum=PRESENTATION_FILENAME_MAX_LENGTH,
+            field_name="student_portfolio_html_filename",
+        )
         root_components = (
             PRESENTATION_MANIFEST_FILENAME,
+            STUDENT_PORTFOLIO_HTML_FILENAME,
             *(section.presentation_directory_name for section in preparation.sections),
         )
         require_unique_presentation_components(tuple(root_components))
@@ -462,6 +450,57 @@ def create_student_portfolio_file_package(
             stage="custody",
         ) from error
 
+
+def create_student_portfolio_file_package(
+    root: str | Path,
+    preparation: StudentPortfolioPresentationPreparation,
+    *,
+    presentation_artifact_id: str,
+) -> StudentPortfolioFilePackageResult:
+    """Create one bounded, create-only digital student Portfolio package.
+
+    Slice 3 includes deterministic offline HTML but still does not persist
+    PortfolioPresentationArtifact because the canonical record also requires the
+    later printable-PDF output.
+    """
+
+    _validate_preparation(preparation)
+    try:
+        artifact_id = require_identifier(
+            presentation_artifact_id, "presentation_artifact_id"
+        )
+    except VitrineModelValidationError as error:
+        raise PortfolioPresentationPackageError(
+            "portfolio_presentation_package.invalid_request",
+            "Portfolio presentation artifact identity is invalid.",
+            stage="request",
+        ) from error
+
+    verification = _verify_exact_export(root, preparation)
+    verified_paths = set(verification.verified_file_paths)
+    try:
+        export_root = snapshot_export_path_from_relative(
+            root,
+            preparation.technical_export_relative_path,
+        )
+        relative_root = presentation_artifact_custody_relative_path(artifact_id)
+        final_root = safe_vitrine_descendant(root, relative_root)
+        namespace_root = safe_vitrine_descendant(
+            root, PORTFOLIO_PRESENTATION_CUSTODY_NAMESPACE
+        )
+    except (
+        SnapshotCustodyError,
+        PortfolioPresentationPreparationError,
+        VitrineStorageValidationError,
+    ) as error:
+        raise PortfolioPresentationPackageError(
+            "portfolio_presentation_package.preparation_invalid",
+            "Presentation custody or exact technical Export custody is invalid.",
+            stage="custody",
+        ) from error
+
+    _validate_root_components(preparation)
+
     try:
         namespace_root.mkdir(parents=True, exist_ok=True)
     except OSError as error:
@@ -493,6 +532,7 @@ def create_student_portfolio_file_package(
 
     copied: list[_CopiedFile] = []
     copied_by_entry_plan: dict[str, _CopiedFile] = {}
+    text_payloads_by_entry_plan: dict[str, bytes] = {}
     try:
         for section in preparation.sections:
             section_root = final_root / section.presentation_directory_name
@@ -541,14 +581,43 @@ def create_student_portfolio_file_package(
                 )
                 copied.append(copied_file)
                 copied_by_entry_plan[item.entry_plan_id] = copied_file
+                if (
+                    item.media_type in _INLINE_TEXT_MEDIA_TYPES
+                    and "reflection" in {item.content_class, item.semantic_role}
+                ):
+                    text_payloads_by_entry_plan[item.entry_plan_id] = payload
 
-        inventory_value = _package_inventory_value(tuple(copied))
+        try:
+            html_render = render_student_portfolio_html(
+                preparation,
+                text_payloads_by_entry_plan=text_payloads_by_entry_plan,
+            )
+        except PortfolioPresentationHtmlError as error:
+            raise PortfolioPresentationPackageError(
+                "portfolio_presentation_package.render_failed",
+                "Student Portfolio HTML could not be rendered from the exact preparation.",
+                stage="html",
+            ) from error
+
+        html_path = final_root / html_render.filename
+        with html_path.open("xb") as stream:
+            stream.write(html_render.payload)
+        html_file = _CopiedFile(
+            relative_path=html_render.filename,
+            byte_size=html_render.byte_size,
+            sha256=html_render.sha256,
+        )
+
+        package_files = (*copied, html_file)
+        inventory_value = _package_inventory_value(tuple(package_files))
         inventory_digest = _sha256(_canonical_json_bytes(inventory_value))
         manifest_value = _manifest_value(
             preparation,
             presentation_artifact_id=artifact_id,
             copied_by_entry_plan=copied_by_entry_plan,
+            html_render=html_render,
             package_inventory_sha256=inventory_digest,
+            package_file_count=len(package_files),
         )
         manifest_payload = _canonical_json_bytes(manifest_value)
         manifest_path = final_root / PRESENTATION_MANIFEST_FILENAME
@@ -570,9 +639,12 @@ def create_student_portfolio_file_package(
         relative_path=relative_root,
         manifest_relative_path=f"{relative_root}/{PRESENTATION_MANIFEST_FILENAME}",
         manifest_sha256=_sha256(manifest_payload),
+        html_relative_path=f"{relative_root}/{html_render.filename}",
+        html_sha256=html_render.sha256,
         package_inventory_sha256=inventory_digest,
         copied_file_paths=tuple(
-            item.relative_path for item in sorted(copied, key=lambda item: item.relative_path)
+            item.relative_path
+            for item in sorted(copied, key=lambda item: item.relative_path)
         ),
         reference_only_count=preparation.reference_only_count,
         omitted_count=preparation.omitted_count,

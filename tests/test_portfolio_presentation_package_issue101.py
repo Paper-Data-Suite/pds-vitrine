@@ -14,6 +14,10 @@ from vitrine.portfolio_presentation import (
     StudentPortfolioPresentationSection,
     presentation_artifact_custody_relative_path,
 )
+from vitrine.portfolio_presentation_html import (
+    STUDENT_PORTFOLIO_HTML_FILENAME,
+    PortfolioPresentationHtmlError,
+)
 from vitrine.portfolio_presentation_package import (
     PRESENTATION_MANIFEST_FILENAME,
     PortfolioPresentationPackageError,
@@ -42,8 +46,12 @@ def _item(
         section_id="selected_work",
         ordinal={"entry_file": 1, "entry_ref": 2, "entry_omit": 3}[entry_plan_id],
         semantic_role="selected_work",
-        content_class=("student_work" if disposition == "included" else "assessment_summary"),
-        materialization_kind=("copied_source" if disposition == "included" else "reference_only"),
+        content_class=(
+            "student_work" if disposition == "included" else "assessment_summary"
+        ),
+        materialization_kind=(
+            "copied_source" if disposition == "included" else "reference_only"
+        ),
         disposition=disposition,
         display_title={
             "entry_file": "Revised Argument",
@@ -198,13 +206,30 @@ def test_file_package_copies_exact_bytes_and_writes_honest_manifest(
         "revised-argument-0123456789abcdef.pdf",
     )
 
+    html_payload = (package_root / STUDENT_PORTFOLIO_HTML_FILENAME).read_bytes()
+    assert hashlib.sha256(html_payload).hexdigest() == result.html_sha256
+    assert result.html_relative_path.endswith("/portfolio.html")
+    html_text = html_payload.decode("utf-8")
+    assert "Improvement Portfolio" in html_text
+    assert "Jordan Lee" in html_text
+    assert "Revised Argument" in html_text
+    assert "Benchmark Snapshot" in html_text
+    assert "entry_file" not in html_text
+
     manifest_payload = (package_root / PRESENTATION_MANIFEST_FILENAME).read_bytes()
     assert hashlib.sha256(manifest_payload).hexdigest() == result.manifest_sha256
     manifest = json.loads(manifest_payload)
     assert manifest["snapshot"]["manifest_sha256"] == MANIFEST_SHA
     assert manifest["snapshot"]["logical_inventory_sha256"] == LOGICAL_SHA
     assert manifest["technical_export"]["directory_inventory_sha256"] == EXPORT_SHA
-    assert manifest["generated_outputs"] == {"html": None, "printable_pdf": None}
+    assert manifest["generated_outputs"]["printable_pdf"] is None
+    html_output = manifest["generated_outputs"]["html"]
+    assert html_output["relative_path"] == "portfolio.html"
+    assert html_output["sha256"] == result.html_sha256
+    assert html_output["renderer_contract_version"] == (
+        "vitrine_student_portfolio_html_v1"
+    )
+    assert manifest["package_inventory"]["file_count"] == 2
 
     file_item, reference_item, omitted_item = manifest["sections"][0]["items"]
     assert file_item["presentation_relative_path"].endswith(".pdf")
@@ -234,6 +259,7 @@ def test_file_package_is_create_only_and_never_overwrites_successful_output(
     )
     package_root = tmp_path / "vitrine" / Path(*first.relative_path.split("/"))
     manifest_before = (package_root / PRESENTATION_MANIFEST_FILENAME).read_bytes()
+    html_before = (package_root / STUDENT_PORTFOLIO_HTML_FILENAME).read_bytes()
 
     with pytest.raises(PortfolioPresentationPackageError) as caught:
         create_student_portfolio_file_package(
@@ -244,6 +270,7 @@ def test_file_package_is_create_only_and_never_overwrites_successful_output(
 
     assert caught.value.code == "portfolio_presentation_package.custody_conflict"
     assert (package_root / PRESENTATION_MANIFEST_FILENAME).read_bytes() == manifest_before
+    assert (package_root / STUDENT_PORTFOLIO_HTML_FILENAME).read_bytes() == html_before
 
 
 def test_copy_mismatch_fails_closed_and_rolls_back_partial_custody(
@@ -266,7 +293,7 @@ def test_copy_mismatch_fails_closed_and_rolls_back_partial_custody(
     assert not final_root.exists()
 
 
-def test_manifest_bytes_are_deterministic_for_same_exact_inputs(
+def test_manifest_and_html_bytes_are_deterministic_for_same_exact_inputs(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -279,6 +306,7 @@ def test_manifest_bytes_are_deterministic_for_same_exact_inputs(
     )
     first_package = first_root / "vitrine" / Path(*first.relative_path.split("/"))
     first_manifest = (first_package / PRESENTATION_MANIFEST_FILENAME).read_bytes()
+    first_html = (first_package / STUDENT_PORTFOLIO_HTML_FILENAME).read_bytes()
 
     second_root = tmp_path / "second"
     _install_test_paths(monkeypatch, second_root)
@@ -289,7 +317,41 @@ def test_manifest_bytes_are_deterministic_for_same_exact_inputs(
     )
     second_package = second_root / "vitrine" / Path(*second.relative_path.split("/"))
     second_manifest = (second_package / PRESENTATION_MANIFEST_FILENAME).read_bytes()
+    second_html = (second_package / STUDENT_PORTFOLIO_HTML_FILENAME).read_bytes()
 
     assert first_manifest == second_manifest
+    assert first_html == second_html
     assert first.manifest_sha256 == second.manifest_sha256
+    assert first.html_sha256 == second.html_sha256
     assert first.package_inventory_sha256 == second.package_inventory_sha256
+
+
+def test_html_render_failure_rolls_back_partial_custody(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import vitrine.portfolio_presentation_package as module
+    _install_test_paths(monkeypatch, tmp_path)
+
+    def fail_html(*_args, **_kwargs):
+        raise PortfolioPresentationHtmlError(
+            "portfolio_presentation_html.invalid_preparation",
+            "synthetic HTML failure",
+            stage="test",
+        )
+
+    monkeypatch.setattr(module, "render_student_portfolio_html", fail_html)
+
+    with pytest.raises(PortfolioPresentationPackageError) as caught:
+        create_student_portfolio_file_package(
+            tmp_path,
+            _preparation(),
+            presentation_artifact_id="presentation_html_failure",
+        )
+
+    assert caught.value.code == "portfolio_presentation_package.render_failed"
+    relative = presentation_artifact_custody_relative_path(
+        "presentation_html_failure"
+    )
+    final_root = tmp_path / "vitrine" / Path(*relative.split("/"))
+    assert not final_root.exists()

@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #101 Slice 3 adds deterministic static offline `portfolio.html` rendering inside the same create-only presentation package, with exact Profile-order navigation, safely escaped student-facing text, local image previews, exact-text Reflection presentation, honest reference-only/omitted treatment, renderer/digest manifest bindings, and no scripts, external assets, network dependencies, or technical identity leakage into the ordinary HTML surface.
+
 - Issue #101 Slice 2 adds create-only human-readable student file packaging from the exact verified technical Export, exact-byte copying under #111 bounded section/file names, deterministic machine presentation manifest, honest reference-only/omitted entries, sealed Snapshot digest bindings, controlled media extensions, and rollback on ordinary partial-write failure without producer access or premature canonical Presentation Artifact publication.
 
 - Issue #101 Slice 1 adds the immutable student Portfolio Presentation Artifact contract and producer-independent exact read-only preparation over one verified sealed Snapshot Edition/technical Export, preserving reference-only and omitted evidence while consuming the shared #111 bounded custody, section-directory, filename, and collision policy without rendering HTML/PDF yet.

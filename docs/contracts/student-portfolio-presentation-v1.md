@@ -202,8 +202,44 @@ and printable-PDF paths/digests, so publishing it before Slices 3–4 would cano
 partial presentation. Slice 2 custody is create-only and ordinary failures roll back
 partial output; crash/recovery and idempotent canonical publication remain Slice 5.
 
+## Slice 3 — static offline HTML Portfolio
+
+Slice 3 renders `portfolio.html` from the same exact frozen preparation used by the
+student file package. HTML generation is deterministic and producer-independent. It
+uses no current clock, network lookup, live producer state, external stylesheet,
+remote font, CDN asset, or JavaScript.
+
+The document presents the Portfolio as a student product rather than a technical
+index: a cover treatment, student display name when present, Profile label and
+purpose, ordered section navigation, exact Profile section labels/purposes, meaningful
+work cards, readable captions/source credit, and clear local file actions. Optional
+empty sections may be omitted from human navigation; required empty sections remain
+visible so required Portfolio structure never disappears silently.
+
+All dynamic human text is HTML-escaped. Package links are formed only from #111-
+validated bounded section/file components. Ordinary HTML contains no canonical IDs,
+SHA-256 values, technical Export paths, renderer names, or custody terminology.
+
+For browser-safe PNG/JPEG work, HTML may show the exact copied file as an inline local
+preview while preserving the file itself unchanged. For exact frozen text/Markdown
+Reflection, Vitrine decodes the already-verified copied bytes as UTF-8 and presents the
+escaped exact text inline; Markdown is not interpreted as active HTML. A byte-bearing
+item always retains an ordinary local link to its exact student-facing source file.
+Reference-only and permitted-omission items remain honest status cards with no fake
+attachment.
+
+`portfolio.html` is created inside the same all-or-nothing create-only package
+operation as the human-readable source copies. The machine manifest now records the
+HTML path, byte size, SHA-256, renderer identity/version/contract, and deterministic
+renderer-configuration digest. The package inventory digest includes HTML plus the
+exact copied source files and still excludes the manifest itself to avoid a self-
+digest cycle.
+
+Slice 3 still does not persist `PortfolioPresentationArtifact`, because that canonical
+record also requires the printable-PDF output owned by Slice 4.
+
 ## Next slice
 
-Slice 3 should render the static offline HTML Portfolio from this same exact prepared
-inventory and package contract, with safe escaping, section navigation, meaningful
-work presentation, honest reference-only treatment, and no external dependencies.
+Slice 4 should add the explicit deterministic binder-ready PDF renderer and supported
+media matrix, preserving exact digital originals separately from derived printable
+pages.
