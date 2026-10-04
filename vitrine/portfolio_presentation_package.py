@@ -33,6 +33,11 @@ from vitrine.portfolio_presentation_html import (
     StudentPortfolioHtmlRenderResult,
     render_student_portfolio_html,
 )
+from vitrine.portfolio_presentation_pdf import (
+    PortfolioPresentationPdfError,
+    StudentPortfolioPdfRenderResult,
+    render_student_portfolio_pdf,
+)
 from vitrine.snapshot_custody import (
     SnapshotCustodyError,
     snapshot_export_path_from_relative,
@@ -89,6 +94,8 @@ class StudentPortfolioFilePackageResult:
     manifest_sha256: str
     html_relative_path: str
     html_sha256: str
+    printable_pdf_relative_path: str
+    printable_pdf_sha256: str
     package_inventory_sha256: str
     copied_file_paths: tuple[str, ...]
     reference_only_count: int
@@ -237,12 +244,36 @@ def _html_manifest_value(
     }
 
 
+def _pdf_manifest_value(
+    render: StudentPortfolioPdfRenderResult,
+) -> dict[str, object]:
+    return {
+        "relative_path": render.filename,
+        "byte_size": render.byte_size,
+        "sha256": render.sha256,
+        "page_count": render.page_count,
+        "renderer_id": render.renderer_id,
+        "renderer_version": render.renderer_version,
+        "renderer_contract_version": render.renderer_contract_version,
+        "renderer_configuration_sha256": render.renderer_configuration_sha256,
+        "items": [
+            {
+                "entry_plan_id": item.entry_plan_id,
+                "print_disposition": item.print_disposition,
+                "page_count": item.page_count,
+            }
+            for item in render.item_dispositions
+        ],
+    }
+
+
 def _manifest_value(
     preparation: StudentPortfolioPresentationPreparation,
     *,
     presentation_artifact_id: str,
     copied_by_entry_plan: dict[str, _CopiedFile],
     html_render: StudentPortfolioHtmlRenderResult,
+    pdf_render: StudentPortfolioPdfRenderResult,
     package_inventory_sha256: str,
     package_file_count: int,
 ) -> dict[str, object]:
@@ -317,7 +348,7 @@ def _manifest_value(
         "sections": sections,
         "generated_outputs": {
             "html": _html_manifest_value(html_render),
-            "printable_pdf": None,
+            "printable_pdf": _pdf_manifest_value(pdf_render),
         },
         "preparation_fingerprint": preparation.preparation_fingerprint,
     }
@@ -398,6 +429,8 @@ def _rollback_partial(path: Path) -> None:
 
 def _validate_root_components(
     preparation: StudentPortfolioPresentationPreparation,
+    *,
+    pdf_filename: str | None = None,
 ) -> None:
     try:
         require_generated_component(
@@ -410,9 +443,16 @@ def _validate_root_components(
             maximum=PRESENTATION_FILENAME_MAX_LENGTH,
             field_name="student_portfolio_html_filename",
         )
+        if pdf_filename is not None:
+            require_generated_component(
+                pdf_filename,
+                maximum=PRESENTATION_FILENAME_MAX_LENGTH,
+                field_name="student_portfolio_pdf_filename",
+            )
         root_components = (
             PRESENTATION_MANIFEST_FILENAME,
             STUDENT_PORTFOLIO_HTML_FILENAME,
+            *(() if pdf_filename is None else (pdf_filename,)),
             *(section.presentation_directory_name for section in preparation.sections),
         )
         require_unique_presentation_components(tuple(root_components))
@@ -457,11 +497,10 @@ def create_student_portfolio_file_package(
     *,
     presentation_artifact_id: str,
 ) -> StudentPortfolioFilePackageResult:
-    """Create one bounded, create-only digital student Portfolio package.
+    """Create one bounded, create-only digital and printable Portfolio package.
 
-    Slice 3 includes deterministic offline HTML but still does not persist
-    PortfolioPresentationArtifact because the canonical record also requires the
-    later printable-PDF output.
+    Slice 4 adds the deterministic binder-ready PDF inside the same create-only
+    package. Canonical PortfolioPresentationArtifact publication remains Slice 5.
     """
 
     _validate_preparation(preparation)
@@ -532,6 +571,7 @@ def create_student_portfolio_file_package(
 
     copied: list[_CopiedFile] = []
     copied_by_entry_plan: dict[str, _CopiedFile] = {}
+    source_payloads_by_entry_plan: dict[str, bytes] = {}
     text_payloads_by_entry_plan: dict[str, bytes] = {}
     try:
         for section in preparation.sections:
@@ -581,6 +621,7 @@ def create_student_portfolio_file_package(
                 )
                 copied.append(copied_file)
                 copied_by_entry_plan[item.entry_plan_id] = copied_file
+                source_payloads_by_entry_plan[item.entry_plan_id] = payload
                 if (
                     item.media_type in _INLINE_TEXT_MEDIA_TYPES
                     and "reflection" in {item.content_class, item.semantic_role}
@@ -608,7 +649,32 @@ def create_student_portfolio_file_package(
             sha256=html_render.sha256,
         )
 
-        package_files = (*copied, html_file)
+        try:
+            pdf_render = render_student_portfolio_pdf(
+                preparation,
+                presentation_artifact_id=artifact_id,
+                source_payloads_by_entry_plan=source_payloads_by_entry_plan,
+            )
+        except PortfolioPresentationPdfError as error:
+            raise PortfolioPresentationPackageError(
+                "portfolio_presentation_package.render_failed",
+                "Printable student Portfolio could not be rendered from exact sources.",
+                stage="pdf",
+            ) from error
+        _validate_root_components(
+            preparation,
+            pdf_filename=pdf_render.filename,
+        )
+        pdf_path = final_root / pdf_render.filename
+        with pdf_path.open("xb") as stream:
+            stream.write(pdf_render.payload)
+        pdf_file = _CopiedFile(
+            relative_path=pdf_render.filename,
+            byte_size=pdf_render.byte_size,
+            sha256=pdf_render.sha256,
+        )
+
+        package_files = (*copied, html_file, pdf_file)
         inventory_value = _package_inventory_value(tuple(package_files))
         inventory_digest = _sha256(_canonical_json_bytes(inventory_value))
         manifest_value = _manifest_value(
@@ -616,6 +682,7 @@ def create_student_portfolio_file_package(
             presentation_artifact_id=artifact_id,
             copied_by_entry_plan=copied_by_entry_plan,
             html_render=html_render,
+            pdf_render=pdf_render,
             package_inventory_sha256=inventory_digest,
             package_file_count=len(package_files),
         )
@@ -641,6 +708,8 @@ def create_student_portfolio_file_package(
         manifest_sha256=_sha256(manifest_payload),
         html_relative_path=f"{relative_root}/{html_render.filename}",
         html_sha256=html_render.sha256,
+        printable_pdf_relative_path=f"{relative_root}/{pdf_render.filename}",
+        printable_pdf_sha256=pdf_render.sha256,
         package_inventory_sha256=inventory_digest,
         copied_file_paths=tuple(
             item.relative_path

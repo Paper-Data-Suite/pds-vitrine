@@ -39,11 +39,13 @@ Repository = "https://github.com/Paper-Data-Suite/pds-vitrine"
 
 [project.optional-dependencies]
 paper = [
+    "pypdfium2>=5.13,<6",
     "qrcode[pil]",
     "reportlab",
 ]
 
 dev = [
+    "pypdfium2>=5.13,<6",
     "qrcode[pil]",
     "reportlab",
     "build>=1.2",

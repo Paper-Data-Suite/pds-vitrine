@@ -225,8 +225,9 @@ preview while preserving the file itself unchanged. For exact frozen text/Markdo
 Reflection, Vitrine decodes the already-verified copied bytes as UTF-8 and presents the
 escaped exact text inline; Markdown is not interpreted as active HTML. A byte-bearing
 item always retains an ordinary local link to its exact student-facing source file.
-Reference-only and permitted-omission items remain honest status cards with no fake
-attachment.
+Reference-only items remain honest status cards with no fake attachment. Permitted
+omissions remain machine-manifest history only and are not reintroduced into the ordinary
+student HTML surface.
 
 `portfolio.html` is created inside the same all-or-nothing create-only package
 operation as the human-readable source copies. The machine manifest now records the
@@ -238,8 +239,58 @@ digest cycle.
 Slice 3 still does not persist `PortfolioPresentationArtifact`, because that canonical
 record also requires the printable-PDF output owned by Slice 4.
 
+## Slice 4 — binder-ready PDF / return to Paper
+
+Slice 4 adds an explicit first-party print renderer contract:
+
+```text
+vitrine_student_portfolio_pdf_v1
+```
+
+The renderer produces one deterministic letter-size binder packet from the same exact
+frozen presentation preparation and exact verified source bytes already copied into the
+student package. It uses ReportLab invariant output for packet composition and PDFium at
+a fixed renderer-contract DPI for exact frozen PDF source pages. Common PNG/JPEG/TIFF
+source pages are decoded through Pillow and fitted to stable print geometry. Exact
+UTF-8 plain-text and Markdown sources are printed literally; Markdown is not interpreted
+or rewritten. The dependency versions participate in the renderer-configuration digest.
+
+The supported print matrix records an explicit per-item disposition:
+
+```text
+rendered_from_exact_source
+digital_attachment_only
+reference_only
+omitted_permitted
+```
+
+PDF, common raster images, and UTF-8 plain text/Markdown are rendered from exact source
+bytes. Other byte-bearing media remain available unchanged in the digital Portfolio and
+receive a clear `digital_attachment_only` page rather than disappearing silently.
+Reference-only content receives an honest print status page and never becomes a fake
+document. Permitted omissions create no visible HTML/PDF item and remain represented
+only in the machine manifest.
+
+The printable PDF is a derived rendering. It never replaces or rewrites the exact
+student-facing source file. The PDF filename is produced by issue #111's bounded human
+presentation filename policy and may deliberately use the authorized student display
+name/title while internal presentation custody remains opaque. Ordinary PDF pages expose
+no canonical IDs, hashes, source paths, renderer names, or custody terminology.
+
+The machine presentation manifest records the PDF path, byte size, SHA-256, page count,
+renderer identity/version/contract, renderer-configuration digest, and ordered per-item
+print disposition/page count. The package inventory digest now covers exact source files,
+`portfolio.html`, and the printable PDF, while continuing to exclude the self-referential
+manifest. HTML, PDF, and source files are still written in one create-only package
+operation with rollback on ordinary render/write failure.
+
+Slice 4 still does not publish the canonical `PortfolioPresentationArtifact`; Slice 5
+owns staging/create-only publication, recovery/idempotency, presentation verification,
+and Current Portfolio workflow integration.
+
 ## Next slice
 
-Slice 4 should add the explicit deterministic binder-ready PDF renderer and supported
-media matrix, preserving exact digital originals separately from derived printable
-pages.
+Slice 5 should integrate presentation after exact Edition/technical Export verification,
+add bounded staging plus create-only publication, persist the completed Presentation
+Artifact, independently verify it, and provide exact resume/idempotency semantics without
+reacquiring producer bytes.

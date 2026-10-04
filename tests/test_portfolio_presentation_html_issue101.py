@@ -279,3 +279,38 @@ def test_html_uses_local_image_preview_for_supported_raster_work() -> None:
     assert f'src="{expected_href}"' in text
     assert f'href="{expected_href}"' in text
     assert 'alt="Revised Visual"' in text
+
+def test_html_does_not_reintroduce_permitted_omissions() -> None:
+    preparation = _preparation()
+    first_section = preparation.sections[0]
+    reference_item = first_section.items[1]
+    omitted_item = replace(
+        reference_item,
+        entry_plan_id="omitted_entry",
+        ordinal=3,
+        display_title="Audience-Prohibited Note",
+        disposition="omitted_permitted",
+        presentation_note="This omitted content must not appear to the student.",
+        omission_id="omission_1",
+    )
+    prepared = replace(
+        preparation,
+        sections=(
+            replace(
+                first_section,
+                items=(*first_section.items, omitted_item),
+            ),
+            *preparation.sections[1:],
+        ),
+        omitted_count=1,
+    )
+
+    result = render_student_portfolio_html(
+        prepared,
+        text_payloads_by_entry_plan={"reflection_entry": b"Exact reflection text."},
+    )
+    text = result.payload.decode("utf-8")
+
+    assert "Assessment Snapshot" in text
+    assert "Audience-Prohibited Note" not in text
+    assert "This omitted content must not appear" not in text

@@ -260,13 +260,21 @@ def _render_item(
     )
 
 
+def _visible_items(
+    section: StudentPortfolioPresentationSection,
+) -> tuple[StudentPortfolioPresentationItem, ...]:
+    return tuple(
+        item for item in section.items if item.disposition != "omitted_permitted"
+    )
+
+
 def _visible_sections(
     preparation: StudentPortfolioPresentationPreparation,
 ) -> tuple[StudentPortfolioPresentationSection, ...]:
     return tuple(
         section
         for section in preparation.sections
-        if section.items or section.obligation == "required"
+        if _visible_items(section) or section.obligation == "required"
     )
 
 
@@ -276,11 +284,12 @@ def _render_section(
     display_index: int,
     text_payloads: Mapping[str, bytes],
 ) -> str:
+    visible_items = _visible_items(section)
     items = "".join(
         _render_item(section, item, text_payloads=text_payloads)
-        for item in section.items
+        for item in visible_items
     )
-    if not section.items:
+    if not visible_items:
         items = (
             '<div class="empty-section">'
             "<p>No Portfolio items are present in this required section.</p>"

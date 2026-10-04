@@ -30,6 +30,9 @@ EXPORT_SHA = "e" * 64
 MANIFEST_SHA = "a" * 64
 LOGICAL_SHA = "b" * 64
 FINGERPRINT = "c" * 64
+PDF_PAYLOAD = b"%PDF-1.4\n% deterministic synthetic printable packet\n"
+PDF_SHA = hashlib.sha256(PDF_PAYLOAD).hexdigest()
+PDF_FILENAME = "jordan-lee-improvement-portfolio-0123456789abcdef.pdf"
 
 
 def _item(
@@ -182,6 +185,45 @@ def _install_test_paths(
             verified_file_paths=("section-01/01-entry-opaque",),
         ),
     )
+
+    def fake_pdf_render(
+        _preparation,
+        *,
+        presentation_artifact_id: str,
+        source_payloads_by_entry_plan: dict[str, bytes],
+    ):
+        assert presentation_artifact_id
+        assert source_payloads_by_entry_plan == {"entry_file": PAYLOAD}
+        return SimpleNamespace(
+            filename=PDF_FILENAME,
+            payload=PDF_PAYLOAD,
+            sha256=PDF_SHA,
+            byte_size=len(PDF_PAYLOAD),
+            page_count=4,
+            renderer_id="vitrine_student_portfolio_pdf_renderer",
+            renderer_version="1",
+            renderer_contract_version="vitrine_student_portfolio_pdf_v1",
+            renderer_configuration_sha256="d" * 64,
+            item_dispositions=(
+                SimpleNamespace(
+                    entry_plan_id="entry_file",
+                    print_disposition="rendered_from_exact_source",
+                    page_count=1,
+                ),
+                SimpleNamespace(
+                    entry_plan_id="entry_ref",
+                    print_disposition="reference_only",
+                    page_count=1,
+                ),
+                SimpleNamespace(
+                    entry_plan_id="entry_omit",
+                    print_disposition="omitted_permitted",
+                    page_count=0,
+                ),
+            ),
+        )
+
+    monkeypatch.setattr(module, "render_student_portfolio_pdf", fake_pdf_render)
     return export_root
 
 
@@ -216,20 +258,35 @@ def test_file_package_copies_exact_bytes_and_writes_honest_manifest(
     assert "Benchmark Snapshot" in html_text
     assert "entry_file" not in html_text
 
+    pdf_payload = (package_root / PDF_FILENAME).read_bytes()
+    assert pdf_payload == PDF_PAYLOAD
+    assert hashlib.sha256(pdf_payload).hexdigest() == result.printable_pdf_sha256
+    assert result.printable_pdf_relative_path.endswith(f"/{PDF_FILENAME}")
+
     manifest_payload = (package_root / PRESENTATION_MANIFEST_FILENAME).read_bytes()
     assert hashlib.sha256(manifest_payload).hexdigest() == result.manifest_sha256
     manifest = json.loads(manifest_payload)
     assert manifest["snapshot"]["manifest_sha256"] == MANIFEST_SHA
     assert manifest["snapshot"]["logical_inventory_sha256"] == LOGICAL_SHA
     assert manifest["technical_export"]["directory_inventory_sha256"] == EXPORT_SHA
-    assert manifest["generated_outputs"]["printable_pdf"] is None
+    pdf_output = manifest["generated_outputs"]["printable_pdf"]
+    assert pdf_output["relative_path"] == PDF_FILENAME
+    assert pdf_output["sha256"] == PDF_SHA
+    assert pdf_output["renderer_contract_version"] == (
+        "vitrine_student_portfolio_pdf_v1"
+    )
+    assert [item["print_disposition"] for item in pdf_output["items"]] == [
+        "rendered_from_exact_source",
+        "reference_only",
+        "omitted_permitted",
+    ]
     html_output = manifest["generated_outputs"]["html"]
     assert html_output["relative_path"] == "portfolio.html"
     assert html_output["sha256"] == result.html_sha256
     assert html_output["renderer_contract_version"] == (
         "vitrine_student_portfolio_html_v1"
     )
-    assert manifest["package_inventory"]["file_count"] == 2
+    assert manifest["package_inventory"]["file_count"] == 3
 
     file_item, reference_item, omitted_item = manifest["sections"][0]["items"]
     assert file_item["presentation_relative_path"].endswith(".pdf")
@@ -260,6 +317,7 @@ def test_file_package_is_create_only_and_never_overwrites_successful_output(
     package_root = tmp_path / "vitrine" / Path(*first.relative_path.split("/"))
     manifest_before = (package_root / PRESENTATION_MANIFEST_FILENAME).read_bytes()
     html_before = (package_root / STUDENT_PORTFOLIO_HTML_FILENAME).read_bytes()
+    pdf_before = (package_root / PDF_FILENAME).read_bytes()
 
     with pytest.raises(PortfolioPresentationPackageError) as caught:
         create_student_portfolio_file_package(
@@ -271,6 +329,7 @@ def test_file_package_is_create_only_and_never_overwrites_successful_output(
     assert caught.value.code == "portfolio_presentation_package.custody_conflict"
     assert (package_root / PRESENTATION_MANIFEST_FILENAME).read_bytes() == manifest_before
     assert (package_root / STUDENT_PORTFOLIO_HTML_FILENAME).read_bytes() == html_before
+    assert (package_root / PDF_FILENAME).read_bytes() == pdf_before
 
 
 def test_copy_mismatch_fails_closed_and_rolls_back_partial_custody(
@@ -307,6 +366,7 @@ def test_manifest_and_html_bytes_are_deterministic_for_same_exact_inputs(
     first_package = first_root / "vitrine" / Path(*first.relative_path.split("/"))
     first_manifest = (first_package / PRESENTATION_MANIFEST_FILENAME).read_bytes()
     first_html = (first_package / STUDENT_PORTFOLIO_HTML_FILENAME).read_bytes()
+    first_pdf = (first_package / PDF_FILENAME).read_bytes()
 
     second_root = tmp_path / "second"
     _install_test_paths(monkeypatch, second_root)
@@ -318,11 +378,14 @@ def test_manifest_and_html_bytes_are_deterministic_for_same_exact_inputs(
     second_package = second_root / "vitrine" / Path(*second.relative_path.split("/"))
     second_manifest = (second_package / PRESENTATION_MANIFEST_FILENAME).read_bytes()
     second_html = (second_package / STUDENT_PORTFOLIO_HTML_FILENAME).read_bytes()
+    second_pdf = (second_package / PDF_FILENAME).read_bytes()
 
     assert first_manifest == second_manifest
     assert first_html == second_html
+    assert first_pdf == second_pdf
     assert first.manifest_sha256 == second.manifest_sha256
     assert first.html_sha256 == second.html_sha256
+    assert first.printable_pdf_sha256 == second.printable_pdf_sha256
     assert first.package_inventory_sha256 == second.package_inventory_sha256
 
 
@@ -352,6 +415,38 @@ def test_html_render_failure_rolls_back_partial_custody(
     assert caught.value.code == "portfolio_presentation_package.render_failed"
     relative = presentation_artifact_custody_relative_path(
         "presentation_html_failure"
+    )
+    final_root = tmp_path / "vitrine" / Path(*relative.split("/"))
+    assert not final_root.exists()
+
+def test_pdf_render_failure_rolls_back_partial_custody(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import vitrine.portfolio_presentation_package as module
+
+    _install_test_paths(monkeypatch, tmp_path)
+
+    def fail_pdf(*_args, **_kwargs):
+        raise module.PortfolioPresentationPdfError(
+            "portfolio_presentation_pdf.render_failed",
+            "synthetic PDF failure",
+            stage="test",
+        )
+
+    monkeypatch.setattr(module, "render_student_portfolio_pdf", fail_pdf)
+
+    with pytest.raises(PortfolioPresentationPackageError) as caught:
+        create_student_portfolio_file_package(
+            tmp_path,
+            _preparation(),
+            presentation_artifact_id="presentation_pdf_failure",
+        )
+
+    assert caught.value.code == "portfolio_presentation_package.render_failed"
+    assert caught.value.stage == "pdf"
+    relative = presentation_artifact_custody_relative_path(
+        "presentation_pdf_failure"
     )
     final_root = tmp_path / "vitrine" / Path(*relative.split("/"))
     assert not final_root.exists()

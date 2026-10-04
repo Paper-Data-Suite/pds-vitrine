@@ -13,7 +13,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Issue #101 Slice 3 adds deterministic static offline `portfolio.html` rendering inside the same create-only presentation package, with exact Profile-order navigation, safely escaped student-facing text, local image previews, exact-text Reflection presentation, honest reference-only/omitted treatment, renderer/digest manifest bindings, and no scripts, external assets, network dependencies, or technical identity leakage into the ordinary HTML surface.
+- Issue #101 Slice 4 adds deterministic binder-ready student Portfolio PDF rendering through the isolated `paper` dependency surface, including exact-source PDF/raster/text rendering, literal Markdown treatment, explicit digital-attachment/reference-only/omitted print dispositions, bounded human PDF naming, PDF renderer/configuration manifest bindings, and package inventory integration while preserving exact source files separately. Permitted omissions remain machine-manifest-only rather than being reintroduced into ordinary HTML/PDF.
+
+- Issue #101 Slice 3 adds deterministic static offline `portfolio.html` rendering inside the same create-only presentation package, with exact Profile-order navigation, safely escaped student-facing text, local image previews, exact-text Reflection presentation, honest reference-only treatment, renderer/digest manifest bindings, and no scripts, external assets, network dependencies, or technical identity leakage into the ordinary HTML surface.
 
 - Issue #101 Slice 2 adds create-only human-readable student file packaging from the exact verified technical Export, exact-byte copying under #111 bounded section/file names, deterministic machine presentation manifest, honest reference-only/omitted entries, sealed Snapshot digest bindings, controlled media extensions, and rollback on ordinary partial-write failure without producer access or premature canonical Presentation Artifact publication.
 
