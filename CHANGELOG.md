@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #101 Slice 2 adds create-only human-readable student file packaging from the exact verified technical Export, exact-byte copying under #111 bounded section/file names, deterministic machine presentation manifest, honest reference-only/omitted entries, sealed Snapshot digest bindings, controlled media extensions, and rollback on ordinary partial-write failure without producer access or premature canonical Presentation Artifact publication.
+
 - Issue #101 Slice 1 adds the immutable student Portfolio Presentation Artifact contract and producer-independent exact read-only preparation over one verified sealed Snapshot Edition/technical Export, preserving reference-only and omitted evidence while consuming the shared #111 bounded custody, section-directory, filename, and collision policy without rendering HTML/PDF yet.
 
 - Issue #100 completes Working Composition v2 requirement-backed content semantics: exact Reflection revision -> Profile requirement -> explicit scope projection, current/historical revision pinning, content-first teacher and CLI presentation, shared Current Portfolio handoff, installed-wheel acceptance, package guards, and v2 contract/validation documentation without turning Reflection into Placement.

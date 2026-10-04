@@ -35,6 +35,7 @@ from vitrine.models import (
     SnapshotExportPlan,
     SnapshotMaterializationProvenance,
     SnapshotMaterializationRecord,
+    SnapshotSeal,
     SourceArtifactReference,
     WorkingPortfolioCompositionRevision,
     record_from_dict,
@@ -374,6 +375,15 @@ def _records() -> tuple[object, ...]:
         created_at=NOW,
         created_by=ACTOR,
     )
+    seal = SnapshotSeal(
+        seal_id="seal_1",
+        snapshot_edition=EDITION_REF,
+        manifest_id="manifest_1",
+        manifest_digest=D1,
+        logical_inventory_digest=D2,
+        sealed_at=NOW,
+        sealed_by=ACTOR,
+    )
     materialization_1 = SnapshotMaterializationRecord(
         materialization_id="materialization_1",
         snapshot_edition=EDITION_REF,
@@ -481,6 +491,7 @@ def _records() -> tuple[object, ...]:
         result,
         provenance,
         edition,
+        seal,
         materialization_1,
         materialization_2,
         *materialization_provenance,
@@ -529,6 +540,8 @@ def test_preparation_uses_exact_sealed_history_and_never_imports_producers(
     assert prepared.portfolio_title == "Senior Showcase"
     assert prepared.audience_presentation_class == "showcase"
     assert prepared.presentation_class == "student_portfolio"
+    assert prepared.snapshot_manifest_sha256 == D1.value
+    assert prepared.snapshot_logical_inventory_sha256 == D2.value
     assert prepared.file_item_count == 1
     assert prepared.reference_only_count == 1
     assert prepared.omitted_count == 0
@@ -546,3 +559,41 @@ def test_preparation_uses_exact_sealed_history_and_never_imports_producers(
     assert reference_item.export_file_available is False
     assert "portable file" in (reference_item.presentation_note or "")
     assert len(prepared.preparation_fingerprint) == 64
+
+
+def test_preparation_rejects_unknown_media_instead_of_inventing_extension(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import vitrine.portfolio_presentation as module
+
+    records = tuple(
+        replace(item, media_type="application/x-unknown-student-artifact")
+        if isinstance(item, SnapshotEntry)
+        else item
+        for item in _records()
+    )
+    monkeypatch.setattr(
+        module,
+        "verify_snapshot_export",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            snapshot_export_artifact_id="export_1",
+            snapshot_series_id="series_1",
+            edition_number=1,
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        "load_current_records_with_state",
+        lambda *_args, **_kwargs: (SimpleNamespace(state_revision=44), records),
+    )
+
+    with pytest.raises(module.PortfolioPresentationPreparationError) as caught:
+        module.prepare_student_portfolio_presentation(
+            Path("."),
+            snapshot_series_id="series_1",
+            edition_number=1,
+            snapshot_export_artifact_id="export_1",
+        )
+
+    assert caught.value.code == "portfolio_presentation.unsupported_media"
+    assert caught.value.stage == "media"

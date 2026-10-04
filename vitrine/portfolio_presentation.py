@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import Final, TypeVar
 
 from vitrine.models import (
@@ -27,6 +26,7 @@ from vitrine.models import (
     SnapshotMaterializationProvenance,
     SnapshotMaterializationRecord,
     SnapshotOmission,
+    SnapshotSeal,
     WorkingPortfolioCompositionRevision,
 )
 from vitrine.models.common import require_identifier, require_positive_int
@@ -70,8 +70,6 @@ _MEDIA_EXTENSION_BY_TYPE: Final[dict[str, str]] = {
     "text/markdown": ".md",
     "text/plain": ".txt",
 }
-_SIMPLE_EXTENSION = re.compile(r"\.[a-z0-9]{1,9}\Z")
-
 PORTFOLIO_PRESENTATION_PREPARATION_ERROR_CODES: Final[frozenset[str]] = frozenset(
     {
         "portfolio_presentation.invalid_request",
@@ -80,6 +78,7 @@ PORTFOLIO_PRESENTATION_PREPARATION_ERROR_CODES: Final[frozenset[str]] = frozense
         "portfolio_presentation.context_inconsistent",
         "portfolio_presentation.inventory_inconsistent",
         "portfolio_presentation.naming_failed",
+        "portfolio_presentation.unsupported_media",
     }
 )
 
@@ -107,11 +106,15 @@ class StudentPortfolioPresentationItem:
     display_caption: str | None
     source_credit: str | None
     presentation_note: str | None
+    candidate_id: str | None
+    selection_id: str | None
+    placement_id: str | None
     snapshot_entry_id: str | None
     materialization_id: str | None
     omission_id: str | None
     technical_relative_path: str | None
     media_type: str | None
+    byte_size: int | None
     output_sha256: str | None
     export_file_available: bool
     presentation_filename: str | None
@@ -134,6 +137,8 @@ class StudentPortfolioPresentationPreparation:
     observed_state_revision: int
     snapshot_edition: SnapshotEditionRef
     snapshot_export_artifact_id: str
+    snapshot_manifest_sha256: str
+    snapshot_logical_inventory_sha256: str
     portfolio_id: str
     portfolio_subject_id: str
     profile_binding_id: str
@@ -217,14 +222,15 @@ def _optional_one(
     return None if not matches else matches[0]
 
 
-def _extension(media_type: str, technical_relative_path: str) -> str:
+def _extension(media_type: str) -> str:
     known = _MEDIA_EXTENSION_BY_TYPE.get(media_type.casefold())
-    if known is not None:
-        return known
-    suffix = PurePosixPath(technical_relative_path).suffix.casefold()
-    if _SIMPLE_EXTENSION.fullmatch(suffix):
-        return suffix
-    return ".bin"
+    if known is None:
+        raise PortfolioPresentationPreparationError(
+            "portfolio_presentation.unsupported_media",
+            "The exact frozen media type has no controlled student-facing extension.",
+            stage="media",
+        )
+    return known
 
 
 def _friendly_key(value: str) -> str:
@@ -235,6 +241,7 @@ def _friendly_key(value: str) -> str:
 def _fingerprint_value(
     *,
     edition: SnapshotEdition,
+    seal: SnapshotSeal,
     artifact: SnapshotExportArtifact,
     audience: AudienceContext,
     profile: PortfolioProfileRevision,
@@ -249,6 +256,8 @@ def _fingerprint_value(
             "edition_number": edition.edition_number,
         },
         "snapshot_export_artifact_id": artifact.snapshot_export_artifact_id,
+        "snapshot_manifest_digest": seal.manifest_digest.value,
+        "snapshot_logical_inventory_digest": seal.logical_inventory_digest.value,
         "directory_inventory_digest": artifact.directory_inventory_digest.value,
         "portfolio_id": edition.portfolio_id,
         "portfolio_subject_id": edition.portfolio_subject_id,
@@ -347,6 +356,22 @@ def prepare_student_portfolio_presentation(
         and item.edition_number == edition_no,
         label="Snapshot Edition",
     )
+    seal_id = edition.seal_id
+
+    def matches_seal(item: SnapshotSeal) -> bool:
+        return item.seal_id == seal_id
+
+    seal = _one(
+        values,
+        SnapshotSeal,
+        matches_seal,
+        label="Snapshot Seal",
+    )
+    if (
+        seal.snapshot_edition != edition.reference
+        or seal.manifest_id != edition.manifest_id
+    ):
+        raise _context_mismatch("Snapshot Seal does not match the sealed Edition.")
     artifact = _one(
         values,
         SnapshotExportArtifact,
@@ -671,9 +696,7 @@ def prepare_student_portfolio_presentation(
                         "entry_plan_id": entry_plan.entry_plan_id,
                         "snapshot_entry_id": snapshot_entry.snapshot_entry_id,
                     },
-                    extension=_extension(
-                        snapshot_entry.media_type, snapshot_entry.relative_path
-                    ),
+                    extension=_extension(snapshot_entry.media_type),
                 )
             except VitrinePathPolicyError as error:
                 raise PortfolioPresentationPreparationError(
@@ -696,6 +719,9 @@ def prepare_student_portfolio_presentation(
                 display_caption=display_caption,
                 source_credit=source_credit,
                 presentation_note=presentation_note,
+                candidate_id=entry_plan.candidate_id,
+                selection_id=entry_plan.selection_id,
+                placement_id=entry_plan.placement_id,
                 snapshot_entry_id=(
                     None if snapshot_entry is None else snapshot_entry.snapshot_entry_id
                 ),
@@ -707,6 +733,9 @@ def prepare_student_portfolio_presentation(
                     None if snapshot_entry is None else snapshot_entry.relative_path
                 ),
                 media_type=None if snapshot_entry is None else snapshot_entry.media_type,
+                byte_size=(
+                    None if materialization is None else materialization.byte_size
+                ),
                 output_sha256=(
                     None
                     if materialization is None or materialization.output_digest is None
@@ -775,6 +804,7 @@ def prepare_student_portfolio_presentation(
     portfolio_title = portfolio.title_snapshot or profile.label
     fingerprint = _fingerprint_value(
         edition=edition,
+        seal=seal,
         artifact=artifact,
         audience=audience,
         profile=profile,
@@ -786,6 +816,8 @@ def prepare_student_portfolio_presentation(
         observed_state_revision=current.state_revision,
         snapshot_edition=edition.reference,
         snapshot_export_artifact_id=artifact.snapshot_export_artifact_id,
+        snapshot_manifest_sha256=seal.manifest_digest.value,
+        snapshot_logical_inventory_sha256=seal.logical_inventory_digest.value,
         portfolio_id=edition.portfolio_id,
         portfolio_subject_id=edition.portfolio_subject_id,
         profile_binding_id=edition.profile_binding_id,

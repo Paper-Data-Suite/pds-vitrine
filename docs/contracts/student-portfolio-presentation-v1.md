@@ -171,8 +171,39 @@ prepared inventory. The PDF is not a screenshot of the website; it is a
 binder-ready print rendering with stable margins, section starts, captions, and
 page flow.
 
+## Slice 2 — human-readable digital file package
+
+Slice 2 consumes the exact prepared inventory and creates one bounded, create-only
+student file package. Immediately before copying, Vitrine independently re-verifies
+the exact technical Snapshot Export. Every byte-bearing presentation item must still
+appear in that verified Export inventory, and its copied payload must match the exact
+frozen materialization SHA-256 and byte size. The student-facing copy is therefore a
+rename/reorganization of exact Snapshot bytes, never a conversion.
+
+The package writes Profile sections under the already-planned #111 bounded section
+directories and exact byte-bearing items under the already-planned #111 meaningful
+filenames. Reference-only and permitted-omission items remain manifest entries only;
+no placeholder document is fabricated for either disposition.
+
+Unknown media types now fail closed during preparation. Vitrine does not infer a
+student-facing extension from a technical filename and does not invent `.bin`. The
+controlled mapping is the only extension authority for this presentation contract.
+
+`portfolio-presentation-manifest.json` is deterministic UTF-8 JSON and records the
+exact Edition, sealed manifest/logical-inventory digests, technical Export identity
+and inventory digest, frozen Profile/Audience context, ordered sections, exact item
+identity/disposition, and presentation-relative paths/digests for byte-bearing files.
+It deliberately omits producer-private source paths and technical Export custody
+paths. The physical package inventory digest covers presentation payload files and
+excludes the manifest itself, avoiding a self-digest cycle.
+
+Slice 2 does not persist `PortfolioPresentationArtifact`. That record requires HTML
+and printable-PDF paths/digests, so publishing it before Slices 3–4 would canonize a
+partial presentation. Slice 2 custody is create-only and ordinary failures roll back
+partial output; crash/recovery and idempotent canonical publication remain Slice 5.
+
 ## Next slice
 
-Slice 2 should consume this exact preparation to create the bounded presentation
-package and human-readable copies of eligible verified Export files. It must not
-re-run producers, follow source successors, or redesign path naming.
+Slice 3 should render the static offline HTML Portfolio from this same exact prepared
+inventory and package contract, with safe escaping, section navigation, meaningful
+work presentation, honest reference-only treatment, and no external dependencies.
