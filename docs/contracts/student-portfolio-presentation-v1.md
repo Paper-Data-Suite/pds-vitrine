@@ -335,8 +335,25 @@ action. Unsupported presentation classes still return successful Snapshot/Export
 explicit unsupported Presentation disposition. Presentation success never advances the Snapshot
 current pointer and never implies disclosure or delivery.
 
-## Next slice
+## Slice 6 — installed acceptance and complete qualification
 
-Slice 6 should add installed-wheel acceptance, package/repository qualification, dedicated
-validation/smoke wiring, Core 0.6.4 qualification, and the final synthetic Improvement Portfolio
-end-to-end acceptance for the complete issue #101 boundary.
+Slice 6 closes the issue #101 boundary with a dedicated validator, development/validation
+documentation, wheel/sdist content guards, repository-gate wiring, an isolated installed-wheel
+smoke through the `paper` extra, and the representative synthetic Improvement Portfolio
+end-to-end acceptance. The representative student-facing Audience Rule explicitly permits
+`portfolio_index`, matching the presentation policy required by this contract.
+
+The installed-wheel smoke authenticates the exact Core 0.6.4 release wheel before creating its
+isolated environment. It installs Vitrine with the `paper` extra, leaves ScoreForm, Quillan,
+Concord, Portia, and Meridian absent, builds a sealed Reflection-only student Portfolio through the
+ordinary Current Portfolio workflow, verifies HTML/PDF presentation custody, proves idempotent
+reuse, and confirms that presentation creation does not advance the Snapshot current pointer.
+
+The final synthetic Improvement Portfolio acceptance exercises multiple ordered human sections,
+exact Snapshot/Export custody, canonical Presentation Artifact publication, HTML and printable PDF,
+idempotent reuse, post-source-removal producer-independent verification, presentation-byte tamper
+detection, and restoration/reverification while proving the technical Export remains unchanged.
+
+Complete repository qualification runs these boundaries from the existing Core 0.6.4-qualified
+repository gate. Issue #101 is complete at this boundary. Persistent historical browsing/open/print
+actions remain issue #102; presentation creation still does not imply disclosure or delivery.

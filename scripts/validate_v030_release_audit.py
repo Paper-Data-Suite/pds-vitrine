@@ -232,8 +232,10 @@ def _validate_guided_usability_boundaries() -> None:
         "The Audience Rule constrains content; it does not identify a recipient.",
         "It does not satisfy, clear, approve, or authorize disclosure.",
         "and create/verify a local directory Export.",
-        "It will not advance the current Edition pointer or deliver the Export.",
-        "Export creation is not disclosure permission or delivery.",
+        "When the exact audience policy is student_portfolio, it will then",
+        "It will not advance the current Edition pointer or deliver the Portfolio.",
+        "The Portfolio has not been delivered or sent.",
+        "Presentation creation is not disclosure permission or delivery.",
     )
     _require_text(
         ROOT / "vitrine/working_composition.py",

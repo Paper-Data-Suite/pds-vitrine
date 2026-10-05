@@ -158,6 +158,9 @@ files = [
     "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
     "scripts/validate_path_output_naming.py",
     "scripts/smoke_test_path_output_naming_wheel.py",
+    "scripts/validate_portfolio_presentation.py",
+    "scripts/validate_student_portfolio_presentation_end_to_end.py",
+    "scripts/smoke_test_portfolio_presentation_wheel.py",
 ]
 
 [[tool.mypy.overrides]]

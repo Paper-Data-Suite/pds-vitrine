@@ -106,6 +106,17 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "student Portfolio presentation",
+        (
+            "scripts/validate_portfolio_presentation.py",
+            "--skip-focused-tests",
+        ),
+    ),
+    (
+        "student Portfolio presentation end-to-end",
+        ("scripts/validate_student_portfolio_presentation_end_to_end.py",),
+    ),
+    (
         "Vitrine attention / next actions",
         (
             "scripts/validate_attention_next_actions.py",
@@ -459,6 +470,10 @@ def validate(
                 (
                     "bounded Vitrine paths/output naming",
                     "scripts/smoke_test_path_output_naming_wheel.py",
+                ),
+                (
+                    "student Portfolio presentation",
+                    "scripts/smoke_test_portfolio_presentation_wheel.py",
                 ),
             )
             for label, script in wheel_smokes:

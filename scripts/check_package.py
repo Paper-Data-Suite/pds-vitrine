@@ -102,6 +102,7 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/models/identity.py",
     "vitrine/models/manual_reflection.py",
     "vitrine/models/paper_reflection_authorship.py",
+    "vitrine/models/presentations.py",
     "vitrine/models/profiles.py",
     "vitrine/models/serialization.py",
     "vitrine/models/snapshot_workflow.py",
@@ -138,6 +139,13 @@ ALLOWED_RUNTIME_FILES = {
     "vitrine/paper_reflection_routes.py",
     "vitrine/paper_reflection_services.py",
     "vitrine/paper_reflection_workflow.py",
+    "vitrine/portfolio_presentation.py",
+    "vitrine/portfolio_presentation_contract.py",
+    "vitrine/portfolio_presentation_html.py",
+    "vitrine/portfolio_presentation_package.py",
+    "vitrine/portfolio_presentation_pdf.py",
+    "vitrine/portfolio_presentation_services.py",
+    "vitrine/portfolio_presentation_verification.py",
     "vitrine/pds_module.py",
 }
 REQUIRED_SDIST_FILES = {
@@ -168,6 +176,7 @@ REQUIRED_SDIST_FILES = {
     "docs/contracts/guided-working-composition-v1.md",
     "docs/contracts/guided-working-composition-v2.md",
     "docs/contracts/build-export-current-portfolio-v1.md",
+    "docs/contracts/student-portfolio-presentation-v1.md",
     "docs/contracts/attention-next-actions-v1.md",
     "docs/contracts/teacher-information-architecture-v1.md",
     "docs/contracts/candidate-evidence-review-v1.md",
@@ -189,6 +198,7 @@ REQUIRED_SDIST_FILES = {
     "docs/development/guided-menu-interactions.md",
     "docs/development/guided-working-composition.md",
     "docs/development/build-export-current-portfolio.md",
+    "docs/development/student-portfolio-presentation.md",
     "docs/development/attention-next-actions.md",
     "docs/development/teacher-information-architecture.md",
     "docs/development/candidate-evidence-review.md",
@@ -201,6 +211,7 @@ REQUIRED_SDIST_FILES = {
     "docs/development/showcase-portfolio-vertical-slice.md",
     "docs/validation/issue-97-selection-placement-guidance-validation.md",
     "docs/validation/issue-98-guided-menu-interactions-validation.md",
+    "docs/validation/issue-101-student-portfolio-presentation-validation.md",
     "docs/development/installed-end-to-end-acceptance.md",
     "fixtures/producer-adapters/README.md",
     "fixtures/producer-adapters/scoreform/manifest.json",
@@ -233,6 +244,9 @@ REQUIRED_SDIST_FILES = {
     "scripts/smoke_test_candidate_review_selection_wheel.py",
     "scripts/smoke_test_working_composition_wheel.py",
     "scripts/smoke_test_current_portfolio_build_export_wheel.py",
+    "scripts/validate_portfolio_presentation.py",
+    "scripts/validate_student_portfolio_presentation_end_to_end.py",
+    "scripts/smoke_test_portfolio_presentation_wheel.py",
     "scripts/smoke_test_attention_next_actions_wheel.py",
     "scripts/smoke_test_teacher_information_architecture_wheel.py",
     "scripts/smoke_test_operations_wheel.py",
@@ -375,6 +389,15 @@ REQUIRED_SDIST_FILES = {
     "tests/test_current_portfolio_menu.py",
     "tests/test_current_portfolio_routing.py",
     "tests/test_current_portfolio_acceptance_matrix.py",
+    "tests/test_portfolio_presentation_issue101.py",
+    "tests/test_portfolio_presentation_package_issue101.py",
+    "tests/test_portfolio_presentation_html_issue101.py",
+    "tests/test_portfolio_presentation_pdf_issue101.py",
+    "tests/test_portfolio_presentation_workflow_issue101.py",
+    "tests/test_portfolio_presentation_verification_issue101.py",
+    "tests/test_current_portfolio_presentation_issue101.py",
+    "tests/test_portfolio_presentation_end_to_end_issue101.py",
+    "tests/test_validate_portfolio_presentation_issue101.py",
     "tests/test_validate_current_portfolio_build_export.py",
     "tests/test_attention.py",
     "tests/test_attention_snapshot.py",
@@ -476,6 +499,14 @@ REQUIRED_SDIST_FILES = {
     "vitrine/paper_reflection_services.py",
     "vitrine/paper_reflection_workflow.py",
     "vitrine/pds_module.py",
+    "vitrine/models/presentations.py",
+    "vitrine/portfolio_presentation.py",
+    "vitrine/portfolio_presentation_contract.py",
+    "vitrine/portfolio_presentation_html.py",
+    "vitrine/portfolio_presentation_package.py",
+    "vitrine/portfolio_presentation_pdf.py",
+    "vitrine/portfolio_presentation_services.py",
+    "vitrine/portfolio_presentation_verification.py",
     "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
     "tests/test_paper_reflection_installed_acceptance.py",
     "docs/contracts/vitrine-path-output-naming-v1.md",
@@ -510,6 +541,14 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
     extras = tuple(metadata.get_all("Provides-Extra", ()))
     if "paper" not in extras:
         findings.append(f"missing paper extra metadata: {extras}")
+    if not any(
+        "pypdfium2<6,>=5.13" in item.lower()
+        and 'extra=="paper"' in item.lower()
+        for item in normalized
+    ):
+        findings.append(
+            f"missing pypdfium2 paper-extra dependency: {requirements}"
+        )
     if not any(
         item.lower().startswith("qrcode[pil]") and 'extra=="paper"' in item.lower()
         for item in normalized

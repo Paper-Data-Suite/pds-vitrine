@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #101 Slice 6 completes student Portfolio Presentation qualification with dedicated validation/development documentation, wheel/sdist guards, repository-gate wiring, representative synthetic Improvement Portfolio end-to-end acceptance, isolated installed-wheel acceptance without producer packages, and authenticated Core 0.6.4 qualification.
+
 - Issue #101 Slice 5 adds bounded presentation staging and create-only publication, deterministic renderer-sensitive Presentation identity, canonical `PortfolioPresentationArtifact` publication, producer-independent package/presentation verification, changed-byte/unexpected-file detection, exact idempotent reuse and durable-package recovery, `portfolio_index`/`student_portfolio` audience gating, Current Portfolio workflow integration, and explicit resume-from-existing-Edition/Export semantics without producer reacquisition or current-pointer advancement.
 
 - Issue #101 Slice 4 adds deterministic binder-ready student Portfolio PDF rendering through the isolated `paper` dependency surface, including exact-source PDF/raster/text rendering, literal Markdown treatment, explicit digital-attachment/reference-only/omitted print dispositions, bounded human PDF naming, PDF renderer/configuration manifest bindings, and package inventory integration while preserving exact source files separately. Permitted omissions remain machine-manifest-only rather than being reintroduced into ordinary HTML/PDF.
