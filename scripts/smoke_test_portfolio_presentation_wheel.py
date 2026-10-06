@@ -1,4 +1,4 @@
-"""Smoke issue #68 Build/Export from isolated Core and Vitrine wheels."""
+"""Installed-wheel acceptance for Issue #101 student Portfolio presentation."""
 
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ import sys
 import tempfile
 import venv
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _venv_python(environment: Path) -> Path:
@@ -27,16 +29,24 @@ def _run(command: list[str], *, cwd: Path, env: dict[str, str]) -> str:
     if result.returncode != 0:
         detail = result.stderr.strip() or result.stdout.strip() or "(no child output)"
         raise RuntimeError(
-            "Current Portfolio Build/Export installed command failed "
+            "Issue #101 installed command failed "
             f"with exit code {result.returncode}:\n{detail}"
         )
     return result.stdout
 
 
 def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
-    with tempfile.TemporaryDirectory(
-        prefix="vitrine-current-portfolio-wheel-smoke-"
-    ) as temporary:
+    _run(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "verify_core_wheel.py"),
+            str(core_wheel.resolve()),
+        ],
+        cwd=ROOT,
+        env=os.environ.copy(),
+    )
+
+    with tempfile.TemporaryDirectory(prefix="vitrine-issue101-wheel-") as temporary:
         root = Path(temporary)
         environment = root / "venv"
         work = root / "work"
@@ -53,38 +63,28 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
             cwd=work,
             env=env,
         )
+        requirement = f"pds-vitrine[paper] @ {vitrine_wheel.resolve().as_uri()}"
         _run(
-            [
-                str(python),
-                "-m",
-                "pip",
-                "install",
-                "--no-deps",
-                str(vitrine_wheel.resolve()),
-            ],
+            [str(python), "-m", "pip", "install", requirement],
             cwd=work,
             env=env,
         )
         _run([str(python), "-m", "pip", "check"], cwd=work, env=env)
 
         code = r'''\
+import importlib.metadata
 import importlib.util
 import sys
 from datetime import datetime, timezone
-from io import StringIO
 from pathlib import Path
 
 from pds_core.workspace import ensure_workspace_root
 
-from vitrine import cli
 from vitrine.curation_services import (
     CurationAuthorityDecision,
     CurationAuthorityRequest,
 )
-from vitrine.current_portfolio_build import (
-    CURRENT_PORTFOLIO_BUILD_CONTRACT_VERSION,
-    prepare_current_portfolio_build,
-)
+from vitrine.current_portfolio_build import prepare_current_portfolio_build
 from vitrine.current_portfolio_execution import execute_prepared_current_portfolio_build
 from vitrine.models import (
     ActorAttribution,
@@ -101,31 +101,34 @@ from vitrine.models import (
     ProfileAudienceRule,
     ProfileSectionDefinition,
 )
+from vitrine.portfolio_presentation_services import build_student_portfolio_presentation
+from vitrine.portfolio_presentation_verification import verify_portfolio_presentation
 from vitrine.snapshot_materialization import (
     SnapshotBuildAuthorityDecision,
     SnapshotBuildAuthorityRequest,
 )
 from vitrine.storage import commit_record_batch, load_current_state
+from vitrine.storage.paths import safe_vitrine_descendant
 from vitrine.workflow_views import show_snapshot_series
 from vitrine.working_composition import (
     freeze_prepared_working_composition,
     prepare_working_composition,
 )
 
-NOW = datetime(2026, 9, 9, 1, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 10, 4, 20, 0, tzinfo=timezone.utc)
 TEACHER = ActorAttribution(
     actor_kind="authorized_adult",
-    actor_id="wheel_smoke_teacher",
+    actor_id="issue101_wheel_teacher",
     owning_system="local",
     role_snapshot="teacher",
 )
 STUDENT = ActorAttribution(
     actor_kind="external_actor",
-    actor_id="wheel_smoke_student",
+    actor_id="issue101_wheel_student",
     owning_system="local",
     role_snapshot="student",
 )
-REFLECTION_TEXT = "I can explain what this exact portfolio evidence means."
+REFLECTION_TEXT = "This exact reflection belongs in my student Portfolio."
 
 
 class CurationGate:
@@ -133,51 +136,52 @@ class CurationGate:
         assert request.operation == "compose_portfolio"
         return CurationAuthorityDecision(
             outcome="allowed",
-            authority_reference="wheel_smoke_curation_authority",
-            reason_codes=("wheel_smoke",),
+            authority_reference="issue101_wheel_curation",
+            reason_codes=("issue101_wheel",),
         )
 
 
 class SnapshotGate:
-    def __init__(self):
-        self.requests = []
-
     def authorize(
         self, request: SnapshotBuildAuthorityRequest
     ) -> SnapshotBuildAuthorityDecision:
-        self.requests.append(request)
         return SnapshotBuildAuthorityDecision(
             outcome="allowed",
-            authority_reference="wheel_smoke_snapshot_authority",
-            reason_codes=("wheel_smoke",),
+            authority_reference="issue101_wheel_snapshot",
+            reason_codes=("issue101_wheel",),
         )
 
 
+assert importlib.metadata.version("pds-core") == "0.6.4"
+assert importlib.metadata.version("pds-vitrine") == "0.3.0"
+for name in ("scoreform", "quillan", "concord", "portia", "meridian"):
+    assert importlib.util.find_spec(name) is None, name
+
 workspace = ensure_workspace_root(Path(sys.argv[1]), create=True)
 subject = PortfolioSubject(
-    portfolio_subject_id="subject_current_portfolio_smoke",
+    portfolio_subject_id="subject_issue101_wheel",
     created_at=NOW,
     created_by=TEACHER,
-    display_name_snapshot="Synthetic Wheel Student",
+    display_name_snapshot="Synthetic Student",
 )
 portfolio = Portfolio(
-    portfolio_id="portfolio_current_portfolio_smoke",
+    portfolio_id="portfolio_issue101_wheel",
     portfolio_subject_id=subject.portfolio_subject_id,
     created_at=NOW,
     created_by=TEACHER,
-    title_snapshot="Current Portfolio Wheel Smoke",
+    title_snapshot="Student Portfolio Wheel Acceptance",
 )
 family = PortfolioProfileFamily(
-    profile_family_id="family_current_portfolio_smoke",
-    label="Current Portfolio Smoke Profiles",
-    purpose_kind="showcase",
+    profile_family_id="family_issue101_wheel",
+    label="Issue 101 Wheel Profiles",
+    purpose_kind="improvement",
     created_at=NOW,
     created_by=TEACHER,
 )
 section = ProfileSectionDefinition(
     section_id="reflection",
     label="Reflection",
-    purpose="One exact student Reflection; no producer Artifact is required.",
+    purpose="One exact student Reflection.",
     order=1,
     obligation="required",
     minimum_placements=0,
@@ -187,28 +191,28 @@ section = ProfileSectionDefinition(
     reflection_requirement="required",
 )
 profile = PortfolioProfileRevision(
-    portfolio_profile_id="profile_current_portfolio_smoke",
+    portfolio_profile_id="profile_issue101_wheel",
     profile_revision=1,
     profile_family_id=family.profile_family_id,
     predecessor_revision=None,
-    label="Current Portfolio Wheel Smoke",
-    purpose_kind="showcase",
+    label="Student Portfolio Wheel Profile",
+    purpose_kind="improvement",
     applicability=ProfileApplicability(school_years=("2026-2027",)),
     sections=(section,),
     audience_rules=(
         ProfileAudienceRule(
             audience_rule_id="student_review",
             audience_class="student",
-            purpose="Review this exact synthetic portfolio package.",
-            allowed_content_classes=("reflection",),
+            purpose="Review this exact synthetic student Portfolio.",
+            allowed_content_classes=("portfolio_index", "reflection"),
             prohibited_content_classes=("private_teacher_note",),
             required_review_classes=(),
-            presentation_class="showcase",
+            presentation_class="student_portfolio",
         ),
     ),
     created_at=NOW,
     created_by=TEACHER,
-    source_authority_references=("wheel_smoke_policy",),
+    source_authority_references=("issue101_wheel_policy",),
 )
 requirement = PortfolioProfileRequirement(
     portfolio_profile_id=profile.portfolio_profile_id,
@@ -221,37 +225,37 @@ requirement = PortfolioProfileRequirement(
     scope_kind="section",
     satisfaction_class="reflection_presence",
     scope_reference=section.section_id,
-    authority_references=("wheel_smoke_policy",),
+    authority_references=("issue101_wheel_policy",),
 )
 lifecycle = PortfolioProfileLifecycleEvent(
-    profile_lifecycle_event_id="profile_event_current_portfolio_smoke",
+    profile_lifecycle_event_id="profile_event_issue101_wheel",
     profile_revision=profile.reference,
     event_kind="activated",
     event_at=NOW,
     effective_at=NOW,
     actor=TEACHER,
-    reason="Activate synthetic wheel-smoke Profile.",
-    authority_reference="wheel_smoke_policy",
+    reason="Activate Issue #101 wheel Profile.",
+    authority_reference="issue101_wheel_policy",
 )
 binding = PortfolioProfileBinding(
-    profile_binding_id="binding_current_portfolio_smoke",
+    profile_binding_id="binding_issue101_wheel",
     portfolio_id=portfolio.portfolio_id,
     profile_revision=profile.reference,
     bound_at=NOW,
     bound_by=TEACHER,
-    binding_reason="Synthetic wheel-smoke binding.",
+    binding_reason="Issue #101 wheel binding.",
 )
 reflection = PortfolioReflection(
-    reflection_id="reflection_current_portfolio_smoke",
+    reflection_id="reflection_issue101_wheel",
     reflection_revision=1,
     portfolio_id=portfolio.portfolio_id,
     portfolio_subject_id=subject.portfolio_subject_id,
     profile_binding_id=binding.profile_binding_id,
     profile_revision=profile.reference,
     reflection_requirement_id=requirement.requirement_id,
-    prompt_id="wheel_smoke_prompt",
+    prompt_id="issue101_wheel_prompt",
     prompt_version="1",
-    prompt_snapshot="Explain what this exact portfolio evidence means.",
+    prompt_snapshot="Explain what this exact Portfolio evidence means.",
     author=STUDENT,
     target_scope="section",
     target_references=(
@@ -278,10 +282,8 @@ commit_record_batch(
     ),
     expected_state_revision=None,
 )
-
 working = prepare_working_composition(workspace, portfolio.portfolio_id)
 assert working.disposition == "create_initial"
-assert working.payload.unresolved_obligation_codes == ()
 frozen = freeze_prepared_working_composition(
     workspace,
     working,
@@ -290,102 +292,66 @@ frozen = freeze_prepared_working_composition(
 )
 assert frozen.disposition == "created"
 
-before_prepare = load_current_state(workspace).state_revision
 preparation = prepare_current_portfolio_build(
     workspace,
     portfolio.portfolio_id,
     audience_rule_id="student_review",
 )
-assert CURRENT_PORTFOLIO_BUILD_CONTRACT_VERSION == (
-    "vitrine_build_export_current_portfolio_v1"
-)
-assert load_current_state(workspace).state_revision == before_prepare
-assert preparation.working_composition_disposition == "reuse_exact_current"
-assert preparation.unplaced_selection_ids == ()
-assert preparation.unresolved_obligation_codes == ()
-assert preparation.audience_context.disposition == "create"
-assert preparation.snapshot_series.disposition == "create"
-assert preparation.planned_items == ()
-assert len(preparation.generated_reflections) == 1
-generated = preparation.generated_reflections[0]
-assert generated.materialization_kind == "generated_vitrine"
-assert generated.content_class == "reflection"
-assert generated.supported
-assert generated.export_file
-assert preparation.directory_export.included_entry_plan_ids == (
-    generated.entry_plan_id,
-)
 assert preparation.ready_for_plan_execution
-
-snapshot_gate = SnapshotGate()
 result = execute_prepared_current_portfolio_build(
     workspace,
     preparation,
     actor=TEACHER,
-    authority_gate=snapshot_gate,
+    authority_gate=SnapshotGate(),
 )
 assert result.attempt_terminal_outcome == "sealed"
-assert result.presentation_disposition == "unsupported"
-assert result.presentation_artifact_id is None
-assert result.presentation_verified is False
+assert result.presentation_disposition == "created"
+assert result.presentation_verified
+assert result.presentation_artifact_id is not None
+assert result.presentation_html_relative_path is not None
+assert result.presentation_pdf_relative_path is not None
 assert result.current_pointer_advanced is False
-assert len(snapshot_gate.requests) == 1
-assert result.export_path.is_dir()
-export_files = tuple(
-    path for path in result.export_path.rglob("*") if path.is_file()
+
+html_path = safe_vitrine_descendant(
+    workspace, result.presentation_html_relative_path
 )
-assert len(export_files) == 1
-assert export_files[0].read_bytes() == REFLECTION_TEXT.encode("utf-8")
+pdf_path = safe_vitrine_descendant(
+    workspace, result.presentation_pdf_relative_path
+)
+html = html_path.read_text(encoding="utf-8")
+assert "Student Portfolio Wheel Acceptance" in html
+assert "Synthetic Student" in html
+assert "Reflection" in html
+assert REFLECTION_TEXT in html
+assert "http://" not in html and "https://" not in html
+assert pdf_path.read_bytes().startswith(b"%PDF-")
+
+verified = verify_portfolio_presentation(
+    workspace,
+    presentation_artifact_id=result.presentation_artifact_id,
+)
+assert verified.presentation_artifact_id == result.presentation_artifact_id
+assert verified.edition_number == result.edition_number
+
+before_repeat = load_current_state(workspace).state_revision
+repeat = build_student_portfolio_presentation(
+    workspace,
+    snapshot_series_id=result.snapshot_series_id,
+    edition_number=result.edition_number,
+    snapshot_export_artifact_id=result.snapshot_export_artifact_id,
+    generated_by=TEACHER,
+)
+assert repeat.disposition == "existing"
+assert repeat.presentation_artifact_id == result.presentation_artifact_id
+assert load_current_state(workspace).state_revision == before_repeat
+
 series = show_snapshot_series(workspace, result.snapshot_series_id)
 assert series.current_edition is None
-assert any(item.edition_number == result.edition_number for item in series.editions)
-
-before_cli_prepare = load_current_state(workspace).state_revision
-output = StringIO()
-status = cli.main(
-    [
-        "portfolio",
-        "build-export",
-        "prepare",
-        portfolio.portfolio_id,
-        "--audience-rule-id",
-        "student_review",
-        "--workspace-root",
-        str(workspace),
-    ],
-    output=output,
-)
-assert status == 0
-assert "Build and Export Current Portfolio" in output.getvalue()
-assert load_current_state(workspace).state_revision == before_cli_prepare
-
-parser = cli.build_parser()
-parsed = parser.parse_args(
-    [
-        "portfolio",
-        "build-export",
-        "execute",
-        portfolio.portfolio_id,
-        "--audience-rule-id",
-        "student_review",
-        "--preparation-fingerprint",
-        preparation.preparation_fingerprint,
-        "--expected-state-revision",
-        str(preparation.observed_state_revision),
-        "--actor-id",
-        TEACHER.actor_id,
-    ]
-)
-assert parsed.portfolio_build_export_command == "execute"
-
-for name in ("scoreform", "quillan", "concord", "portia", "meridian"):
-    assert importlib.util.find_spec(name) is None
 '''
         _run([str(python), "-c", code, str(workspace)], cwd=work, env=env)
         if list(work.iterdir()):
             raise RuntimeError(
-                "Current Portfolio Build/Export wheel smoke left "
-                "working-directory residue"
+                "Issue #101 installed-wheel acceptance left working-directory residue"
             )
 
 
@@ -396,13 +362,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         smoke(args.vitrine_wheel, args.core_wheel)
-        print("PASS isolated Current Portfolio Build/Export wheel smoke test")
+        print("PASS Issue #101 Core 0.6.4 installed-wheel presentation acceptance")
         return 0
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
-        print(
-            f"Current Portfolio Build/Export wheel smoke test failed: {error}",
-            file=sys.stderr,
-        )
+        print(f"Issue #101 installed-wheel smoke failed: {error}", file=sys.stderr)
         return 1
 
 

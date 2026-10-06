@@ -39,11 +39,13 @@ Repository = "https://github.com/Paper-Data-Suite/pds-vitrine"
 
 [project.optional-dependencies]
 paper = [
+    "pypdfium2>=5.13,<6",
     "qrcode[pil]",
     "reportlab",
 ]
 
 dev = [
+    "pypdfium2>=5.13,<6",
     "qrcode[pil]",
     "reportlab",
     "build>=1.2",
@@ -156,6 +158,9 @@ files = [
     "scripts/smoke_test_paper_reflection_end_to_end_wheel.py",
     "scripts/validate_path_output_naming.py",
     "scripts/smoke_test_path_output_naming_wheel.py",
+    "scripts/validate_portfolio_presentation.py",
+    "scripts/validate_student_portfolio_presentation_end_to_end.py",
+    "scripts/smoke_test_portfolio_presentation_wheel.py",
 ]
 
 [[tool.mypy.overrides]]

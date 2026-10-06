@@ -282,7 +282,12 @@ def _profile_definitions() -> tuple[
                     "Student-facing review of explicitly curated improvement "
                     "evidence."
                 ),
-                allowed_content_classes=("student_work", "feedback", "reflection"),
+                allowed_content_classes=(
+                    "student_work",
+                    "feedback",
+                    "reflection",
+                    "portfolio_index",
+                ),
                 prohibited_content_classes=("private_teacher_note",),
                 required_review_classes=(),
                 presentation_class="student_portfolio",

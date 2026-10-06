@@ -140,8 +140,29 @@ def _print_result(result: CurrentPortfolioBuildExportResult, output: TextIO) -> 
         file=output,
     )
     print(f"Export path: {result.export_path}", file=output)
+    presentation_disposition = getattr(
+        result,
+        "presentation_disposition",
+        "unsupported",
+    )
+    print(f"Presentation disposition: {presentation_disposition}", file=output)
+    presentation_id = getattr(result, "presentation_artifact_id", None)
+    if presentation_id is not None:
+        print(f"Presentation Artifact: {presentation_id}", file=output)
+        print(
+            f"Presentation path: {getattr(result, 'presentation_relative_path')}",
+            file=output,
+        )
+        print(
+            f"Portfolio HTML: {getattr(result, 'presentation_html_relative_path')}",
+            file=output,
+        )
+        print(
+            f"Printable PDF: {getattr(result, 'presentation_pdf_relative_path')}",
+            file=output,
+        )
     print("Current Edition pointer advanced: no", file=output)
-    print("Export creation is not disclosure permission or delivery.", file=output)
+    print("Presentation creation is not disclosure permission or delivery.", file=output)
 
 
 def run_current_portfolio_build_export_command(

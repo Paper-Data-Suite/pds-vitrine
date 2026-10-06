@@ -242,15 +242,43 @@ def _acknowledge_obligations(
 
 
 def _print_result(result: CurrentPortfolioBuildExportResult, output: TextIO) -> None:
+    presentation_disposition = getattr(
+        result,
+        "presentation_disposition",
+        "unsupported",
+    )
+    presentation_available = presentation_disposition in {
+        "created",
+        "existing",
+        "recovered",
+    }
+    presentation_lines: tuple[str, ...]
+    if presentation_available:
+        presentation_lines = (
+            "Student Portfolio:",
+            "  Digital Portfolio: available",
+            "  Printable Portfolio: available",
+            "  Student files: available",
+        )
+    else:
+        presentation_lines = (
+            "Student Portfolio:",
+            "  Presentation: not generated for this audience presentation class",
+        )
     _write(
         output,
         "",
         "Build and Export Current Portfolio completed.",
         f"Portfolio Edition: {result.edition_number}",
+        "Edition is sealed and verified.",
+        *presentation_lines,
+        "Technical custody package:",
+        "  preserved and verified",
         f"Export: {teacher_term(result.export_disposition)}",
         f"Export location: {result.export_path}",
         "Current Edition pointer advanced: no",
-        "Export creation is not disclosure permission or delivery.",
+        "The Portfolio has not been delivered or sent.",
+        "Presentation creation is not disclosure permission or delivery.",
     )
 
 
@@ -258,8 +286,7 @@ def _print_result_technical_details(
     result: CurrentPortfolioBuildExportResult,
     output: TextIO,
 ) -> None:
-    _write(
-        output,
+    lines = [
         "",
         "Build Result Technical Details / Provenance",
         "",
@@ -268,9 +295,30 @@ def _print_result_technical_details(
         f"Snapshot Export Artifact ID: {result.snapshot_export_artifact_id}",
         f"Export disposition: {result.export_disposition}",
         f"Export path: {result.export_path}",
-        "Current Edition pointer advanced: no",
-        "Export creation is not disclosure permission or delivery.",
+    ]
+    presentation_disposition = getattr(
+        result,
+        "presentation_disposition",
+        "unsupported",
     )
+    lines.append(f"Presentation disposition: {presentation_disposition}")
+    presentation_id = getattr(result, "presentation_artifact_id", None)
+    if presentation_id is not None:
+        lines.extend(
+            (
+                f"Presentation Artifact ID: {presentation_id}",
+                f"Presentation path: {getattr(result, 'presentation_relative_path')}",
+                f"Portfolio HTML: {getattr(result, 'presentation_html_relative_path')}",
+                f"Printable PDF: {getattr(result, 'presentation_pdf_relative_path')}",
+            )
+        )
+    lines.extend(
+        (
+            "Current Edition pointer advanced: no",
+            "Presentation creation is not disclosure permission or delivery.",
+        )
+    )
+    _write(output, *lines)
 
 
 def _print_execution_error(
@@ -283,9 +331,9 @@ def _print_execution_error(
         f"Stage: {error.stage}",
     )
     if error.underlying_code is not None:
-        _write(output, f"Underlying Snapshot code: {error.underlying_code}")
+        _write(output, f"Underlying code: {error.underlying_code}")
     if error.underlying_stage is not None:
-        _write(output, f"Underlying Snapshot stage: {error.underlying_stage}")
+        _write(output, f"Underlying stage: {error.underlying_stage}")
     if error.snapshot_build_attempt_id is not None:
         _write(output, f"Durable Attempt: {error.snapshot_build_attempt_id}")
     if error.edition_number is not None:
@@ -439,7 +487,9 @@ def run_current_portfolio_build_export_menu(
                 "This will create/reuse canonical Snapshot workflow records, acquire",
                 "only authorized planned bytes, seal an immutable Edition, verify it,",
                 "and create/verify a local directory Export.",
-                "It will not advance the current Edition pointer or deliver the Export.",
+                "When the exact audience policy is student_portfolio, it will then",
+                "build and verify the digital and printable Student Portfolio.",
+                "It will not advance the current Edition pointer or deliver the Portfolio.",
                 "",
                 "T. Technical details / provenance",
             )

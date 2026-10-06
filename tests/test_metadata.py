@@ -34,6 +34,7 @@ def test_only_core_module_operations_entry_point_is_declared() -> None:
     }
     assert project["scripts"] == {"vitrine": "vitrine.cli:main"}
     assert project["optional-dependencies"]["paper"] == [
+        "pypdfium2>=5.13,<6",
         "qrcode[pil]",
         "reportlab",
     ]

@@ -290,7 +290,7 @@ profile = PortfolioProfileRevision(
             allowed_content_classes=("reflection",),
             prohibited_content_classes=("assessment_summary",),
             required_review_classes=(),
-            presentation_class="student_portfolio",
+            presentation_class="showcase",
         ),
     ),
     created_at=NOW,
@@ -629,6 +629,9 @@ result = execute_prepared_current_portfolio_build(
     authority_gate=SnapshotGate(),
 )
 assert result.attempt_terminal_outcome == "sealed"
+assert result.presentation_disposition == "unsupported"
+assert result.presentation_artifact_id is None
+assert result.presentation_verified is False
 assert result.current_pointer_advanced is False
 post_build_revision = load_current_state(workspace).state_revision
 sealed_attention = evaluate_vitrine_attention(

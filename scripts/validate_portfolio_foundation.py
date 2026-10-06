@@ -15,6 +15,21 @@ ROOT = Path(__file__).resolve().parents[1]
 AUDIT = ROOT / "docs/audits/portfolio-foundation-audit.json"
 INVALID_SHA = "8202aeff46a6e3e30e4de07e4adc00ad" + "38cd5348"
 EXPECTED_SCOREFORM = "c2fa06f1a4c33df01f3e0d9c8dd27702d4a06419"
+IGNORED_REPOSITORY_TREE_NAMES = frozenset(
+    {
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        ".nox",
+        ".tox",
+        "build",
+        "dist",
+        "htmlcov",
+        "venv",
+    }
+)
 REQUIRED_HEADINGS = {
     "docs/audits/portfolio-foundation-audit.md": ["# Portfolio Foundation Audit", "## Final verdict"],
     "docs/audits/portfolio-foundation-traceability.md": ["# Portfolio Foundation Traceability", "## Exit-condition traceability"],
@@ -51,10 +66,19 @@ def safe_relative_path(raw: str) -> bool:
     return all(part not in {"", ".", ".."} for part in parts)
 
 
+def ignored_repository_path(path: Path) -> bool:
+    return any(
+        part in IGNORED_REPOSITORY_TREE_NAMES
+        or part == "__pycache__"
+        or part.endswith(".egg-info")
+        for part in path.parts
+    )
+
+
 def validate_json_and_paths() -> int:
     count = 0
     for path in ROOT.rglob("*.json"):
-        if ".git" in path.parts:
+        if ignored_repository_path(path):
             continue
         data = load_json(path)
         count += 1
@@ -73,7 +97,7 @@ def validate_no_links_or_fence_errors() -> tuple[int, int]:
     link_count = 0
     link_re = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
     for path in ROOT.rglob("*.md"):
-        if ".git" in path.parts:
+        if ignored_repository_path(path):
             continue
         md_count += 1
         text = path.read_text(encoding="utf-8")
@@ -171,7 +195,7 @@ def validate_adr_files() -> int:
 
 def validate_baselines() -> None:
     for path in ROOT.rglob("*"):
-        if not path.is_file() or ".git" in path.parts:
+        if not path.is_file() or ignored_repository_path(path):
             continue
         try:
             text = path.read_text(encoding="utf-8")
@@ -194,7 +218,7 @@ def validate_baselines() -> None:
 
 def validate_filesystem() -> None:
     for path in ROOT.rglob("*"):
-        if ".git" in path.parts:
+        if ignored_repository_path(path):
             continue
         if path.is_symlink():
             fail(f"symlink is not allowed: {path.relative_to(ROOT)}")

@@ -83,6 +83,10 @@ from .paper_reflection_authorship import (
     ReflectionAuthorshipConfirmation,
     ReflectionPaperFinalization,
 )
+from .presentations import (
+    PORTFOLIO_PRESENTATION_ARTIFACT_RECORD_TYPE,
+    PortfolioPresentationArtifact,
+)
 from .profiles import (
     PortfolioProfileBinding,
     PortfolioProfileComposition,
@@ -164,6 +168,8 @@ __all__ = [
     "Portfolio",
     "PortfolioCandidate",
     "PortfolioPlacement",
+    "PORTFOLIO_PRESENTATION_ARTIFACT_RECORD_TYPE",
+    "PortfolioPresentationArtifact",
     "PortfolioProfileBinding",
     "PortfolioProfileComposition",
     "PortfolioProfileFamily",

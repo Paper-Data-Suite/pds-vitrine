@@ -13,6 +13,18 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #101 Slice 6 completes student Portfolio Presentation qualification with dedicated validation/development documentation, wheel/sdist guards, repository-gate wiring, representative synthetic Improvement Portfolio end-to-end acceptance, isolated installed-wheel acceptance without producer packages, and authenticated Core 0.6.4 qualification.
+
+- Issue #101 Slice 5 adds bounded presentation staging and create-only publication, deterministic renderer-sensitive Presentation identity, canonical `PortfolioPresentationArtifact` publication, producer-independent package/presentation verification, changed-byte/unexpected-file detection, exact idempotent reuse and durable-package recovery, `portfolio_index`/`student_portfolio` audience gating, Current Portfolio workflow integration, and explicit resume-from-existing-Edition/Export semantics without producer reacquisition or current-pointer advancement.
+
+- Issue #101 Slice 4 adds deterministic binder-ready student Portfolio PDF rendering through the isolated `paper` dependency surface, including exact-source PDF/raster/text rendering, literal Markdown treatment, explicit digital-attachment/reference-only/omitted print dispositions, bounded human PDF naming, PDF renderer/configuration manifest bindings, and package inventory integration while preserving exact source files separately. Permitted omissions remain machine-manifest-only rather than being reintroduced into ordinary HTML/PDF.
+
+- Issue #101 Slice 3 adds deterministic static offline `portfolio.html` rendering inside the same create-only presentation package, with exact Profile-order navigation, safely escaped student-facing text, local image previews, exact-text Reflection presentation, honest reference-only treatment, renderer/digest manifest bindings, and no scripts, external assets, network dependencies, or technical identity leakage into the ordinary HTML surface.
+
+- Issue #101 Slice 2 adds create-only human-readable student file packaging from the exact verified technical Export, exact-byte copying under #111 bounded section/file names, deterministic machine presentation manifest, honest reference-only/omitted entries, sealed Snapshot digest bindings, controlled media extensions, and rollback on ordinary partial-write failure without producer access or premature canonical Presentation Artifact publication.
+
+- Issue #101 Slice 1 adds the immutable student Portfolio Presentation Artifact contract and producer-independent exact read-only preparation over one verified sealed Snapshot Edition/technical Export, preserving reference-only and omitted evidence while consuming the shared #111 bounded custody, section-directory, filename, and collision policy without rendering HTML/PDF yet.
+
 - Issue #100 completes Working Composition v2 requirement-backed content semantics: exact Reflection revision -> Profile requirement -> explicit scope projection, current/historical revision pinning, content-first teacher and CLI presentation, shared Current Portfolio handoff, installed-wheel acceptance, package guards, and v2 contract/validation documentation without turning Reflection into Placement.
 
 - Issue #98 Slice 13 closes guided-menu interaction qualification with the `vitrine_guided_menu_interaction_v1` contract/development/validation documentation, dedicated validator and regression test, package guards, repository-gate integration, Mypy coverage, and isolated installed-wheel interaction smoke.
