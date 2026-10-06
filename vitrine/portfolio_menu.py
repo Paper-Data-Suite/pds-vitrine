@@ -21,6 +21,7 @@ from vitrine.candidate_services import (
     CandidateDiscoveryResult,
     discover_and_evaluate_candidates,
 )
+from vitrine.completed_portfolio_menu import run_completed_portfolio_menu
 from vitrine.curation_services import (
     decide_selection_proposal,
     invalidate_selection,
@@ -245,6 +246,7 @@ def _render_teacher_portfolio_overview(
         f"Active Selections: {view.active_selection_count}",
         f"Working Composition: {composition}",
         f"Current Portfolio Editions: {view.current_edition_count}",
+        f"Completed Portfolio Editions: {getattr(view, 'completed_edition_count', 0)}",
     )
 
 
@@ -490,6 +492,7 @@ def _render_portfolio_technical_details(
         ),
         f"Snapshot Series: {view.snapshot_series_count}",
         f"Current Edition count: {view.current_edition_count}",
+        f"Completed Edition count: {getattr(view, 'completed_edition_count', 0)}",
         "",
         "These identifiers are diagnostic/provenance context. Human-readable",
         "labels are display-only and do not replace canonical authority.",
@@ -1170,7 +1173,8 @@ def _portfolio_context(
             "5. Student Reflection",
             "6. Working Composition",
             "7. Build and Export Current Portfolio",
-            "8. Attention / Next Actions",
+            "8. Completed Portfolio Editions",
+            "9. Attention / Next Actions",
             "H. Help",
             "B. Back",
             "M. Main Menu",
@@ -1263,6 +1267,15 @@ def _portfolio_context(
                 actor=actor,
             )
         elif choice == "8":
+            run_completed_portfolio_menu(
+                root=root,
+                portfolio_id=portfolio_id,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+            )
+            continue
+        elif choice == "9":
             run_attention_menu(
                 output=output,
                 clear_fn=clear_fn,
@@ -1272,7 +1285,7 @@ def _portfolio_context(
             )
             continue
         else:
-            _write(output, "Please choose 1-8, H, B, M, or Q.")
+            _write(output, "Please choose 1-9, H, B, M, or Q.")
         _pause(input_fn)
 
 

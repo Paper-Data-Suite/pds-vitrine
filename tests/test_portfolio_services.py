@@ -134,7 +134,11 @@ def test_candidate_count_is_scoped_to_active_binding(
     monkeypatch.setattr(
         portfolio_services,
         "project_snapshot_state",
-        lambda _records: SimpleNamespace(series=(), current_edition=lambda _id: None),
+        lambda _records: SimpleNamespace(
+            series=(),
+            editions=(),
+            current_edition=lambda _id: None,
+        ),
     )
     monkeypatch.setattr(portfolio_services, "collect_snapshot_state_issues", lambda _: ())
 
