@@ -1,4 +1,4 @@
-"""Validate issue #57 released producer contracts and downstream handoff."""
+"""Validate released producer contracts, including issue #102 current anchors."""
 
 from __future__ import annotations
 
@@ -14,13 +14,13 @@ from vitrine.producer_adapters import build_adapter_registry
 from vitrine.released_producer_contracts import (
     CONCORD_0_3_0_AUDIT,
     CONCORD_LIVE_SUPPORT_KEY,
-    CORE_0_6_3_AUDIT,
+    CORE_0_6_4_AUDIT,
     LIVE_PRODUCER_SUPPORT_KEYS,
-    QUILLAN_0_10_0_AUDIT,
+    QUILLAN_0_10_5_AUDIT,
     QUILLAN_LIVE_SUPPORT_KEY,
     RELEASED_PRODUCER_AUDIT_CONTRACT_VERSION,
     RELEASED_PRODUCER_CONTRACTS,
-    SCOREFORM_0_11_0_AUDIT,
+    SCOREFORM_0_12_0_AUDIT,
     SCOREFORM_LIVE_SUPPORT_KEY,
 )
 from vitrine.released_producer_schema_audit import (
@@ -37,14 +37,14 @@ _REQUIREMENT_NAME = re.compile(r"^[A-Za-z0-9_.-]+")
 
 _EXPECTED_RELEASES: Mapping[str, tuple[str, str, str]] = {
     "scoreform": (
-        "0.11.0",
-        "scoreform-0.11.0-py3-none-any.whl",
-        "8248c6a1cc8254b5f9df46440131d524f80da8662a0dc7864fdc982e501b4c44",
+        "0.12.0",
+        "scoreform-0.12.0-py3-none-any.whl",
+        "84ad10ada72a99bebd5455d8c18a0725f9406f8279e57156f3e424efa5678d20",
     ),
     "quillan": (
-        "0.10.0",
-        "quillan-0.10.0-py3-none-any.whl",
-        "5dd4ed62b8bf39f7e11e6538d1c094929c6428dba81b254fe80d03c60d5114e9",
+        "0.10.5",
+        "quillan-0.10.5-py3-none-any.whl",
+        "031e5a5455c222da6b9a7d8f72e7823dd4c61acde7d90ddce94b49d9bcbe123f",
     ),
     "concord": (
         "0.3.0",
@@ -180,15 +180,15 @@ def _validate_release_artifacts() -> None:
         == "vitrine_released_producer_contract_audit_v1",
         "unexpected released producer audit contract version",
     )
-    _require(CORE_0_6_3_AUDIT.release_version == "0.6.3", "unexpected Core release")
-    _require(CORE_0_6_3_AUDIT.release_tag == "v0.6.3", "unexpected Core tag")
+    _require(CORE_0_6_4_AUDIT.release_version == "0.6.4", "unexpected Core release")
+    _require(CORE_0_6_4_AUDIT.release_tag == "v0.6.4", "unexpected Core tag")
     _require(
-        CORE_0_6_3_AUDIT.wheel_filename == "pds_core-0.6.3-py3-none-any.whl",
+        CORE_0_6_4_AUDIT.wheel_filename == "pds_core-0.6.4-py3-none-any.whl",
         "unexpected Core wheel filename",
     )
     _require(
-        CORE_0_6_3_AUDIT.wheel_sha256
-        == "98d7596ce0eed26e4d56a17bbbbd644db3014259b56a45783a173fe8237af5e5",
+        CORE_0_6_4_AUDIT.wheel_sha256
+        == "48cea9317f2967bdc0f2d4c14349a56677c7c3f8211f0f33978ccb1a1c75859b",
         "unexpected Core wheel digest",
     )
 
@@ -205,12 +205,12 @@ def _validate_release_artifacts() -> None:
         _require(audit.wheel_sha256 == digest, f"{module_id} digest changed")
 
     _require(
-        SCOREFORM_0_11_0_AUDIT.public_reader_module
+        SCOREFORM_0_12_0_AUDIT.public_reader_module
         == "scoreform.academic_result_reader",
         "ScoreForm reader module changed",
     )
     _require(
-        QUILLAN_0_10_0_AUDIT.artifact_reader_module
+        QUILLAN_0_10_5_AUDIT.artifact_reader_module
         == "quillan.academic_result_artifacts",
         "Quillan artifact boundary changed",
     )
@@ -220,11 +220,11 @@ def _validate_release_artifacts() -> None:
         "Concord artifact boundary changed",
     )
     _require(
-        SCOREFORM_0_11_0_AUDIT.artifact_access_mode == "none",
+        SCOREFORM_0_12_0_AUDIT.artifact_access_mode == "none",
         "ScoreForm must not gain artifact access by audit inference",
     )
     _require(
-        QUILLAN_0_10_0_AUDIT.artifact_access_mode == "producer_authorized_bytes",
+        QUILLAN_0_10_5_AUDIT.artifact_access_mode == "producer_authorized_bytes",
         "Quillan artifact access mode changed",
     )
     _require(

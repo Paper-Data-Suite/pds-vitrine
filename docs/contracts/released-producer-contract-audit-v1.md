@@ -3,7 +3,7 @@
 - **Issue:** #57 — Re-audit released producer contracts, verify Vitrine schema sufficiency, and freeze live adapter support keys
 - **Milestone:** v0.3.0 — Consume released producer evidence and guide real improvement/showcase portfolios
 - **Audit contract:** `vitrine_released_producer_contract_audit_v1`
-- **Status:** frozen live-adapter planning baseline
+- **Status:** frozen support-key baseline; release anchors refreshed by #102
 
 ## Purpose
 
@@ -45,16 +45,20 @@ adapter-selection fields.
 
 | Component | Release | Wheel | SHA-256 |
 |---|---|---|---|
-| Core | `0.6.3` | `pds_core-0.6.3-py3-none-any.whl` | `98d7596ce0eed26e4d56a17bbbbd644db3014259b56a45783a173fe8237af5e5` |
-| ScoreForm | `0.11.0` | `scoreform-0.11.0-py3-none-any.whl` | `8248c6a1cc8254b5f9df46440131d524f80da8662a0dc7864fdc982e501b4c44` |
-| Quillan | `0.10.0` | `quillan-0.10.0-py3-none-any.whl` | `5dd4ed62b8bf39f7e11e6538d1c094929c6428dba81b254fe80d03c60d5114e9` |
+| Core | `0.6.4` | `pds_core-0.6.4-py3-none-any.whl` | `48cea9317f2967bdc0f2d4c14349a56677c7c3f8211f0f33978ccb1a1c75859b` |
+| ScoreForm | `0.12.0` | `scoreform-0.12.0-py3-none-any.whl` | `84ad10ada72a99bebd5455d8c18a0725f9406f8279e57156f3e424efa5678d20` |
+| Quillan | `0.10.5` | `quillan-0.10.5-py3-none-any.whl` | `031e5a5455c222da6b9a7d8f72e7823dd4c61acde7d90ddce94b49d9bcbe123f` |
 | Concord | `0.3.0` | `pds_concord-0.3.0-py3-none-any.whl` | `dd827f7059c91c79bd69b6190b3c673d6b3bbc02bc25fa666286bbf5883c5e12` |
+
+Issue #102 refreshed only release provenance. The frozen semantic support keys
+below remain unchanged. The earlier 0.6.3 / 0.11.0 / 0.10.0 wheel identities are
+retained in the machine-readable module as historical audit records.
 
 The audited producer requirements are:
 
 ```text
-ScoreForm 0.11.0: pds-core>=0.6.2,<0.7
-Quillan 0.10.0:   pds-core>=0.6.2,<0.7
+ScoreForm 0.12.0: pds-core>=0.6.4,<0.7
+Quillan 0.10.5:   pds-core>=0.6.2,<0.7
 Concord 0.3.0:    pds-core>=0.6.3,<0.7
 ```
 

@@ -15,7 +15,7 @@ This audit is a prerequisite specification only. It does not activate live adapt
 
 ## Conclusion
 
-The released ScoreForm 0.11.0, Quillan 0.10.0, and Concord 0.3.0 public
+The released ScoreForm 0.12.0, Quillan 0.10.5, and Concord 0.3.0 public
 contracts do **not** require a general Vitrine schema redesign.
 
 The existing Vitrine model is sufficient for:

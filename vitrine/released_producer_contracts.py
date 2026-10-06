@@ -189,6 +189,17 @@ CORE_0_6_3_AUDIT: Final[ReleasedCoreAudit] = ReleasedCoreAudit(
     requires_python=">=3.11",
 )
 
+# Issue #102 refreshes the current release-qualification anchor while retaining
+# the historical 0.6.3 record above for reproducibility of earlier audits.
+CORE_0_6_4_AUDIT: Final[ReleasedCoreAudit] = ReleasedCoreAudit(
+    distribution_name="pds-core",
+    release_version="0.6.4",
+    release_tag="v0.6.4",
+    wheel_filename="pds_core-0.6.4-py3-none-any.whl",
+    wheel_sha256="48cea9317f2967bdc0f2d4c14349a56677c7c3f8211f0f33978ccb1a1c75859b",
+    requires_python=">=3.11",
+)
+
 SCOREFORM_LIVE_SUPPORT_KEY: Final[ProducerAdapterSupportKey] = ProducerAdapterSupportKey(
     producer_module_id="scoreform",
     core_publication_schema_version="1",
@@ -247,6 +258,31 @@ SCOREFORM_0_11_0_AUDIT: Final[ReleasedProducerContractAudit] = (
     )
 )
 
+SCOREFORM_0_12_0_AUDIT: Final[ReleasedProducerContractAudit] = (
+    ReleasedProducerContractAudit(
+        producer_module_id="scoreform",
+        distribution_name="scoreform",
+        release_version="0.12.0",
+        release_tag="v0.12.0",
+        wheel_filename="scoreform-0.12.0-py3-none-any.whl",
+        wheel_sha256="84ad10ada72a99bebd5455d8c18a0725f9406f8279e57156f3e424efa5678d20",
+        requires_python=">=3.11",
+        core_requirement="pds-core>=0.6.4,<0.7",
+        publication_producer_entry_point=(
+            "scoreform=scoreform.pds_publication:get_publication_producer_profile"
+        ),
+        public_reader_module="scoreform.academic_result_reader",
+        public_reader_symbol="read_academic_result_manifest",
+        advertised_capabilities=("points", "question_evidence", "multiple_attempts"),
+        support_key=SCOREFORM_LIVE_SUPPORT_KEY,
+        artifact_reader_module=None,
+        artifact_request_kinds=(),
+        artifact_representation_kinds=(),
+        artifact_authorization_outcomes=(),
+        artifact_access_mode="none",
+    )
+)
+
 QUILLAN_0_10_0_AUDIT: Final[ReleasedProducerContractAudit] = (
     ReleasedProducerContractAudit(
         producer_module_id="quillan",
@@ -255,6 +291,31 @@ QUILLAN_0_10_0_AUDIT: Final[ReleasedProducerContractAudit] = (
         release_tag="v0.10.0",
         wheel_filename="quillan-0.10.0-py3-none-any.whl",
         wheel_sha256="5dd4ed62b8bf39f7e11e6538d1c094929c6428dba81b254fe80d03c60d5114e9",
+        requires_python=">=3.11",
+        core_requirement="pds-core>=0.6.2,<0.7",
+        publication_producer_entry_point=(
+            "quillan=quillan.pds_publication:get_publication_producer_profile"
+        ),
+        public_reader_module="quillan.academic_result_reader",
+        public_reader_symbol="read_academic_result_manifest",
+        advertised_capabilities=("standards_ratings",),
+        support_key=QUILLAN_LIVE_SUPPORT_KEY,
+        artifact_reader_module="quillan.academic_result_artifacts",
+        artifact_request_kinds=("student_work", "feedback_pdf", "feedback_markdown"),
+        artifact_representation_kinds=(),
+        artifact_authorization_outcomes=("allowed", "denied", "unresolved"),
+        artifact_access_mode="producer_authorized_bytes",
+    )
+)
+
+QUILLAN_0_10_5_AUDIT: Final[ReleasedProducerContractAudit] = (
+    ReleasedProducerContractAudit(
+        producer_module_id="quillan",
+        distribution_name="quillan",
+        release_version="0.10.5",
+        release_tag="v0.10.5",
+        wheel_filename="quillan-0.10.5-py3-none-any.whl",
+        wheel_sha256="031e5a5455c222da6b9a7d8f72e7823dd4c61acde7d90ddce94b49d9bcbe123f",
         requires_python=">=3.11",
         core_requirement="pds-core>=0.6.2,<0.7",
         publication_producer_entry_point=(
@@ -304,8 +365,8 @@ CONCORD_0_3_0_AUDIT: Final[ReleasedProducerContractAudit] = (
 RELEASED_PRODUCER_CONTRACTS: Final[tuple[ReleasedProducerContractAudit, ...]] = tuple(
     sorted(
         (
-            SCOREFORM_0_11_0_AUDIT,
-            QUILLAN_0_10_0_AUDIT,
+            SCOREFORM_0_12_0_AUDIT,
+            QUILLAN_0_10_5_AUDIT,
             CONCORD_0_3_0_AUDIT,
         ),
         key=lambda item: item.producer_module_id,
@@ -327,8 +388,10 @@ __all__ = [
     "CONCORD_0_3_0_AUDIT",
     "CONCORD_LIVE_SUPPORT_KEY",
     "CORE_0_6_3_AUDIT",
+    "CORE_0_6_4_AUDIT",
     "LIVE_PRODUCER_SUPPORT_KEYS",
     "QUILLAN_0_10_0_AUDIT",
+    "QUILLAN_0_10_5_AUDIT",
     "QUILLAN_LIVE_SUPPORT_KEY",
     "RELEASED_PRODUCER_AUDIT_CONTRACT_VERSION",
     "RELEASED_PRODUCER_CONTRACT_BY_MODULE",
@@ -336,5 +399,6 @@ __all__ = [
     "ReleasedCoreAudit",
     "ReleasedProducerContractAudit",
     "SCOREFORM_0_11_0_AUDIT",
+    "SCOREFORM_0_12_0_AUDIT",
     "SCOREFORM_LIVE_SUPPORT_KEY",
 ]

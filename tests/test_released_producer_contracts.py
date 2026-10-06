@@ -18,12 +18,15 @@ from vitrine.released_producer_contracts import (
     CONCORD_0_3_0_AUDIT,
     CONCORD_LIVE_SUPPORT_KEY,
     CORE_0_6_3_AUDIT,
+    CORE_0_6_4_AUDIT,
     LIVE_PRODUCER_SUPPORT_KEYS,
     QUILLAN_0_10_0_AUDIT,
+    QUILLAN_0_10_5_AUDIT,
     QUILLAN_LIVE_SUPPORT_KEY,
     RELEASED_PRODUCER_CONTRACT_BY_MODULE,
     RELEASED_PRODUCER_CONTRACTS,
     SCOREFORM_0_11_0_AUDIT,
+    SCOREFORM_0_12_0_AUDIT,
     SCOREFORM_LIVE_SUPPORT_KEY,
 )
 
@@ -47,7 +50,7 @@ def _request(
     )
 
 
-def test_release_audit_pins_exact_phase_1_wheels() -> None:
+def test_release_audit_preserves_exact_phase_1_wheels() -> None:
     assert CORE_0_6_3_AUDIT.wheel_filename == "pds_core-0.6.3-py3-none-any.whl"
     assert (
         CORE_0_6_3_AUDIT.wheel_sha256
@@ -70,6 +73,28 @@ def test_release_audit_pins_exact_phase_1_wheels() -> None:
     )
 
 
+def test_issue102_release_audit_pins_current_compatible_wheels() -> None:
+    assert CORE_0_6_4_AUDIT.wheel_filename == "pds_core-0.6.4-py3-none-any.whl"
+    assert (
+        CORE_0_6_4_AUDIT.wheel_sha256
+        == "48cea9317f2967bdc0f2d4c14349a56677c7c3f8211f0f33978ccb1a1c75859b"
+    )
+    assert SCOREFORM_0_12_0_AUDIT.wheel_filename == (
+        "scoreform-0.12.0-py3-none-any.whl"
+    )
+    assert (
+        SCOREFORM_0_12_0_AUDIT.wheel_sha256
+        == "84ad10ada72a99bebd5455d8c18a0725f9406f8279e57156f3e424efa5678d20"
+    )
+    assert SCOREFORM_0_12_0_AUDIT.core_requirement == "pds-core>=0.6.4,<0.7"
+    assert QUILLAN_0_10_5_AUDIT.wheel_filename == "quillan-0.10.5-py3-none-any.whl"
+    assert (
+        QUILLAN_0_10_5_AUDIT.wheel_sha256
+        == "031e5a5455c222da6b9a7d8f72e7823dd4c61acde7d90ddce94b49d9bcbe123f"
+    )
+    assert QUILLAN_0_10_5_AUDIT.core_requirement == "pds-core>=0.6.2,<0.7"
+
+
 def test_release_audit_catalog_is_deterministic_and_complete() -> None:
     assert [item.producer_module_id for item in RELEASED_PRODUCER_CONTRACTS] == [
         "concord",
@@ -81,6 +106,14 @@ def test_release_audit_catalog_is_deterministic_and_complete() -> None:
         "quillan",
         "concord",
     }
+    assert [
+        (item.producer_module_id, item.release_version)
+        for item in RELEASED_PRODUCER_CONTRACTS
+    ] == [
+        ("concord", "0.3.0"),
+        ("quillan", "0.10.5"),
+        ("scoreform", "0.12.0"),
+    ]
     assert LIVE_PRODUCER_SUPPORT_KEYS == tuple(
         item.support_key for item in RELEASED_PRODUCER_CONTRACTS
     )
@@ -210,12 +243,12 @@ def test_audited_contract_catalog_activates_only_implemented_live_adapters() -> 
 
 
 def test_artifact_access_is_separate_from_manifest_support() -> None:
-    assert SCOREFORM_0_11_0_AUDIT.artifact_access_mode == "none"
-    assert SCOREFORM_0_11_0_AUDIT.artifact_reader_module is None
+    assert SCOREFORM_0_12_0_AUDIT.artifact_access_mode == "none"
+    assert SCOREFORM_0_12_0_AUDIT.artifact_reader_module is None
 
-    assert QUILLAN_0_10_0_AUDIT.artifact_access_mode == "producer_authorized_bytes"
-    assert QUILLAN_0_10_0_AUDIT.artifact_reader_module == "quillan.academic_result_artifacts"
-    assert QUILLAN_0_10_0_AUDIT.artifact_authorization_outcomes == (
+    assert QUILLAN_0_10_5_AUDIT.artifact_access_mode == "producer_authorized_bytes"
+    assert QUILLAN_0_10_5_AUDIT.artifact_reader_module == "quillan.academic_result_artifacts"
+    assert QUILLAN_0_10_5_AUDIT.artifact_authorization_outcomes == (
         "allowed",
         "denied",
         "unresolved",
@@ -229,8 +262,8 @@ def test_artifact_access_is_separate_from_manifest_support() -> None:
 
 
 def test_release_audit_records_exact_public_reader_boundaries() -> None:
-    assert SCOREFORM_0_11_0_AUDIT.public_reader_module == "scoreform.academic_result_reader"
-    assert QUILLAN_0_10_0_AUDIT.public_reader_module == "quillan.academic_result_reader"
+    assert SCOREFORM_0_12_0_AUDIT.public_reader_module == "scoreform.academic_result_reader"
+    assert QUILLAN_0_10_5_AUDIT.public_reader_module == "quillan.academic_result_reader"
     assert CONCORD_0_3_0_AUDIT.public_reader_module == "concord.academic_result_reader"
     assert {
         audit.public_reader_symbol for audit in RELEASED_PRODUCER_CONTRACTS
@@ -239,4 +272,4 @@ def test_release_audit_records_exact_public_reader_boundaries() -> None:
 
 def test_audit_dataclass_rejects_invalid_hash_on_replacement() -> None:
     with pytest.raises(ValueError, match="SHA-256"):
-        replace(SCOREFORM_0_11_0_AUDIT, wheel_sha256="not-a-digest")
+        replace(SCOREFORM_0_12_0_AUDIT, wheel_sha256="not-a-digest")
