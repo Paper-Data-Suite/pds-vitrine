@@ -44,6 +44,8 @@ from vitrine.portfolio_services import show_portfolio
 from vitrine.storage import VitrineStorageError, load_current_records_with_state
 from vitrine.teacher_presentation import teacher_term
 
+BUILD_UPDATED_EDITION = "build_updated_edition"
+
 
 def _write(output: TextIO, *lines: str) -> None:
     for line in lines:
@@ -149,6 +151,7 @@ def _edition_actions(
         )
     actions.extend(
         (
+            (BUILD_UPDATED_EDITION, "Build Updated Edition"),
             ("artifact_history", "Export / Presentation History"),
             ("technical_details", "Technical Details / Provenance"),
         )
@@ -691,7 +694,7 @@ def _edition_workflow(
     input_fn: InputFunction,
     output: TextIO,
     clear_fn: ClearFunction,
-) -> None:
+) -> str | None:
     while True:
         history = _load_history(root, portfolio_id)
         exact = _exact_edition(
@@ -768,6 +771,8 @@ def _edition_workflow(
                 output=output,
                 clear_fn=clear_fn,
             )
+        elif action == BUILD_UPDATED_EDITION:
+            return BUILD_UPDATED_EDITION
         else:
             raise AssertionError(f"unsupported completed Portfolio action: {action}")
 
@@ -780,8 +785,8 @@ def run_completed_portfolio_menu(
     output: TextIO,
     clear_fn: ClearFunction,
     actor: ActorAttribution | None = None,
-) -> None:
-    """Browse canonical completed Editions in the selected Portfolio context."""
+) -> str | None:
+    """Browse completed Editions and return only explicit parent routing signals."""
     while True:
         try:
             history = _load_history(root, portfolio_id)
@@ -804,7 +809,7 @@ def run_completed_portfolio_menu(
         if choice.isdecimal() and 1 <= int(choice) <= len(selections):
             series_id, number = selections[int(choice) - 1]
             try:
-                _edition_workflow(
+                outcome = _edition_workflow(
                     root=root,
                     portfolio_id=portfolio_id,
                     snapshot_series_id=series_id,
@@ -815,6 +820,8 @@ def run_completed_portfolio_menu(
                     output=output,
                     clear_fn=clear_fn,
                 )
+                if outcome == BUILD_UPDATED_EDITION:
+                    return BUILD_UPDATED_EDITION
             except (CompletedPortfolioHistoryError, VitrineStorageError) as error:
                 clear_fn()
                 _write(
@@ -830,4 +837,4 @@ def run_completed_portfolio_menu(
         _pause(input_fn)
 
 
-__all__ = ["run_completed_portfolio_menu"]
+__all__ = ["BUILD_UPDATED_EDITION", "run_completed_portfolio_menu"]

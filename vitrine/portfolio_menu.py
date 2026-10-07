@@ -21,7 +21,10 @@ from vitrine.candidate_services import (
     CandidateDiscoveryResult,
     discover_and_evaluate_candidates,
 )
-from vitrine.completed_portfolio_menu import run_completed_portfolio_menu
+from vitrine.completed_portfolio_menu import (
+    BUILD_UPDATED_EDITION,
+    run_completed_portfolio_menu,
+)
 from vitrine.curation_services import (
     decide_selection_proposal,
     invalidate_selection,
@@ -1267,7 +1270,7 @@ def _portfolio_context(
                 actor=actor,
             )
         elif choice == "8":
-            run_completed_portfolio_menu(
+            completed_action = run_completed_portfolio_menu(
                 root=root,
                 portfolio_id=portfolio_id,
                 input_fn=input_fn,
@@ -1275,6 +1278,16 @@ def _portfolio_context(
                 clear_fn=clear_fn,
                 actor=actor,
             )
+            if completed_action == BUILD_UPDATED_EDITION:
+                run_current_portfolio_build_export_menu(
+                    root=root,
+                    portfolio_id=portfolio_id,
+                    input_fn=input_fn,
+                    output=output,
+                    clear_fn=clear_fn,
+                    dependencies=dependencies,
+                    actor=actor,
+                )
             continue
         elif choice == "9":
             run_attention_menu(

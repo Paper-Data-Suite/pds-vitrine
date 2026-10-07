@@ -99,6 +99,7 @@ def test_historical_student_presentation_action_is_offered_without_ids() -> None
         "open_technical_export",
         "verify_portfolio",
         "create_student_presentation",
+        "build_updated_edition",
         "artifact_history",
         "technical_details",
     )

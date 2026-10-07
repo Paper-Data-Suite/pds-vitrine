@@ -224,7 +224,7 @@ def test_selected_edition_reloads_canonical_history_before_each_detail_action(
     menu.run_completed_portfolio_menu(
         root=tmp_path,
         portfolio_id="portfolio_private_111",
-        input_fn=_inputs("2", "6", "", "7", "", "B", "B"),
+        input_fn=_inputs("2", "7", "", "8", "", "B", "B"),
         output=output,
         clear_fn=lambda: None,
     )

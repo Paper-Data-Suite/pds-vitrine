@@ -128,6 +128,7 @@ def test_detail_offers_safe_local_actions_before_history_and_provenance() -> Non
         "open_portfolio_folder",
         "open_technical_export",
         "verify_portfolio",
+        "build_updated_edition",
         "artifact_history",
         "technical_details",
     )
@@ -137,8 +138,9 @@ def test_detail_offers_safe_local_actions_before_history_and_provenance() -> Non
     assert "3. Open Portfolio Folder" in rendered
     assert "4. Open Technical Export Folder" in rendered
     assert "5. Verify Portfolio Now" in rendered
-    assert "6. Export / Presentation History" in rendered
-    assert "7. Technical Details / Provenance" in rendered
+    assert "6. Build Updated Edition" in rendered
+    assert "7. Export / Presentation History" in rendered
+    assert "8. Technical Details / Provenance" in rendered
     assert "presentation_secret_1" not in rendered
     assert "export_1" not in rendered
 
