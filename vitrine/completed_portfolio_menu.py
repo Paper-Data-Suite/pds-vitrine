@@ -1,8 +1,9 @@
 """Read-only teacher navigation over exact completed Portfolio history.
 
-Issue #102 Slice 3: canonical browsing plus explicit verified local-use actions.
-This module never discovers history from custody, repairs output, performs silent
-printing, claims delivery, rebuilds, or advances the Current Pointer.
+Issue #102 Slice 4: canonical browsing, verified local use, explicit verification,
+and exact historical student Presentation handoff. This module never discovers
+history from custody, repairs output, claims delivery, rereads producers, or
+advances the Current Pointer.
 """
 
 from __future__ import annotations
@@ -23,7 +24,15 @@ from vitrine.completed_portfolio import (
     CompletedPortfolioSeries,
     project_completed_portfolio_history,
 )
+from vitrine.completed_portfolio_actions import (
+    CompletedPortfolioActionError,
+    create_historical_student_portfolio_presentation,
+    historical_student_presentation_available,
+    verify_completed_portfolio_edition,
+)
+from vitrine.menu_interactions import confirm_exact_phrase
 from vitrine.menu_types import ClearFunction, InputFunction
+from vitrine.models import ActorAttribution
 from vitrine.portfolio_output_opening import (
     PortfolioOutputOpenError,
     open_printable_student_portfolio,
@@ -119,6 +128,7 @@ def _student_presentations(
 
 
 def _edition_actions(
+    series: CompletedPortfolioSeries,
     edition: CompletedPortfolioEdition,
 ) -> tuple[tuple[str, str], ...]:
     actions: list[tuple[str, str]] = []
@@ -132,6 +142,11 @@ def _edition_actions(
         )
     if edition.exports:
         actions.append(("open_technical_export", "Open Technical Export Folder"))
+    actions.append(("verify_portfolio", "Verify Portfolio Now"))
+    if historical_student_presentation_available(series, edition):
+        actions.append(
+            ("create_student_presentation", "Create Student Portfolio Presentation")
+        )
     actions.extend(
         (
             ("artifact_history", "Export / Presentation History"),
@@ -191,10 +206,18 @@ def _render_edition_detail(
     output: TextIO,
     *,
     edition: CompletedPortfolioEdition,
+    series: CompletedPortfolioSeries,
     series_label: str,
     portfolio_label: str,
 ) -> tuple[str, ...]:
-    actions = _edition_actions(edition)
+    actions = _edition_actions(series, edition)
+    student_presentations = _student_presentations(edition)
+    if student_presentations:
+        student_status = "recorded (verify before trusted use)"
+    elif series.presentation_class == "student_portfolio":
+        student_status = "not created yet"
+    else:
+        student_status = "not available for this presentation class"
     _write(
         output,
         "Completed Portfolio Edition",
@@ -204,10 +227,11 @@ def _render_edition_detail(
         f"Edition {edition.edition_number}",
         f"Built: {_date(edition.created_at)}",
         f"Current: {'yes' if edition.is_current else 'no'}",
+        f"Student Portfolio: {student_status}",
         f"Technical Exports: {len(edition.exports)} recorded",
         f"Portfolio Presentations: {len(edition.presentations)} recorded",
         "",
-        "Local-use actions verify the exact saved artifact before opening it.",
+        "Recorded-at-creation status is not the same as verification now.",
         "",
     )
     for index, (_key, label) in enumerate(actions, 1):
@@ -494,6 +518,168 @@ def _run_export_open_action(
 
 
 
+def _actor(input_fn: InputFunction) -> ActorAttribution | None:
+    actor_id = _read(input_fn, "Teacher/actor ID (B to cancel): ")
+    navigation = _navigation(actor_id)
+    if navigation is NavigationChoice.BACK or not actor_id:
+        return None
+    return ActorAttribution(
+        actor_kind="authorized_adult",
+        actor_id=actor_id,
+        owning_system="local",
+        role_snapshot="teacher",
+    )
+
+
+def _render_verification_problem(
+    output: TextIO,
+    error: CompletedPortfolioActionError,
+) -> None:
+    if error.code == "completed_portfolio_action.verification_failed":
+        headline = "This Portfolio no longer matches its verified saved state."
+    else:
+        headline = "This Portfolio could not be verified from canonical saved state."
+    _write(
+        output,
+        headline,
+        "",
+        "Nothing was changed automatically.",
+        "Open Technical Details / Provenance for diagnostics.",
+    )
+
+
+def _run_verify_action(
+    *,
+    root: Path,
+    portfolio_id: str,
+    edition: CompletedPortfolioEdition,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> None:
+    try:
+        result = verify_completed_portfolio_edition(
+            root,
+            portfolio_id=portfolio_id,
+            snapshot_series_id=edition.snapshot_series_id,
+            edition_number=edition.edition_number,
+        )
+    except CompletedPortfolioActionError as error:
+        clear_fn()
+        _render_verification_problem(output, error)
+        _pause(input_fn)
+        return
+    clear_fn()
+    export_status = (
+        "none recorded"
+        if result.verified_export_count == 0
+        else (
+            "verified"
+            if result.verified_export_count == 1
+            else f"{result.verified_export_count} verified"
+        )
+    )
+    presentation_status = (
+        "none recorded"
+        if result.verified_student_presentation_count == 0
+        else (
+            "verified"
+            if result.verified_student_presentation_count == 1
+            else f"{result.verified_student_presentation_count} verified"
+        )
+    )
+    _write(
+        output,
+        "Portfolio verification passed.",
+        "",
+        "Edition: verified",
+        f"Technical Export: {export_status}",
+        f"Student Portfolio: {presentation_status}",
+        "",
+        "Verification was read-only. No current-pointer state was changed.",
+    )
+    _pause(input_fn)
+
+
+def _run_create_presentation_action(
+    *,
+    root: Path,
+    portfolio_id: str,
+    edition: CompletedPortfolioEdition,
+    actor: ActorAttribution | None,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> None:
+    export = _choose_export(
+        edition=edition,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+    )
+    if export is None:
+        return
+    generated_by = actor or _actor(input_fn)
+    if generated_by is None:
+        return
+
+    def render_review() -> None:
+        _write(
+            output,
+            "Create Student Portfolio Presentation",
+            "",
+            f"Edition {edition.edition_number}",
+            f"Technical Export: generated {_date(export.generated_at)}",
+            "",
+            "This uses the exact sealed Edition and technical Export already in Vitrine.",
+            "Current Working Composition and producer state will not be reread.",
+            "The historical Edition and Current Pointer will not be changed.",
+        )
+
+    if not confirm_exact_phrase(
+        expected_phrase="CREATE PRESENTATION",
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+        render_review=render_review,
+    ):
+        return
+
+    try:
+        create_historical_student_portfolio_presentation(
+            root,
+            portfolio_id=portfolio_id,
+            snapshot_series_id=edition.snapshot_series_id,
+            edition_number=edition.edition_number,
+            snapshot_export_artifact_id=export.snapshot_export_artifact_id,
+            generated_by=generated_by,
+        )
+    except CompletedPortfolioActionError as error:
+        clear_fn()
+        if error.code == "completed_portfolio_action.verification_failed":
+            _render_verification_problem(output, error)
+        else:
+            _write(
+                output,
+                "Student Portfolio Presentation creation did not complete.",
+                "",
+                "The historical Edition and Current Pointer were not changed.",
+                "Open Technical Details / Provenance for diagnostics.",
+            )
+        _pause(input_fn)
+        return
+
+    clear_fn()
+    _write(
+        output,
+        "Student Portfolio Presentation is available and verified.",
+        "",
+        "It was created from the exact historical Edition and technical Export.",
+        "The current Working Composition was not reread.",
+    )
+    _pause(input_fn)
+
+
 def _edition_workflow(
     *,
     root: Path,
@@ -501,12 +687,12 @@ def _edition_workflow(
     snapshot_series_id: str,
     edition_number: int,
     portfolio_label: str,
+    actor: ActorAttribution | None,
     input_fn: InputFunction,
     output: TextIO,
     clear_fn: ClearFunction,
 ) -> None:
     while True:
-        # Reload canonical state instead of relying on an earlier selection index.
         history = _load_history(root, portfolio_id)
         exact = _exact_edition(
             history,
@@ -522,6 +708,7 @@ def _edition_workflow(
         actions = _render_edition_detail(
             output,
             edition=edition,
+            series=series,
             series_label=_labels(history)[snapshot_series_id],
             portfolio_label=portfolio_label,
         )
@@ -562,6 +749,25 @@ def _edition_workflow(
                 output=output,
                 clear_fn=clear_fn,
             )
+        elif action == "verify_portfolio":
+            _run_verify_action(
+                root=root,
+                portfolio_id=portfolio_id,
+                edition=edition,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+            )
+        elif action == "create_student_presentation":
+            _run_create_presentation_action(
+                root=root,
+                portfolio_id=portfolio_id,
+                edition=edition,
+                actor=actor,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+            )
         else:
             raise AssertionError(f"unsupported completed Portfolio action: {action}")
 
@@ -573,6 +779,7 @@ def run_completed_portfolio_menu(
     input_fn: InputFunction,
     output: TextIO,
     clear_fn: ClearFunction,
+    actor: ActorAttribution | None = None,
 ) -> None:
     """Browse canonical completed Editions in the selected Portfolio context."""
     while True:
@@ -603,6 +810,7 @@ def run_completed_portfolio_menu(
                     snapshot_series_id=series_id,
                     edition_number=number,
                     portfolio_label=label,
+                    actor=actor,
                     input_fn=input_fn,
                     output=output,
                     clear_fn=clear_fn,

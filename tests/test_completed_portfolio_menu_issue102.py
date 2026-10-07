@@ -168,10 +168,14 @@ def test_colliding_human_labels_are_disambiguated_without_opaque_ids() -> None:
 
 
 def test_edition_details_offer_safe_local_actions_but_defer_explicit_verify() -> None:
-    edition = _history().series[0].editions[1]
+    series = _history().series[0]
+    edition = series.editions[1]
     output = io.StringIO()
     menu._render_edition_detail(
-        output, edition=edition, series_label="Student Review",
+        output,
+        edition=edition,
+        series=series,
+        series_label="Student Review",
         portfolio_label="Jordan — Improvement Portfolio",
     )
     text = output.getvalue()
@@ -182,7 +186,7 @@ def test_edition_details_offer_safe_local_actions_but_defer_explicit_verify() ->
     assert "Print Portfolio" in text
     assert "Open Portfolio Folder" in text
     assert "Open Technical Export Folder" in text
-    assert "Verify Portfolio Now" not in text
+    assert "Verify Portfolio Now" in text
     assert "presentation_private_456" not in text
 
 
@@ -220,7 +224,7 @@ def test_selected_edition_reloads_canonical_history_before_each_detail_action(
     menu.run_completed_portfolio_menu(
         root=tmp_path,
         portfolio_id="portfolio_private_111",
-        input_fn=_inputs("2", "5", "", "6", "", "B", "B"),
+        input_fn=_inputs("2", "6", "", "7", "", "B", "B"),
         output=output,
         clear_fn=lambda: None,
     )
@@ -309,6 +313,7 @@ def test_portfolio_context_routes_completed_history_without_opaque_input(
     assert len(calls) == 1
     assert calls[0]["portfolio_id"] == "portfolio_private_111"
     assert calls[0]["root"] == tmp_path
+    assert calls[0]["actor"] is None
     assert "8. Completed Portfolio Editions" in output.getvalue()
     assert "9. Attention / Next Actions" in output.getvalue()
 

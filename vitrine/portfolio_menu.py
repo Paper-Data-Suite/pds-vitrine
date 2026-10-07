@@ -1273,6 +1273,7 @@ def _portfolio_context(
                 input_fn=input_fn,
                 output=output,
                 clear_fn=clear_fn,
+                actor=actor,
             )
             continue
         elif choice == "9":

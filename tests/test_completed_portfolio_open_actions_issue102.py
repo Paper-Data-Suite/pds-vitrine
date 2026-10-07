@@ -110,12 +110,14 @@ def _install_menu_context(
 
 
 def test_detail_offers_safe_local_actions_before_history_and_provenance() -> None:
-    edition = _history().series[0].editions[0]
+    series = _history().series[0]
+    edition = series.editions[0]
     output = io.StringIO()
 
     actions = menu._render_edition_detail(
         output,
         edition=edition,
+        series=series,
         series_label="Student Review",
         portfolio_label="Jordan — Improvement Portfolio",
     )
@@ -125,6 +127,7 @@ def test_detail_offers_safe_local_actions_before_history_and_provenance() -> Non
         "print_portfolio",
         "open_portfolio_folder",
         "open_technical_export",
+        "verify_portfolio",
         "artifact_history",
         "technical_details",
     )
@@ -133,9 +136,9 @@ def test_detail_offers_safe_local_actions_before_history_and_provenance() -> Non
     assert "2. Print Portfolio" in rendered
     assert "3. Open Portfolio Folder" in rendered
     assert "4. Open Technical Export Folder" in rendered
-    assert "5. Export / Presentation History" in rendered
-    assert "6. Technical Details / Provenance" in rendered
-    assert "Verify Portfolio Now" not in rendered
+    assert "5. Verify Portfolio Now" in rendered
+    assert "6. Export / Presentation History" in rendered
+    assert "7. Technical Details / Provenance" in rendered
     assert "presentation_secret_1" not in rendered
     assert "export_1" not in rendered
 
