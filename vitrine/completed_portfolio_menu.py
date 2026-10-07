@@ -1,8 +1,8 @@
 """Read-only teacher navigation over exact completed Portfolio history.
 
-Issue #102 Slice 2: canonical Edition, Export, and Presentation browsing only.
-This module does not inspect output custody, verify bytes, open local paths,
-print, rebuild, or advance the Current Pointer.
+Issue #102 Slice 3: canonical browsing plus explicit verified local-use actions.
+This module never discovers history from custody, repairs output, performs silent
+printing, claims delivery, rebuilds, or advances the Current Pointer.
 """
 
 from __future__ import annotations
@@ -16,12 +16,21 @@ from pds_core.menu_navigation import NavigationChoice, parse_navigation_choice
 
 from vitrine.completed_portfolio import (
     CompletedPortfolioEdition,
+    CompletedPortfolioExport,
     CompletedPortfolioHistory,
     CompletedPortfolioHistoryError,
+    CompletedPortfolioPresentation,
     CompletedPortfolioSeries,
     project_completed_portfolio_history,
 )
 from vitrine.menu_types import ClearFunction, InputFunction
+from vitrine.portfolio_output_opening import (
+    PortfolioOutputOpenError,
+    open_printable_student_portfolio,
+    open_student_portfolio_folder,
+    open_student_portfolio_html,
+    open_technical_export_folder,
+)
 from vitrine.portfolio_services import show_portfolio
 from vitrine.storage import VitrineStorageError, load_current_records_with_state
 from vitrine.teacher_presentation import teacher_term
@@ -99,6 +108,39 @@ def _portfolio_label(root: Path, portfolio_id: str) -> str:
     return title
 
 
+def _student_presentations(
+    edition: CompletedPortfolioEdition,
+) -> tuple[CompletedPortfolioPresentation, ...]:
+    return tuple(
+        item
+        for item in edition.presentations
+        if item.presentation_class == "student_portfolio"
+    )
+
+
+def _edition_actions(
+    edition: CompletedPortfolioEdition,
+) -> tuple[tuple[str, str], ...]:
+    actions: list[tuple[str, str]] = []
+    if _student_presentations(edition):
+        actions.extend(
+            (
+                ("view_student_portfolio", "View Student Portfolio"),
+                ("print_portfolio", "Print Portfolio"),
+                ("open_portfolio_folder", "Open Portfolio Folder"),
+            )
+        )
+    if edition.exports:
+        actions.append(("open_technical_export", "Open Technical Export Folder"))
+    actions.extend(
+        (
+            ("artifact_history", "Export / Presentation History"),
+            ("technical_details", "Technical Details / Provenance"),
+        )
+    )
+    return tuple(actions)
+
+
 def _render_list(
     output: TextIO,
     history: CompletedPortfolioHistory,
@@ -144,13 +186,15 @@ def _render_list(
     return tuple(selections)
 
 
+
 def _render_edition_detail(
     output: TextIO,
     *,
     edition: CompletedPortfolioEdition,
     series_label: str,
     portfolio_label: str,
-) -> None:
+) -> tuple[str, ...]:
+    actions = _edition_actions(edition)
     _write(
         output,
         "Completed Portfolio Edition",
@@ -163,14 +207,13 @@ def _render_edition_detail(
         f"Technical Exports: {len(edition.exports)} recorded",
         f"Portfolio Presentations: {len(edition.presentations)} recorded",
         "",
-        "Recorded artifacts are not automatically verified or available on disk.",
+        "Local-use actions verify the exact saved artifact before opening it.",
         "",
-        "1. Export / Presentation History",
-        "2. Technical Details / Provenance",
-        "B. Back",
-        "M. Main Menu",
-        "Q. Quit",
     )
+    for index, (_key, label) in enumerate(actions, 1):
+        _write(output, f"{index}. {label}")
+    _write(output, "B. Back", "M. Main Menu", "Q. Quit")
+    return tuple(key for key, _label in actions)
 
 
 def _render_artifact_history(
@@ -281,6 +324,176 @@ def _exact_edition(
     return None
 
 
+def _choose_presentation(
+    *,
+    edition: CompletedPortfolioEdition,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> CompletedPortfolioPresentation | None:
+    values = _student_presentations(edition)
+    if not values:
+        return None
+    if len(values) == 1:
+        return values[0]
+    clear_fn()
+    _write(output, "Choose Student Portfolio", "")
+    for index, item in enumerate(values, 1):
+        _write(output, f"{index}. Generated {_date(item.generated_at)}")
+    _write(output, "B. Back", "M. Main Menu", "Q. Quit")
+    raw = _read(input_fn, "Student Portfolio number: ")
+    navigation = _navigation(raw)
+    if navigation is not None:
+        return None
+    if raw.isdecimal() and 1 <= int(raw) <= len(values):
+        return values[int(raw) - 1]
+    _write(output, "That Student Portfolio number is not available.")
+    _pause(input_fn)
+    return None
+
+
+def _choose_export(
+    *,
+    edition: CompletedPortfolioEdition,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> CompletedPortfolioExport | None:
+    values = edition.exports
+    if not values:
+        return None
+    if len(values) == 1:
+        return values[0]
+    clear_fn()
+    _write(output, "Choose Technical Export", "")
+    for index, item in enumerate(values, 1):
+        _write(
+            output,
+            f"{index}. {teacher_term(item.export_format)} "
+            f"— generated {_date(item.generated_at)}",
+        )
+    _write(output, "B. Back", "M. Main Menu", "Q. Quit")
+    raw = _read(input_fn, "Technical Export number: ")
+    navigation = _navigation(raw)
+    if navigation is not None:
+        return None
+    if raw.isdecimal() and 1 <= int(raw) <= len(values):
+        return values[int(raw) - 1]
+    _write(output, "That Technical Export number is not available.")
+    _pause(input_fn)
+    return None
+
+
+def _render_open_problem(output: TextIO, error: PortfolioOutputOpenError) -> None:
+    if error.code == "portfolio_output.verification_failed":
+        headline = "This Portfolio no longer matches its verified saved state."
+    else:
+        headline = "This saved Portfolio could not be opened safely."
+    _write(
+        output,
+        headline,
+        "",
+        "Nothing was changed automatically.",
+        "Open Technical Details / Provenance for diagnostics.",
+    )
+
+
+def _run_presentation_action(
+    *,
+    action: str,
+    root: Path,
+    edition: CompletedPortfolioEdition,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> None:
+    presentation = _choose_presentation(
+        edition=edition,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+    )
+    if presentation is None:
+        return
+    try:
+        if action == "view_student_portfolio":
+            open_student_portfolio_html(
+                root,
+                presentation_artifact_id=presentation.presentation_artifact_id,
+            )
+            message = (
+                "Student Portfolio opened.",
+                "This is a local view; no delivery or sharing is recorded.",
+            )
+        elif action == "print_portfolio":
+            open_printable_student_portfolio(
+                root,
+                presentation_artifact_id=presentation.presentation_artifact_id,
+            )
+            message = (
+                "Printable Portfolio opened.",
+                "",
+                "Use your PDF application's Print command to print the "
+                "binder-ready Portfolio.",
+                "Opening the PDF does not mean physical printing occurred.",
+            )
+        elif action == "open_portfolio_folder":
+            open_student_portfolio_folder(
+                root,
+                presentation_artifact_id=presentation.presentation_artifact_id,
+            )
+            message = (
+                "Portfolio folder opened.",
+                "This is local file access; no delivery or sharing is recorded.",
+            )
+        else:
+            raise AssertionError(f"unsupported presentation local-use action: {action}")
+    except PortfolioOutputOpenError as error:
+        clear_fn()
+        _render_open_problem(output, error)
+        _pause(input_fn)
+        return
+    clear_fn()
+    _write(output, *message)
+    _pause(input_fn)
+
+
+def _run_export_open_action(
+    *,
+    root: Path,
+    edition: CompletedPortfolioEdition,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> None:
+    export = _choose_export(
+        edition=edition,
+        input_fn=input_fn,
+        output=output,
+        clear_fn=clear_fn,
+    )
+    if export is None:
+        return
+    try:
+        open_technical_export_folder(
+            root,
+            snapshot_export_artifact_id=export.snapshot_export_artifact_id,
+        )
+    except PortfolioOutputOpenError as error:
+        clear_fn()
+        _render_open_problem(output, error)
+        _pause(input_fn)
+        return
+    clear_fn()
+    _write(
+        output,
+        "Technical Export folder opened.",
+        "This is the technical Export, not the student Portfolio presentation.",
+    )
+    _pause(input_fn)
+
+
+
 def _edition_workflow(
     *,
     root: Path,
@@ -306,7 +519,7 @@ def _edition_workflow(
             _pause(input_fn)
             return
         series, edition = exact
-        _render_edition_detail(
+        actions = _render_edition_detail(
             output,
             edition=edition,
             series_label=_labels(history)[snapshot_series_id],
@@ -315,17 +528,42 @@ def _edition_workflow(
         choice = _read(input_fn, "Choice: ")
         if _navigation(choice) is not None:
             return
-        if choice == "1":
+        if not choice.isdecimal() or not (1 <= int(choice) <= len(actions)):
+            _write(output, "Please choose a listed action, B, M, or Q.")
+            _pause(input_fn)
+            continue
+        action = actions[int(choice) - 1]
+        if action == "artifact_history":
             clear_fn()
             _render_artifact_history(output, edition)
             _pause(input_fn)
-        elif choice == "2":
+        elif action == "technical_details":
             clear_fn()
             _render_technical(output, edition=edition, series=series)
             _pause(input_fn)
+        elif action in {
+            "view_student_portfolio",
+            "print_portfolio",
+            "open_portfolio_folder",
+        }:
+            _run_presentation_action(
+                action=action,
+                root=root,
+                edition=edition,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+            )
+        elif action == "open_technical_export":
+            _run_export_open_action(
+                root=root,
+                edition=edition,
+                input_fn=input_fn,
+                output=output,
+                clear_fn=clear_fn,
+            )
         else:
-            _write(output, "Please choose 1, 2, B, M, or Q.")
-            _pause(input_fn)
+            raise AssertionError(f"unsupported completed Portfolio action: {action}")
 
 
 def run_completed_portfolio_menu(

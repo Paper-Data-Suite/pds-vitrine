@@ -167,7 +167,7 @@ def test_colliding_human_labels_are_disambiguated_without_opaque_ids() -> None:
     assert "series_internal" not in text
 
 
-def test_edition_details_do_not_offer_unimplemented_open_print_verify_actions() -> None:
+def test_edition_details_offer_safe_local_actions_but_defer_explicit_verify() -> None:
     edition = _history().series[0].editions[1]
     output = io.StringIO()
     menu._render_edition_detail(
@@ -178,8 +178,10 @@ def test_edition_details_do_not_offer_unimplemented_open_print_verify_actions() 
     assert "Export / Presentation History" in text
     assert "Technical Details / Provenance" in text
     assert "Current: yes" in text
-    assert "View Student Portfolio" not in text
-    assert "Print Portfolio" not in text
+    assert "View Student Portfolio" in text
+    assert "Print Portfolio" in text
+    assert "Open Portfolio Folder" in text
+    assert "Open Technical Export Folder" in text
     assert "Verify Portfolio Now" not in text
     assert "presentation_private_456" not in text
 
@@ -218,7 +220,7 @@ def test_selected_edition_reloads_canonical_history_before_each_detail_action(
     menu.run_completed_portfolio_menu(
         root=tmp_path,
         portfolio_id="portfolio_private_111",
-        input_fn=_inputs("2", "1", "", "2", "", "B", "B"),
+        input_fn=_inputs("2", "5", "", "6", "", "B", "B"),
         output=output,
         clear_fn=lambda: None,
     )
