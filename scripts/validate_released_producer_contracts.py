@@ -1,4 +1,4 @@
-"""Validate released producer contracts, including issue #102 current anchors."""
+"""Validate historical and current-development released producer contracts."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from vitrine.released_producer_contracts import (
     RELEASED_PRODUCER_AUDIT_CONTRACT_VERSION,
     RELEASED_PRODUCER_CONTRACTS,
     SCOREFORM_0_12_0_AUDIT,
+    SCOREFORM_0_12_1_AUDIT,
     SCOREFORM_LIVE_SUPPORT_KEY,
 )
 from vitrine.released_producer_schema_audit import (
@@ -37,9 +38,9 @@ _REQUIREMENT_NAME = re.compile(r"^[A-Za-z0-9_.-]+")
 
 _EXPECTED_RELEASES: Mapping[str, tuple[str, str, str]] = {
     "scoreform": (
-        "0.12.0",
-        "scoreform-0.12.0-py3-none-any.whl",
-        "84ad10ada72a99bebd5455d8c18a0725f9406f8279e57156f3e424efa5678d20",
+        "0.12.1",
+        "scoreform-0.12.1-py3-none-any.whl",
+        "0f71b709eafe351052eac3e4f0d474b7bef36aeec347df05361b0a8995d44d32",
     ),
     "quillan": (
         "0.10.5",
@@ -205,9 +206,14 @@ def _validate_release_artifacts() -> None:
         _require(audit.wheel_sha256 == digest, f"{module_id} digest changed")
 
     _require(
+        SCOREFORM_0_12_1_AUDIT.public_reader_module
+        == "scoreform.academic_result_reader",
+        "ScoreForm current reader module changed",
+    )
+    _require(
         SCOREFORM_0_12_0_AUDIT.public_reader_module
         == "scoreform.academic_result_reader",
-        "ScoreForm reader module changed",
+        "ScoreForm historical 0.12.0 reader module changed",
     )
     _require(
         QUILLAN_0_10_5_AUDIT.artifact_reader_module
@@ -220,8 +226,12 @@ def _validate_release_artifacts() -> None:
         "Concord artifact boundary changed",
     )
     _require(
+        SCOREFORM_0_12_1_AUDIT.artifact_access_mode == "none",
+        "ScoreForm current release must not gain artifact access by audit inference",
+    )
+    _require(
         SCOREFORM_0_12_0_AUDIT.artifact_access_mode == "none",
-        "ScoreForm must not gain artifact access by audit inference",
+        "ScoreForm historical 0.12.0 audit must remain metadata-only",
     )
     _require(
         QUILLAN_0_10_5_AUDIT.artifact_access_mode == "producer_authorized_bytes",

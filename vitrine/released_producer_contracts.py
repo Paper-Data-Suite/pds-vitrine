@@ -283,6 +283,35 @@ SCOREFORM_0_12_0_AUDIT: Final[ReleasedProducerContractAudit] = (
     )
 )
 
+
+# Issue #103 advances the current-development ScoreForm qualification anchor to
+# the released 0.12.1 compatibility correction while retaining 0.12.0 above as
+# exact historical Issue #102 qualification evidence.
+SCOREFORM_0_12_1_AUDIT: Final[ReleasedProducerContractAudit] = (
+    ReleasedProducerContractAudit(
+        producer_module_id="scoreform",
+        distribution_name="scoreform",
+        release_version="0.12.1",
+        release_tag="v0.12.1",
+        wheel_filename="scoreform-0.12.1-py3-none-any.whl",
+        wheel_sha256="0f71b709eafe351052eac3e4f0d474b7bef36aeec347df05361b0a8995d44d32",
+        requires_python=">=3.11",
+        core_requirement="pds-core>=0.6.4,<0.7",
+        publication_producer_entry_point=(
+            "scoreform=scoreform.pds_publication:get_publication_producer_profile"
+        ),
+        public_reader_module="scoreform.academic_result_reader",
+        public_reader_symbol="read_academic_result_manifest",
+        advertised_capabilities=("points", "question_evidence", "multiple_attempts"),
+        support_key=SCOREFORM_LIVE_SUPPORT_KEY,
+        artifact_reader_module=None,
+        artifact_request_kinds=(),
+        artifact_representation_kinds=(),
+        artifact_authorization_outcomes=(),
+        artifact_access_mode="none",
+    )
+)
+
 QUILLAN_0_10_0_AUDIT: Final[ReleasedProducerContractAudit] = (
     ReleasedProducerContractAudit(
         producer_module_id="quillan",
@@ -365,7 +394,7 @@ CONCORD_0_3_0_AUDIT: Final[ReleasedProducerContractAudit] = (
 RELEASED_PRODUCER_CONTRACTS: Final[tuple[ReleasedProducerContractAudit, ...]] = tuple(
     sorted(
         (
-            SCOREFORM_0_12_0_AUDIT,
+            SCOREFORM_0_12_1_AUDIT,
             QUILLAN_0_10_5_AUDIT,
             CONCORD_0_3_0_AUDIT,
         ),
@@ -400,5 +429,6 @@ __all__ = [
     "ReleasedProducerContractAudit",
     "SCOREFORM_0_11_0_AUDIT",
     "SCOREFORM_0_12_0_AUDIT",
+    "SCOREFORM_0_12_1_AUDIT",
     "SCOREFORM_LIVE_SUPPORT_KEY",
 ]

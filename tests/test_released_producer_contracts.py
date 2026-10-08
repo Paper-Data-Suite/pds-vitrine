@@ -112,7 +112,7 @@ def test_release_audit_catalog_is_deterministic_and_complete() -> None:
     ] == [
         ("concord", "0.3.0"),
         ("quillan", "0.10.5"),
-        ("scoreform", "0.12.0"),
+        ("scoreform", "0.12.1"),
     ]
     assert LIVE_PRODUCER_SUPPORT_KEYS == tuple(
         item.support_key for item in RELEASED_PRODUCER_CONTRACTS
