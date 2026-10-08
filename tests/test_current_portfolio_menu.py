@@ -194,6 +194,9 @@ def test_menu_requires_exact_context_series_and_obligation_acknowledgement(
             snapshot_export_artifact_id="export_1",
             export_disposition="created",
             export_path=tmp_path / "export",
+            presentation_disposition="unsupported",
+            presentation_artifact_id=None,
+            presentation_verified=False,
         )
 
     monkeypatch.setattr(
@@ -308,6 +311,9 @@ def test_menu_can_open_exact_preparation_provenance_before_confirmation(
                 snapshot_export_artifact_id="export_1",
                 export_disposition="created",
                 export_path=tmp_path / "export",
+                presentation_disposition="unsupported",
+                presentation_artifact_id=None,
+                presentation_verified=False,
             ),
         )[1],
     )

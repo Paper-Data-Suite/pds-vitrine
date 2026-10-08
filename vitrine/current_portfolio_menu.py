@@ -24,6 +24,12 @@ from vitrine.current_portfolio_surface import (
 from vitrine.menu_interactions import confirm_exact_phrase, resolve_required_choice
 from vitrine.menu_types import ClearFunction, InputFunction
 from vitrine.models import ActorAttribution
+from vitrine.portfolio_output_opening import (
+    PortfolioOutputOpenError,
+    open_printable_student_portfolio,
+    open_student_portfolio_folder,
+    open_student_portfolio_html,
+)
 from vitrine.teacher_presentation import teacher_term
 from vitrine.workflow_context import VitrineWorkflowDependencies
 from vitrine.working_composition import prepare_working_composition
@@ -321,6 +327,116 @@ def _print_result_technical_details(
     _write(output, *lines)
 
 
+def _presentation_available(result: CurrentPortfolioBuildExportResult) -> bool:
+    return (
+        result.presentation_disposition in {"created", "existing", "recovered"}
+        and result.presentation_verified
+        and result.presentation_artifact_id is not None
+    )
+
+
+def _render_post_build_problem(
+    output: TextIO,
+    error: PortfolioOutputOpenError,
+) -> None:
+    if error.code == "portfolio_output.verification_failed":
+        headline = "This Portfolio no longer matches its verified saved state."
+    else:
+        headline = "The saved Portfolio could not be opened safely."
+    _write(
+        output,
+        "",
+        headline,
+        "Nothing was changed automatically.",
+        "Use completed Portfolio Technical Details / Provenance for diagnostics.",
+    )
+
+
+def _run_post_build_continuation(
+    *,
+    root: Path,
+    result: CurrentPortfolioBuildExportResult,
+    input_fn: InputFunction,
+    output: TextIO,
+    clear_fn: ClearFunction,
+) -> None:
+    while True:
+        clear_fn()
+        _print_result(result, output)
+        available = _presentation_available(result)
+        _write(output, "")
+        if available:
+            _write(
+                output,
+                "1. View Student Portfolio",
+                "2. Print Portfolio",
+                "3. Open Portfolio Folder",
+            )
+        _write(
+            output,
+            "T. Technical details / provenance",
+            "B. Return to Portfolio",
+        )
+        raw = _read(input_fn, "Next action (Enter to return): ")
+        if not raw:
+            return
+        navigation = _navigation(raw)
+        if navigation is NavigationChoice.BACK:
+            return
+        if raw.casefold() == "t":
+            clear_fn()
+            _print_result_technical_details(result, output)
+            _pause(input_fn)
+            continue
+        if not available or raw not in {"1", "2", "3"}:
+            _write(output, "Please choose a listed action, T, B, M, or Q.")
+            _pause(input_fn)
+            continue
+
+        presentation_id = result.presentation_artifact_id
+        assert presentation_id is not None
+        message: tuple[str, ...]
+        try:
+            if raw == "1":
+                open_student_portfolio_html(
+                    root,
+                    presentation_artifact_id=presentation_id,
+                )
+                message = (
+                    "Student Portfolio opened.",
+                    "This is a local view; no delivery or sharing is recorded.",
+                )
+            elif raw == "2":
+                open_printable_student_portfolio(
+                    root,
+                    presentation_artifact_id=presentation_id,
+                )
+                message = (
+                    "Printable Portfolio opened.",
+                    "",
+                    "Use your PDF application's Print command to print the "
+                    "binder-ready Portfolio.",
+                    "Opening the PDF does not mean physical printing occurred.",
+                )
+            else:
+                open_student_portfolio_folder(
+                    root,
+                    presentation_artifact_id=presentation_id,
+                )
+                message = (
+                    "Portfolio folder opened.",
+                    "This is local file access; no delivery or sharing is recorded.",
+                )
+        except PortfolioOutputOpenError as error:
+            clear_fn()
+            _render_post_build_problem(output, error)
+            _pause(input_fn)
+            continue
+        clear_fn()
+        _write(output, *message)
+        _pause(input_fn)
+
+
 def _print_execution_error(
     error: CurrentPortfolioExecutionError, output: TextIO
 ) -> None:
@@ -527,22 +643,13 @@ def run_current_portfolio_build_export_menu(
             authority_gate=dependencies.snapshot_build_authority_gate,
             source_providers=dependencies.snapshot_source_providers,
         )
-        clear_fn()
-        _print_result(result, output)
-        _write(
-            output,
-            "",
-            "T. Technical details / provenance",
+        _run_post_build_continuation(
+            root=root,
+            result=result,
+            input_fn=input_fn,
+            output=output,
+            clear_fn=clear_fn,
         )
-        if (
-            _read(
-                input_fn,
-                "T for build-result technical details or Enter to finish: ",
-            ).casefold()
-            == "t"
-        ):
-            clear_fn()
-            _print_result_technical_details(result, output)
     except CurrentPortfolioExecutionError as error:
         _print_execution_error(error, output)
     except RuntimeError as error:

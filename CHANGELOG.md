@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Issue #102 Slice 6 completes completed Portfolio navigation qualification with a canonical history contract, verified local View/Print/Open, explicit chain verification, historical Presentation handoff, Build Updated routing, post-build continuation, injectable no-GUI local-open acceptance, package/repository guards, isolated Core 0.6.4 + Vitrine installed-wheel acceptance without producer packages, and refreshed ScoreForm 0.12.0 / Quillan 0.10.5 / Concord 0.3.0 release anchors.
+
 - Issue #101 Slice 6 completes student Portfolio Presentation qualification with dedicated validation/development documentation, wheel/sdist guards, repository-gate wiring, representative synthetic Improvement Portfolio end-to-end acceptance, isolated installed-wheel acceptance without producer packages, and authenticated Core 0.6.4 qualification.
 
 - Issue #101 Slice 5 adds bounded presentation staging and create-only publication, deterministic renderer-sensitive Presentation identity, canonical `PortfolioPresentationArtifact` publication, producer-independent package/presentation verification, changed-byte/unexpected-file detection, exact idempotent reuse and durable-package recovery, `portfolio_index`/`student_portfolio` audience gating, Current Portfolio workflow integration, and explicit resume-from-existing-Edition/Export semantics without producer reacquisition or current-pointer advancement.

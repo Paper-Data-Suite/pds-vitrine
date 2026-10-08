@@ -53,6 +53,7 @@ class PortfolioSummary:
     current_composition_revision: int | None
     snapshot_series_count: int
     current_edition_count: int
+    completed_edition_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -210,6 +211,11 @@ def _summaries(records: tuple[VitrineRecord, ...]) -> tuple[PortfolioSummary, ..
                 None if composition is None else composition.composition_revision,
                 len(series),
                 len(current_editions),
+                sum(
+                    1
+                    for item in snapshot.editions
+                    if item.portfolio_id == portfolio.portfolio_id
+                ),
             )
         )
     return tuple(result)

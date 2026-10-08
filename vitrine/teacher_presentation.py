@@ -122,6 +122,7 @@ class TeacherPortfolioOverview:
     current_composition_revision: int | None
     snapshot_series_count: int
     current_edition_count: int
+    completed_edition_count: int = 0
 
 
 def teacher_term(value: str | None) -> str:
@@ -258,6 +259,7 @@ def build_teacher_portfolio_overview(
         current_composition_revision=summary.current_composition_revision,
         snapshot_series_count=summary.snapshot_series_count,
         current_edition_count=summary.current_edition_count,
+        completed_edition_count=getattr(summary, 'completed_edition_count', 0),
     )
 
 

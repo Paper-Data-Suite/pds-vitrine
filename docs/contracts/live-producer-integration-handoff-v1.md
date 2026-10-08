@@ -41,10 +41,13 @@ The audited release artifacts are:
 
 | Producer | Release | Core range |
 | --- | --- | --- |
-| ScoreForm | 0.11.0 | `pds-core>=0.6.2,<0.7` |
-| Quillan | 0.10.0 | `pds-core>=0.6.2,<0.7` |
+| ScoreForm | 0.12.0 | `pds-core>=0.6.4,<0.7` |
+| Quillan | 0.10.5 | `pds-core>=0.6.2,<0.7` |
 | Concord | 0.3.0 | `pds-core>=0.6.3,<0.7` |
-| Core audit baseline | 0.6.3 | n/a |
+| Core audit baseline | 0.6.4 | n/a |
+
+Issue #102 refreshed these exact release anchors after the newer compatible
+producer releases shipped. The semantic support keys below did not change.
 
 Package versions are reproducibility anchors for the audit. They are **not**
 fields in semantic adapter-key identity.
