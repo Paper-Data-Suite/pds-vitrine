@@ -442,6 +442,7 @@ def _run_presentation_action(
     )
     if presentation is None:
         return
+    message: tuple[str, ...]
     try:
         if action == "view_student_portfolio":
             open_student_portfolio_html(
@@ -706,7 +707,7 @@ def _edition_workflow(
         if exact is None:
             _write(output, "Selected Edition is no longer in canonical history.")
             _pause(input_fn)
-            return
+            return None
         series, edition = exact
         actions = _render_edition_detail(
             output,
@@ -717,7 +718,7 @@ def _edition_workflow(
         )
         choice = _read(input_fn, "Choice: ")
         if _navigation(choice) is not None:
-            return
+            return None
         if not choice.isdecimal() or not (1 <= int(choice) <= len(actions)):
             _write(output, "Please choose a listed action, B, M, or Q.")
             _pause(input_fn)
@@ -800,12 +801,12 @@ def run_completed_portfolio_menu(
                 "Inspect canonical Vitrine storage before continuing.",
             )
             _pause(input_fn)
-            return
+            return None
         clear_fn()
         selections = _render_list(output, history, label)
         choice = _read(input_fn, "Edition number (B to go back): ")
         if _navigation(choice) is not None:
-            return
+            return None
         if choice.isdecimal() and 1 <= int(choice) <= len(selections):
             series_id, number = selections[int(choice) - 1]
             try:
@@ -831,7 +832,7 @@ def run_completed_portfolio_menu(
                     f"{getattr(error, 'code', 'canonical_storage_unavailable')}",
                 )
                 _pause(input_fn)
-                return
+                return None
             continue
         _write(output, "That Edition number is not available.")
         _pause(input_fn)

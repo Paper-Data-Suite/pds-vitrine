@@ -395,6 +395,7 @@ def _run_post_build_continuation(
 
         presentation_id = result.presentation_artifact_id
         assert presentation_id is not None
+        message: tuple[str, ...]
         try:
             if raw == "1":
                 open_student_portfolio_html(

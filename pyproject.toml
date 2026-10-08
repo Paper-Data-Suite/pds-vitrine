@@ -161,6 +161,8 @@ files = [
     "scripts/validate_portfolio_presentation.py",
     "scripts/validate_student_portfolio_presentation_end_to_end.py",
     "scripts/smoke_test_portfolio_presentation_wheel.py",
+    "scripts/validate_completed_portfolio_navigation.py",
+    "scripts/smoke_test_completed_portfolio_navigation_wheel.py",
 ]
 
 [[tool.mypy.overrides]]

@@ -7,6 +7,7 @@ teacher-entered filesystem paths.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from typing import Final, Literal
 
@@ -36,6 +37,7 @@ _PORTFOLIO_OUTPUT_OPEN_ERROR_CODES: Final[frozenset[str]] = frozenset(
     }
 )
 _TargetKind = Literal["file", "directory"]
+LocalOpener = Callable[[Path], Path]
 
 
 class PortfolioOutputOpenError(RuntimeError):
@@ -222,9 +224,14 @@ def _resolve_vitrine_target(
     return resolved
 
 
-def _open_target(path: Path) -> Path:
+def _open_target(
+    path: Path,
+    *,
+    opener: LocalOpener | None = None,
+) -> Path:
+    selected_opener = open_local_path if opener is None else opener
     try:
-        opened = open_local_path(path)
+        opened = selected_opener(path)
     except LocalOpenError as error:
         raise PortfolioOutputOpenError(
             "portfolio_output.local_open_failed",
@@ -245,6 +252,7 @@ def open_student_portfolio_html(
     root: str | Path,
     *,
     presentation_artifact_id: str,
+    opener: LocalOpener | None = None,
 ) -> Path:
     """Verify and open the exact canonical student Portfolio HTML."""
 
@@ -254,13 +262,14 @@ def open_student_portfolio_html(
         artifact.html_relative_path,
         target_kind="file",
     )
-    return _open_target(target)
+    return _open_target(target, opener=opener)
 
 
 def open_printable_student_portfolio(
     root: str | Path,
     *,
     presentation_artifact_id: str,
+    opener: LocalOpener | None = None,
 ) -> Path:
     """Verify and open the exact canonical binder-ready Portfolio PDF."""
 
@@ -270,13 +279,14 @@ def open_printable_student_portfolio(
         artifact.printable_pdf_relative_path,
         target_kind="file",
     )
-    return _open_target(target)
+    return _open_target(target, opener=opener)
 
 
 def open_student_portfolio_folder(
     root: str | Path,
     *,
     presentation_artifact_id: str,
+    opener: LocalOpener | None = None,
 ) -> Path:
     """Verify and open the exact canonical student Presentation root."""
 
@@ -286,13 +296,14 @@ def open_student_portfolio_folder(
         artifact.relative_path,
         target_kind="directory",
     )
-    return _open_target(target)
+    return _open_target(target, opener=opener)
 
 
 def open_technical_export_folder(
     root: str | Path,
     *,
     snapshot_export_artifact_id: str,
+    opener: LocalOpener | None = None,
 ) -> Path:
     """Verify and open the exact canonical technical Snapshot Export root."""
 
@@ -302,7 +313,7 @@ def open_technical_export_folder(
         artifact.relative_path,
         target_kind="directory",
     )
-    return _open_target(target)
+    return _open_target(target, opener=opener)
 
 
 __all__ = [

@@ -361,20 +361,20 @@ def project_completed_portfolio_history(
             presentation.snapshot_edition.snapshot_series_id,
             presentation.snapshot_edition.edition_number,
         )
-        edition = editions_by_key.get(edition_key)
-        if edition is None:
+        linked_edition = editions_by_key.get(edition_key)
+        if linked_edition is None:
             raise _fail("Portfolio Presentation references a missing Snapshot Edition.")
-        export = exports_by_id.get(presentation.snapshot_export_artifact_id)
-        if not isinstance(export, SnapshotExportArtifact):
+        linked_export = exports_by_id.get(presentation.snapshot_export_artifact_id)
+        if not isinstance(linked_export, SnapshotExportArtifact):
             raise _fail("Portfolio Presentation references a missing Snapshot Export.")
-        if export.snapshot_edition != presentation.snapshot_edition:
+        if linked_export.snapshot_edition != presentation.snapshot_edition:
             raise _fail("Portfolio Presentation and Snapshot Export bind different Editions.")
         if (
-            presentation.portfolio_id != edition.portfolio_id
-            or presentation.portfolio_subject_id != edition.portfolio_subject_id
-            or presentation.profile_binding_id != edition.profile_binding_id
-            or presentation.profile_revision != edition.profile_revision
-            or presentation.audience_context_id != edition.audience_context_id
+            presentation.portfolio_id != linked_edition.portfolio_id
+            or presentation.portfolio_subject_id != linked_edition.portfolio_subject_id
+            or presentation.profile_binding_id != linked_edition.profile_binding_id
+            or presentation.profile_revision != linked_edition.profile_revision
+            or presentation.audience_context_id != linked_edition.audience_context_id
         ):
             raise _fail("Portfolio Presentation context disagrees with its Snapshot Edition.")
         predecessor_id = presentation.predecessor_presentation_artifact_id
