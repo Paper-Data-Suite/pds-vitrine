@@ -8,9 +8,9 @@ import pytest
 
 from vitrine import attention_menu, menu, portfolio_menu
 from vitrine.attention import (
-    VITRINE_ATTENTION_CONTRACT_VERSION,
-    VitrineAttentionReport,
-    VitrineAttentionSummary,
+    VITRINE_ATTENTION_V2_CONTRACT_VERSION,
+    VitrineAttentionReportV2,
+    VitrineAttentionSummaryV2,
     VitrineNextActionRef,
 )
 from vitrine.models import ActorAttribution
@@ -29,22 +29,51 @@ def _inputs(values: list[str]):
     return lambda _prompt: next(iterator)
 
 
-def _report(portfolio_id: str | None) -> VitrineAttentionReport:
-    return VitrineAttentionReport(
-        contract_version=VITRINE_ATTENTION_CONTRACT_VERSION,
+def _report(portfolio_id: str | None) -> VitrineAttentionReportV2:
+    return VitrineAttentionReportV2(
+        contract_version=VITRINE_ATTENTION_V2_CONTRACT_VERSION,
         evaluation="evaluated",
         observed_state_revision=9,
         summaries=(
-            VitrineAttentionSummary(
+            VitrineAttentionSummaryV2(
                 code="vitrine_selection_unplaced",
                 label="Selection needs placement",
                 count=1,
                 count_unit="selections",
                 attention_class="workflow",
+                requirement_level="required",
                 portfolio_id=portfolio_id,
                 reason_codes=("working_composition.selection_unplaced",),
                 next_action=VitrineNextActionRef(
                     action_id="open_candidate_review",
+                    portfolio_id=portfolio_id,
+                ),
+            ),
+            VitrineAttentionSummaryV2(
+                code="vitrine_candidate_optional_evidence",
+                label="Additional evidence available",
+                count=3,
+                count_unit="candidates",
+                attention_class="workflow",
+                requirement_level="opportunity",
+                portfolio_id=portfolio_id,
+                reason_codes=("candidate_not_required_by_current_portfolio",),
+                next_action=VitrineNextActionRef(
+                    action_id="open_candidate_inbox",
+                    portfolio_id=portfolio_id,
+                ),
+            ),
+            VitrineAttentionSummaryV2(
+                code="vitrine_portfolio_complete",
+                label="Portfolio complete",
+                count=1,
+                count_unit="portfolios",
+                attention_class="status",
+                requirement_level="status",
+                portfolio_id=portfolio_id,
+                reason_codes=(),
+                next_action=VitrineNextActionRef(
+                    action_id="open_completed_portfolio_editions",
                     portfolio_id=portfolio_id,
                 ),
             ),
@@ -64,7 +93,7 @@ def test_attention_menu_renders_bounded_next_action_without_mutation(
     )
     monkeypatch.setattr(
         attention_menu,
-        "evaluate_vitrine_attention",
+        "evaluate_vitrine_attention_v2",
         lambda _root, query: _report(query.portfolio_id),
     )
     output = io.StringIO()
@@ -78,12 +107,20 @@ def test_attention_menu_renders_bounded_next_action_without_mutation(
 
     rendered = output.getvalue()
     assert "Attention / Next Actions — Current Portfolio" in rendered
+    assert "Portfolio status" in rendered
+    assert "- Portfolio complete" in rendered
+    assert "Needs attention" in rendered
     assert "Selection needs placement: 1 selection" in rendered
-    assert "Next action: Review Candidates / Selections" in rendered
+    assert "Next step: Review Candidates / Selections" in rendered
+    assert "Optional opportunities" in rendered
+    assert "Additional evidence available: 3 candidates" in rendered
+    assert "Open: Candidate Inbox" in rendered
+    assert "Open: Completed Portfolio Editions" in rendered
     assert "Evaluation:" not in rendered
     assert "Observed state revision:" not in rendered
     assert "Code:" not in rendered
     assert "Class:" not in rendered
+    assert "Requirement level:" not in rendered
     assert "Reasons:" not in rendered
     assert "Action ID:" not in rendered
     assert "portfolio_exact" not in rendered
@@ -111,12 +148,13 @@ def test_attention_teacher_count_uses_registered_singular_labels(
     count_unit: str,
     expected: str,
 ) -> None:
-    summary = VitrineAttentionSummary(
+    summary = VitrineAttentionSummaryV2(
         code="vitrine_test_count",
         label="Synthetic",
         count=1,
         count_unit=count_unit,
         attention_class="workflow",
+        requirement_level="required",
         portfolio_id=None,
         reason_codes=(),
         next_action=None,
@@ -136,14 +174,14 @@ def test_attention_menu_technical_details_preserve_exact_projection(
         lambda _root: tmp_path,
     )
 
-    def evaluate(_root: Path, query: object) -> VitrineAttentionReport:
+    def evaluate(_root: Path, query: object) -> VitrineAttentionReportV2:
         portfolio_id = getattr(query, "portfolio_id")
         calls.append(portfolio_id)
         return _report(portfolio_id)
 
     monkeypatch.setattr(
         attention_menu,
-        "evaluate_vitrine_attention",
+        "evaluate_vitrine_attention_v2",
         evaluate,
     )
     output = io.StringIO()
@@ -159,12 +197,15 @@ def test_attention_menu_technical_details_preserve_exact_projection(
     rendered = output.getvalue()
     assert calls == ["portfolio_exact"]
     assert "Technical Details / Provenance" in rendered
-    assert "Contract: vitrine_attention_next_actions_v1" in rendered
+    assert "Contract: vitrine_attention_next_actions_v2" in rendered
     assert "Evaluation: evaluated" in rendered
     assert "Observed state revision: 9" in rendered
     assert "Portfolio ID: portfolio_exact" in rendered
     assert "Code: vitrine_selection_unplaced" in rendered
     assert "Class: workflow" in rendered
+    assert "Requirement level: required" in rendered
+    assert "Requirement level: opportunity" in rendered
+    assert "Requirement level: status" in rendered
     assert "Count unit: selections" in rendered
     assert "Reasons: working_composition.selection_unplaced" in rendered
     assert "Action ID: open_candidate_review" in rendered

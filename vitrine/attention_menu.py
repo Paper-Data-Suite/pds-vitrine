@@ -9,9 +9,9 @@ from pds_core.workspace import resolve_workspace_root
 
 from vitrine.attention import (
     VitrineAttentionQuery,
-    VitrineAttentionReport,
-    VitrineAttentionSummary,
-    evaluate_vitrine_attention,
+    VitrineAttentionReportV2,
+    VitrineAttentionSummaryV2,
+    evaluate_vitrine_attention_v2,
 )
 from vitrine.menu_types import ClearFunction, InputFunction
 
@@ -20,6 +20,7 @@ _ACTION_LABELS: Final[dict[str, str]] = {
     "open_candidate_review": "Review Candidates / Selections",
     "open_working_composition": "Working Composition",
     "open_build_export_current_portfolio": "Build and Export Current Portfolio",
+    "open_completed_portfolio_editions": "Completed Portfolio Editions",
     "inspect_snapshot_recovery": "Snapshot recovery inspection",
     "inspect_snapshot_custody": "Snapshot custody inspection",
     "inspect_snapshot_edition": "Snapshot Edition inspection",
@@ -47,14 +48,14 @@ def _write(output: TextIO, *lines: str) -> None:
         print(line, file=output)
 
 
-def _teacher_count(summary: VitrineAttentionSummary) -> str:
+def _teacher_count(summary: VitrineAttentionSummaryV2) -> str:
     unit = summary.count_unit.replace("_", " ")
     if summary.count == 1:
         unit = _SINGULAR_COUNT_UNITS.get(summary.count_unit, unit)
     return f"{summary.count} {unit}"
 
 
-def _teacher_action_label(summary: VitrineAttentionSummary) -> str | None:
+def _teacher_action_label(summary: VitrineAttentionSummaryV2) -> str | None:
     if summary.next_action is None:
         return None
     return _ACTION_LABELS.get(
@@ -63,9 +64,38 @@ def _teacher_action_label(summary: VitrineAttentionSummary) -> str | None:
     )
 
 
+def _render_teacher_group(
+    output: TextIO,
+    heading: str,
+    summaries: tuple[VitrineAttentionSummaryV2, ...],
+    *,
+    empty_message: str | None = None,
+) -> None:
+    _write(output, heading)
+    if not summaries:
+        if empty_message is not None:
+            _write(output, empty_message)
+        return
+
+    for item in summaries:
+        if item.requirement_level == "status" and item.count == 1:
+            _write(output, f"- {item.label}")
+        else:
+            _write(output, f"- {item.label}: {_teacher_count(item)}")
+        action_label = _teacher_action_label(item)
+        if action_label is None:
+            continue
+        prefix = (
+            "Next step"
+            if item.requirement_level == "required"
+            else "Open"
+        )
+        _write(output, f"  {prefix}: {action_label}")
+
+
 def _render_teacher_attention(
     output: TextIO,
-    report: VitrineAttentionReport,
+    report: VitrineAttentionReportV2,
     *,
     portfolio_id: str | None,
 ) -> None:
@@ -81,15 +111,47 @@ def _render_teacher_attention(
             "Vitrine could not evaluate attention from the current state.",
             "",
         )
-    if not report.summaries and report.evaluation == "evaluated":
-        _write(output, "No current Vitrine attention summaries.")
-    if report.summaries:
-        _write(output, "What needs attention")
-    for item in report.summaries:
-        _write(output, f"- {item.label}: {_teacher_count(item)}")
-        action_label = _teacher_action_label(item)
-        if action_label is not None:
-            _write(output, f"  Next action: {action_label}")
+        if report.notices:
+            _write(output, "Notices")
+            for notice in report.notices:
+                _write(output, f"- {notice.summary}")
+        return
+
+    status = tuple(
+        item
+        for item in report.summaries
+        if item.requirement_level == "status"
+    )
+    required = tuple(
+        item
+        for item in report.summaries
+        if item.requirement_level == "required"
+    )
+    opportunities = tuple(
+        item
+        for item in report.summaries
+        if item.requirement_level == "opportunity"
+    )
+
+    if status:
+        _render_teacher_group(output, "Portfolio status", status)
+        _write(output, "")
+
+    _render_teacher_group(
+        output,
+        "Needs attention",
+        required,
+        empty_message="No required actions.",
+    )
+
+    if opportunities:
+        _write(output, "")
+        _render_teacher_group(
+            output,
+            "Optional opportunities",
+            opportunities,
+        )
+
     if report.notices:
         _write(output, "", "Notices")
         for notice in report.notices:
@@ -98,7 +160,7 @@ def _render_teacher_attention(
 
 def _render_attention_technical_details(
     output: TextIO,
-    report: VitrineAttentionReport,
+    report: VitrineAttentionReportV2,
     *,
     portfolio_id: str | None,
 ) -> None:
@@ -142,6 +204,7 @@ def _render_attention_technical_details(
             f"  Count: {item.count}",
             f"  Count unit: {item.count_unit}",
             f"  Class: {item.attention_class}",
+            f"  Requirement level: {item.requirement_level}",
             f"  Portfolio ID: {summary_portfolio}",
             f"  Reasons: {reasons}",
             f"  Action ID: {action_id}",
@@ -172,7 +235,7 @@ def run_attention_menu(
     """Render one current read-only attention report and return to the caller."""
 
     root = resolve_workspace_root(workspace_root)
-    report = evaluate_vitrine_attention(
+    report = evaluate_vitrine_attention_v2(
         root,
         VitrineAttentionQuery(portfolio_id=portfolio_id),
     )
