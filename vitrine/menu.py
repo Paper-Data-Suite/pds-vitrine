@@ -311,6 +311,7 @@ def run_menu(
                     clear_fn=clear_fn,
                     portfolio_id=None,
                     input_fn=input_fn,
+                    dependencies=workflow_dependencies,
                 )
             else:
                 _write_lines(

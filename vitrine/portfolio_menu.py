@@ -1296,6 +1296,8 @@ def _portfolio_context(
                 workspace_root=root,
                 portfolio_id=portfolio_id,
                 input_fn=input_fn,
+                dependencies=dependencies,
+                actor=actor,
             )
             continue
         else:

@@ -232,6 +232,7 @@ def test_main_menu_option_six_routes_workspace_attention(
     assert len(routed) == 1
     assert routed[0]["portfolio_id"] is None
     assert routed[0]["input_fn"] is not None
+    assert routed[0]["dependencies"] is not None
 
 
 def test_portfolio_option_nine_routes_exact_portfolio_attention(
@@ -276,3 +277,164 @@ def test_portfolio_option_nine_routes_exact_portfolio_attention(
     assert routed[0]["workspace_root"] == tmp_path
     assert routed[0]["portfolio_id"] == "portfolio_exact"
     assert routed[0]["input_fn"] is raw_input
+    assert routed[0]["dependencies"] is not None
+    assert routed[0]["actor"] == ACTOR
+
+
+def test_attention_action_routes_to_owner_workflow_and_recomputes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    evaluations: list[str | None] = []
+
+    monkeypatch.setattr(
+        attention_menu,
+        "resolve_workspace_root",
+        lambda _root: tmp_path,
+    )
+
+    def evaluate(_root: Path, query: object) -> VitrineAttentionReportV2:
+        portfolio_id = getattr(query, "portfolio_id")
+        evaluations.append(portfolio_id)
+        return _report(portfolio_id)
+
+    monkeypatch.setattr(
+        attention_menu,
+        "evaluate_vitrine_attention_v2",
+        evaluate,
+    )
+    routed: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        attention_menu,
+        "run_candidate_review_menu",
+        lambda **kwargs: routed.append(kwargs),
+    )
+
+    attention_menu.run_attention_menu(
+        output=io.StringIO(),
+        clear_fn=lambda: None,
+        workspace_root=tmp_path,
+        portfolio_id="portfolio_exact",
+        input_fn=_inputs(["1", "B"]),
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert len(routed) == 1
+    assert routed[0]["portfolio_id"] == "portfolio_exact"
+    assert routed[0]["workspace_root"] == tmp_path
+    assert routed[0]["actor"] == ACTOR
+    assert evaluations == ["portfolio_exact", "portfolio_exact"]
+
+
+def test_workspace_action_chooses_only_matching_human_readable_portfolio(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    values = (
+        SimpleNamespace(
+            portfolio_id="portfolio_alpha",
+            title_snapshot="Growth Portfolio",
+            subject_display_label="Avery",
+        ),
+        SimpleNamespace(
+            portfolio_id="portfolio_beta",
+            title_snapshot="Growth Portfolio",
+            subject_display_label="Jordan",
+        ),
+        SimpleNamespace(
+            portfolio_id="portfolio_gamma",
+            title_snapshot="Other Portfolio",
+            subject_display_label="Morgan",
+        ),
+    )
+    monkeypatch.setattr(
+        attention_menu,
+        "list_portfolios",
+        lambda _root: values,
+    )
+
+    def evaluate(_root: Path, query: object) -> VitrineAttentionReportV2:
+        portfolio_id = getattr(query, "portfolio_id")
+        report = _report(portfolio_id)
+        if portfolio_id == "portfolio_gamma":
+            return VitrineAttentionReportV2(
+                contract_version=VITRINE_ATTENTION_V2_CONTRACT_VERSION,
+                evaluation="evaluated",
+                observed_state_revision=9,
+                summaries=tuple(
+                    item
+                    for item in report.summaries
+                    if item.next_action is not None
+                    and item.next_action.action_id != "open_candidate_review"
+                ),
+                notices=(),
+            )
+        return report
+
+    monkeypatch.setattr(
+        attention_menu,
+        "evaluate_vitrine_attention_v2",
+        evaluate,
+    )
+    output = io.StringIO()
+    selected = attention_menu._select_workspace_portfolio_for_action(
+        root=tmp_path,
+        action=attention_menu._MenuActionChoice(
+            action_id="open_candidate_review",
+            portfolio_id=None,
+            label="Review Candidates / Selections",
+        ),
+        input_fn=_inputs(["2"]),
+        output=output,
+        clear_fn=lambda: None,
+    )
+
+    rendered = output.getvalue()
+    assert selected == "portfolio_beta"
+    assert "Avery — Growth Portfolio" in rendered
+    assert "Jordan — Growth Portfolio" in rendered
+    assert "Morgan" not in rendered
+    assert "portfolio_alpha" not in rendered
+    assert "portfolio_beta" not in rendered
+    assert "portfolio_gamma" not in rendered
+
+
+def test_completed_portfolio_action_can_continue_to_updated_build(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    completed_calls: list[dict[str, object]] = []
+    build_calls: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        attention_menu,
+        "run_completed_portfolio_menu",
+        lambda **kwargs: (
+            completed_calls.append(kwargs)
+            or attention_menu.BUILD_UPDATED_EDITION
+        ),
+    )
+    monkeypatch.setattr(
+        attention_menu,
+        "run_current_portfolio_build_export_menu",
+        lambda **kwargs: build_calls.append(kwargs),
+    )
+
+    attention_menu._run_owner_action(
+        root=tmp_path,
+        action=attention_menu._MenuActionChoice(
+            action_id="open_completed_portfolio_editions",
+            portfolio_id="portfolio_exact",
+            label="Completed Portfolio Editions",
+        ),
+        portfolio_id="portfolio_exact",
+        input_fn=_inputs([]),
+        output=io.StringIO(),
+        clear_fn=lambda: None,
+        dependencies=default_workflow_dependencies(),
+        actor=ACTOR,
+    )
+
+    assert len(completed_calls) == 1
+    assert len(build_calls) == 1
+    assert build_calls[0]["portfolio_id"] == "portfolio_exact"
