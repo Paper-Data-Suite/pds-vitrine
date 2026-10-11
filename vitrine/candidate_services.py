@@ -73,6 +73,7 @@ from vitrine.models import (
     PortfolioProfileRevision,
     PortfolioSubject,
     PortfolioSubjectRelationshipAssertion,
+    ProducerSourceReference,
     VitrineRecord,
 )
 from vitrine.models.common import (
@@ -91,6 +92,9 @@ from vitrine.producer_adapters import (
     ProducerProjectionError,
     ProducerReaderError,
     ProjectedProducerSource,
+)
+from vitrine.producer_reader_compatibility import (
+    normalize_persisted_reader_contract_version,
 )
 from vitrine.producer_reader_services import (
     ProducerReaderServiceError,
@@ -1105,12 +1109,35 @@ def _assertion_semantic_key(
     )
 
 
+def _producer_source_semantic_key(value: object) -> tuple[object, ...]:
+    source = cast(ProducerSourceReference, value)
+    return (
+        source.producer_module_id,
+        source.producer_contract_version,
+        source.source_record_kind,
+        source.source_record_id,
+        source.source_record_contract_version,
+        source.native_revision,
+        source.native_lifecycle,
+        source.native_disposition,
+        source.lineage_reference,
+        normalize_persisted_reader_contract_version(
+            source.producer_module_id,
+            source.reader_contract_version,
+        ),
+        source.projection_contract_version,
+    )
+
+
 def _endpoint_semantic_key(value: CandidateSourceEndpoint) -> tuple[object, ...]:
     return (
         value.core_publication.publication_id,
-        value.producer_source,
+        _producer_source_semantic_key(value.producer_source),
         value.source_artifact,
-        tuple(_assertion_semantic_key(item) for item in value.subject_relationship_assertions),
+        tuple(
+            _assertion_semantic_key(item)
+            for item in value.subject_relationship_assertions
+        ),
         value.source_privacy,
     )
 

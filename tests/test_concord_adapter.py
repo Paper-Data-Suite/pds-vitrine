@@ -15,7 +15,6 @@ from vitrine.producer_adapters import (
     ProducerAdapterSupportRequest,
     ProducerProjectionError,
 )
-from vitrine.producer_reader_services import INSTALLED_PRODUCER_READER_CONTRACT_VERSION
 from vitrine.released_producer_contracts import CONCORD_LIVE_SUPPORT_KEY
 
 
@@ -643,7 +642,7 @@ def test_declaration_uses_frozen_concord_contract_and_installed_reader(
         "vitrine_installed_concord_academic_result_reader"
     )
     assert declaration.reader_contract_version == (
-        INSTALLED_PRODUCER_READER_CONTRACT_VERSION
+        "concord_academic_result_reader_v1"
     )
     assert declaration.reader_package_identity == "pds-concord"
     assert declaration.integration_kind == "live"

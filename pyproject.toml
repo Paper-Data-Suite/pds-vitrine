@@ -12,7 +12,7 @@ authors = [
     { name = "Stephen Severino" }
 ]
 dependencies = [
-    "pds-core>=0.6.3,<0.7"
+    "pds-core>=0.6.5,<0.7"
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",

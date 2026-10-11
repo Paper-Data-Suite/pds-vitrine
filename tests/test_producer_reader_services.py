@@ -12,7 +12,6 @@ import vitrine.producer_reader_services as producer_reader_services
 from scripts.candidate_fixture_support import build_candidate_fixture_workspace
 from vitrine.producer_adapters import ProducerReaderError, build_adapter_registry
 from vitrine.producer_reader_services import (
-    INSTALLED_PRODUCER_READER_CONTRACT_VERSION,
     PRODUCER_READER_SERVICE_CONTRACT_VERSION,
     InstalledProducerManifestReader,
     ProducerReaderServiceError,
@@ -138,11 +137,15 @@ def test_audited_installed_reader_catalog_is_lazy_and_live(
         "scoreform",
     )
     assert all(reader.descriptor.integration_kind == "live" for reader in readers)
-    assert all(
+    assert {
+        reader.audit.producer_module_id:
         reader.descriptor.reader_contract_version
-        == INSTALLED_PRODUCER_READER_CONTRACT_VERSION
         for reader in readers
-    )
+    } == {
+        "concord": "concord_academic_result_reader_v1",
+        "quillan": "quillan_academic_result_reader_v1",
+        "scoreform": "scoreform_academic_result_reader_v1",
+    }
     ordinary = build_adapter_registry()
     assert tuple(item.declaration.adapter_id for item in ordinary.adapters) == (
         "vitrine_concord_live_adapter",
@@ -241,6 +244,14 @@ def test_package_version_is_not_a_semantic_reader_gate(
         producer_reader_services.metadata,
         "version",
         lambda _name: "99.123.456",
+    )
+    monkeypatch.setattr(
+        producer_reader_services,
+        "resolve_installed_producer_reader_compatibility",
+        lambda audit, *, installed_distribution_version: SimpleNamespace(
+            reader_contract_version=reader.descriptor.reader_contract_version,
+            installed_distribution_version=installed_distribution_version,
+        ),
     )
     monkeypatch.setattr(
         producer_reader_services,

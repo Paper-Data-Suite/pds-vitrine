@@ -21,7 +21,6 @@ from vitrine.producer_adapters import (
     ProducerProjectionError,
     build_adapter_registry,
 )
-from vitrine.producer_reader_services import INSTALLED_PRODUCER_READER_CONTRACT_VERSION
 from vitrine.quillan_contract import (
     QUILLAN_FEEDBACK_MARKDOWN_MEDIA_TYPE,
     QUILLAN_FEEDBACK_MARKDOWN_REPRESENTATION_KIND,
@@ -397,7 +396,7 @@ def test_live_declaration_uses_frozen_quillan_contract_and_installed_reader(
         "vitrine_installed_quillan_academic_result_reader"
     )
     assert declaration.reader_contract_version == (
-        INSTALLED_PRODUCER_READER_CONTRACT_VERSION
+        "quillan_academic_result_reader_v1"
     )
     assert declaration.reader_package_identity == "quillan"
     assert adapter.declaration is declaration
