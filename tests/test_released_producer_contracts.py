@@ -16,17 +16,22 @@ from vitrine.producer_adapters import (
 )
 from vitrine.released_producer_contracts import (
     CONCORD_0_3_0_AUDIT,
+    CONCORD_0_3_1_AUDIT,
+    CONCORD_0_3_2_AUDIT,
     CONCORD_LIVE_SUPPORT_KEY,
     CORE_0_6_3_AUDIT,
     CORE_0_6_4_AUDIT,
+    CORE_0_6_5_AUDIT,
     LIVE_PRODUCER_SUPPORT_KEYS,
     QUILLAN_0_10_0_AUDIT,
     QUILLAN_0_10_5_AUDIT,
+    QUILLAN_0_10_6_AUDIT,
     QUILLAN_LIVE_SUPPORT_KEY,
     RELEASED_PRODUCER_CONTRACT_BY_MODULE,
     RELEASED_PRODUCER_CONTRACTS,
     SCOREFORM_0_11_0_AUDIT,
     SCOREFORM_0_12_0_AUDIT,
+    SCOREFORM_0_13_0_AUDIT,
     SCOREFORM_LIVE_SUPPORT_KEY,
 )
 
@@ -95,6 +100,18 @@ def test_issue102_release_audit_pins_current_compatible_wheels() -> None:
     assert QUILLAN_0_10_5_AUDIT.core_requirement == "pds-core>=0.6.2,<0.7"
 
 
+def test_issue103_release_audit_pins_current_reader_metadata_wheels() -> None:
+    assert CORE_0_6_5_AUDIT.wheel_filename == "pds_core-0.6.5-py3-none-any.whl"
+    assert (
+        CORE_0_6_5_AUDIT.wheel_sha256
+        == "9ace75f17b23b7f0ed6a709d531af5120db43d0325b4148d26f2d6ba1d4b3c18"
+    )
+    assert SCOREFORM_0_13_0_AUDIT.core_requirement == "pds-core>=0.6.5,<0.7"
+    assert QUILLAN_0_10_6_AUDIT.core_requirement == "pds-core>=0.6.5,<0.7"
+    assert CONCORD_0_3_2_AUDIT.core_requirement == "pds-core>=0.6.5,<0.7"
+    assert CONCORD_0_3_1_AUDIT.release_version == "0.3.1"
+
+
 def test_release_audit_catalog_is_deterministic_and_complete() -> None:
     assert [item.producer_module_id for item in RELEASED_PRODUCER_CONTRACTS] == [
         "concord",
@@ -110,9 +127,9 @@ def test_release_audit_catalog_is_deterministic_and_complete() -> None:
         (item.producer_module_id, item.release_version)
         for item in RELEASED_PRODUCER_CONTRACTS
     ] == [
-        ("concord", "0.3.0"),
-        ("quillan", "0.10.5"),
-        ("scoreform", "0.12.1"),
+        ("concord", "0.3.2"),
+        ("quillan", "0.10.6"),
+        ("scoreform", "0.13.0"),
     ]
     assert LIVE_PRODUCER_SUPPORT_KEYS == tuple(
         item.support_key for item in RELEASED_PRODUCER_CONTRACTS
@@ -246,25 +263,25 @@ def test_artifact_access_is_separate_from_manifest_support() -> None:
     assert SCOREFORM_0_12_0_AUDIT.artifact_access_mode == "none"
     assert SCOREFORM_0_12_0_AUDIT.artifact_reader_module is None
 
-    assert QUILLAN_0_10_5_AUDIT.artifact_access_mode == "producer_authorized_bytes"
-    assert QUILLAN_0_10_5_AUDIT.artifact_reader_module == "quillan.academic_result_artifacts"
-    assert QUILLAN_0_10_5_AUDIT.artifact_authorization_outcomes == (
+    assert QUILLAN_0_10_6_AUDIT.artifact_access_mode == "producer_authorized_bytes"
+    assert QUILLAN_0_10_6_AUDIT.artifact_reader_module == "quillan.academic_result_artifacts"
+    assert QUILLAN_0_10_6_AUDIT.artifact_authorization_outcomes == (
         "allowed",
         "denied",
         "unresolved",
     )
 
-    assert CONCORD_0_3_0_AUDIT.artifact_access_mode == "producer_authorized_bytes"
-    assert CONCORD_0_3_0_AUDIT.artifact_reader_module == "concord.academic_result_artifacts"
-    assert CONCORD_0_3_0_AUDIT.artifact_representation_kinds == (
+    assert CONCORD_0_3_2_AUDIT.artifact_access_mode == "producer_authorized_bytes"
+    assert CONCORD_0_3_2_AUDIT.artifact_reader_module == "concord.academic_result_artifacts"
+    assert CONCORD_0_3_2_AUDIT.artifact_representation_kinds == (
         "returned_artifact_pdf",
     )
 
 
 def test_release_audit_records_exact_public_reader_boundaries() -> None:
-    assert SCOREFORM_0_12_0_AUDIT.public_reader_module == "scoreform.academic_result_reader"
-    assert QUILLAN_0_10_5_AUDIT.public_reader_module == "quillan.academic_result_reader"
-    assert CONCORD_0_3_0_AUDIT.public_reader_module == "concord.academic_result_reader"
+    assert SCOREFORM_0_13_0_AUDIT.public_reader_module == "scoreform.academic_result_reader"
+    assert QUILLAN_0_10_6_AUDIT.public_reader_module == "quillan.academic_result_reader"
+    assert CONCORD_0_3_2_AUDIT.public_reader_module == "concord.academic_result_reader"
     assert {
         audit.public_reader_symbol for audit in RELEASED_PRODUCER_CONTRACTS
     } == {"read_academic_result_manifest"}

@@ -167,6 +167,14 @@ def test_old_exact_historical_scoreform_release_remains_supported() -> None:
     )
 
 
+def test_current_metadata_bearing_releases_are_not_legacy_fallbacks() -> None:
+    for module_id, audit in RELEASED_PRODUCER_CONTRACT_BY_MODULE.items():
+        assert (
+            audit.release_version
+            not in VITRINE_LEGACY_EXACT_PRODUCER_RELEASES[module_id]
+        )
+
+
 def test_metadata_absent_future_release_is_not_guessed_compatible() -> None:
     audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE["scoreform"]
 
