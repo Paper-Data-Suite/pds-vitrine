@@ -165,8 +165,16 @@ def _validate_project_contract() -> None:
     project = data.get("project")
     if not isinstance(project, dict):
         raise RuntimeError("pyproject project table is missing")
-    if project.get("dependencies") != [EXPECTED_VITRINE_RUNTIME_DEPENDENCY]:
-        raise RuntimeError("issue #71 must preserve Core-only Vitrine runtime dependency")
+    current_dependencies = project.get("dependencies")
+    allowed_core_only_dependencies = (
+        [EXPECTED_VITRINE_RUNTIME_DEPENDENCY],
+        ["pds-core>=0.6.5,<0.7"],
+    )
+    if current_dependencies not in allowed_core_only_dependencies:
+        raise RuntimeError(
+            "issue #71 repository check requires one approved Core-only "
+            "Vitrine runtime dependency"
+        )
     optional = project.get("optional-dependencies", {})
     all_requirements = tuple(project.get("dependencies", ()))
     if isinstance(optional, dict):

@@ -168,7 +168,7 @@ class SnapshotGate:
         )
 
 
-assert importlib.metadata.version("pds-core") == "0.6.4"
+assert importlib.metadata.version("pds-core") == "0.6.5"
 assert importlib.metadata.version("pds-vitrine") == "0.3.0"
 for name in ("scoreform", "quillan", "concord", "portia", "meridian"):
     assert importlib.util.find_spec(name) is None, name
@@ -493,7 +493,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         smoke(args.vitrine_wheel, args.core_wheel)
-        print("PASS Issue #102 Core 0.6.4 installed-wheel completed Portfolio acceptance")
+        print("PASS Issue #102 / #103 Core 0.6.5 installed-wheel completed Portfolio acceptance")
         return 0
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"Issue #102 installed-wheel smoke failed: {error}", file=sys.stderr)

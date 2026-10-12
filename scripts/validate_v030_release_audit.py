@@ -157,8 +157,10 @@ def _validate_package_boundary() -> None:
     project = data.get("project")
     if not isinstance(project, dict):
         raise RuntimeError("pyproject project table is missing")
-    if project.get("dependencies") != ["pds-core>=0.6.3,<0.7"]:
-        raise RuntimeError("v0.3.0 audit requires Core-only runtime dependency")
+    if project.get("dependencies") != ["pds-core>=0.6.5,<0.7"]:
+        raise RuntimeError(
+            "current repository must retain the Core-only runtime dependency"
+        )
     if project.get("scripts") != {"vitrine": "vitrine.cli:main"}:
         raise RuntimeError("v0.3.0 console-script boundary drifted")
     expected = {

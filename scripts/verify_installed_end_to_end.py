@@ -147,9 +147,9 @@ def _installed_provenance(
     vitrine_distribution = metadata.distribution("pds-vitrine")
     core_distribution = metadata.distribution("pds-core")
     _require(
-        core_distribution.version == "0.6.4",
+        core_distribution.version == "0.6.5",
         stage,
-        "installed Core version is not 0.6.4",
+        "installed Core version is not 0.6.5",
     )
     requirements = tuple(metadata.requires("pds-vitrine") or ())
     core_requirements = tuple(

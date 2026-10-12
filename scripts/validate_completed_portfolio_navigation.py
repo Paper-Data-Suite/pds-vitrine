@@ -156,8 +156,10 @@ def _validate_release_anchors() -> None:
 def _validate_package_boundary() -> None:
     data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     dependencies = tuple(data["project"].get("dependencies", ()))
-    if dependencies != ("pds-core>=0.6.3,<0.7",):
-        raise RuntimeError("#102 must preserve the Core-only base dependency boundary")
+    if dependencies != ("pds-core>=0.6.5,<0.7",):
+        raise RuntimeError(
+            "#102 must preserve a Core-only base dependency; #103 raises its floor to 0.6.5"
+        )
 
     mypy_files = tuple(data["tool"]["mypy"].get("files", ()))
     for required in (

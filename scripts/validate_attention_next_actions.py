@@ -363,9 +363,9 @@ def _validate_project_contract() -> None:
     if not isinstance(project, dict):
         raise RuntimeError("pyproject project table is missing")
     dependencies = tuple(project.get("dependencies", ()))
-    if dependencies != ("pds-core>=0.6.3,<0.7",):
+    if dependencies != ("pds-core>=0.6.5,<0.7",):
         raise RuntimeError(
-            "Issue #69 requires the current released Core floor pds-core>=0.6.3,<0.7"
+            "Issue #103 requires the current Core floor pds-core>=0.6.5,<0.7"
         )
     dependency_text = "\n".join(str(item) for item in dependencies).casefold()
     for sibling in ("scoreform", "quillan", "concord", "portia", "meridian"):

@@ -97,7 +97,7 @@ from vitrine.producer_adapters import (
     build_adapter_registry,
 )
 from vitrine.released_producer_contracts import (
-    CORE_0_6_3_AUDIT,
+    CORE_0_6_5_AUDIT,
     RELEASED_PRODUCER_CONTRACT_BY_MODULE,
 )
 from vitrine.snapshot_materialization import (
@@ -611,8 +611,8 @@ class _ArtifactGate:
 def _qualify(workspace: Path) -> None:
     concord_audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE["concord"]
     _require(
-        metadata.version(CORE_0_6_3_AUDIT.distribution_name)
-        == CORE_0_6_3_AUDIT.release_version,
+        metadata.version(CORE_0_6_5_AUDIT.distribution_name)
+        == CORE_0_6_5_AUDIT.release_version,
         "exact Core release is not installed",
     )
     _require(
