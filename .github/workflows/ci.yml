@@ -170,18 +170,16 @@ jobs:
         run: |
           $releaseDirectory = Join-Path $env:RUNNER_TEMP "issue71-release-wheels"
           $wheelhouse = Join-Path $env:RUNNER_TEMP "issue71-wheelhouse"
-          $vitrineDist = Join-Path $env:RUNNER_TEMP "issue71-vitrine-dist"
           New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
           New-Item -ItemType Directory -Force -Path $wheelhouse | Out-Null
-          New-Item -ItemType Directory -Force -Path $vitrineDist | Out-Null
 
           "ISSUE71_RELEASE_DIR=$releaseDirectory" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "ISSUE71_WHEELHOUSE=$wheelhouse" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "ISSUE71_VITRINE_DIST=$vitrineDist" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "ISSUE71_CORE_WHEEL=$(Join-Path $releaseDirectory 'pds_core-0.6.3-py3-none-any.whl')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "ISSUE71_SCOREFORM_WHEEL=$(Join-Path $releaseDirectory 'scoreform-0.11.0-py3-none-any.whl')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "ISSUE71_QUILLAN_WHEEL=$(Join-Path $releaseDirectory 'quillan-0.10.0-py3-none-any.whl')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "ISSUE71_CONCORD_WHEEL=$(Join-Path $releaseDirectory 'pds_concord-0.3.0-py3-none-any.whl')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ISSUE71_VITRINE_WHEEL=$(Join-Path $releaseDirectory 'pds_vitrine-0.3.0-py3-none-any.whl')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Download exact released PDS wheels
         shell: pwsh
@@ -202,6 +200,10 @@ jobs:
             -Uri "https://github.com/Paper-Data-Suite/pds-concord/releases/download/v0.3.0/pds_concord-0.3.0-py3-none-any.whl" `
             -OutFile $env:ISSUE71_CONCORD_WHEEL `
             -ErrorAction Stop
+          Invoke-WebRequest `
+            -Uri "https://github.com/Paper-Data-Suite/pds-vitrine/releases/download/v0.3.0/pds_vitrine-0.3.0-py3-none-any.whl" `
+            -OutFile $env:ISSUE71_VITRINE_WHEEL `
+            -ErrorAction Stop
 
       - name: Prepare endpoint-local offline wheelhouse
         shell: pwsh
@@ -213,17 +215,6 @@ jobs:
             "$env:ISSUE71_SCOREFORM_WHEEL" `
             "$env:ISSUE71_QUILLAN_WHEEL" `
             "$env:ISSUE71_CONCORD_WHEEL"
-
-      - name: Build candidate Vitrine wheel
-        shell: pwsh
-        run: |
-          python -m pip install build
-          python -m build --wheel --outdir "$env:ISSUE71_VITRINE_DIST"
-          $wheels = @(Get-ChildItem -LiteralPath "$env:ISSUE71_VITRINE_DIST" -Filter "pds_vitrine-0.3.0-*.whl")
-          if ($wheels.Count -ne 1) {
-            throw "Expected exactly one pds-vitrine 0.3.0 wheel."
-          }
-          "ISSUE71_VITRINE_WHEEL=$($wheels[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Run authoritative issue #71 live installed acceptance
         shell: pwsh
