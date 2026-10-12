@@ -307,3 +307,78 @@ def test_live_reader_rejects_future_version_with_unsupported_metadata(
 
     assert caught.value.code == "reader.incompatible"
     assert caught.value.stage == "reader_contract"
+
+# Issue #104 Slice 1: cross-producer version-resilience matrix.
+@pytest.mark.parametrize(
+    ("module_id", "contract"),
+    (
+        ("scoreform", "scoreform_academic_result_reader_v1"),
+        ("quillan", "quillan_academic_result_reader_v1"),
+        ("concord", "concord_academic_result_reader_v1"),
+    ),
+)
+def test_issue104_future_producer_release_calls_public_reader(
+    monkeypatch: pytest.MonkeyPatch, module_id: str, contract: str
+) -> None:
+    audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE[module_id]
+    future_version = "99.123.456"
+    assert future_version != audit.release_version
+    assert future_version not in VITRINE_LEGACY_EXACT_PRODUCER_RELEASES[module_id]
+    reader = build_audited_installed_producer_reader(module_id)
+    calls: list[bytes] = []
+
+    def public_read(payload: bytes) -> object:
+        calls.append(payload)
+        return {"producer": module_id}
+
+    monkeypatch.setattr(reader_services.metadata, "version", lambda _name: future_version)
+    monkeypatch.setattr(
+        compatibility,
+        "discover_publication_producer_profiles",
+        lambda: (_profile(module_id, reader_contract_version=contract),),
+    )
+    monkeypatch.setattr(
+        reader_services,
+        "import_module",
+        lambda _name: SimpleNamespace(**{audit.public_reader_symbol: public_read}),
+    )
+    payload = b'{"synthetic":true}'
+    assert reader.read(payload) == {"producer": module_id}
+    assert calls == [payload]
+    resolved = resolve_installed_producer_reader_compatibility(
+        audit,
+        installed_distribution_version=future_version,
+        profiles=(_profile(module_id, reader_contract_version=contract),),
+    )
+    assert resolved.installed_distribution_version == future_version
+    assert resolved.compatibility_basis == "declared_reader_contract"
+    assert resolved.reader_contract_version == contract
+
+
+@pytest.mark.parametrize("module_id", ("scoreform", "quillan", "concord"))
+@pytest.mark.parametrize("reader_contract", ("unsupported_reader_v2", None))
+def test_issue104_future_producer_contract_failure_is_closed(
+    module_id: str, reader_contract: str | None
+) -> None:
+    audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE[module_id]
+    with pytest.raises(
+        compatibility.InstalledProducerReaderCompatibilityError
+    ) as caught:
+        resolve_installed_producer_reader_compatibility(
+            audit,
+            installed_distribution_version="99.123.456",
+            profiles=(_profile(module_id, reader_contract_version=reader_contract),),
+        )
+    assert caught.value.code == "reader.incompatible"
+    assert caught.value.stage == "reader_contract"
+
+
+@pytest.mark.parametrize("module_id", ("scoreform", "quillan", "concord"))
+def test_issue104_pre_metadata_fallback_is_exact(module_id: str) -> None:
+    audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE[module_id]
+    for version in VITRINE_LEGACY_EXACT_PRODUCER_RELEASES[module_id]:
+        result = resolve_installed_producer_reader_compatibility(
+            audit, installed_distribution_version=version, profiles=()
+        )
+        assert result.compatibility_basis == "legacy_exact_release"
+        assert result.installed_distribution_version == version
