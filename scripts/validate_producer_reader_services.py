@@ -9,8 +9,11 @@ from pathlib import Path
 from typing import Any, cast
 
 from vitrine.producer_adapters import build_adapter_registry
+from vitrine.producer_reader_compatibility import (
+    LEGACY_INSTALLED_PRODUCER_READER_CONTRACT_VERSION,
+    VITRINE_SUPPORTED_PRODUCER_READER_CONTRACTS,
+)
 from vitrine.producer_reader_services import (
-    INSTALLED_PRODUCER_READER_CONTRACT_VERSION,
     PRODUCER_READER_SERVICE_CONTRACT_VERSION,
     build_audited_installed_producer_readers,
     read_authorized_producer_manifest,
@@ -61,9 +64,18 @@ def _validate_contracts() -> None:
         "unexpected producer-reader service contract version",
     )
     _require(
-        INSTALLED_PRODUCER_READER_CONTRACT_VERSION
+        LEGACY_INSTALLED_PRODUCER_READER_CONTRACT_VERSION
         == "vitrine_installed_producer_reader_v1",
-        "unexpected installed producer-reader contract version",
+        "unexpected historical installed-reader provenance label",
+    )
+    _require(
+        VITRINE_SUPPORTED_PRODUCER_READER_CONTRACTS
+        == {
+            "concord": frozenset({"concord_academic_result_reader_v1"}),
+            "quillan": frozenset({"quillan_academic_result_reader_v1"}),
+            "scoreform": frozenset({"scoreform_academic_result_reader_v1"}),
+        },
+        "Vitrine producer-reader compatibility vocabulary changed",
     )
 
 
@@ -122,7 +134,7 @@ def _validate_audited_reader_bindings() -> None:
         )
         _require(
             reader.descriptor.reader_contract_version
-            == INSTALLED_PRODUCER_READER_CONTRACT_VERSION,
+            in VITRINE_SUPPORTED_PRODUCER_READER_CONTRACTS[module_id],
             f"{module_id} installed reader contract version changed",
         )
 

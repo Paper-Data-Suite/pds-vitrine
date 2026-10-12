@@ -74,6 +74,14 @@ CONCORD_WHEEL: Final[WheelSpec] = WheelSpec(
     release_tag="v0.3.0",
     repository="Paper-Data-Suite/pds-concord",
 )
+VITRINE_RELEASE_WHEEL: Final[WheelSpec] = WheelSpec(
+    distribution_name="pds-vitrine",
+    version="0.3.0",
+    filename="pds_vitrine-0.3.0-py3-none-any.whl",
+    sha256="69d2d1ea8a90b5d25c813da3c852232a0e0a9e7094e2b4d217f22662022596b8",
+    release_tag="v0.3.0",
+    repository="Paper-Data-Suite/pds-vitrine",
+)
 AUDITED_RELEASE_WHEELS: Final[tuple[WheelSpec, ...]] = (
     CORE_WHEEL,
     SCOREFORM_WHEEL,
@@ -196,11 +204,13 @@ def validate_contract_constants() -> None:
         raise RuntimeError("audited wheel filenames must be unique")
     if len(set(distributions)) != len(distributions):
         raise RuntimeError("audited wheel distribution names must be unique")
-    for wheel in AUDITED_RELEASE_WHEELS:
+    for wheel in (*AUDITED_RELEASE_WHEELS, VITRINE_RELEASE_WHEEL):
         if len(wheel.sha256) != 64 or any(ch not in "0123456789abcdef" for ch in wheel.sha256):
             raise RuntimeError(f"invalid frozen SHA-256 for {wheel.filename}")
         if wheel.version not in wheel.filename:
             raise RuntimeError(f"wheel filename/version mismatch for {wheel.filename}")
+    if VITRINE_RELEASE_WHEEL.version != EXPECTED_VITRINE_VERSION:
+        raise RuntimeError("historical Vitrine wheel/version mismatch")
 
     producer_ids = tuple(item.producer_module_id for item in LIVE_PRODUCERS)
     if producer_ids != ("scoreform", "quillan", "concord"):
@@ -243,6 +253,7 @@ __all__ = [
     "ProducerAcceptanceContract",
     "QUILLAN_CONTRACT",
     "REQUIRED_ACCEPTANCE_FILES",
+    "VITRINE_RELEASE_WHEEL",
     "SCOREFORM_CONTRACT",
     "WheelSpec",
     "validate_contract_constants",

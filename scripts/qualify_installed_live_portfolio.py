@@ -28,6 +28,7 @@ if TYPE_CHECKING:
         EXPECTED_VITRINE_VERSION,
         FULL_ACCEPTANCE_READY,
         NEGATIVE_MATRIX_SLICE_READY,
+        VITRINE_RELEASE_WHEEL,
         WheelSpec,
         validate_contract_constants,
     )
@@ -40,6 +41,7 @@ else:
         EXPECTED_VITRINE_VERSION,
         FULL_ACCEPTANCE_READY,
         NEGATIVE_MATRIX_SLICE_READY,
+        VITRINE_RELEASE_WHEEL,
         WheelSpec,
         validate_contract_constants,
     )
@@ -115,15 +117,15 @@ def _distribution_version_from_wheel_filename(path: Path) -> tuple[str, str]:
 
 
 def _authenticate_vitrine_wheel(path: Path) -> tuple[Path, str]:
-    resolved = path.resolve(strict=True)
+    resolved = _authenticate(path, VITRINE_RELEASE_WHEEL)
     distribution, version = _distribution_version_from_wheel_filename(resolved)
     if distribution != "pds-vitrine":
         raise LiveInstalledQualificationError(
-            f"candidate wheel is not pds-vitrine: {resolved.name}"
+            f"historical wheel is not pds-vitrine: {resolved.name}"
         )
     if version != EXPECTED_VITRINE_VERSION:
         raise LiveInstalledQualificationError(
-            "candidate Vitrine version mismatch: "
+            "historical Vitrine version mismatch: "
             f"expected {EXPECTED_VITRINE_VERSION}, found {version}"
         )
     return resolved, _sha256(resolved)
@@ -429,7 +431,7 @@ def qualify(
     )
     release_wheels = _resolve_release_wheels(wheel_dir, specs=release_specs)
     print("PASS exact release wheel authentication", flush=True)
-    print(f"PASS candidate Vitrine wheel authentication sha256={candidate_sha256}", flush=True)
+    print(f"PASS historical Vitrine release wheel authentication sha256={candidate_sha256}", flush=True)
 
     with tempfile.TemporaryDirectory(prefix="vitrine-live-installed-71-") as raw:
         work_root = Path(raw).resolve()

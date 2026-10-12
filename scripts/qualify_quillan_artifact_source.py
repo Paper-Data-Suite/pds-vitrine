@@ -46,7 +46,7 @@ from vitrine.quillan_contract import (
     QUILLAN_SELECTED_STUDENT_WORK_REPRESENTATION_KIND,
 )
 from vitrine.released_producer_contracts import (
-    CORE_0_6_3_AUDIT,
+    CORE_0_6_5_AUDIT,
     RELEASED_PRODUCER_CONTRACT_BY_MODULE,
 )
 from vitrine.snapshot_materialization import (
@@ -242,8 +242,16 @@ def _request(entry: SnapshotEntryPlan) -> SnapshotSourceRequest:
 
 def qualify() -> None:
     quillan_audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE["quillan"]
-    _require(metadata.version(CORE_0_6_3_AUDIT.distribution_name) == "0.6.3", "Core exact-wheel version changed")
-    _require(metadata.version(quillan_audit.distribution_name) == "0.10.0", "Quillan exact-wheel version changed")
+    _require(
+        metadata.version(CORE_0_6_5_AUDIT.distribution_name)
+        == CORE_0_6_5_AUDIT.release_version,
+        "Core exact-wheel version changed",
+    )
+    _require(
+        metadata.version(quillan_audit.distribution_name)
+        == quillan_audit.release_version,
+        "Quillan exact-wheel version changed",
+    )
 
     with tempfile.TemporaryDirectory(prefix="vitrine-quillan-artifact-") as temporary:
         root = Path(temporary)

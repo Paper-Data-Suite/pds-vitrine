@@ -421,15 +421,17 @@ def run_candidate_inbox_menu(
     clear_fn: ClearFunction,
     dependencies: VitrineWorkflowDependencies | None = None,
     actor: ActorAttribution | None = None,
+    workspace_root: Path | None = None,
+    portfolio_id: str | None = None,
 ) -> None:
     """Browse current Candidate inbox state without mutations."""
 
-    filters = CandidateInboxMenuFilters()
+    filters = CandidateInboxMenuFilters(portfolio_id=portfolio_id)
     workflow_dependencies = dependencies or default_workflow_dependencies()
     while True:
         clear_fn()
         try:
-            root = resolve_workspace_root()
+            root = resolve_workspace_root(workspace_root)
             result = list_candidate_inbox(root, filters.query())
         except (WorkspaceRootError, CandidateInboxError, ValueError) as error:
             code = getattr(error, "code", error.__class__.__name__)

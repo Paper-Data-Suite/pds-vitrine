@@ -193,7 +193,7 @@ def get_summary(report, code):
     return values[0] if values else None
 
 
-assert importlib.metadata.version("pds-core") == "0.6.4"
+assert importlib.metadata.version("pds-core") == "0.6.5"
 workspace = ensure_workspace_root(Path(sys.argv[1]), create=True)
 
 work_ref = ModuleWorkRef("scoreform", "class_attention", "work_attention")
@@ -690,7 +690,7 @@ teacher_text, technical_text = menu_text.split(
     maxsplit=1,
 )
 assert "Attention / Next Actions" in teacher_text
-assert "Next action: Snapshot Export verification" in teacher_text
+assert "Next step: Snapshot Export verification" in teacher_text
 assert "Action ID:" not in teacher_text
 assert "verify_snapshot_export" not in teacher_text
 assert "Action ID: verify_snapshot_export" in technical_text

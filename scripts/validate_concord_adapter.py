@@ -112,7 +112,7 @@ def _validate_declaration_registry_and_provider() -> None:
         "Concord reader binding changed",
     )
     _require(
-        declaration.reader_contract_version == "vitrine_installed_producer_reader_v1",
+        declaration.reader_contract_version == "concord_academic_result_reader_v1",
         "Concord reader contract changed",
     )
     _require(

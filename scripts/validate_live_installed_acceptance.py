@@ -28,6 +28,7 @@ try:
         QUILLAN_CONTRACT,
         REQUIRED_ACCEPTANCE_FILES,
         SCOREFORM_CONTRACT,
+        VITRINE_RELEASE_WHEEL,
         validate_contract_constants,
     )
 except ModuleNotFoundError:  # direct script execution from scripts/
@@ -49,6 +50,7 @@ except ModuleNotFoundError:  # direct script execution from scripts/
         QUILLAN_CONTRACT,
         REQUIRED_ACCEPTANCE_FILES,
         SCOREFORM_CONTRACT,
+        VITRINE_RELEASE_WHEEL,
         validate_contract_constants,
     )
 
@@ -138,6 +140,16 @@ def _validate_frozen_contract() -> None:
     }
     if frozen != expected:
         raise RuntimeError("issue #71 exact release artifact audit drifted")
+    if (
+        VITRINE_RELEASE_WHEEL.version,
+        VITRINE_RELEASE_WHEEL.filename,
+        VITRINE_RELEASE_WHEEL.sha256,
+    ) != (
+        "0.3.0",
+        "pds_vitrine-0.3.0-py3-none-any.whl",
+        "69d2d1ea8a90b5d25c813da3c852232a0e0a9e7094e2b4d217f22662022596b8",
+    ):
+        raise RuntimeError("issue #71 historical Vitrine release artifact drifted")
     if tuple(item.producer_module_id for item in LIVE_PRODUCERS) != (
         "scoreform",
         "quillan",
@@ -165,8 +177,16 @@ def _validate_project_contract() -> None:
     project = data.get("project")
     if not isinstance(project, dict):
         raise RuntimeError("pyproject project table is missing")
-    if project.get("dependencies") != [EXPECTED_VITRINE_RUNTIME_DEPENDENCY]:
-        raise RuntimeError("issue #71 must preserve Core-only Vitrine runtime dependency")
+    current_dependencies = project.get("dependencies")
+    allowed_core_only_dependencies = (
+        [EXPECTED_VITRINE_RUNTIME_DEPENDENCY],
+        ["pds-core>=0.6.5,<0.7"],
+    )
+    if current_dependencies not in allowed_core_only_dependencies:
+        raise RuntimeError(
+            "issue #71 repository check requires one approved Core-only "
+            "Vitrine runtime dependency"
+        )
     optional = project.get("optional-dependencies", {})
     all_requirements = tuple(project.get("dependencies", ()))
     if isinstance(optional, dict):
@@ -513,16 +533,20 @@ def _validate_ci_wiring() -> None:
         "pds-scoreform/releases/download/v0.11.0/scoreform-0.11.0-py3-none-any.whl",
         "pds-quillan/releases/download/v0.10.0/quillan-0.10.0-py3-none-any.whl",
         "pds-concord/releases/download/v0.3.0/pds_concord-0.3.0-py3-none-any.whl",
-        f"pds_vitrine-{EXPECTED_VITRINE_VERSION}-*.whl",
-        f"Expected exactly one pds-vitrine {EXPECTED_VITRINE_VERSION} wheel.",
+        "pds-vitrine/releases/download/v0.3.0/pds_vitrine-0.3.0-py3-none-any.whl",
+        VITRINE_RELEASE_WHEEL.filename,
         "python -m pip wheel",
-        "python -m build --wheel",
         "scripts/qualify_installed_live_portfolio.py",
         "--vitrine-wheel",
         "--wheel-dir",
     )
     source = path.read_text(encoding="utf-8")
     _, job = source.split("  live_installed_acceptance:", 1)
+    if "python -m build --wheel" in job or "Build candidate Vitrine wheel" in job:
+        raise RuntimeError(
+            "frozen issue #71 CI must replay the released Vitrine 0.3.0 wheel, "
+            "not rebuild current development source"
+        )
     for slice_flag in (
         "--preflight-only",
         "--candidate-discovery-only",

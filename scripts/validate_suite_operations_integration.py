@@ -129,8 +129,10 @@ def _validate_project_contract() -> None:
     project = data.get("project")
     if not isinstance(project, dict):
         raise RuntimeError("pyproject project table is missing")
-    if project.get("dependencies") != ["pds-core>=0.6.3,<0.7"]:
-        raise RuntimeError("Issue #70 must preserve the Core 0.6.3 runtime floor")
+    if project.get("dependencies") != ["pds-core>=0.6.5,<0.7"]:
+        raise RuntimeError(
+            "Issue #70 must remain Core-only; #103 raises the runtime floor to 0.6.5"
+        )
     if project.get("scripts") != {"vitrine": "vitrine.cli:main"}:
         raise RuntimeError("Issue #70 must preserve the vitrine console script")
 

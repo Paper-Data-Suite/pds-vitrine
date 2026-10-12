@@ -31,7 +31,6 @@ from vitrine.producer_adapters import (
     ProjectionField,
 )
 from vitrine.producer_reader_services import (
-    INSTALLED_PRODUCER_READER_CONTRACT_VERSION,
     build_audited_installed_producer_reader,
 )
 from vitrine.released_producer_contracts import (
@@ -71,7 +70,7 @@ SCOREFORM_LIVE_ADAPTER_DECLARATION: Final[ProducerProjectionAdapterDeclaration] 
         ),
         support_key=SCOREFORM_LIVE_SUPPORT_KEY,
         public_reader_id=_SCOREFORM_READER_DESCRIPTOR.public_reader_id,
-        reader_contract_version=INSTALLED_PRODUCER_READER_CONTRACT_VERSION,
+        reader_contract_version=_SCOREFORM_READER_DESCRIPTOR.reader_contract_version,
         reader_package_identity=_SCOREFORM_AUDIT.distribution_name,
         supported_source_families=("assessment_result",),
         supported_representation_families=("result_summary",),

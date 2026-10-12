@@ -36,7 +36,7 @@ def _run(command: list[str], *, cwd: Path, env: dict[str, str]) -> str:
 
 
 def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
-    # Authenticate the exact published Core 0.6.4 artifact before creating
+    # Authenticate the exact published Core 0.6.5 artifact before creating
     # the isolated environment.
     _run(
         [
@@ -116,7 +116,7 @@ from vitrine.snapshot_custody import (
     release_snapshot_series_lock,
 )
 
-assert importlib.metadata.version("pds-core") == "0.6.4"
+assert importlib.metadata.version("pds-core") == "0.6.5"
 assert importlib.metadata.version("pds-vitrine") == "0.3.0"
 
 requirements = tuple(
@@ -125,7 +125,7 @@ requirements = tuple(
         "Requires-Dist", ()
     )
 )
-assert any("pds-core<0.7,>=0.6.3" in value for value in requirements)
+assert any("pds-core<0.7,>=0.6.5" in value for value in requirements)
 
 long_attempt = "snapshot_attempt_" + ("a" * 4096)
 long_series = "snapshot_series_" + ("s" * 4096)
@@ -232,7 +232,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         smoke(args.vitrine_wheel, args.core_wheel)
-        print("PASS Issue #111 Core 0.6.4 installed-wheel acceptance")
+        print("PASS Issue #111 / #103 Core 0.6.5 installed-wheel acceptance")
         return 0
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"Issue #111 wheel smoke failed: {error}", file=sys.stderr)

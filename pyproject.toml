@@ -12,7 +12,7 @@ authors = [
     { name = "Stephen Severino" }
 ]
 dependencies = [
-    "pds-core>=0.6.3,<0.7"
+    "pds-core>=0.6.5,<0.7"
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -107,6 +107,7 @@ files = [
     "scripts/validate_producer_adapters.py",
     "scripts/validate_released_producer_contracts.py",
     "scripts/validate_producer_reader_services.py",
+    "scripts/validate_issue103_acceptance.py",
     "scripts/validate_compatibility_diagnostics.py",
     "scripts/validate_scoreform_adapter.py",
     "scripts/validate_concord_adapter.py",

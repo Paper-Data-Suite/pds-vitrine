@@ -1,4 +1,4 @@
-"""Authenticate the exact qualified pds-core v0.6.4 wheel and installation."""
+"""Authenticate the exact qualified pds-core v0.6.5 wheel and installation."""
 
 from __future__ import annotations
 
@@ -12,10 +12,10 @@ from pathlib import Path
 
 CORE_DISTRIBUTION_NAME = "pds-core"
 CORE_IMPORT_NAME = "pds_core"
-EXPECTED_CORE_VERSION = "0.6.4"
-EXPECTED_CORE_WHEEL_FILENAME = "pds_core-0.6.4-py3-none-any.whl"
+EXPECTED_CORE_VERSION = "0.6.5"
+EXPECTED_CORE_WHEEL_FILENAME = "pds_core-0.6.5-py3-none-any.whl"
 EXPECTED_CORE_WHEEL_SHA256 = (
-    "48cea9317f2967bdc0f2d4c14349a56677c7c3f8211f0f33978ccb1a1c75859b"
+    "9ace75f17b23b7f0ed6a709d531af5120db43d0325b4148d26f2d6ba1d4b3c18"
 )
 
 
@@ -72,7 +72,7 @@ def verify_core_wheel(path: str | Path) -> None:
     if metadata["Name"] != CORE_DISTRIBUTION_NAME:
         raise CoreVerificationError("Core wheel distribution name is not pds-core.")
     if metadata["Version"] != EXPECTED_CORE_VERSION:
-        raise CoreVerificationError("Core wheel version is not exactly 0.6.4.")
+        raise CoreVerificationError("Core wheel version is not exactly 0.6.5.")
 
 
 def verify_installed_core() -> None:
@@ -131,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     ) as exc:
         print(f"Core verification failed: {exc}", file=sys.stderr)
         return 1
-    print("PASS Core v0.6.4 verification")
+    print("PASS Core v0.6.5 verification")
     return 0
 
 

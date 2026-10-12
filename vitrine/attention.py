@@ -13,6 +13,10 @@ from vitrine.candidate_inbox import (
     CandidateInboxQuery,
     list_candidate_inbox,
 )
+from vitrine.completed_portfolio import (
+    CompletedPortfolioHistoryError,
+    project_completed_portfolio_history,
+)
 from vitrine.curation_services import CurationWorkflowError
 from vitrine.curation_state import CurationState, project_curation_state
 from vitrine.models import (
@@ -36,6 +40,12 @@ from vitrine.models.common import (
     require_text,
 )
 from vitrine.models.errors import VitrineModelValidationError
+from vitrine.portfolio_completion import (
+    PortfolioCompletionError,
+    PortfolioCompletionProjection,
+    project_portfolio_completion,
+    project_portfolio_completion_operational_status,
+)
 from vitrine.snapshot_distribution import (
     SnapshotCustodyFinding,
     SnapshotDistributionError,
@@ -55,6 +65,13 @@ from vitrine.working_composition import (
 )
 
 VITRINE_ATTENTION_CONTRACT_VERSION: Final[str] = "vitrine_attention_next_actions_v1"
+VITRINE_ATTENTION_V2_CONTRACT_VERSION: Final[str] = "vitrine_attention_next_actions_v2"
+VITRINE_ATTENTION_V2_REQUIREMENT_LEVELS: Final[frozenset[str]] = frozenset(
+    {"required", "opportunity", "status"}
+)
+VITRINE_ATTENTION_V2_CLASSES: Final[frozenset[str]] = frozenset(
+    {"workflow", "recovery", "integrity", "notice", "status"}
+)
 VITRINE_ATTENTION_EVALUATIONS: Final[frozenset[str]] = frozenset(
     {"evaluated", "unavailable"}
 )
@@ -293,6 +310,178 @@ class VitrineAttentionReport:
             raise ValueError(
                 "unavailable attention reports must not claim a state revision"
             )
+
+
+
+@dataclass(frozen=True, slots=True)
+class VitrineAttentionSummaryV2:
+    """One completion-aware Vitrine attention, opportunity, or status aggregate."""
+
+    code: str
+    label: str
+    count: int
+    count_unit: str
+    attention_class: str
+    requirement_level: str
+    portfolio_id: str | None
+    reason_codes: tuple[str, ...]
+    next_action: VitrineNextActionRef | None
+
+    def __post_init__(self) -> None:
+        try:
+            code = require_identifier(self.code, "code")
+            if len(code) > _MAX_CODE_LENGTH:
+                raise VitrineModelValidationError("attention code is too long.")
+            object.__setattr__(self, "code", code)
+            object.__setattr__(
+                self,
+                "label",
+                require_text(self.label, "label", maximum=_MAX_LABEL_LENGTH),
+            )
+            count = require_nonnegative_int(self.count, "count")
+            if count > _MAX_COUNT:
+                raise VitrineModelValidationError("attention count is too large.")
+            object.__setattr__(self, "count", count)
+            object.__setattr__(
+                self,
+                "count_unit",
+                require_identifier(self.count_unit, "count_unit"),
+            )
+            object.__setattr__(
+                self,
+                "attention_class",
+                require_enum(
+                    self.attention_class,
+                    "attention_class",
+                    VITRINE_ATTENTION_V2_CLASSES,
+                ),
+            )
+            object.__setattr__(
+                self,
+                "requirement_level",
+                require_enum(
+                    self.requirement_level,
+                    "requirement_level",
+                    VITRINE_ATTENTION_V2_REQUIREMENT_LEVELS,
+                ),
+            )
+            if self.portfolio_id is not None:
+                object.__setattr__(
+                    self,
+                    "portfolio_id",
+                    require_identifier(self.portfolio_id, "portfolio_id"),
+                )
+            reasons = tuple(
+                require_text(
+                    value,
+                    "reason_codes",
+                    maximum=_MAX_REASON_CODE_LENGTH,
+                )
+                for value in self.reason_codes
+            )
+            if len(set(reasons)) != len(reasons):
+                raise VitrineModelValidationError(
+                    "reason_codes must not contain duplicates."
+                )
+            if len(reasons) > _MAX_REASON_CODES:
+                raise VitrineModelValidationError(
+                    "reason_codes exceeds the bounded attention maximum."
+                )
+            object.__setattr__(self, "reason_codes", reasons)
+        except VitrineModelValidationError as error:
+            raise ValueError("invalid Vitrine v2 attention summary") from error
+
+        if self.requirement_level == "status" and self.attention_class not in {
+            "notice",
+            "status",
+        }:
+            raise ValueError(
+                "status requirement level requires notice/status attention class"
+            )
+        if self.next_action is not None:
+            if not isinstance(self.next_action, VitrineNextActionRef):
+                raise ValueError("next_action must be VitrineNextActionRef or null")
+            if self.next_action.portfolio_id != self.portfolio_id:
+                raise ValueError(
+                    "next_action Portfolio scope must match the attention summary"
+                )
+
+
+@dataclass(frozen=True, slots=True)
+class VitrineAttentionReportV2:
+    """Completion-aware v2 report; the frozen v1 report remains unchanged."""
+
+    contract_version: str
+    evaluation: str
+    observed_state_revision: int | None
+    summaries: tuple[VitrineAttentionSummaryV2, ...]
+    notices: tuple[VitrineAttentionNotice, ...]
+
+    def __post_init__(self) -> None:
+        if self.contract_version != VITRINE_ATTENTION_V2_CONTRACT_VERSION:
+            raise ValueError("unsupported Vitrine v2 attention contract version")
+        try:
+            object.__setattr__(
+                self,
+                "evaluation",
+                require_enum(
+                    self.evaluation,
+                    "evaluation",
+                    VITRINE_ATTENTION_EVALUATIONS,
+                ),
+            )
+            if self.observed_state_revision is not None:
+                object.__setattr__(
+                    self,
+                    "observed_state_revision",
+                    require_positive_int(
+                        self.observed_state_revision,
+                        "observed_state_revision",
+                    ),
+                )
+        except VitrineModelValidationError as error:
+            raise ValueError("invalid Vitrine v2 attention report") from error
+
+        summaries = tuple(self.summaries)
+        notices = tuple(self.notices)
+        if len(summaries) > _MAX_SUMMARIES:
+            raise ValueError("too many Vitrine v2 attention summaries")
+        if len(notices) > _MAX_NOTICES:
+            raise ValueError("too many Vitrine attention notices")
+        if any(not isinstance(item, VitrineAttentionSummaryV2) for item in summaries):
+            raise ValueError(
+                "summaries must contain VitrineAttentionSummaryV2 values"
+            )
+        if any(not isinstance(item, VitrineAttentionNotice) for item in notices):
+            raise ValueError("notices must contain VitrineAttentionNotice values")
+        if len({item.code for item in summaries}) != len(summaries):
+            raise ValueError("v2 attention summary codes must be unique")
+        if len({item.code for item in notices}) != len(notices):
+            raise ValueError("attention notice codes must be unique")
+        object.__setattr__(self, "summaries", summaries)
+        object.__setattr__(self, "notices", notices)
+
+        if self.evaluation == "evaluated" and self.observed_state_revision is None:
+            raise ValueError("evaluated v2 reports require a state revision")
+        if (
+            self.evaluation == "unavailable"
+            and self.observed_state_revision is not None
+        ):
+            raise ValueError(
+                "unavailable v2 reports must not claim a state revision"
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class _AttentionV2Fact:
+    code: str
+    label: str
+    count_unit: str
+    attention_class: str
+    requirement_level: str
+    portfolio_id: str | None
+    reason_codes: tuple[str, ...]
+    action_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -659,6 +848,177 @@ def _candidate_facts(
                     reason_codes=reasons or ("candidate_evaluation_unresolved",),
                 )
             )
+    return tuple(facts)
+
+
+
+_V2_OPTIONAL_CANDIDATE_DEFINITIONS: Final[
+    dict[str, tuple[str, str]]
+] = {
+    "vitrine_candidate_optional_evidence": (
+        "Additional evidence available",
+        "candidates",
+    ),
+    "vitrine_candidate_optional_stale": (
+        "Additional evidence needs refresh before use",
+        "candidate_entries",
+    ),
+    "vitrine_candidate_optional_unresolved": (
+        "Additional evidence could not be evaluated",
+        "candidate_entries",
+    ),
+}
+
+
+def _missing_candidate_section_ids(
+    preparation: WorkingCompositionPreparation,
+) -> frozenset[str]:
+    return frozenset(
+        item.scope_reference
+        for item in preparation.requirements
+        if item.requirement_kind == "section"
+        and item.scope_reference is not None
+        and item.status in {"unresolved_missing", "conditional_unresolved"}
+    )
+
+
+def _v2_candidate_facts(
+    items: tuple[CandidateInboxItem, ...],
+    state: CurationState,
+    records: tuple[VitrineRecord, ...],
+    preparation: WorkingCompositionPreparation,
+) -> tuple[_AttentionV2Fact, ...]:
+    candidates = _candidate_by_id(records)
+    missing_sections = _missing_candidate_section_ids(preparation)
+    facts: list[_AttentionV2Fact] = []
+
+    for item in items:
+        eligible_for_missing_section = bool(
+            missing_sections.intersection(item.eligible_section_ids)
+        )
+        actively_selected = item.selected_state == "selected"
+
+        if (
+            item.candidate_id is not None
+            and item.evaluation_outcome in {"eligible", "conditionally_eligible"}
+            and not _candidate_has_explicit_curation_disposition(
+                item,
+                state,
+                candidates,
+            )
+        ):
+            if eligible_for_missing_section:
+                facts.append(
+                    _AttentionV2Fact(
+                        code="vitrine_candidate_review_pending",
+                        label="Candidate review pending",
+                        count_unit="candidates",
+                        attention_class="workflow",
+                        requirement_level="required",
+                        portfolio_id=item.portfolio_id,
+                        reason_codes=(
+                            "candidate_can_satisfy_missing_section_requirement",
+                        ),
+                        action_id="open_candidate_inbox",
+                    )
+                )
+            else:
+                label, count_unit = _V2_OPTIONAL_CANDIDATE_DEFINITIONS[
+                    "vitrine_candidate_optional_evidence"
+                ]
+                facts.append(
+                    _AttentionV2Fact(
+                        code="vitrine_candidate_optional_evidence",
+                        label=label,
+                        count_unit=count_unit,
+                        attention_class="workflow",
+                        requirement_level="opportunity",
+                        portfolio_id=item.portfolio_id,
+                        reason_codes=(
+                            "candidate_not_required_by_current_portfolio",
+                        ),
+                        action_id="open_candidate_inbox",
+                    )
+                )
+
+        if item.stale_state == "stale":
+            if actively_selected or eligible_for_missing_section:
+                facts.append(
+                    _AttentionV2Fact(
+                        code="vitrine_candidate_evaluation_stale",
+                        label="Candidate evaluation stale",
+                        count_unit="candidate_entries",
+                        attention_class="workflow",
+                        requirement_level="required",
+                        portfolio_id=item.portfolio_id,
+                        reason_codes=item.stale_reason_codes,
+                        action_id="open_candidate_inbox",
+                    )
+                )
+            else:
+                label, count_unit = _V2_OPTIONAL_CANDIDATE_DEFINITIONS[
+                    "vitrine_candidate_optional_stale"
+                ]
+                facts.append(
+                    _AttentionV2Fact(
+                        code="vitrine_candidate_optional_stale",
+                        label=label,
+                        count_unit=count_unit,
+                        attention_class="workflow",
+                        requirement_level="opportunity",
+                        portfolio_id=item.portfolio_id,
+                        reason_codes=(
+                            item.stale_reason_codes
+                            or ("optional_candidate_evaluation_stale",)
+                        ),
+                        action_id="open_candidate_inbox",
+                    )
+                )
+
+        if (
+            item.evaluation_outcome == "unresolved"
+            or item.stale_state == "unresolved"
+        ):
+            reasons = tuple(
+                sorted(
+                    set(
+                        (
+                            *item.stale_reason_codes,
+                            *item.attention_reason_codes,
+                        )
+                    )
+                )
+            ) or ("candidate_evaluation_unresolved",)
+            if actively_selected:
+                facts.append(
+                    _AttentionV2Fact(
+                        code="vitrine_candidate_evaluation_unresolved",
+                        label="Candidate evaluation unresolved",
+                        count_unit="candidate_entries",
+                        attention_class="workflow",
+                        requirement_level="required",
+                        portfolio_id=item.portfolio_id,
+                        reason_codes=reasons,
+                        action_id="open_candidate_inbox",
+                    )
+                )
+            else:
+                label, count_unit = _V2_OPTIONAL_CANDIDATE_DEFINITIONS[
+                    "vitrine_candidate_optional_unresolved"
+                ]
+                facts.append(
+                    _AttentionV2Fact(
+                        code="vitrine_candidate_optional_unresolved",
+                        label=label,
+                        count_unit=count_unit,
+                        attention_class="workflow",
+                        requirement_level="opportunity",
+                        portfolio_id=item.portfolio_id,
+                        reason_codes=reasons,
+                        action_id="open_candidate_inbox",
+                    )
+                )
+
     return tuple(facts)
 
 
@@ -1210,6 +1570,175 @@ def _aggregate_facts(
     return tuple(summaries)
 
 
+
+def _v2_from_legacy_fact(fact: _AttentionFact) -> _AttentionV2Fact:
+    definition = _DEFINITION_BY_CODE[fact.code]
+    requirement_level = (
+        "status" if definition.attention_class == "notice" else "required"
+    )
+    return _AttentionV2Fact(
+        code=fact.code,
+        label=definition.label,
+        count_unit=definition.count_unit,
+        attention_class=definition.attention_class,
+        requirement_level=requirement_level,
+        portfolio_id=fact.portfolio_id,
+        reason_codes=fact.reason_codes,
+        action_id=definition.action_id,
+    )
+
+
+def _completion_status_fact(
+    completion: PortfolioCompletionProjection,
+) -> _AttentionV2Fact:
+    values: dict[str, tuple[str, str | None]] = {
+        "required_work": (
+            "Portfolio needs attention",
+            None,
+        ),
+        "ready_to_build": (
+            "Portfolio ready to build",
+            "open_build_export_current_portfolio",
+        ),
+        "complete": (
+            "Portfolio complete",
+            "open_completed_portfolio_editions",
+        ),
+        "update_ready": (
+            "Portfolio complete — update ready",
+            "open_build_export_current_portfolio",
+        ),
+        "recovery_or_integrity_blocked": (
+            "Portfolio recovery or integrity work required",
+            None,
+        ),
+    }
+    label, action_id = values[completion.state]
+    reasons = tuple(
+        sorted(
+            set(
+                (
+                    *completion.required_reason_codes,
+                    *completion.recovery_reason_codes,
+                    *completion.integrity_reason_codes,
+                )
+            )
+        )
+    )[:_MAX_REASON_CODES]
+    return _AttentionV2Fact(
+        code=f"vitrine_portfolio_{completion.state}",
+        label=label,
+        count_unit="portfolios",
+        attention_class="status",
+        requirement_level="status",
+        portfolio_id=completion.portfolio_id,
+        reason_codes=reasons,
+        action_id=action_id,
+    )
+
+
+def _student_presentation_opportunity(
+    completion: PortfolioCompletionProjection,
+) -> _AttentionV2Fact | None:
+    if not completion.student_presentation_missing:
+        return None
+    return _AttentionV2Fact(
+        code="vitrine_student_presentation_missing",
+        label="Student Portfolio presentation is available to create",
+        count_unit="portfolios",
+        attention_class="workflow",
+        requirement_level="opportunity",
+        portfolio_id=completion.portfolio_id,
+        reason_codes=("student_portfolio_presentation_missing",),
+        action_id="open_completed_portfolio_editions",
+    )
+
+
+def _aggregate_v2_facts(
+    facts: tuple[_AttentionV2Fact, ...],
+) -> tuple[VitrineAttentionSummaryV2, ...]:
+    by_code: dict[str, list[_AttentionV2Fact]] = {}
+    for fact in facts:
+        by_code.setdefault(fact.code, []).append(fact)
+
+    requirement_order = {
+        "required": 0,
+        "opportunity": 1,
+        "status": 2,
+    }
+    codes = sorted(
+        by_code,
+        key=lambda code: (
+            requirement_order[by_code[code][0].requirement_level],
+            code,
+        ),
+    )
+
+    summaries: list[VitrineAttentionSummaryV2] = []
+    for code in codes:
+        matching = tuple(by_code[code])
+        first = matching[0]
+        signature = (
+            first.label,
+            first.count_unit,
+            first.attention_class,
+            first.requirement_level,
+            first.action_id,
+        )
+        if any(
+            (
+                item.label,
+                item.count_unit,
+                item.attention_class,
+                item.requirement_level,
+                item.action_id,
+            )
+            != signature
+            for item in matching
+        ):
+            raise ValueError(
+                f"inconsistent v2 attention fact definition: {code}"
+            )
+
+        portfolios = {item.portfolio_id for item in matching}
+        portfolio_id = (
+            next(iter(portfolios))
+            if len(portfolios) == 1 and None not in portfolios
+            else None
+        )
+        reasons = tuple(
+            sorted(
+                {
+                    reason
+                    for item in matching
+                    for reason in item.reason_codes
+                }
+            )
+        )[:_MAX_REASON_CODES]
+        summaries.append(
+            VitrineAttentionSummaryV2(
+                code=code,
+                label=first.label,
+                count=len(matching),
+                count_unit=first.count_unit,
+                attention_class=first.attention_class,
+                requirement_level=first.requirement_level,
+                portfolio_id=portfolio_id,
+                reason_codes=reasons,
+                next_action=(
+                    None
+                    if first.action_id is None
+                    else VitrineNextActionRef(
+                        action_id=first.action_id,
+                        portfolio_id=portfolio_id,
+                    )
+                ),
+            )
+        )
+
+    return tuple(summaries)
+
+
 def _portfolio_ids(
     records: tuple[VitrineRecord, ...],
     query: VitrineAttentionQuery,
@@ -1311,11 +1840,173 @@ def evaluate_vitrine_attention(
     )
 
 
+
+def _unavailable_report_v2() -> VitrineAttentionReportV2:
+    return VitrineAttentionReportV2(
+        contract_version=VITRINE_ATTENTION_V2_CONTRACT_VERSION,
+        evaluation="unavailable",
+        observed_state_revision=None,
+        summaries=(),
+        notices=(
+            VitrineAttentionNotice(
+                code="vitrine_attention_unavailable",
+                summary="Vitrine attention could not be evaluated safely.",
+            ),
+        ),
+    )
+
+
+def evaluate_vitrine_attention_v2(
+    workspace_root: str | Path,
+    query: VitrineAttentionQuery | None = None,
+) -> VitrineAttentionReportV2:
+    """Evaluate completion-aware v2 semantics without changing frozen v1."""
+
+    request = VitrineAttentionQuery() if query is None else query
+    if not isinstance(request, VitrineAttentionQuery):
+        raise VitrineAttentionError(
+            "vitrine_attention.invalid_query",
+            "query must be VitrineAttentionQuery.",
+        )
+
+    root = Path(workspace_root)
+    try:
+        current, records = load_current_records_with_state(root)
+    except (VitrineStorageNotFoundError, VitrineStorageError, OSError):
+        return _unavailable_report_v2()
+
+    portfolio_ids = _portfolio_ids(records, request)
+    state = project_curation_state(records)
+    facts: list[_AttentionV2Fact] = []
+    notices: list[VitrineAttentionNotice] = []
+
+    for portfolio_id in portfolio_ids:
+        inbox = None
+        preparation = None
+
+        try:
+            inbox = list_candidate_inbox(
+                root,
+                CandidateInboxQuery(
+                    portfolio_id=portfolio_id,
+                    limit=MAX_CANDIDATE_INBOX_RESULTS,
+                ),
+            )
+        except CandidateInboxError:
+            if not notices:
+                notices.append(_partial_notice())
+        else:
+            if inbox.observed_state_revision != current.state_revision:
+                return _unavailable_report_v2()
+            if inbox.truncated and not notices:
+                notices.append(_partial_notice())
+
+        try:
+            preparation = prepare_working_composition(root, portfolio_id)
+        except CurationWorkflowError:
+            if not notices:
+                notices.append(_partial_notice())
+        else:
+            if preparation.observed_state_revision != current.state_revision:
+                return _unavailable_report_v2()
+
+        completion: PortfolioCompletionProjection | None = None
+        if preparation is not None:
+            try:
+                history = project_completed_portfolio_history(
+                    records,
+                    portfolio_id=portfolio_id,
+                )
+                completion = project_portfolio_completion(
+                    preparation,
+                    history,
+                    operational_status=(
+                        project_portfolio_completion_operational_status(
+                            records,
+                            portfolio_id=portfolio_id,
+                        )
+                    ),
+                )
+            except (
+                CompletedPortfolioHistoryError,
+                PortfolioCompletionError,
+            ):
+                if not notices:
+                    notices.append(_partial_notice())
+
+        if inbox is not None:
+            if preparation is not None and completion is not None:
+                facts.extend(
+                    _v2_candidate_facts(
+                        inbox.items,
+                        state,
+                        records,
+                        preparation,
+                    )
+                )
+            else:
+                facts.extend(
+                    _v2_from_legacy_fact(item)
+                    for item in _candidate_facts(
+                        inbox.items,
+                        state,
+                        records,
+                    )
+                )
+            facts.extend(
+                _v2_from_legacy_fact(item)
+                for item in _proposal_facts(inbox.items, state)
+            )
+
+        if preparation is not None:
+            facts.extend(
+                _v2_from_legacy_fact(item)
+                for item in _working_composition_facts(preparation)
+            )
+
+        if completion is not None:
+            facts.append(_completion_status_fact(completion))
+            presentation = _student_presentation_opportunity(completion)
+            if presentation is not None:
+                facts.append(presentation)
+
+    snapshot_facts, snapshot_partial = _snapshot_facts(
+        root,
+        project_snapshot_state(records),
+        portfolio_ids,
+        observed_state_revision=current.state_revision,
+        include_unscoped=request.portfolio_id is None,
+    )
+    facts.extend(
+        _v2_from_legacy_fact(item)
+        for item in snapshot_facts
+    )
+    if snapshot_partial and not notices:
+        notices.append(_partial_notice())
+
+    try:
+        if load_current_state(root).state_revision != current.state_revision:
+            return _unavailable_report_v2()
+    except (VitrineStorageNotFoundError, VitrineStorageError, OSError):
+        return _unavailable_report_v2()
+
+    return VitrineAttentionReportV2(
+        contract_version=VITRINE_ATTENTION_V2_CONTRACT_VERSION,
+        evaluation="evaluated",
+        observed_state_revision=current.state_revision,
+        summaries=_aggregate_v2_facts(tuple(facts)),
+        notices=tuple(notices),
+    )
+
+
 __all__ = [
     "VITRINE_ATTENTION_ACTION_IDS",
     "VITRINE_ATTENTION_CLASSES",
     "VITRINE_ATTENTION_CODES",
     "VITRINE_ATTENTION_CONTRACT_VERSION",
+    "VITRINE_ATTENTION_V2_CLASSES",
+    "VITRINE_ATTENTION_V2_CONTRACT_VERSION",
+    "VITRINE_ATTENTION_V2_REQUIREMENT_LEVELS",
     "VITRINE_ATTENTION_EVALUATIONS",
     "VITRINE_ATTENTION_NOTICE_CODES",
     "VitrineAttentionError",
@@ -1323,6 +2014,9 @@ __all__ = [
     "VitrineAttentionQuery",
     "VitrineAttentionReport",
     "VitrineAttentionSummary",
+    "VitrineAttentionSummaryV2",
+    "VitrineAttentionReportV2",
     "VitrineNextActionRef",
     "evaluate_vitrine_attention",
+    "evaluate_vitrine_attention_v2",
 ]

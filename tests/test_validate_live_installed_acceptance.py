@@ -80,3 +80,16 @@ def test_slice_4b_custody_verifier_static_contract_passes() -> None:
 
 def test_issue_71_final_ci_wiring_static_contract_passes() -> None:
     validator._validate_ci_wiring()
+
+
+def test_issue_71_ci_replays_published_vitrine_release_not_current_source() -> None:
+    workflow = (
+        Path(validator.ROOT) / ".github" / "workflows" / "ci.yml"
+    ).read_text(encoding="utf-8")
+    _, job = workflow.split("  live_installed_acceptance:", 1)
+    assert (
+        "pds-vitrine/releases/download/v0.3.0/"
+        "pds_vitrine-0.3.0-py3-none-any.whl"
+    ) in job
+    assert "Build candidate Vitrine wheel" not in job
+    assert "python -m build --wheel" not in job

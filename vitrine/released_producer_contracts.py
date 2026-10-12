@@ -200,6 +200,16 @@ CORE_0_6_4_AUDIT: Final[ReleasedCoreAudit] = ReleasedCoreAudit(
     requires_python=">=3.11",
 )
 
+# Issue #103 consumes Core's stable producer reader-contract metadata surface.
+CORE_0_6_5_AUDIT: Final[ReleasedCoreAudit] = ReleasedCoreAudit(
+    distribution_name="pds-core",
+    release_version="0.6.5",
+    release_tag="v0.6.5",
+    wheel_filename="pds_core-0.6.5-py3-none-any.whl",
+    wheel_sha256="9ace75f17b23b7f0ed6a709d531af5120db43d0325b4148d26f2d6ba1d4b3c18",
+    requires_python=">=3.11",
+)
+
 SCOREFORM_LIVE_SUPPORT_KEY: Final[ProducerAdapterSupportKey] = ProducerAdapterSupportKey(
     producer_module_id="scoreform",
     core_publication_schema_version="1",
@@ -283,6 +293,63 @@ SCOREFORM_0_12_0_AUDIT: Final[ReleasedProducerContractAudit] = (
     )
 )
 
+
+# Issue #103 advances the current-development ScoreForm qualification anchor to
+# the released 0.12.1 compatibility correction while retaining 0.12.0 above as
+# exact historical Issue #102 qualification evidence.
+SCOREFORM_0_12_1_AUDIT: Final[ReleasedProducerContractAudit] = (
+    ReleasedProducerContractAudit(
+        producer_module_id="scoreform",
+        distribution_name="scoreform",
+        release_version="0.12.1",
+        release_tag="v0.12.1",
+        wheel_filename="scoreform-0.12.1-py3-none-any.whl",
+        wheel_sha256="0f71b709eafe351052eac3e4f0d474b7bef36aeec347df05361b0a8995d44d32",
+        requires_python=">=3.11",
+        core_requirement="pds-core>=0.6.4,<0.7",
+        publication_producer_entry_point=(
+            "scoreform=scoreform.pds_publication:get_publication_producer_profile"
+        ),
+        public_reader_module="scoreform.academic_result_reader",
+        public_reader_symbol="read_academic_result_manifest",
+        advertised_capabilities=("points", "question_evidence", "multiple_attempts"),
+        support_key=SCOREFORM_LIVE_SUPPORT_KEY,
+        artifact_reader_module=None,
+        artifact_request_kinds=(),
+        artifact_representation_kinds=(),
+        artifact_authorization_outcomes=(),
+        artifact_access_mode="none",
+    )
+)
+
+# ScoreForm 0.13.0 is the current metadata-bearing Issue #103 qualification
+# target. It preserves the same manifest/support semantics and advertises the
+# stable scoreform_academic_result_reader_v1 contract through Core 0.6.5.
+SCOREFORM_0_13_0_AUDIT: Final[ReleasedProducerContractAudit] = (
+    ReleasedProducerContractAudit(
+        producer_module_id="scoreform",
+        distribution_name="scoreform",
+        release_version="0.13.0",
+        release_tag="v0.13.0",
+        wheel_filename="scoreform-0.13.0-py3-none-any.whl",
+        wheel_sha256="4a4d158fda6e899f1835f3312ca8291622e2b1c7da219b349adf5e88b9b7c9b7",
+        requires_python=">=3.11",
+        core_requirement="pds-core>=0.6.5,<0.7",
+        publication_producer_entry_point=(
+            "scoreform=scoreform.pds_publication:get_publication_producer_profile"
+        ),
+        public_reader_module="scoreform.academic_result_reader",
+        public_reader_symbol="read_academic_result_manifest",
+        advertised_capabilities=("points", "question_evidence", "multiple_attempts"),
+        support_key=SCOREFORM_LIVE_SUPPORT_KEY,
+        artifact_reader_module=None,
+        artifact_request_kinds=(),
+        artifact_representation_kinds=(),
+        artifact_authorization_outcomes=(),
+        artifact_access_mode="none",
+    )
+)
+
 QUILLAN_0_10_0_AUDIT: Final[ReleasedProducerContractAudit] = (
     ReleasedProducerContractAudit(
         producer_module_id="quillan",
@@ -333,6 +400,33 @@ QUILLAN_0_10_5_AUDIT: Final[ReleasedProducerContractAudit] = (
     )
 )
 
+# Quillan 0.10.6 adopts Core 0.6.5 reader-support metadata while preserving
+# the existing public reader, manifest, artifact, and support-key semantics.
+QUILLAN_0_10_6_AUDIT: Final[ReleasedProducerContractAudit] = (
+    ReleasedProducerContractAudit(
+        producer_module_id="quillan",
+        distribution_name="quillan",
+        release_version="0.10.6",
+        release_tag="v0.10.6",
+        wheel_filename="quillan-0.10.6-py3-none-any.whl",
+        wheel_sha256="7dbe975c969e60cfda9a8489154450f95c4dc58a8d75afcfad92e7a3c026afbb",
+        requires_python=">=3.11",
+        core_requirement="pds-core>=0.6.5,<0.7",
+        publication_producer_entry_point=(
+            "quillan=quillan.pds_publication:get_publication_producer_profile"
+        ),
+        public_reader_module="quillan.academic_result_reader",
+        public_reader_symbol="read_academic_result_manifest",
+        advertised_capabilities=("standards_ratings",),
+        support_key=QUILLAN_LIVE_SUPPORT_KEY,
+        artifact_reader_module="quillan.academic_result_artifacts",
+        artifact_request_kinds=("student_work", "feedback_pdf", "feedback_markdown"),
+        artifact_representation_kinds=(),
+        artifact_authorization_outcomes=("allowed", "denied", "unresolved"),
+        artifact_access_mode="producer_authorized_bytes",
+    )
+)
+
 CONCORD_0_3_0_AUDIT: Final[ReleasedProducerContractAudit] = (
     ReleasedProducerContractAudit(
         producer_module_id="concord",
@@ -362,12 +456,75 @@ CONCORD_0_3_0_AUDIT: Final[ReleasedProducerContractAudit] = (
     )
 )
 
+# Concord 0.3.1 first adopts Core 0.6.5 reader metadata and corrected durable
+# Core Standards identities. It is retained as historical metadata-bearing
+# release evidence after the 0.3.2 dependency-only compatibility patch.
+CONCORD_0_3_1_AUDIT: Final[ReleasedProducerContractAudit] = (
+    ReleasedProducerContractAudit(
+        producer_module_id="concord",
+        distribution_name="pds-concord",
+        release_version="0.3.1",
+        release_tag="v0.3.1",
+        wheel_filename="pds_concord-0.3.1-py3-none-any.whl",
+        wheel_sha256="c9b95b1a543b4e74f5ed5ca339e3aad68d180df4082e7c0f0b5b840d7dc8e47b",
+        requires_python=">=3.11",
+        core_requirement="pds-core>=0.6.5,<0.7",
+        publication_producer_entry_point=(
+            "concord=concord.pds_publication:get_publication_producer_profile"
+        ),
+        public_reader_module="concord.academic_result_reader",
+        public_reader_symbol="read_academic_result_manifest",
+        advertised_capabilities=(
+            "criterion_scores",
+            "standards_ratings",
+            "moderated_scores",
+        ),
+        support_key=CONCORD_LIVE_SUPPORT_KEY,
+        artifact_reader_module="concord.academic_result_artifacts",
+        artifact_request_kinds=("artifact_instance", "artifact_page"),
+        artifact_representation_kinds=("returned_artifact_pdf",),
+        artifact_authorization_outcomes=("allowed", "denied", "unresolved"),
+        artifact_access_mode="producer_authorized_bytes",
+    )
+)
+
+# Concord 0.3.2 changes the ZXing dependency range only and preserves the
+# concord_academic_result_reader_v1 / manifest v1 compatibility boundary.
+CONCORD_0_3_2_AUDIT: Final[ReleasedProducerContractAudit] = (
+    ReleasedProducerContractAudit(
+        producer_module_id="concord",
+        distribution_name="pds-concord",
+        release_version="0.3.2",
+        release_tag="v0.3.2",
+        wheel_filename="pds_concord-0.3.2-py3-none-any.whl",
+        wheel_sha256="825b27bc6142cc8bce8c3b9381a3337c4a55e983f6f3f2e7e4b1a10f980e83ce",
+        requires_python=">=3.11",
+        core_requirement="pds-core>=0.6.5,<0.7",
+        publication_producer_entry_point=(
+            "concord=concord.pds_publication:get_publication_producer_profile"
+        ),
+        public_reader_module="concord.academic_result_reader",
+        public_reader_symbol="read_academic_result_manifest",
+        advertised_capabilities=(
+            "criterion_scores",
+            "standards_ratings",
+            "moderated_scores",
+        ),
+        support_key=CONCORD_LIVE_SUPPORT_KEY,
+        artifact_reader_module="concord.academic_result_artifacts",
+        artifact_request_kinds=("artifact_instance", "artifact_page"),
+        artifact_representation_kinds=("returned_artifact_pdf",),
+        artifact_authorization_outcomes=("allowed", "denied", "unresolved"),
+        artifact_access_mode="producer_authorized_bytes",
+    )
+)
+
 RELEASED_PRODUCER_CONTRACTS: Final[tuple[ReleasedProducerContractAudit, ...]] = tuple(
     sorted(
         (
-            SCOREFORM_0_12_0_AUDIT,
-            QUILLAN_0_10_5_AUDIT,
-            CONCORD_0_3_0_AUDIT,
+            SCOREFORM_0_13_0_AUDIT,
+            QUILLAN_0_10_6_AUDIT,
+            CONCORD_0_3_2_AUDIT,
         ),
         key=lambda item: item.producer_module_id,
     )
@@ -386,12 +543,16 @@ LIVE_PRODUCER_SUPPORT_KEYS: Final[tuple[ProducerAdapterSupportKey, ...]] = tuple
 
 __all__ = [
     "CONCORD_0_3_0_AUDIT",
+    "CONCORD_0_3_1_AUDIT",
+    "CONCORD_0_3_2_AUDIT",
     "CONCORD_LIVE_SUPPORT_KEY",
     "CORE_0_6_3_AUDIT",
     "CORE_0_6_4_AUDIT",
+    "CORE_0_6_5_AUDIT",
     "LIVE_PRODUCER_SUPPORT_KEYS",
     "QUILLAN_0_10_0_AUDIT",
     "QUILLAN_0_10_5_AUDIT",
+    "QUILLAN_0_10_6_AUDIT",
     "QUILLAN_LIVE_SUPPORT_KEY",
     "RELEASED_PRODUCER_AUDIT_CONTRACT_VERSION",
     "RELEASED_PRODUCER_CONTRACT_BY_MODULE",
@@ -400,5 +561,7 @@ __all__ = [
     "ReleasedProducerContractAudit",
     "SCOREFORM_0_11_0_AUDIT",
     "SCOREFORM_0_12_0_AUDIT",
+    "SCOREFORM_0_12_1_AUDIT",
+    "SCOREFORM_0_13_0_AUDIT",
     "SCOREFORM_LIVE_SUPPORT_KEY",
 ]

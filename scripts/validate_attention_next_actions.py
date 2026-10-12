@@ -363,9 +363,9 @@ def _validate_project_contract() -> None:
     if not isinstance(project, dict):
         raise RuntimeError("pyproject project table is missing")
     dependencies = tuple(project.get("dependencies", ()))
-    if dependencies != ("pds-core>=0.6.3,<0.7",):
+    if dependencies != ("pds-core>=0.6.5,<0.7",):
         raise RuntimeError(
-            "Issue #69 requires the current released Core floor pds-core>=0.6.3,<0.7"
+            "Issue #103 requires the current Core floor pds-core>=0.6.5,<0.7"
         )
     dependency_text = "\n".join(str(item) for item in dependencies).casefold()
     for sibling in ("scoreform", "quillan", "concord", "portia", "meridian"):
@@ -530,10 +530,12 @@ def validate(*, run_focused_tests: bool = True) -> None:
     )
     _require_text(
         menu_path,
-        "evaluate_vitrine_attention(",
+        "evaluate_vitrine_attention_v2(",
+        "VitrineAttentionReportV2",
         "Technical Details / Provenance",
         "_render_teacher_attention(",
         "_render_attention_technical_details(",
+        "Requirement level:",
         "Action ID:",
         "open_candidate_inbox",
         "verify_snapshot_export",

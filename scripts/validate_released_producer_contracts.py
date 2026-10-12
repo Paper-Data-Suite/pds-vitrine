@@ -1,4 +1,4 @@
-"""Validate released producer contracts, including issue #102 current anchors."""
+"""Validate historical and current-development released producer contracts."""
 
 from __future__ import annotations
 
@@ -12,15 +12,16 @@ from typing import Any, cast
 from vitrine.development_adapters import build_development_fixture_adapter_registry
 from vitrine.producer_adapters import build_adapter_registry
 from vitrine.released_producer_contracts import (
-    CONCORD_0_3_0_AUDIT,
+    CONCORD_0_3_2_AUDIT,
     CONCORD_LIVE_SUPPORT_KEY,
-    CORE_0_6_4_AUDIT,
+    CORE_0_6_5_AUDIT,
     LIVE_PRODUCER_SUPPORT_KEYS,
-    QUILLAN_0_10_5_AUDIT,
+    QUILLAN_0_10_6_AUDIT,
     QUILLAN_LIVE_SUPPORT_KEY,
     RELEASED_PRODUCER_AUDIT_CONTRACT_VERSION,
     RELEASED_PRODUCER_CONTRACTS,
     SCOREFORM_0_12_0_AUDIT,
+    SCOREFORM_0_13_0_AUDIT,
     SCOREFORM_LIVE_SUPPORT_KEY,
 )
 from vitrine.released_producer_schema_audit import (
@@ -37,19 +38,19 @@ _REQUIREMENT_NAME = re.compile(r"^[A-Za-z0-9_.-]+")
 
 _EXPECTED_RELEASES: Mapping[str, tuple[str, str, str]] = {
     "scoreform": (
-        "0.12.0",
-        "scoreform-0.12.0-py3-none-any.whl",
-        "84ad10ada72a99bebd5455d8c18a0725f9406f8279e57156f3e424efa5678d20",
+        "0.13.0",
+        "scoreform-0.13.0-py3-none-any.whl",
+        "4a4d158fda6e899f1835f3312ca8291622e2b1c7da219b349adf5e88b9b7c9b7",
     ),
     "quillan": (
-        "0.10.5",
-        "quillan-0.10.5-py3-none-any.whl",
-        "031e5a5455c222da6b9a7d8f72e7823dd4c61acde7d90ddce94b49d9bcbe123f",
+        "0.10.6",
+        "quillan-0.10.6-py3-none-any.whl",
+        "7dbe975c969e60cfda9a8489154450f95c4dc58a8d75afcfad92e7a3c026afbb",
     ),
     "concord": (
-        "0.3.0",
-        "pds_concord-0.3.0-py3-none-any.whl",
-        "dd827f7059c91c79bd69b6190b3c673d6b3bbc02bc25fa666286bbf5883c5e12",
+        "0.3.2",
+        "pds_concord-0.3.2-py3-none-any.whl",
+        "825b27bc6142cc8bce8c3b9381a3337c4a55e983f6f3f2e7e4b1a10f980e83ce",
     ),
 }
 
@@ -180,15 +181,15 @@ def _validate_release_artifacts() -> None:
         == "vitrine_released_producer_contract_audit_v1",
         "unexpected released producer audit contract version",
     )
-    _require(CORE_0_6_4_AUDIT.release_version == "0.6.4", "unexpected Core release")
-    _require(CORE_0_6_4_AUDIT.release_tag == "v0.6.4", "unexpected Core tag")
+    _require(CORE_0_6_5_AUDIT.release_version == "0.6.5", "unexpected Core release")
+    _require(CORE_0_6_5_AUDIT.release_tag == "v0.6.5", "unexpected Core tag")
     _require(
-        CORE_0_6_4_AUDIT.wheel_filename == "pds_core-0.6.4-py3-none-any.whl",
+        CORE_0_6_5_AUDIT.wheel_filename == "pds_core-0.6.5-py3-none-any.whl",
         "unexpected Core wheel filename",
     )
     _require(
-        CORE_0_6_4_AUDIT.wheel_sha256
-        == "48cea9317f2967bdc0f2d4c14349a56677c7c3f8211f0f33978ccb1a1c75859b",
+        CORE_0_6_5_AUDIT.wheel_sha256
+        == "9ace75f17b23b7f0ed6a709d531af5120db43d0325b4148d26f2d6ba1d4b3c18",
         "unexpected Core wheel digest",
     )
 
@@ -205,30 +206,39 @@ def _validate_release_artifacts() -> None:
         _require(audit.wheel_sha256 == digest, f"{module_id} digest changed")
 
     _require(
-        SCOREFORM_0_12_0_AUDIT.public_reader_module
+        SCOREFORM_0_13_0_AUDIT.public_reader_module
         == "scoreform.academic_result_reader",
-        "ScoreForm reader module changed",
+        "ScoreForm current reader module changed",
     )
     _require(
-        QUILLAN_0_10_5_AUDIT.artifact_reader_module
+        SCOREFORM_0_12_0_AUDIT.public_reader_module
+        == "scoreform.academic_result_reader",
+        "ScoreForm historical 0.12.0 reader module changed",
+    )
+    _require(
+        QUILLAN_0_10_6_AUDIT.artifact_reader_module
         == "quillan.academic_result_artifacts",
         "Quillan artifact boundary changed",
     )
     _require(
-        CONCORD_0_3_0_AUDIT.artifact_reader_module
+        CONCORD_0_3_2_AUDIT.artifact_reader_module
         == "concord.academic_result_artifacts",
         "Concord artifact boundary changed",
     )
     _require(
-        SCOREFORM_0_12_0_AUDIT.artifact_access_mode == "none",
-        "ScoreForm must not gain artifact access by audit inference",
+        SCOREFORM_0_13_0_AUDIT.artifact_access_mode == "none",
+        "ScoreForm current release must not gain artifact access by audit inference",
     )
     _require(
-        QUILLAN_0_10_5_AUDIT.artifact_access_mode == "producer_authorized_bytes",
+        SCOREFORM_0_12_0_AUDIT.artifact_access_mode == "none",
+        "ScoreForm historical 0.12.0 audit must remain metadata-only",
+    )
+    _require(
+        QUILLAN_0_10_6_AUDIT.artifact_access_mode == "producer_authorized_bytes",
         "Quillan artifact access mode changed",
     )
     _require(
-        CONCORD_0_3_0_AUDIT.artifact_access_mode == "producer_authorized_bytes",
+        CONCORD_0_3_2_AUDIT.artifact_access_mode == "producer_authorized_bytes",
         "Concord artifact access mode changed",
     )
 

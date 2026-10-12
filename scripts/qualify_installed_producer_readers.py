@@ -1,4 +1,4 @@
-"""Qualify Vitrine #58 installed readers against exact audited release wheels."""
+"""Qualify installed producer readers against Vitrine current release audits."""
 
 from __future__ import annotations
 
@@ -38,16 +38,16 @@ def _sha256(path: Path) -> str:
 
 def _audit_specs() -> tuple[WheelSpec, ...]:
     from vitrine.released_producer_contracts import (
-        CORE_0_6_3_AUDIT,
+        CORE_0_6_5_AUDIT,
         RELEASED_PRODUCER_CONTRACTS,
     )
 
     return (
         WheelSpec(
-            distribution_name=CORE_0_6_3_AUDIT.distribution_name,
-            release_version=CORE_0_6_3_AUDIT.release_version,
-            wheel_filename=CORE_0_6_3_AUDIT.wheel_filename,
-            wheel_sha256=CORE_0_6_3_AUDIT.wheel_sha256,
+            distribution_name=CORE_0_6_5_AUDIT.distribution_name,
+            release_version=CORE_0_6_5_AUDIT.release_version,
+            wheel_filename=CORE_0_6_5_AUDIT.wheel_filename,
+            wheel_sha256=CORE_0_6_5_AUDIT.wheel_sha256,
         ),
         *(
             WheelSpec(
@@ -538,16 +538,21 @@ def _loaded_siblings() -> tuple[str, ...]:
 
 
 def _inside_qualification(fixture_dir: Path) -> None:
+    from pds_core.publication_compatibility import (
+        PublicationReaderSupport,
+        lookup_publication_reader_support,
+    )
+
     from vitrine.producer_reader_services import (
         build_audited_installed_producer_readers,
     )
     from vitrine.released_producer_contracts import (
-        CORE_0_6_3_AUDIT,
+        CORE_0_6_5_AUDIT,
         RELEASED_PRODUCER_CONTRACT_BY_MODULE,
     )
 
     expected_versions = {
-        CORE_0_6_3_AUDIT.distribution_name: CORE_0_6_3_AUDIT.release_version,
+        CORE_0_6_5_AUDIT.distribution_name: CORE_0_6_5_AUDIT.release_version,
         **{
             audit.distribution_name: audit.release_version
             for audit in RELEASED_PRODUCER_CONTRACT_BY_MODULE.values()
@@ -845,6 +850,49 @@ def _inside_qualification(fixture_dir: Path) -> None:
     ):
         raise RuntimeError("Concord Profile Activity source-record semantics changed")
 
+    expected_reader_contracts = {
+        "scoreform": (
+            scoreform_profile,
+            "scoreform_academic_result_reader_v1",
+        ),
+        "quillan": (
+            quillan_profile,
+            "quillan_academic_result_reader_v1",
+        ),
+        "concord": (
+            concord_profile,
+            "concord_academic_result_reader_v1",
+        ),
+    }
+    for module_id, (profile, expected_reader_contract) in (
+        expected_reader_contracts.items()
+    ):
+        audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE[module_id]
+        support = lookup_publication_reader_support(
+            profile,
+            "academic_result_set",
+            audit.support_key.manifest_contract_version,
+        )
+        if not isinstance(support, PublicationReaderSupport):
+            raise RuntimeError(
+                f"{module_id} current release lacks PublicationReaderSupport"
+            )
+        if support.distribution_name != audit.distribution_name:
+            raise RuntimeError(
+                f"{module_id} reader metadata distribution binding changed"
+            )
+        if support.reader_contract_version != expected_reader_contract:
+            raise RuntimeError(
+                f"{module_id} reader metadata contract changed"
+            )
+        reader = by_module[module_id]
+        if reader.descriptor.reader_contract_version != expected_reader_contract:
+            raise RuntimeError(
+                f"{module_id} Vitrine reader descriptor contract changed"
+            )
+
+    print("PASS exact-wheel Issue #103 reader-contract metadata qualification")
+
     concord_key = CONCORD_LIVE_SUPPORT_KEY
     concord_request = ProducerAdapterSupportRequest(
         producer_module_id=concord_key.producer_module_id,
@@ -1066,7 +1114,7 @@ def main(argv: list[str] | None = None) -> int:
         "--wheel-dir",
         type=Path,
         default=Path.home() / "Downloads",
-        help="directory containing the exact #57 audited release wheels",
+        help="directory containing the exact current audited release wheels",
     )
     parser.add_argument("--inside", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--fixture-dir", type=Path, help=argparse.SUPPRESS)

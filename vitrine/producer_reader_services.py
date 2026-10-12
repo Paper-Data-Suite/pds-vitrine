@@ -35,6 +35,12 @@ from vitrine.producer_adapters import (
     ProducerReaderDescriptor,
     ProducerReaderError,
 )
+from vitrine.producer_reader_compatibility import (
+    LEGACY_INSTALLED_PRODUCER_READER_CONTRACT_VERSION,
+    InstalledProducerReaderCompatibilityError,
+    resolve_installed_producer_reader_compatibility,
+    supported_reader_contract_for_module,
+)
 from vitrine.released_producer_contracts import (
     RELEASED_PRODUCER_CONTRACT_BY_MODULE,
     RELEASED_PRODUCER_CONTRACTS,
@@ -44,8 +50,10 @@ from vitrine.released_producer_contracts import (
 PRODUCER_READER_SERVICE_CONTRACT_VERSION: Final[str] = (
     "vitrine_producer_reader_service_v1"
 )
+# Backward-compatible import alias for historical persisted provenance.
+# New semantic compatibility uses producer-owned reader contracts.
 INSTALLED_PRODUCER_READER_CONTRACT_VERSION: Final[str] = (
-    "vitrine_installed_producer_reader_v1"
+    LEGACY_INSTALLED_PRODUCER_READER_CONTRACT_VERSION
 )
 SOURCE_READ_AUTHORIZATION_OUTCOMES: Final[frozenset[str]] = frozenset(
     {"allowed", "denied", "unresolved"}
@@ -329,7 +337,7 @@ def _reader_error(
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class InstalledProducerManifestReader:
-    """Lazy binding to one exact #57-audited producer public manifest reader."""
+    """Lazy reader binding with stable producer-reader compatibility policy."""
 
     audit: ReleasedProducerContractAudit
 
@@ -352,7 +360,9 @@ class InstalledProducerManifestReader:
                 f"vitrine_installed_{self.audit.producer_module_id}"
                 "_academic_result_reader"
             ),
-            reader_contract_version=INSTALLED_PRODUCER_READER_CONTRACT_VERSION,
+            reader_contract_version=supported_reader_contract_for_module(
+                self.audit.producer_module_id
+            ),
             package_identity=self.audit.distribution_name,
             integration_kind="live",
         )
@@ -367,7 +377,7 @@ class InstalledProducerManifestReader:
             )
 
         try:
-            metadata.version(self.audit.distribution_name)
+            installed_version = metadata.version(self.audit.distribution_name)
         except metadata.PackageNotFoundError as error:
             raise _reader_error(
                 self.audit,
@@ -381,6 +391,19 @@ class InstalledProducerManifestReader:
                 "reader.unavailable",
                 "reader_distribution",
                 "Audited producer reader distribution could not be resolved.",
+            ) from error
+
+        try:
+            resolve_installed_producer_reader_compatibility(
+                self.audit,
+                installed_distribution_version=installed_version,
+            )
+        except InstalledProducerReaderCompatibilityError as error:
+            raise _reader_error(
+                self.audit,
+                error.code,
+                error.stage,
+                str(error),
             ) from error
 
         try:
@@ -459,6 +482,7 @@ __all__ = [
     "PRODUCER_READER_SERVICE_CONTRACT_VERSION",
     "PRODUCER_READER_SERVICE_FAILURE_CODES",
     "InstalledProducerManifestReader",
+    "LEGACY_INSTALLED_PRODUCER_READER_CONTRACT_VERSION",
     "ProducerReaderServiceError",
     "SOURCE_READ_AUTHORIZATION_OUTCOMES",
     "SourceReadAuthorizationDecision",

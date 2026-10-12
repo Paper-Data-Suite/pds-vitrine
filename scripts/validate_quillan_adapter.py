@@ -118,7 +118,7 @@ def _validate_declaration_registry_and_providers() -> None:
         "Quillan reader binding changed",
     )
     _require(
-        declaration.reader_contract_version == "vitrine_installed_producer_reader_v1",
+        declaration.reader_contract_version == "quillan_academic_result_reader_v1",
         "Quillan reader contract changed",
     )
     _require(

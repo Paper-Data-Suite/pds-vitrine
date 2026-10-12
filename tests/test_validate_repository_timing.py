@@ -99,3 +99,12 @@ def test_repository_gate_avoids_nested_focused_pytest_reexecution() -> None:
         "scripts/validate_working_composition.py",
         "--skip-focused-tests",
     )
+
+
+
+def test_repository_gate_avoids_nested_issue103_pytest_reexecution() -> None:
+    commands = dict(validator.VALIDATOR_COMMANDS)
+    assert commands["issue #103 completion / reader compatibility"] == (
+        "scripts/validate_issue103_acceptance.py",
+        "--skip-focused-tests",
+    )

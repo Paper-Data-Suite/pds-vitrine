@@ -73,7 +73,7 @@ def _validate_declaration_and_registry() -> None:
     _require(declaration.support_key is SCOREFORM_LIVE_SUPPORT_KEY, "ScoreForm support key is not frozen #57 key")
     _require(declaration.integration_kind == "live", "ScoreForm adapter is not live")
     _require(declaration.public_reader_id == "vitrine_installed_scoreform_academic_result_reader", "ScoreForm reader binding changed")
-    _require(declaration.reader_contract_version == "vitrine_installed_producer_reader_v1", "ScoreForm reader contract changed")
+    _require(declaration.reader_contract_version == "scoreform_academic_result_reader_v1", "ScoreForm reader contract changed")
     _require(adapter.reader.descriptor.package_identity == "scoreform", "ScoreForm package identity changed")
 
     ordinary = build_adapter_registry()

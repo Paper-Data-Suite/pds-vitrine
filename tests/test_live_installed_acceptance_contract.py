@@ -16,6 +16,7 @@ from scripts.live_installed_acceptance_contract import (
     NEGATIVE_MATRIX_SLICE_READY,
     QUILLAN_CONTRACT,
     SCOREFORM_CONTRACT,
+    VITRINE_RELEASE_WHEEL,
     validate_contract_constants,
 )
 
@@ -38,6 +39,17 @@ def test_issue_71_exact_release_artifacts_are_frozen() -> None:
     ]
     assert all(len(item.sha256) == 64 for item in AUDITED_RELEASE_WHEELS)
     assert all("/releases/download/v" in item.release_url for item in AUDITED_RELEASE_WHEELS)
+    assert VITRINE_RELEASE_WHEEL.version == "0.3.0"
+    assert VITRINE_RELEASE_WHEEL.filename == "pds_vitrine-0.3.0-py3-none-any.whl"
+    assert (
+        VITRINE_RELEASE_WHEEL.sha256
+        == "69d2d1ea8a90b5d25c813da3c852232a0e0a9e7094e2b4d217f22662022596b8"
+    )
+    assert (
+        VITRINE_RELEASE_WHEEL.release_url
+        == "https://github.com/Paper-Data-Suite/pds-vitrine/releases/download/"
+        "v0.3.0/pds_vitrine-0.3.0-py3-none-any.whl"
+    )
 
 
 def test_issue_71_preserves_three_different_materialization_rules() -> None:

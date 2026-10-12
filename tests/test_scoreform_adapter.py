@@ -18,7 +18,6 @@ from vitrine.producer_adapters import (
     ProducerProjectionError,
     build_adapter_registry,
 )
-from vitrine.producer_reader_services import INSTALLED_PRODUCER_READER_CONTRACT_VERSION
 from vitrine.released_producer_contracts import SCOREFORM_LIVE_SUPPORT_KEY
 from vitrine.workflow_context import default_workflow_dependencies
 
@@ -336,7 +335,7 @@ def test_live_declaration_uses_frozen_scoreform_contract_and_installed_reader(
         "vitrine_installed_scoreform_academic_result_reader"
     )
     assert declaration.reader_contract_version == (
-        INSTALLED_PRODUCER_READER_CONTRACT_VERSION
+        "scoreform_academic_result_reader_v1"
     )
     assert declaration.reader_package_identity == "scoreform"
     assert adapter.declaration is declaration
