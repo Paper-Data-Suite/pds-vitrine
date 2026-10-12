@@ -810,3 +810,108 @@ def test_adapter_rejects_non_quillan_public_model_with_safe_diagnostic(
     assert caught.value.code == "projection.invalid_input"
     assert caught.value.stage == "projection"
     assert "student_alpha" not in str(caught.value)
+
+def test_issue104_future_quillan_reader_projects_public_candidate_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A future distribution retains the live public reader and adapter path."""
+    from pds_core.publication_compatibility import (
+        PublicationContractSupport,
+        PublicationProducerProfile,
+        PublicationReaderSupport,
+    )
+
+    import vitrine.producer_reader_compatibility as compatibility
+    import vitrine.producer_reader_services as reader_services
+    from vitrine.producer_reader_services import build_audited_installed_producer_reader
+    from vitrine.released_producer_contracts import (
+        RELEASED_PRODUCER_CONTRACT_BY_MODULE,
+    )
+
+    audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE["quillan"]
+    key = audit.support_key
+    future_version = "99.123.456"
+    assert audit.release_version != future_version
+    profile = PublicationProducerProfile(
+        module_id="quillan",
+        display_name="Synthetic future Quillan",
+        supported_core_publication_schema_versions=frozenset(
+            {key.core_publication_schema_version}
+        ),
+        supported_academic_work_contract_versions=frozenset(
+            {key.producer_contract_version}
+            if key.producer_contract_version is not None
+            else ()
+        ),
+        publication_contracts=(
+            PublicationContractSupport(
+                publication_kind=key.publication_kind,
+                manifest_contract_versions=frozenset({key.manifest_contract_version}),
+                supported_capabilities=frozenset(audit.advertised_capabilities),
+                reader_support=(
+                    PublicationReaderSupport(
+                        manifest_contract_version=key.manifest_contract_version,
+                        distribution_name=audit.distribution_name,
+                        reader_contract_version="quillan_academic_result_reader_v1",
+                    ),
+                ),
+            ),
+        ),
+    )
+    calls: list[bytes] = []
+
+    def public_reader(payload: bytes) -> _Manifest:
+        calls.append(payload)
+        return _manifest()
+
+    monkeypatch.setattr(reader_services.metadata, "version", lambda _name: future_version)
+    monkeypatch.setattr(
+        compatibility,
+        "discover_publication_producer_profiles",
+        lambda: (profile,),
+    )
+    monkeypatch.setattr(
+        reader_services,
+        "import_module",
+        lambda _name: SimpleNamespace(**{audit.public_reader_symbol: public_reader}),
+    )
+
+    reader = build_audited_installed_producer_reader("quillan")
+    manifest_bytes = b'{"synthetic_future_quillan":true}'
+    public_model = reader.read(manifest_bytes)
+    assert calls == [manifest_bytes]
+    assert isinstance(public_model, _Manifest)
+
+    request = ProducerAdapterSupportRequest(
+        producer_module_id=key.producer_module_id,
+        core_publication_schema_version=key.core_publication_schema_version,
+        publication_kind=key.publication_kind,
+        manifest_contract_version=key.manifest_contract_version,
+        producer_contract_version=key.producer_contract_version,
+        source_record_kind=key.source_record_kind,
+        source_record_contract_version=key.source_record_contract_version,
+        capabilities=key.required_capabilities,
+    )
+    adapter = build_adapter_registry().select_adapter(request)
+    assert adapter.declaration.adapter_id == "vitrine_quillan_live_adapter"
+
+    import vitrine.quillan_adapter as quillan_adapter
+
+    monkeypatch.setattr(
+        quillan_adapter,
+        "import_module",
+        lambda name: SimpleNamespace(AcademicResultManifest=_Manifest)
+        if name == "quillan.academic_result_manifest"
+        else None,
+    )
+    batch = adapter.project(public_model)
+    review_sources = _sources_for_kind(batch, QUILLAN_REVIEW_SUMMARY_REPRESENTATION_KIND)
+    assert {source.source_relationships[0].source_subject_id for source in review_sources} == {
+        "student_alpha",
+        "student_beta",
+    }
+    assert len(_sources_for_kind(batch, QUILLAN_SELECTED_STUDENT_WORK_REPRESENTATION_KIND)) == 2
+    rendered = repr(batch)
+    assert _PRIVATE_PROMPT not in rendered
+    for private_marker in _UNSELECTED_MARKERS:
+        assert private_marker not in rendered
