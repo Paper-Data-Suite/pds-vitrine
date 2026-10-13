@@ -138,6 +138,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "issue #104 improvement / reader resilience",
+        (
+            "scripts/validate_issue104_acceptance.py",
+            "--skip-focused-tests",
+        ),
+    ),
+    (
         "teacher information architecture",
         (
             "scripts/validate_teacher_information_architecture.py",
@@ -492,6 +499,10 @@ def validate(
                 (
                     "completed Portfolio navigation",
                     "scripts/smoke_test_completed_portfolio_navigation_wheel.py",
+                ),
+                (
+                    "issue #104 installed reader resilience",
+                    "scripts/smoke_test_issue104_reader_resilience_wheel.py",
                 ),
             )
             for label, script in wheel_smokes:

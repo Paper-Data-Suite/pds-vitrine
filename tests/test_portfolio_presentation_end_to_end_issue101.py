@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from scripts.improvement_portfolio_fixture_support import (
+    PORTFOLIO_ID,
     TEACHER,
     ImprovementPortfolioFixture,
     build_improvement_portfolio_fixture,
@@ -21,7 +22,10 @@ from scripts.validate_snapshot_workflows import (
     _provider_registry,
     _ReflectionFixtureRenderer,
 )
+from vitrine.attention import VitrineAttentionQuery, evaluate_vitrine_attention_v2
+from vitrine.completed_portfolio import project_completed_portfolio_history
 from vitrine.models import PortfolioPresentationArtifact, SnapshotCurrentPointerRevision
+from vitrine.portfolio_completion import prepare_portfolio_completion
 from vitrine.portfolio_presentation_services import (
     build_student_portfolio_presentation,
 )
@@ -105,6 +109,54 @@ def test_representative_improvement_portfolio_becomes_verified_student_presentat
     )
     technical_before = _file_bytes(export_result.export_path)
 
+    # Issue #104 Slice 4: completion and Attention from the same journey.
+    # The sealed Edition and verified Export are technically complete before
+    # presentation generation, even with no Current Pointer.
+    history_before_presentation = project_completed_portfolio_history(
+        load_current_records(setup.workspace), portfolio_id=PORTFOLIO_ID
+    )
+    assert history_before_presentation.completed_edition_count == 1
+    assert len(history_before_presentation.series) == 1
+    completed_series = history_before_presentation.series[0]
+    assert completed_series.snapshot_series_id == series.snapshot_series_id
+    assert completed_series.current_edition_number is None
+    assert len(completed_series.editions) == 1
+    completed_edition = completed_series.editions[0]
+    assert completed_edition.edition_number == sealed.edition.edition_number
+    assert completed_edition.composition_revision == setup.composition.composition_revision
+    assert completed_edition.is_current is False
+    assert len(completed_edition.exports) == 1
+    assert (
+        completed_edition.exports[0].snapshot_export_artifact_id
+        == export_result.export_artifact.snapshot_export_artifact_id
+    )
+    assert completed_edition.presentations == ()
+
+    completion_before_presentation = prepare_portfolio_completion(
+        setup.workspace, PORTFOLIO_ID
+    )
+    assert completion_before_presentation.state == "complete"
+    assert completion_before_presentation.is_complete
+    assert completion_before_presentation.student_presentation_missing
+    assert completion_before_presentation.required_reason_codes == ()
+    assert len(completion_before_presentation.exact_current_editions) == 1
+    assert not completion_before_presentation.exact_current_editions[0].is_current
+
+    attention_before_presentation = evaluate_vitrine_attention_v2(
+        setup.workspace, VitrineAttentionQuery(portfolio_id=PORTFOLIO_ID)
+    )
+    assert attention_before_presentation.evaluation == "evaluated"
+    before_by_code = {item.code: item for item in attention_before_presentation.summaries}
+    assert before_by_code["vitrine_portfolio_complete"].requirement_level == "status"
+    assert (
+        before_by_code["vitrine_student_presentation_missing"].requirement_level
+        == "opportunity"
+    )
+    assert not any(
+        item.requirement_level == "required"
+        for item in attention_before_presentation.summaries
+    )
+
     presentation = build_student_portfolio_presentation(
         setup.workspace,
         snapshot_series_id=series.snapshot_series_id,
@@ -140,6 +192,45 @@ def test_representative_improvement_portfolio_becomes_verified_student_presentat
     assert verified.presentation_artifact_id == presentation.presentation_artifact_id
     assert verified.snapshot_series_id == series.snapshot_series_id
     assert verified.edition_number == sealed.edition.edition_number
+
+    # The Presentation is discoverable from the same canonical history and
+    # resolves an opportunity; its creation must not invent a Current Pointer.
+    history_after_presentation = project_completed_portfolio_history(
+        load_current_records(setup.workspace), portfolio_id=PORTFOLIO_ID
+    )
+    assert len(history_after_presentation.series) == 1
+    completed_series_after = history_after_presentation.series[0]
+    assert completed_series_after.current_edition_number is None
+    assert len(completed_series_after.editions) == 1
+    completed_edition_after = completed_series_after.editions[0]
+    assert completed_edition_after.is_current is False
+    assert len(completed_edition_after.exports) == 1
+    assert len(completed_edition_after.presentations) == 1
+    assert (
+        completed_edition_after.presentations[0].presentation_artifact_id
+        == presentation.presentation_artifact_id
+    )
+
+    completion_after_presentation = prepare_portfolio_completion(
+        setup.workspace, PORTFOLIO_ID
+    )
+    assert completion_after_presentation.state == "complete"
+    assert not completion_after_presentation.student_presentation_missing
+    assert (
+        completion_after_presentation.exact_current_editions[0].student_presentation_available
+    )
+
+    attention_after_presentation = evaluate_vitrine_attention_v2(
+        setup.workspace, VitrineAttentionQuery(portfolio_id=PORTFOLIO_ID)
+    )
+    assert attention_after_presentation.evaluation == "evaluated"
+    after_by_code = {item.code: item for item in attention_after_presentation.summaries}
+    assert after_by_code["vitrine_portfolio_complete"].requirement_level == "status"
+    assert "vitrine_student_presentation_missing" not in after_by_code
+    assert not any(
+        item.requirement_level == "required"
+        for item in attention_after_presentation.summaries
+    )
 
     records = load_current_records(setup.workspace)
     artifacts = tuple(
