@@ -438,3 +438,158 @@ def test_v2_evaluator_reports_complete_and_optional_extra_evidence(
         ].requirement_level
         == "opportunity"
     )
+
+
+# Issue #104 Slice 5: completion and Attention transitions.
+def _issue104_attention_with_read_models(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    *,
+    preparation: WorkingCompositionPreparation,
+    history: CompletedPortfolioHistory,
+    operational: PortfolioCompletionOperationalStatus,
+) -> attention.VitrineAttentionReportV2:
+    """Compose actual completion/Attention projections from supplied read models.
+
+    Only the persistence, inbox, and snapshot-fact read boundaries are stubbed.
+    This is a projection matrix, not a substitute for custody verification.
+    """
+    monkeypatch.setattr(
+        attention,
+        "load_current_records_with_state",
+        lambda _root: (SimpleNamespace(state_revision=7), ()),
+    )
+    monkeypatch.setattr(
+        attention,
+        "load_current_state",
+        lambda _root: SimpleNamespace(state_revision=7),
+    )
+    monkeypatch.setattr(attention, "_portfolio_ids", lambda _records, _query: ("portfolio",))
+    monkeypatch.setattr(
+        attention,
+        "project_curation_state",
+        lambda _records: SimpleNamespace(selections=(), proposals=(), decisions=()),
+    )
+    monkeypatch.setattr(
+        attention,
+        "list_candidate_inbox",
+        lambda _root, _query: SimpleNamespace(
+            observed_state_revision=7,
+            truncated=False,
+            items=(_item(),),
+        ),
+    )
+    monkeypatch.setattr(
+        attention,
+        "prepare_working_composition",
+        lambda _root, _portfolio_id: preparation,
+    )
+    monkeypatch.setattr(
+        attention,
+        "project_completed_portfolio_history",
+        lambda _records, *, portfolio_id: history,
+    )
+    monkeypatch.setattr(
+        attention,
+        "project_portfolio_completion_operational_status",
+        lambda _records, *, portfolio_id: operational,
+    )
+    monkeypatch.setattr(
+        attention,
+        "project_snapshot_state",
+        lambda _records: SimpleNamespace(),
+    )
+    monkeypatch.setattr(attention, "_snapshot_facts", lambda *args, **kwargs: ((), False))
+    return evaluate_vitrine_attention_v2(
+        tmp_path,
+        VitrineAttentionQuery(portfolio_id="portfolio"),
+    )
+
+
+@pytest.mark.parametrize(
+    ("scenario", "expected_status", "expected_action", "expected_reason"),
+    (
+        ("complete", "complete", "open_completed_portfolio_editions", None),
+        ("historical_new_frozen", "update_ready", "open_build_export_current_portfolio", None),
+        ("historical_unfrozen", "required_work", None, "working_composition_create_successor"),
+        ("missing_export", "recovery_or_integrity_blocked", None, "snapshot_export_missing"),
+        ("incomplete_attempt", "recovery_or_integrity_blocked", None, "snapshot_attempt_incomplete"),
+        ("integrity_conflict", "recovery_or_integrity_blocked", None, "snapshot_attempt_result_conflict"),
+    ),
+)
+def test_issue104_attention_preserves_completion_and_teacher_next_action(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    scenario: str,
+    expected_status: str,
+    expected_action: str | None,
+    expected_reason: str | None,
+) -> None:
+    """Optional evidence must never erase completion, update, or blocked status."""
+    from dataclasses import replace
+
+    preparation = _preparation()
+    history = _history()
+    operational = PortfolioCompletionOperationalStatus()
+
+    if scenario in {"historical_new_frozen", "historical_unfrozen"}:
+        series = history.series[0]
+        prior_edition = replace(series.editions[0], composition_revision=1)
+        history = replace(
+            history,
+            series=(replace(series, editions=(prior_edition,)),),
+        )
+    if scenario == "historical_unfrozen":
+        preparation = replace(
+            preparation,
+            current_composition_revision=1,
+            predicted_composition_revision=2,
+            disposition="create_successor",
+            composition_note_will_persist=True,
+        )
+    elif scenario == "missing_export":
+        series = history.series[0]
+        exportless = replace(series.editions[0], exports=())
+        history = replace(history, series=(replace(series, editions=(exportless,)),))
+        operational = PortfolioCompletionOperationalStatus(
+            recovery_reason_codes=("snapshot_export_missing",),
+        )
+    elif scenario == "incomplete_attempt":
+        operational = PortfolioCompletionOperationalStatus(
+            recovery_reason_codes=("snapshot_attempt_incomplete",),
+        )
+    elif scenario == "integrity_conflict":
+        operational = PortfolioCompletionOperationalStatus(
+            integrity_reason_codes=("snapshot_attempt_result_conflict",),
+        )
+
+    report = _issue104_attention_with_read_models(
+        monkeypatch,
+        tmp_path,
+        preparation=preparation,
+        history=history,
+        operational=operational,
+    )
+    assert report.evaluation == "evaluated"
+    assert report.observed_state_revision == 7
+    assert report.notices == ()
+
+    by_code = {summary.code: summary for summary in report.summaries}
+    status_code = f"vitrine_portfolio_{expected_status}"
+    assert status_code in by_code
+    status = by_code[status_code]
+    assert status.requirement_level == "status"
+    assert status.portfolio_id == "portfolio"
+    assert status.count == 1
+    assert (status.next_action.action_id if status.next_action else None) == expected_action
+    assert (expected_reason is None or expected_reason in status.reason_codes)
+    assert sum(code.startswith("vitrine_portfolio_") for code in by_code) == 1
+
+    assert "vitrine_candidate_review_pending" not in by_code
+    assert by_code["vitrine_candidate_optional_evidence"].requirement_level == "opportunity"
+    # A verified technical Export can still need a student Presentation, even
+    # while an independent recovery or integrity condition blocks the workflow.
+    if scenario in {"complete", "incomplete_attempt", "integrity_conflict"}:
+        assert by_code["vitrine_student_presentation_missing"].requirement_level == "opportunity"
+    else:
+        assert "vitrine_student_presentation_missing" not in by_code

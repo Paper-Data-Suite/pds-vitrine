@@ -346,3 +346,60 @@ def test_projection_rejects_mismatched_history_identity() -> None:
         match="exact Working Portfolio",
     ):
         project_portfolio_completion(_working(), bad_history)
+
+
+# Issue #104 Slice 5: completion and Attention transitions.
+def test_issue104_combined_recovery_and_integrity_keep_completed_history_visible() -> None:
+    """An operational blocker must not erase a verified historical Export."""
+    status = PortfolioCompletionOperationalStatus(
+        recovery_reason_codes=("snapshot_attempt_incomplete",),
+        integrity_reason_codes=("snapshot_attempt_result_conflict",),
+    )
+    projection = project_portfolio_completion(
+        _working(),
+        _history(composition_revision=2, with_export=True, with_presentation=False),
+        operational_status=status,
+    )
+
+    assert projection.state == "recovery_or_integrity_blocked"
+    assert not projection.can_build_current
+    assert projection.historical_completed_edition_count == 1
+    assert len(projection.exact_current_editions) == 1
+    assert projection.exact_current_editions[0].export_count == 1
+    assert not projection.exact_current_editions[0].is_current
+    assert projection.student_presentation_missing is True
+    assert projection.recovery_reason_codes == ("snapshot_attempt_incomplete",)
+    assert projection.integrity_reason_codes == ("snapshot_attempt_result_conflict",)
+
+
+@pytest.mark.parametrize(
+    ("reason_kind", "reason_code"),
+    (
+        ("recovery", "snapshot_export_missing"),
+        ("recovery", "snapshot_attempt_incomplete"),
+        ("integrity", "snapshot_attempt_result_conflict"),
+        ("integrity", "snapshot_durability_uncertain"),
+    ),
+)
+def test_issue104_operational_blockers_override_update_ready(
+    reason_kind: str, reason_code: str
+) -> None:
+    """An older Edition stays historical, even when updates are blocked."""
+    operational = PortfolioCompletionOperationalStatus(
+        recovery_reason_codes=(reason_code,) if reason_kind == "recovery" else (),
+        integrity_reason_codes=(reason_code,) if reason_kind == "integrity" else (),
+    )
+    projection = project_portfolio_completion(
+        _working(current_revision=2),
+        _history(composition_revision=1),
+        operational_status=operational,
+    )
+
+    assert projection.state == "recovery_or_integrity_blocked"
+    assert not projection.can_build_current
+    assert projection.historical_completed_edition_count == 1
+    assert projection.exact_current_editions == ()
+    assert reason_code in (
+        *projection.recovery_reason_codes,
+        *projection.integrity_reason_codes,
+    )
