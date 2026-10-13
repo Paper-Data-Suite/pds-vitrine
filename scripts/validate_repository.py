@@ -177,6 +177,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_v030_release_audit.py",),
     ),
     (
+        "issue #117 v0.4.0 historical baseline",
+        ("scripts/validate_issue117_release_baseline.py",),
+    ),
+    (
         "Vitrine workspace relocation",
         ("scripts/validate_workspace_relocation.py",),
     ),

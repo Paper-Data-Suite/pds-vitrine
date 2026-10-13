@@ -1,0 +1,17 @@
+{
+  "contract": "vitrine_issue117_release_baseline_v1",
+  "historical_sha256": {
+    "RELEASE_NOTES_v0.3.0.md": "6c80475996f5308e0b5cc3414d4914cda5f5627349e387ae943e765c7f6e8250",
+    "docs/release_checklist.md": "45ba5131ca1a20cc8343129776bba1bd577557bdbefe8666c9968111b0f83889",
+    "docs/v0.3.0-release-audit.md": "7ce3bf6400026f926230b293302f811f9f9b7a6494a5a7e743a87c9191a830bd",
+    "docs/v0.3.0-release-compatibility.md": "6ca00d798f1a6fcce7af9236c4f39bef2fd30e4b0d4c89479acff60097366b5e",
+    "scripts/live_installed_acceptance_contract.py": "66da26c1815a8c0875d2892a07a494cfdcc11610ff3bf0949e8b10b3356b6390",
+    "scripts/qualify_installed_live_portfolio.py": "5e9574893081a1d0e561be53eefd7c459b4d4c9bd969d936bc2a054bde1d8e9f",
+    "scripts/validate_v030_release_audit.py": "8cc7ca08a7ff40c48893b91d25820c04b94d9d987cfba045cf41e2ffea9f3ac6",
+    "tests/test_validate_v030_release_audit.py": "81286a32565184e325568e42be75b1fadcc83df3303d2eb397adedec26f668e4"
+  },
+  "initial_source_version": "0.3.0",
+  "starting_commit": "95f29168f8b72007b606433da905a09faea3ca07",
+  "starting_tree": "eb08c974d9af0ed72918416178e75332dbba13bd",
+  "target_version": "0.4.0"
+}
