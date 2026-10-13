@@ -9,6 +9,7 @@ import re
 import sys
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
+from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any
 
@@ -915,3 +916,238 @@ def test_issue104_future_quillan_reader_projects_public_candidate_evidence(
     assert _PRIVATE_PROMPT not in rendered
     for private_marker in _UNSELECTED_MARKERS:
         assert private_marker not in rendered
+
+def test_issue104_future_quillan_canonical_candidate_and_guided_curation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A future stable-contract Quillan reader reaches persisted teacher curation.
+
+    Canonical Core storage, discovery, Candidate persistence, and guided curation
+    are real. The manifest bytes and public Quillan model remain test fixtures;
+    this is not an installed producer package or Artifact-byte integration test.
+    """
+    from pds_core.academic_catalog import (
+        PublicationCatalogQuery,
+        rebuild_academic_catalog,
+    )
+    from pds_core.publication_compatibility import (
+        PublicationContractSupport,
+        PublicationProducerProfile,
+        PublicationProducerRegistry,
+        PublicationReaderSupport,
+    )
+
+    import vitrine.producer_reader_compatibility as compatibility
+    import vitrine.producer_reader_services as reader_services
+    from scripts.candidate_fixture_support import (
+        ACTOR,
+        DeterministicIds,
+        StaticAuthorizationGate,
+        _publish_fixture,
+        build_candidate_fixture_workspace,
+        fixed_clock,
+    )
+    from scripts.curation_fixture_support import StaticCurationAuthorityGate
+    from vitrine.candidate_review import (
+        execute_candidate_decision,
+        execute_selection_placement,
+        plan_candidate_decision,
+        plan_selection_placement,
+    )
+    from vitrine.candidate_services import (
+        CandidateDiscoveryRequest,
+        discover_and_evaluate_candidates,
+    )
+    from vitrine.models import (
+        PortfolioCandidate,
+        PortfolioPlacement,
+        PortfolioSelection,
+    )
+    from vitrine.producer_adapters import build_adapter_registry
+    from vitrine.released_producer_contracts import (
+        RELEASED_PRODUCER_CONTRACT_BY_MODULE,
+    )
+    from vitrine.storage import load_current_records
+
+    setup = build_candidate_fixture_workspace(tmp_path)
+    audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE["quillan"]
+    key = audit.support_key
+    contract = "quillan_academic_result_reader_v1"
+    future_version = "99.123.456"
+    profile = PublicationProducerProfile(
+        module_id="quillan",
+        display_name="Synthetic stable-contract future Quillan",
+        supported_core_publication_schema_versions=frozenset(
+            {key.core_publication_schema_version}
+        ),
+        supported_academic_work_contract_versions=frozenset(
+            {key.producer_contract_version}
+            if key.producer_contract_version is not None
+            else ()
+        ),
+        publication_contracts=(
+            PublicationContractSupport(
+                publication_kind=key.publication_kind,
+                manifest_contract_versions=frozenset(
+                    {key.manifest_contract_version}
+                ),
+                supported_capabilities=frozenset({"standards_ratings"}),
+                allows_missing_source_record=True,
+                reader_support=(
+                    PublicationReaderSupport(
+                        manifest_contract_version=key.manifest_contract_version,
+                        distribution_name=audit.distribution_name,
+                        reader_contract_version=contract,
+                    ),
+                ),
+            ),
+        ),
+    )
+    publication_id, manifest_path = _publish_fixture(
+        setup.workspace,
+        module_id="quillan",
+        work_id="essay_alpha",
+        producer_contract_version="quillan_academic_work_v1",
+        manifest_contract_version="quillan_academic_result_manifest_v1",
+        fixture_path=(
+            Path(__file__).resolve().parents[1]
+            / "fixtures/producer-adapters/quillan/manifest.json"
+        ),
+        source_record=None,
+        capabilities=("standards_ratings",),
+        record_set_id="issue104_future_quillan",
+    )
+    rebuild_academic_catalog(setup.workspace)
+
+    # The metadata announces a future package version but retains the exact
+    # supported reader contract and public API; the package itself is not installed.
+    read_calls: list[bytes] = []
+
+    def public_read(payload: bytes) -> object:
+        read_calls.append(payload)
+        return _manifest()
+
+    monkeypatch.setattr(
+        reader_services.metadata, "version", lambda _name: future_version
+    )
+    monkeypatch.setattr(
+        compatibility,
+        "discover_publication_producer_profiles",
+        lambda: (profile,),
+    )
+    monkeypatch.setattr(
+        reader_services,
+        "import_module",
+        lambda _name: SimpleNamespace(**{audit.public_reader_symbol: public_read}),
+    )
+    import vitrine.quillan_adapter as quillan_adapter
+
+    monkeypatch.setattr(
+        quillan_adapter,
+        "import_module",
+        lambda name: SimpleNamespace(AcademicResultManifest=_Manifest)
+        if name == "quillan.academic_result_manifest"
+        else None,
+    )
+    gate = StaticAuthorizationGate("allowed")
+    discovery = discover_and_evaluate_candidates(
+        setup.workspace,
+        CandidateDiscoveryRequest(
+            portfolio_id=setup.portfolio_id,
+            requesting_actor=ACTOR,
+            requested_purpose="improvement",
+            catalog_query=PublicationCatalogQuery(
+                module_id="quillan", state="current", limit=10
+            ),
+            expected_state_revision=setup.state_revision,
+        ),
+        producer_registry=PublicationProducerRegistry(profiles=(profile,)),
+        adapter_registry=build_adapter_registry(),
+        authorization_gate=gate,
+        clock=fixed_clock,
+        id_factory=DeterministicIds(),
+    )
+    assert discovery.findings == ()
+    assert len(read_calls) == 1
+    assert read_calls[0] == manifest_path.read_bytes()
+    assert len(gate.requests) == 1
+    assert gate.requests[0].publication_id == publication_id
+
+    candidates = tuple(
+        result.candidate
+        for result in discovery.evaluation_results
+        if result.candidate is not None
+    )
+    assert candidates
+    assert all(
+        item.source_endpoint.core_publication.publication_id == publication_id
+        and item.source_endpoint.producer_source.producer_module_id == "quillan"
+        and item.source_endpoint.producer_source.reader_contract_version == contract
+        for item in candidates
+    )
+    work = tuple(item for item in candidates if "student_work" in item.eligible_section_ids)
+    feedback = tuple(
+        item for item in candidates if "feedback_context" in item.eligible_section_ids
+    )
+    assert len(work) == 2
+    assert len(feedback) == 2
+    assert {item.candidate_id for item in work}.isdisjoint(
+        {item.candidate_id for item in feedback}
+    )
+    assert all(
+        item.candidate is None
+        for item in discovery.evaluation_results
+        if item.projected_source.source_relationships[0].source_subject_id
+        == "student_beta"
+    )
+
+    before_curation = load_current_records(setup.workspace)
+    assert not any(isinstance(item, PortfolioSelection) for item in before_curation)
+    assert not any(isinstance(item, PortfolioPlacement) for item in before_curation)
+
+    for candidate, section in ((work[0], "student_work"), (feedback[0], "feedback_context")):
+        entry_id = f"candidate:{candidate.candidate_id}"
+        select_plan = plan_candidate_decision(
+            setup.workspace,
+            entry_id=entry_id,
+            decision="select",
+            proposed_section_ids=(section,),
+        )
+        selected = execute_candidate_decision(
+            setup.workspace,
+            select_plan,
+            actor=ACTOR,
+            authority_gate=StaticCurationAuthorityGate(),
+            rationale_text="Teacher explicitly selected future-version Quillan evidence.",
+        )
+        selection = next(
+            item for item in selected.records if isinstance(item, PortfolioSelection)
+        )
+        assert selection.candidate_id == candidate.candidate_id
+        place_plan = plan_selection_placement(
+            setup.workspace,
+            entry_id=entry_id,
+            selection_id=selection.selection_id,
+            section_id=section,
+        )
+        placed = execute_selection_placement(
+            setup.workspace,
+            place_plan,
+            placed_by=ACTOR,
+            authority_gate=StaticCurationAuthorityGate(),
+        )
+        placement = next(
+            item for item in placed.records if isinstance(item, PortfolioPlacement)
+        )
+        assert placement.selection_id == selection.selection_id
+        assert placement.section_id == section
+
+    persisted = load_current_records(setup.workspace)
+    assert {item.candidate_id for item in persisted if isinstance(item, PortfolioCandidate)} == {
+        item.candidate_id for item in candidates
+    }
+    assert len(tuple(item for item in persisted if isinstance(item, PortfolioSelection))) == 2
+    assert len(tuple(item for item in persisted if isinstance(item, PortfolioPlacement))) == 2
+    # The test uses only the already-supported producer-owned contract. The
+    # future distribution version is intentionally *not* a runtime whitelist.
+    assert future_version != audit.release_version
