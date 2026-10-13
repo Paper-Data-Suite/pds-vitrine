@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import tomllib
 from pathlib import Path
 
 import pytest
 
+import scripts.check_package as package_checker
 import scripts.validate_issue104_acceptance as acceptance
+import scripts.validate_repository as repository_validator
 
 
 def test_issue104_static_acceptance_and_source_inventory() -> None:
@@ -95,3 +98,39 @@ def test_issue104_invalid_contract_policy_fails_closed() -> None:
 
 def test_issue104_acceptance_source_is_checkout_scoped() -> None:
     assert acceptance.ROOT == Path(__file__).resolve().parents[1]
+
+
+def test_issue104_repository_validator_runs_umbrella_without_nested_pytest() -> None:
+    commands = repository_validator.VALIDATOR_COMMANDS
+    label = "issue #104 improvement / reader resilience"
+    matches = tuple(command for name, command in commands if name == label)
+    assert matches == ((
+        "scripts/validate_issue104_acceptance.py",
+        "--skip-focused-tests",
+    ),)
+    labels = tuple(name for name, _command in commands)
+    assert labels.index("issue #103 completion / reader compatibility") < (
+        labels.index(label)
+    )
+    assert labels.index(label) < labels.index("teacher information architecture")
+    # Repository-wide pytest supplies the focused cases; the #104 runner still
+    # executes source-policy guards and the fixture-backed synthetic journey.
+    assert "--skip-synthetic-journey" not in matches[0]
+
+
+def test_issue104_acceptance_is_required_in_sdist_and_mypy_scope() -> None:
+    validator = "scripts/validate_issue104_acceptance.py"
+    regression = "tests/test_validate_issue104_acceptance.py"
+    project = tomllib.loads(
+        (acceptance.ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    )
+    assert validator in project["tool"]["mypy"]["files"]
+    assert validator in package_checker.REQUIRED_SDIST_FILES
+    assert regression in package_checker.REQUIRED_SDIST_FILES
+    manifest = (acceptance.ROOT / "MANIFEST.in").read_text(encoding="utf-8")
+    assert "recursive-include scripts *.py" in manifest
+    assert "recursive-include tests *.py *.json" in manifest
+    ci = (acceptance.ROOT / ".github/workflows/ci.yml").read_text(
+        encoding="utf-8"
+    )
+    assert 'python scripts/validate_repository.py --core-wheel' in ci

@@ -138,6 +138,13 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "issue #104 improvement / reader resilience",
+        (
+            "scripts/validate_issue104_acceptance.py",
+            "--skip-focused-tests",
+        ),
+    ),
+    (
         "teacher information architecture",
         (
             "scripts/validate_teacher_information_architecture.py",
