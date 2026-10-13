@@ -500,6 +500,10 @@ def validate(
                     "completed Portfolio navigation",
                     "scripts/smoke_test_completed_portfolio_navigation_wheel.py",
                 ),
+                (
+                    "issue #104 installed reader resilience",
+                    "scripts/smoke_test_issue104_reader_resilience_wheel.py",
+                ),
             )
             for label, script in wheel_smokes:
                 _run(
