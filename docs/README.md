@@ -23,6 +23,7 @@ v0.3.0 release audit is preserved without revision.
 - [Provisional v0.4.0 release audit](v0.4.0-release-audit.md)
 - [v0.4.0 four-phase release checklist](v0.4.0-release-checklist.md)
 - [Frozen v0.3.0 release baseline](development/issue117-v040-release-baseline.md)
+- [#117 exact input-wheel authentication](validation/issue117-slice4-release-wheel-authentication.md)
 
 
 ## Runtime implementation

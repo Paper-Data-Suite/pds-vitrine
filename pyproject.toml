@@ -111,6 +111,7 @@ files = [
     "scripts/validate_issue104_acceptance.py",
     "scripts/validate_issue117_release_baseline.py",
     "scripts/validate_issue117_release_documents.py",
+    "scripts/validate_issue117_release_wheels.py",
     "scripts/issue104_synthetic_producer_wheels.py",
     "scripts/issue104_installed_reader_probe.py",
     "scripts/smoke_test_issue104_reader_resilience_wheel.py",

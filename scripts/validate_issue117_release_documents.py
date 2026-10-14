@@ -71,7 +71,7 @@ def validate(root: Path = ROOT) -> tuple[str, ...]:
             "0.6.5",
             "0.13.0",
             "0.10.6",
-            "0.3.1",
+            "0.3.2",
             "Pending authentication",
             "not a substitute",
         ),
