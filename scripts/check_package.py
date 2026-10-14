@@ -557,7 +557,7 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
     metadata = email.message_from_bytes(metadata_bytes)
     if metadata.get("Name") != "pds-vitrine":
         findings.append(f"unexpected distribution name: {metadata.get('Name')}")
-    if metadata.get("Version") != "0.3.0":
+    if metadata.get("Version") != "0.4.0":
         findings.append(f"unexpected version: {metadata.get('Version')}")
     if metadata.get("Requires-Python") != ">=3.11":
         findings.append(

@@ -72,6 +72,7 @@ def test_issue117_source_version_can_be_promoted_without_falsifying_history(
     root = _isolated_baseline(tmp_path)
     source = root / "vitrine/_version.py"
     content = source.read_text(encoding="utf-8")
-    assert '__version__ = "0.3.0"' in content
-    source.write_text(content.replace('"0.3.0"', '"0.4.0"'), encoding="utf-8")
+    assert '__version__ = "0.4.0"' in content
+    # Reverting the *surrogate* source version still preserves the audit.
+    source.write_text(content.replace('"0.4.0"', '"0.3.0"'), encoding="utf-8")
     assert baseline.validate(root) == ()
