@@ -1,17 +1,24 @@
 # Changelog
 
-- Issue #99 paper-native student Reflection: immutable prompt/target issuance, Core PDS2 response-page routing, printable QR response PDFs, retained returned-paper evidence, explicit `CONFIRM STUDENT AUTHOR` review, separated student author/adult recorder provenance, typed fallback correction, and exact paper materialization for Current Portfolio.
-- Issue #99 installed-wheel acceptance now exercises retained-source Core dispatch through canonical Reflection and exact Current Portfolio paper-byte materialization; the base distribution remains Core-only with printable PDF dependencies isolated in the `paper` extra.
-
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+
+No post-v0.4.0 changes recorded. The v0.4.0 candidate below is **NOT PUBLISHED**.
+
+## 0.4.0 - 2026-10-13 (release candidate; NOT PUBLISHED)
+
+This section summarizes the merged features intended for the next release.
+It is not a claim of a published `v0.4.0` tag or authenticated artifact.
 
 ### Changed
 
 - Issue #111 bounds newly written Vitrine canonical and Snapshot custody components, preserves historical direct-identity paths without migration, qualifies existing Current Portfolio/paper path surfaces, finalizes the #101 presentation naming contract, and adds exact installed qualification against Core 0.6.4 while retaining the `pds-core>=0.6.3,<0.7` runtime dependency range.
 
 ### Added
+
+- Issue #99 paper-native student Reflection: immutable prompt/target issuance, Core PDS2 response-page routing, printable QR response PDFs, retained returned-paper evidence, explicit `CONFIRM STUDENT AUTHOR` review, separated student author/adult recorder provenance, typed fallback correction, and exact paper materialization for Current Portfolio.
+- Issue #99 installed-wheel acceptance now exercises retained-source Core dispatch through canonical Reflection and exact Current Portfolio paper-byte materialization; the base distribution remains Core-only with printable PDF dependencies isolated in the `paper` extra.
 
 - Issue #102 Slice 6 completes completed Portfolio navigation qualification with a canonical history contract, verified local View/Print/Open, explicit chain verification, historical Presentation handoff, Build Updated routing, post-build continuation, injectable no-GUI local-open acceptance, package/repository guards, isolated Core 0.6.4 + Vitrine installed-wheel acceptance without producer packages, and refreshed ScoreForm 0.12.0 / Quillan 0.10.5 / Concord 0.3.0 release anchors.
 

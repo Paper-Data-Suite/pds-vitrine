@@ -1,18 +1,29 @@
 # Vitrine Documentation
 
-Vitrine has completed the merged v0.3.0 implementation through issue #71 and is now
-in issue #72 release audit/preparation. The source release identity is promoted to
-`0.3.0` during this work, but publication and fresh-download verification remain
-separate release phases.
+Vitrine v0.3.0 is **RELEASED — VERIFIED**. The current source is in
+**v0.4.0 release preparation** for [issue #117](https://github.com/Paper-Data-Suite/pds-vitrine/issues/117).
+The active source identity `0.4.0` is not proof of a published release. Final
+exact-main qualification, official producer-wheel acceptance, publication and
+independent fresh-download verification remain outstanding.
 
-The v0.3 implementation consumes exact released ScoreForm, Quillan, and Concord
-contracts through public producer boundaries, adds guided teacher Portfolio workflows,
-immutable local Snapshot/Export custody, bounded attention, and Core module-operations
-integration while preserving Vitrine's privacy/provenance/authority boundaries.
+Vitrine now includes paper-native Reflection, Working Composition v2, teacher-guided
+interactions, student-facing Presentation, Completed Portfolio navigation, and
+completion-aware Attention. Reader Contract v1 compatibility is semantic and
+separate from exact released-wheel qualification; Core v0.6.5 is the runtime floor.
 
-Documents distinguish accepted architecture, exact runtime contracts, development
-fixtures, live installed acceptance, release-audit evidence, and intentionally deferred
-production authorization/delivery surfaces.
+Documents distinguish accepted architecture, runtime contracts, opt-in development
+fixtures, historical release audits, current release qualification, and intentionally
+deferred production authorization/delivery surfaces. The historical issue #71
+v0.3.0 release audit is preserved without revision.
+
+## v0.4.0 release preparation
+
+- [Release notes — candidate](../RELEASE_NOTES_v0.4.0.md)
+- [Compatibility and provisional qualification matrix](v0.4.0-release-compatibility.md)
+- [Provisional v0.4.0 release audit](v0.4.0-release-audit.md)
+- [v0.4.0 four-phase release checklist](v0.4.0-release-checklist.md)
+- [Frozen v0.3.0 release baseline](development/issue117-v040-release-baseline.md)
+
 
 ## Runtime implementation
 

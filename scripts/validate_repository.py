@@ -181,6 +181,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_issue117_release_baseline.py",),
     ),
     (
+        "issue #117 v0.4.0 candidate documentation",
+        ("scripts/validate_issue117_release_documents.py",),
+    ),
+    (
         "Vitrine workspace relocation",
         ("scripts/validate_workspace_relocation.py",),
     ),

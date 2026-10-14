@@ -11,6 +11,16 @@ feedback, signatures, disability information, disciplinary information, or other
 education records in repository, test, example, screenshot, log, release, or
 qualification evidence. Tests and release qualification must use synthetic data.
 
+## v0.4.0 release-candidate scope
+
+The current source requires Core v0.6.5 and supports newer producer releases
+through approved Reader Contract v1 semantics, not version-number equality.
+Neither a candidate source identity nor synthetic future producer wheels proves
+an official released producer composition is qualified. Existing source-read,
+Artifact authorization, privacy, and custody boundaries continue to apply.
+The paper/Portfolio workflows remain local; Export and Presentation do not
+constitute disclosure or delivery.
+
 ## v0.3.0 producer access
 
 Vitrine v0.3.0 can consume released ScoreForm 0.11.0, Quillan 0.10.0, and Concord
