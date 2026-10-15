@@ -35,7 +35,26 @@ def _run(command: list[str], *, cwd: Path, env: dict[str, str]) -> str:
     return result.stdout
 
 
-def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
+def smoke(
+    vitrine_wheel: Path,
+    core_wheel: Path,
+    *,
+    viewer_workspace: Path | None = None,
+    viewer_report: Path | None = None,
+) -> None:
+    if (viewer_workspace is None) != (viewer_report is None):
+        raise RuntimeError("Viewer workspace and report must be supplied together")
+    if viewer_workspace is not None and viewer_report is not None:
+        if sys.platform != "win32":
+            raise RuntimeError("Actual Windows viewer qualification requires Windows")
+        viewer_workspace = viewer_workspace.expanduser().absolute()
+        viewer_report = viewer_report.expanduser().absolute()
+        if viewer_workspace.exists() or viewer_report.exists():
+            raise RuntimeError("Viewer workspace/report must not already exist")
+        if viewer_workspace.is_relative_to(ROOT):
+            raise RuntimeError("Viewer workspace must not be inside the repository")
+        if not viewer_report.parent.is_dir():
+            raise RuntimeError("Viewer report parent does not exist")
     _run(
         [
             sys.executable,
@@ -50,7 +69,7 @@ def smoke(vitrine_wheel: Path, core_wheel: Path) -> None:
         root = Path(temporary)
         environment = root / "venv"
         work = root / "work"
-        workspace = root / "deep" / "workspace" / "for" / "completed" / "portfolios"
+        workspace = (viewer_workspace if viewer_workspace is not None else root / "deep" / "workspace" / "for" / "completed" / "portfolios")
         work.mkdir()
         venv.EnvBuilder(with_pip=True, clear=True).create(environment)
         python = _venv_python(environment)
@@ -169,7 +188,7 @@ class SnapshotGate:
 
 
 assert importlib.metadata.version("pds-core") == "0.6.5"
-assert importlib.metadata.version("pds-vitrine") == "0.3.0"
+assert importlib.metadata.version("pds-vitrine") == "0.4.0"
 for name in ("scoreform", "quillan", "concord", "portia", "meridian"):
     assert importlib.util.find_spec(name) is None, name
 
@@ -454,6 +473,83 @@ verify_completed_portfolio_edition(
 )
 assert load_current_state(workspace).state_revision == before_read_only
 
+# Real Windows viewer characterization is opt-in; the ordinary installed smoke
+# remains headless and cannot claim actual browser/PDF/Explorer accessibility.
+if len(sys.argv) > 2 and sys.argv[2] != "-":
+    import hashlib
+    import json
+
+    if sys.platform != "win32":
+        raise RuntimeError("real viewer opening requires Windows")
+    targets = (
+        ("student_html", html, lambda: open_student_portfolio_html(
+            workspace, presentation_artifact_id=presentation.presentation_artifact_id
+        )),
+        ("printable_pdf", pdf, lambda: open_printable_student_portfolio(
+            workspace, presentation_artifact_id=presentation.presentation_artifact_id
+        )),
+        ("presentation_folder", presentation_root, lambda: open_student_portfolio_folder(
+            workspace, presentation_artifact_id=presentation.presentation_artifact_id
+        )),
+        ("technical_export_folder", export_root, lambda: open_technical_export_folder(
+            workspace, snapshot_export_artifact_id=export.snapshot_export_artifact_id
+        )),
+    )
+    # Each type must actually be deep; no shallow-pass substitution.
+    if any(len(str(path)) <= 260 for _, path, _ in targets):
+        raise RuntimeError("viewer targets must all exceed 260 canonical characters")
+    report_targets = []
+    for kind, canonical, launch in targets:
+        result = {
+            "kind": kind,
+            "canonical_path": str(canonical),
+            "canonical_path_length": len(str(canonical)),
+            "canonical_sha256": (hashlib.sha256(canonical.read_bytes()).hexdigest()
+                                 if canonical.is_file() else None),
+            "shell_handoff": "failed",
+            "handoff_path": None,
+            "handoff_path_length": None,
+            "viewer_accessibility": "pending",
+        }
+        try:
+            returned = launch()
+            result["shell_handoff"] = "returned"
+            result["handoff_path"] = str(returned)
+            result["handoff_path_length"] = len(str(returned))
+            # A short handoff may be an alias, not the canonical path. Require
+            # equivalent verified bytes/inventory; never assume alias authority.
+            returned_path = Path(returned)
+            if canonical.is_file():
+                result["handoff_content_matches"] = (
+                    hashlib.sha256(returned_path.read_bytes()).hexdigest()
+                    == result["canonical_sha256"]
+                )
+            else:
+                def inventory(folder):
+                    return tuple(sorted(
+                        (item.relative_to(folder).as_posix(),
+                         hashlib.sha256(item.read_bytes()).hexdigest())
+                        for item in folder.rglob("*") if item.is_file()
+                    ))
+                result["handoff_content_matches"] = (
+                    inventory(returned_path) == inventory(canonical)
+                )
+        except (PortfolioOutputOpenError, OSError, RuntimeError) as error:
+            result["shell_error"] = type(error).__name__
+        report_targets.append(result)
+    report = {
+        "contract": "vitrine_issue117_windows_viewer_v1",
+        "platform": sys.platform,
+        "core_version": importlib.metadata.version("pds-core"),
+        "vitrine_version": importlib.metadata.version("pds-vitrine"),
+        "workspace": str(workspace),
+        "synthetic_only": True,
+        "canonical_verified": True,
+        "targets": report_targets,
+        "attestation_method": "pending",
+    }
+    Path(sys.argv[2]).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
 calls = []
 portfolio_menu.run_completed_portfolio_menu = (
     lambda **_kwargs: BUILD_UPDATED_EDITION
@@ -479,7 +575,16 @@ assert "edition_number" not in calls[0]
 for name in ("scoreform", "quillan", "concord", "portia", "meridian"):
     assert importlib.util.find_spec(name) is None, name
 """
-        _run([str(python), "-c", code, str(workspace)], cwd=work, env=env)
+        _run(
+            [str(python), "-c", code, str(workspace),
+             str(viewer_report) if viewer_report is not None else "-"],
+            cwd=work, env=env,
+        )
+        if viewer_report is not None:
+            if not viewer_report.is_file():
+                raise RuntimeError("Expected viewer capture report was not produced")
+            print(f"CAPTURED real Windows shell-handoff evidence: {viewer_report}")
+            print("PENDING manual verification of actual viewer accessibility")
         if list(work.iterdir()):
             raise RuntimeError(
                 "Issue #102 installed-wheel acceptance left working-directory residue"
@@ -490,10 +595,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("vitrine_wheel", type=Path)
     parser.add_argument("core_wheel", type=Path)
+    parser.add_argument("--viewer-workspace", type=Path)
+    parser.add_argument("--viewer-report", type=Path)
     args = parser.parse_args(argv)
     try:
-        smoke(args.vitrine_wheel, args.core_wheel)
+        smoke(
+            args.vitrine_wheel, args.core_wheel,
+            viewer_workspace=args.viewer_workspace,
+            viewer_report=args.viewer_report,
+        )
         print("PASS Issue #102 / #103 Core 0.6.5 installed-wheel completed Portfolio acceptance")
+        if args.viewer_report is not None:
+            print("NOTE shell handoff captured; Windows viewer accessibility remains UNVERIFIED until attested")
         return 0
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"Issue #102 installed-wheel smoke failed: {error}", file=sys.stderr)

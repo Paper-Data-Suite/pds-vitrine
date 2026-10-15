@@ -113,6 +113,7 @@ files = [
     "scripts/validate_issue117_release_documents.py",
     "scripts/validate_issue117_release_wheels.py",
     "scripts/qualify_issue117_installed_release.py",
+    "scripts/validate_issue117_windows_viewer_acceptance.py",
     "scripts/issue104_synthetic_producer_wheels.py",
     "scripts/issue104_installed_reader_probe.py",
     "scripts/smoke_test_issue104_reader_resilience_wheel.py",

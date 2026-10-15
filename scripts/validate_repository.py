@@ -193,6 +193,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/qualify_issue117_installed_release.py", "--check-source"),
     ),
     (
+        "issue #117 Windows viewer source boundary (real GUI gate separate)",
+        ("scripts/validate_issue117_windows_viewer_acceptance.py", "--check-source"),
+    ),
+    (
         "Vitrine workspace relocation",
         ("scripts/validate_workspace_relocation.py",),
     ),

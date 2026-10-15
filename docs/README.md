@@ -25,6 +25,7 @@ v0.3.0 release audit is preserved without revision.
 - [Frozen v0.3.0 release baseline](development/issue117-v040-release-baseline.md)
 - [#117 exact input-wheel authentication](validation/issue117-slice4-release-wheel-authentication.md)
 - [#117 noneditable official-producer installed acceptance](validation/issue117-slice5-installed-release-qualification.md)
+- [#117 real-Windows viewer-handoff characterization and release gate](validation/issue117-slice6-windows-viewer-handoff.md)
 
 
 ## Runtime implementation
