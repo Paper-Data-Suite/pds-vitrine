@@ -189,6 +189,10 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_issue117_release_wheels.py",),
     ),
     (
+        "issue #117 installed official-producer acceptance source gate",
+        ("scripts/qualify_issue117_installed_release.py", "--check-source"),
+    ),
+    (
         "Vitrine workspace relocation",
         ("scripts/validate_workspace_relocation.py",),
     ),
