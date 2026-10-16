@@ -60,11 +60,11 @@ def test_core_only_runtime_dependency_remains_required(tmp_path: Path) -> None:
     root = _copy_candidate(tmp_path)
     path = root / "pyproject.toml"
     content = path.read_text(encoding="utf-8")
-    assert '"pds-core>=0.6.5,<0.7"' in content
+    assert '"pds-core>=0.6.6,<0.7"' in content
     path.write_text(
         content.replace(
-            '"pds-core>=0.6.5,<0.7"',
-            '"pds-core>=0.6.5,<0.7", "scoreform==0.13.0"',
+            '"pds-core>=0.6.6,<0.7"',
+            '"pds-core>=0.6.6,<0.7", "scoreform==0.13.0"',
             1,
         ),
         encoding="utf-8",

@@ -11,10 +11,11 @@ its package version has been promoted but the v0.4.0 GitHub Release, exact-wheel
 qualification, artifact hashes, and fresh-download verification are **not yet complete**.
 Do not mistake a source version or successful test run for a published release.
 
-The current package requires `pds-core>=0.6.5,<0.7` and exposes optional public
+The current package requires `pds-core>=0.6.6,<0.7` and exposes optional public
 ScoreForm, Quillan and Concord reader integrations. Compatible producer releases
 are selected by supported Reader Contract v1 semantics, not release numbers; the
-candidate official-wheel qualification matrix remains pending authentication.
+candidate official-wheel qualification matrix passed authenticated installed
+acceptance under Core 0.6.6; final publication qualification remains pending.
 No producer, Meridian, or Portia distribution is an unconditional dependency.
 
 The current teacher-local workflow provides:
@@ -67,16 +68,16 @@ hosting, or external submission.
 
 ```text
 Python >=3.11
-pds-core>=0.6.5,<0.7
+pds-core>=0.6.6,<0.7
 ```
 
-For **source-checkout development**, authenticate Core v0.6.5 and install its
+For **source-checkout development**, authenticate Core v0.6.6 and install its
 published wheel before installing Vitrine. No v0.4.0 GitHub Release exists yet as
 a result of promoting the source version:
 
 ```powershell
-python scripts\verify_core_wheel.py "$HOME\Downloads\pds_core-0.6.5-py3-none-any.whl"
-python -m pip install "$HOME\Downloads\pds_core-0.6.5-py3-none-any.whl"
+python scripts\verify_core_wheel.py "$HOME\Downloads\pds_core-0.6.6-py3-none-any.whl"
+python -m pip install "$HOME\Downloads\pds_core-0.6.6-py3-none-any.whl"
 python -m pip install --no-deps --no-build-isolation -e .
 python -m pip check
 ```
@@ -170,7 +171,7 @@ from vitrine.snapshot_distribution import (
 ## Validation
 
 ```powershell
-.\run_tests.ps1 -CoreWheel C:\path\to\pds_core-0.6.5-py3-none-any.whl
+.\run_tests.ps1 -CoreWheel C:\path\to\pds_core-0.6.6-py3-none-any.whl
 ```
 
 Cross-platform form:

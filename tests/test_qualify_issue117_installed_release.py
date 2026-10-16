@@ -19,7 +19,7 @@ def _candidate(
     metadata = (
         f"Metadata-Version: 2.3\nName: {name}\nVersion: {version}\n"
         "Requires-Python: >=3.11\n"
-        "Requires-Dist: pds-core<0.7,>=0.6.5\n\n"
+        "Requires-Dist: pds-core<0.7,>=0.6.6\n\n"
     )
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr("pds_vitrine-0.4.0.dist-info/METADATA", metadata)
@@ -34,7 +34,7 @@ def test_issue117_installed_source_contract_is_current() -> None:
 def test_issue117_reuses_exact_current_release_audits() -> None:
     assert qualification.VERSIONS == {
         "pds-vitrine": "0.4.0",
-        "pds-core": "0.6.5",
+        "pds-core": "0.6.6",
         "scoreform": "0.13.0",
         "quillan": "0.10.6",
         "pds-concord": "0.3.2",

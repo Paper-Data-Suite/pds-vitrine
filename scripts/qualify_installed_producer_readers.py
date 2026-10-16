@@ -558,6 +558,9 @@ def _inside_qualification(fixture_dir: Path) -> None:
             for audit in RELEASED_PRODUCER_CONTRACT_BY_MODULE.values()
         },
     }
+    expected_versions["pds-core"] = os.environ.get(
+        "PDS_ISSUE117_CORE_VERSION", CORE_0_6_5_AUDIT.release_version
+    )
     for distribution, expected in expected_versions.items():
         actual = metadata.version(distribution)
         if actual != expected:

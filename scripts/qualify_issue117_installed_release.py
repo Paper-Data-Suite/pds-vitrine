@@ -44,7 +44,7 @@ HELPERS = (
 )
 VERSIONS = {
     "pds-vitrine": "0.4.0",
-    "pds-core": "0.6.5",
+    "pds-core": "0.6.6",
     "scoreform": "0.13.0",
     "quillan": "0.10.6",
     "pds-concord": "0.3.2",
@@ -125,7 +125,7 @@ def validate_candidate_wheel(path: Path) -> str:
     if metadata.get("Requires-Python") != ">=3.11":
         raise RuntimeError("Vitrine wheel Python floor changed")
     dependencies = metadata.get_all("Requires-Dist", ())
-    core = {"pds-core<0.7,>=0.6.5", "pds-core>=0.6.5,<0.7"}
+    core = {"pds-core<0.7,>=0.6.6", "pds-core>=0.6.6,<0.7"}
     if not any(d.replace(" ", "") in core for d in dependencies):
         raise RuntimeError("Vitrine candidate lacks required Core dependency")
     for dependency in dependencies:
@@ -227,6 +227,9 @@ def qualify(vitrine_wheel: Path, wheel_dir: Path) -> None:
         venv.EnvBuilder(with_pip=True, clear=True).create(isolated)
         python = _isolated_python(isolated)
         env = _isolated_env()
+        # Override exact Core version only for current #117 qualification.
+        # Standalone historical/#103 probes remain pinned to Core 0.6.5.
+        env["PDS_ISSUE117_CORE_VERSION"] = "0.6.6"
         # Installing all five wheel INPUTS together allows legitimate transitive
         # dependencies to resolve without adding sibling dependencies to Vitrine.
         _run(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -612,7 +613,9 @@ def _qualify(workspace: Path) -> None:
     concord_audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE["concord"]
     _require(
         metadata.version(CORE_0_6_5_AUDIT.distribution_name)
-        == CORE_0_6_5_AUDIT.release_version,
+        == os.environ.get(
+            "PDS_ISSUE117_CORE_VERSION", CORE_0_6_5_AUDIT.release_version
+        ),
         "exact Core release is not installed",
     )
     _require(

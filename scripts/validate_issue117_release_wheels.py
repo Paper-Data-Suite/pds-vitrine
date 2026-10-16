@@ -17,14 +17,26 @@ from email.parser import BytesParser
 from pathlib import Path
 
 from vitrine.released_producer_contracts import (
-    CORE_0_6_5_AUDIT,
     RELEASED_PRODUCER_CONTRACTS,
     ReleasedCoreAudit,
     ReleasedProducerContractAudit,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_CORE_REQUIREMENT = "pds-core>=0.6.5,<0.7"
+EXPECTED_CORE_REQUIREMENT = "pds-core>=0.6.6,<0.7"
+
+# Qualified Core #232 release record. The original Core 0.6.5 audit remains
+# immutable in vitrine.released_producer_contracts and Slice 6 baseline evidence.
+CORE_0_6_6_AUDIT = ReleasedCoreAudit(
+    distribution_name="pds-core",
+    release_version="0.6.6",
+    release_tag="v0.6.6",
+    wheel_filename="pds_core-0.6.6-py3-none-any.whl",
+    wheel_sha256=(
+        "d6d21e426092b0329bcfd69b6fbee44c345edc46794a914d847d5ea73a2b7301"
+    ),
+    requires_python=">=3.11",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,14 +56,14 @@ class QualifiedWheel:
 
 
 # The values below are exact qualification inputs, NEVER runtime allowlists.
-# They independently freeze current #103 release audit identities for #117.
+# Core 0.6.6 is newly authenticated; producer identities retain #103 audits.
 EXPECTED_WHEELS: tuple[QualifiedWheel, ...] = (
     QualifiedWheel(
         "pds-core",
-        "0.6.5",
+        "0.6.6",
         "pds-core",
-        "pds_core-0.6.5-py3-none-any.whl",
-        "9ace75f17b23b7f0ed6a709d531af5120db43d0325b4148d26f2d6ba1d4b3c18",
+        "pds_core-0.6.6-py3-none-any.whl",
+        "d6d21e426092b0329bcfd69b6fbee44c345edc46794a914d847d5ea73a2b7301",
     ),
     QualifiedWheel(
         "scoreform",
@@ -93,7 +105,7 @@ def validate_inventory(
     """Reject stale or inconsistent source/docs qualification anchors."""
     findings: list[str] = []
     audits: tuple[ReleasedCoreAudit | ReleasedProducerContractAudit, ...] = (
-        CORE_0_6_5_AUDIT,
+        CORE_0_6_6_AUDIT,
         *RELEASED_PRODUCER_CONTRACTS,
     )
     by_distribution = {audit.distribution_name: audit for audit in audits}

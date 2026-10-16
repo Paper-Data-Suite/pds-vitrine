@@ -70,7 +70,12 @@ def validate_source(root: Path = ROOT) -> tuple[str, ...]:
     return tuple(findings)
 
 
-def report_findings(report: object, *, require_attested: bool) -> tuple[str, ...]:
+def report_findings(
+    report: object,
+    *,
+    require_attested: bool,
+    expected_core_version: str = "0.6.5",
+) -> tuple[str, ...]:
     """Fail closed on missing/invalid reports and unconfirmed viewer outcomes."""
     failures: list[str] = []
     if not isinstance(report, dict):
@@ -80,8 +85,10 @@ def report_findings(report: object, *, require_attested: bool) -> tuple[str, ...
         failures.append("incorrect viewer report contract")
     if data.get("platform") != "win32":
         failures.append("report was not produced on Windows")
-    if data.get("core_version") != "0.6.5":
-        failures.append("Core input version differs from Slice 6 baseline")
+    if expected_core_version not in {"0.6.5", "0.6.6"}:
+        failures.append("unsupported expected Core viewer acceptance version")
+    if data.get("core_version") != expected_core_version:
+        failures.append("Core input version differs from requested viewer qualification")
     if data.get("vitrine_version") != "0.4.0":
         failures.append("Vitrine input version differs from v0.4.0")
     if data.get("canonical_verified") is not True:
@@ -133,13 +140,15 @@ def report_findings(report: object, *, require_attested: bool) -> tuple[str, ...
     return tuple(failures)
 
 
-def attest(path: Path) -> int:
+def attest(path: Path, *, core_version: str = "0.6.5") -> int:
     """Record human observations; a launch return can never auto-pass."""
     if sys.platform != "win32":
         print("Real viewer attestation requires Windows", file=sys.stderr)
         return 1
     report = json.loads(path.read_text(encoding="utf-8"))
-    failures = report_findings(report, require_attested=False)
+    failures = report_findings(
+        report, require_attested=False, expected_core_version=core_version
+    )
     if failures:
         print("\n".join(failures), file=sys.stderr)
         return 1
@@ -158,6 +167,8 @@ def attest(path: Path) -> int:
         print(f"Canonical path: {target['canonical_path']}")
         print(f"Returned path: {target.get('handoff_path')}")
         response = input("VIEWED / FAILED: ").strip()
+        if response not in {"VIEWED", "FAILED"}:
+            raise ValueError("Enter exactly VIEWED or FAILED for viewer evidence")
         target["viewer_accessibility"] = (
             "confirmed" if response == "VIEWED" else "failed"
         )
@@ -166,7 +177,9 @@ def attest(path: Path) -> int:
     # This report lives outside custody and has synthetic-only paths; never
     # mutate or rewrite a canonical Portfolio/Presentation/Export artifact.
     path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    failed = report_findings(report, require_attested=True)
+    failed = report_findings(
+        report, require_attested=True, expected_core_version=core_version
+    )
     if failed:
         print("BLOCKED: real Windows viewer accessibility not qualified:", file=sys.stderr)
         print("\n".join(failed), file=sys.stderr)
@@ -181,13 +194,20 @@ def main(argv: list[str] | None = None) -> int:
     group.add_argument("--check-source", action="store_true")
     group.add_argument("--attest-report", type=Path)
     group.add_argument("--verify-report", type=Path)
+    parser.add_argument(
+        "--core-version", choices=("0.6.5", "0.6.6"), default="0.6.5"
+    )
     args = parser.parse_args(argv)
     try:
         if args.attest_report is not None:
-            return attest(args.attest_report)
+            return attest(args.attest_report, core_version=args.core_version)
         if args.verify_report is not None:
             report = json.loads(args.verify_report.read_text(encoding="utf-8"))
-            findings = report_findings(report, require_attested=True)
+            findings = report_findings(
+                report,
+                require_attested=True,
+                expected_core_version=args.core_version,
+            )
             if findings:
                 print("\n".join(findings), file=sys.stderr)
                 return 1

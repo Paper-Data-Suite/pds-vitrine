@@ -27,7 +27,7 @@ from vitrine.workflow_context import default_workflow_dependencies
 
 EXPECTED_VERSION = "0.4.0"
 EXPECTED_CORE_REQUIREMENT = "pds-core>=0.6.3,<0.7"
-CURRENT_DEVELOPMENT_CORE_REQUIREMENT = "pds-core>=0.6.5,<0.7"
+CURRENT_DEVELOPMENT_CORE_REQUIREMENT = "pds-core>=0.6.6,<0.7"
 EXPECTED_CORE_WHEEL = "pds_core-0.6.3-py3-none-any.whl"
 EXPECTED_CORE_SHA256 = (
     "98d7596ce0eed26e4d56a17bbbbd644db3014259b56a45783a173fe8237af5e5"

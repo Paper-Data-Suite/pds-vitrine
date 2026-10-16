@@ -26,7 +26,7 @@ FROZEN_PATHS = (
     "scripts/validate_v030_release_audit.py",
     "tests/test_validate_v030_release_audit.py",
 )
-CORE_REQUIREMENT = "pds-core>=0.6.5,<0.7"
+CORE_REQUIREMENT = "pds-core>=0.6.6,<0.7"
 FORBIDDEN_DEPENDENCIES = frozenset(
     {"pds-vitrine", "scoreform", "quillan", "pds-concord", "pds-meridian", "pds-portia"}
 )
@@ -93,7 +93,7 @@ def validate(root: Path = ROOT) -> tuple[str, ...]:
             findings.append("release Python floor changed")
         if dependencies != [CORE_REQUIREMENT]:
             findings.append(
-                "runtime dependency inventory deviates from Core-only v0.6.5"
+                "runtime dependency inventory deviates from Core-only v0.6.6"
             )
         for dependency in dependencies:
             if not isinstance(dependency, str):

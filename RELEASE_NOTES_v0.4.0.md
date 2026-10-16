@@ -34,6 +34,11 @@ work into an immutable Portfolio. The post-v0.3.0 work adds and completes:
   contracts without a Vitrine release solely for a package-version increment.
   Unsupported/missing metadata fails closed; historical fallback stays bounded.
 
+- **Deep-path Windows viewer opening:** requires authenticated Core v0.6.6;
+  an installed-wheel, four-target graphical Windows test confirmed PDF and HTML
+  rendering in Edge and folder navigation in Explorer without rewriting
+  canonical Portfolio evidence.
+
 The last point has both fixture-backed journey coverage and an isolated installed
 smoke using synthetic future-version producers (issue #104). Those synthetic
 packages are **not official released producer wheels** and do not replace current
@@ -45,7 +50,7 @@ exact-release qualification.
 Distribution:       pds-vitrine 0.4.0
 Import:             vitrine
 Python:             >=3.11
-Required dependency: pds-core>=0.6.5,<0.7
+Required dependency: pds-core>=0.6.6,<0.7
 Console:            vitrine = vitrine.cli:main
 ```
 
@@ -53,12 +58,12 @@ ScoreForm, Quillan, Concord, Meridian, and Portia are **not** unconditional Vitr
 runtime dependencies. The `paper` optional extra supplies supported print/PDF
 rendering libraries; do not assume base Vitrine installation has PDF tooling.
 
-For source-checkout development, install an **authenticated Core 0.6.5 wheel**
+For source-checkout development, install an **authenticated Core 0.6.6 wheel**
 first, then refresh Vitrine's editable metadata:
 
 ```powershell
-python scripts/verify_core_wheel.py "$HOME\Downloads\pds_core-0.6.5-py3-none-any.whl"
-python -m pip install "$HOME\Downloads\pds_core-0.6.5-py3-none-any.whl"
+python scripts/verify_core_wheel.py "$HOME\Downloads\pds_core-0.6.6-py3-none-any.whl"
+python -m pip install "$HOME\Downloads\pds_core-0.6.6-py3-none-any.whl"
 python -m pip install --no-deps --no-build-isolation -e .
 python -m pip check
 ```
@@ -76,9 +81,9 @@ verified manifest bytes—not a nearest-version rule or producer wheel SHA-256.
 Exact wheel filenames and hashes still govern **which released producer artifacts
 were independently qualified**.
 
-The proposed current qualification candidates are Core 0.6.5, ScoreForm 0.13.0,
-Quillan 0.10.6, and Concord 0.3.1. These are not yet claimed as an authenticated
-passing release matrix. See [v0.4.0 compatibility](docs/v0.4.0-release-compatibility.md).
+The authenticated current qualification inputs are Core 0.6.6, ScoreForm 0.13.0,
+Quillan 0.10.6, and Concord 0.3.2. All four official wheels and the Vitrine candidate passed isolated installed
+qualification; this does not establish final exact-main release qualification. See [v0.4.0 compatibility](docs/v0.4.0-release-compatibility.md).
 
 The published Paper Data Suite launcher v0.1.0 has a separate exact-version
 compatibility manifest qualifying Vitrine v0.2.0; it is **not automatically

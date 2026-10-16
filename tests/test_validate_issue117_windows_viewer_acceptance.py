@@ -90,3 +90,23 @@ def test_authorization_verification_flag_is_required() -> None:
     record = deepcopy(_report())
     record["canonical_verified"] = False
     assert report_findings(record, require_attested=False)
+
+
+def test_new_core066_report_is_separate_from_historical_core065() -> None:
+    record = _report()
+    record["core_version"] = "0.6.6"
+    for target in record["targets"]:
+        target["viewer_accessibility"] = "confirmed"
+    record["attestation_method"] = "interactive_human"
+    assert report_findings(record, require_attested=True)
+    assert report_findings(
+        record, require_attested=True, expected_core_version="0.6.6"
+    ) == ()
+
+
+def test_shell_return_cannot_pass_core066_without_viewer_attestation() -> None:
+    record = _report()
+    record["core_version"] = "0.6.6"
+    assert report_findings(
+        record, require_attested=True, expected_core_version="0.6.6"
+    )

@@ -187,7 +187,7 @@ class SnapshotGate:
         )
 
 
-assert importlib.metadata.version("pds-core") == "0.6.5"
+assert importlib.metadata.version("pds-core") == "0.6.6"
 assert importlib.metadata.version("pds-vitrine") == "0.4.0"
 for name in ("scoreform", "quillan", "concord", "portia", "meridian"):
     assert importlib.util.find_spec(name) is None, name
@@ -604,7 +604,7 @@ def main(argv: list[str] | None = None) -> int:
             viewer_workspace=args.viewer_workspace,
             viewer_report=args.viewer_report,
         )
-        print("PASS Issue #102 / #103 Core 0.6.5 installed-wheel completed Portfolio acceptance")
+        print("PASS Issue #117 Core 0.6.6 installed-wheel completed Portfolio acceptance")
         if args.viewer_report is not None:
             print("NOTE shell handoff captured; Windows viewer accessibility remains UNVERIFIED until attested")
         return 0

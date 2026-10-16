@@ -170,6 +170,7 @@ REQUIRED_SDIST_FILES = {
     "docs/v0.4.0-release-compatibility.md",
     "docs/validation/issue117-slice4-release-wheel-authentication.md",
     "docs/validation/issue117-slice5-installed-release-qualification.md",
+    "docs/validation/issue117-slice7-core066-adoption.md",
     "docs/validation/issue117-slice6-windows-viewer-handoff.md",
     "docs/v0.4.0-release-audit.md",
     "docs/v0.4.0-release-checklist.md",
@@ -580,7 +581,7 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
         )
     requirements = metadata.get_all("Requires-Dist", [])
     normalized = [item.replace(" ", "") for item in requirements]
-    if not any("pds-core<0.7,>=0.6.5" in item for item in normalized):
+    if not any("pds-core<0.7,>=0.6.6" in item for item in normalized):
         findings.append(f"missing Core dependency range: {requirements}")
     extras = tuple(metadata.get_all("Provides-Extra", ()))
     if "paper" not in extras:

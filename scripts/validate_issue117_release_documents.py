@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_VERSION = "0.4.0"
-EXPECTED_CORE = "pds-core>=0.6.5,<0.7"
+EXPECTED_CORE = "pds-core>=0.6.6,<0.7"
 DOCUMENTS: tuple[str, ...] = (
     "RELEASE_NOTES_v0.4.0.md",
     "docs/v0.4.0-release-compatibility.md",
@@ -136,7 +136,7 @@ def validate(root: Path = ROOT) -> tuple[str, ...]:
         findings.append(f"cannot inspect authoritative source version: {exc}")
 
     checks = (
-        ("README.md", ("v0.4.0 release preparation", EXPECTED_CORE, "Core v0.6.5")),
+        ("README.md", ("v0.4.0 release preparation", EXPECTED_CORE, "Core v0.6.6")),
         ("docs/README.md", ("v0.4.0 release preparation", "v0.3.0 release audit")),
         (
             "CHANGELOG.md",

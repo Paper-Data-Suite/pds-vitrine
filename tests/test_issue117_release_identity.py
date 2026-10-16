@@ -21,7 +21,7 @@ def test_active_package_checker_rejects_historical_v030_identity() -> None:
         b"Name: pds-vitrine\n"
         b"Version: 0.3.0\n"
         b"Requires-Python: >=3.11\n"
-        b"Requires-Dist: pds-core<0.7,>=0.6.5\n"
+        b"Requires-Dist: pds-core<0.7,>=0.6.6\n"
     )
     assert "unexpected version: 0.3.0" in check_package._metadata_findings(raw)
     candidate = raw.replace(b"Version: 0.3.0", b"Version: 0.4.0")
@@ -40,8 +40,8 @@ def test_published_v030_wheel_audit_is_not_current_version_authority() -> None:
     assert baseline.validate() == ()
 
 
-def test_current_dependency_floor_is_core065_and_no_producers() -> None:
+def test_current_dependency_floor_is_core066_and_no_producers() -> None:
     assert validate_release_contract.CURRENT_DEVELOPMENT_CORE_REQUIREMENT == (
-        "pds-core>=0.6.5,<0.7"
+        "pds-core>=0.6.6,<0.7"
     )
     assert baseline.validate() == ()

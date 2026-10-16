@@ -38,7 +38,7 @@ def test_current_release_input_matrix_matches_existing_audits() -> None:
         (item.distribution, item.version) for item in wheels.EXPECTED_WHEELS
     )
     assert actual == (
-        ("pds-core", "0.6.5"),
+        ("pds-core", "0.6.6"),
         ("scoreform", "0.13.0"),
         ("quillan", "0.10.6"),
         ("pds-concord", "0.3.2"),

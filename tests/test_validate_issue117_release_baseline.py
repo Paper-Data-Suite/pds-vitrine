@@ -51,11 +51,11 @@ def test_issue117_core_floor_and_optional_producers_remain_separate(
     root = _isolated_baseline(tmp_path)
     project = root / "pyproject.toml"
     content = project.read_text(encoding="utf-8")
-    assert '"pds-core>=0.6.5,<0.7"' in content
+    assert '"pds-core>=0.6.6,<0.7"' in content
     project.write_text(
         content.replace(
-            '"pds-core>=0.6.5,<0.7"',
-            '"pds-core>=0.6.5,<0.7", "pds-vitrine==0.4.0"',
+            '"pds-core>=0.6.6,<0.7"',
+            '"pds-core>=0.6.6,<0.7", "pds-vitrine==0.4.0"',
             1,
         ),
         encoding="utf-8",
