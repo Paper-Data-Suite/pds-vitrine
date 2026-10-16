@@ -87,7 +87,7 @@ assert callable(profile.registration_validator)
 metadata = importlib.metadata.metadata("pds-vitrine")
 requirements = tuple(metadata.get_all("Requires-Dist", ()))
 normalized = tuple(value.replace(" ", "").lower() for value in requirements)
-assert any("pds-core<0.7,>=0.6.5" in value for value in normalized)
+assert any("pds-core<0.7,>=0.6.6" in value for value in normalized)
 assert metadata.get_all("Provides-Extra", ()).count("paper") == 1
 assert any(
     value.startswith("qrcode[pil]") and 'extra=="paper"' in value

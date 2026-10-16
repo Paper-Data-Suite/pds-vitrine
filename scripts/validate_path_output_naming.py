@@ -94,9 +94,9 @@ def _validate_policy_constants() -> None:
 def _validate_package_boundary() -> None:
     data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     dependencies = tuple(data["project"].get("dependencies", ()))
-    if dependencies != ("pds-core>=0.6.5,<0.7",):
+    if dependencies != ("pds-core>=0.6.6,<0.7",):
         raise RuntimeError(
-            "Issue #111 remains Core-only; Issue #103 now requires Core 0.6.5 "
+            "Issue #111 remains Core-only; Issue #103 now requires Core 0.6.6 "
             "reader-contract metadata"
         )
 
@@ -145,13 +145,13 @@ def _validate_package_boundary() -> None:
 def _validate_core_qualification_anchor() -> None:
     verifier = (ROOT / "scripts/verify_core_wheel.py").read_text(encoding="utf-8")
     for marker in (
-        'EXPECTED_CORE_VERSION = "0.6.5"',
-        'EXPECTED_CORE_WHEEL_FILENAME = "pds_core-0.6.5-py3-none-any.whl"',
-        "9ace75f17b23b7f0ed6a709d531af5120db43d0325b4148d26f2d6ba1d4b3c18",
+        'EXPECTED_CORE_VERSION = "0.6.6"',
+        'EXPECTED_CORE_WHEEL_FILENAME = "pds_core-0.6.6-py3-none-any.whl"',
+        "d6d21e426092b0329bcfd69b6fbee44c345edc46794a914d847d5ea73a2b7301",
     ):
         if marker not in verifier:
             raise RuntimeError(
-                f"Core 0.6.5 exact qualification anchor is missing: {marker}"
+                f"Core 0.6.6 exact qualification anchor is missing: {marker}"
             )
 
     for relative in (
@@ -166,9 +166,9 @@ def _validate_core_qualification_anchor() -> None:
             raise RuntimeError(
                 f"{relative} still pins a historical Core installed-smoke qualification"
             )
-        if 'importlib.metadata.version("pds-core") == "0.6.5"' not in text:
+        if 'importlib.metadata.version("pds-core") == "0.6.6"' not in text:
             raise RuntimeError(
-                f"{relative} is missing the current Core 0.6.5 "
+                f"{relative} is missing the current Core 0.6.6 "
                 "installed-smoke qualification"
             )
 
@@ -182,9 +182,9 @@ def _validate_core_qualification_anchor() -> None:
         raise RuntimeError(
             "installed end-to-end provenance still pins a historical Core release"
         )
-    if 'core_distribution.version == "0.6.5"' not in end_to_end:
+    if 'core_distribution.version == "0.6.6"' not in end_to_end:
         raise RuntimeError(
-            "installed end-to-end provenance is missing current Core 0.6.5"
+            "installed end-to-end provenance is missing current Core 0.6.6"
         )
 
 
@@ -200,12 +200,12 @@ def _validate_ci_qualification_anchor() -> None:
             "active CI compatibility/qualification jobs still reference historical Core"
         )
     for required in (
-        "pds_core-0.6.5-py3-none-any.whl",
-        "releases/download/v0.6.5/pds_core-0.6.5-py3-none-any.whl",
+        "pds_core-0.6.6-py3-none-any.whl",
+        "releases/download/v0.6.6/pds_core-0.6.6-py3-none-any.whl",
     ):
         if active.count(required) < 2:
             raise RuntimeError(
-                f"active CI compatibility/qualification jobs are missing Core 0.6.5: "
+                f"active CI compatibility/qualification jobs are missing Core 0.6.6: "
                 f"{required}"
             )
 

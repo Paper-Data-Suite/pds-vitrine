@@ -157,7 +157,7 @@ def _validate_package_boundary() -> None:
     project = data.get("project")
     if not isinstance(project, dict):
         raise RuntimeError("pyproject project table is missing")
-    if project.get("dependencies") != ["pds-core>=0.6.5,<0.7"]:
+    if project.get("dependencies") != ["pds-core>=0.6.6,<0.7"]:
         raise RuntimeError(
             "current repository must retain the Core-only runtime dependency"
         )

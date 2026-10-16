@@ -185,8 +185,8 @@ def _validate_reader_service_source(source: str) -> None:
 def _validate_contracts_and_inventory() -> None:
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     _require(
-        project["project"]["dependencies"] == ["pds-core>=0.6.5,<0.7"],
-        "Base installation must depend only on Core >=0.6.5,<0.7",
+        project["project"]["dependencies"] == ["pds-core>=0.6.6,<0.7"],
+        "Base installation must depend only on Core >=0.6.6,<0.7",
     )
     _validate_version_policy_source(
         (ROOT / "vitrine/producer_reader_compatibility.py").read_text(

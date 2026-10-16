@@ -211,9 +211,9 @@ def _validate_no_durable_task_record() -> None:
 def _validate_core_only_runtime_dependency() -> None:
     payload = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     dependencies = tuple(payload["project"].get("dependencies", ()))
-    if dependencies != ("pds-core>=0.6.5,<0.7",):
+    if dependencies != ("pds-core>=0.6.6,<0.7",):
         raise RuntimeError(
-            "Issue #68 must remain Core-only; #103 requires released Core 0.6.5"
+            "Issue #68 must remain Core-only; #103 requires released Core 0.6.6"
         )
     mypy_files = tuple(payload["tool"]["mypy"].get("files", ()))
     for required in (

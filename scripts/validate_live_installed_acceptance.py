@@ -181,6 +181,7 @@ def _validate_project_contract() -> None:
     allowed_core_only_dependencies = (
         [EXPECTED_VITRINE_RUNTIME_DEPENDENCY],
         ["pds-core>=0.6.5,<0.7"],
+        ["pds-core>=0.6.6,<0.7"],
     )
     if current_dependencies not in allowed_core_only_dependencies:
         raise RuntimeError(

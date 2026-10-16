@@ -174,7 +174,7 @@ def _validate_installed_wheel_smoke() -> None:
     path = ROOT / "scripts" / "smoke_test_attention_next_actions_wheel.py"
     _require_text(
         path,
-        'importlib.metadata.version("pds-core") == "0.6.5"',
+        'importlib.metadata.version("pds-core") == "0.6.6"',
         "Next step: Snapshot Export verification",
         "Action ID: verify_snapshot_export",
         "vitrine_attention_next_actions_v1",
@@ -203,18 +203,18 @@ def _validate_repository_and_package_wiring() -> None:
     _require_text(
         ROOT / "pyproject.toml",
         '"scripts/validate_issue103_acceptance.py"',
-        '"pds-core>=0.6.5,<0.7"',
+        '"pds-core>=0.6.6,<0.7"',
     )
     _require_text(
         ROOT / "scripts" / "validate_release_contract.py",
-        'CURRENT_DEVELOPMENT_CORE_REQUIREMENT = "pds-core>=0.6.5,<0.7"',
+        'CURRENT_DEVELOPMENT_CORE_REQUIREMENT = "pds-core>=0.6.6,<0.7"',
     )
     _require_text(
         ROOT / "scripts" / "verify_core_wheel.py",
-        'EXPECTED_CORE_VERSION = "0.6.5"',
-        'EXPECTED_CORE_WHEEL_FILENAME = "pds_core-0.6.5-py3-none-any.whl"',
-        "9ace75f17b23b7f0ed6a709d531af5120db43d0325b4148d26f2d6ba1d4b3c18",
-        "PASS Core v0.6.5 verification",
+        'EXPECTED_CORE_VERSION = "0.6.6"',
+        'EXPECTED_CORE_WHEEL_FILENAME = "pds_core-0.6.6-py3-none-any.whl"',
+        "d6d21e426092b0329bcfd69b6fbee44c345edc46794a914d847d5ea73a2b7301",
+        "PASS Core v0.6.6 verification",
     )
     for relative in (
         "scripts/smoke_test_completed_portfolio_navigation_wheel.py",
@@ -225,8 +225,8 @@ def _validate_repository_and_package_wiring() -> None:
     ):
         current_text = (ROOT / relative).read_text(encoding="utf-8")
         _require(
-            "0.6.5" in current_text,
-            f"{relative} is missing the current Core 0.6.5 qualification marker",
+            "0.6.6" in current_text,
+            f"{relative} is missing the current Core 0.6.6 qualification marker",
         )
     _require_text(
         ROOT / "scripts" / "validate_scoreform_adapter.py",
@@ -242,7 +242,7 @@ def _validate_repository_and_package_wiring() -> None:
     )
     _require_text(
         ROOT / "scripts" / "validate_v030_release_audit.py",
-        'project.get("dependencies") != ["pds-core>=0.6.5,<0.7"]',
+        'project.get("dependencies") != ["pds-core>=0.6.6,<0.7"]',
     )
 
 

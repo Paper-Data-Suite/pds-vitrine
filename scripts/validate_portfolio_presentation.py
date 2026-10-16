@@ -172,9 +172,9 @@ def _validate_runtime_boundaries() -> None:
 def _validate_package_boundary() -> None:
     data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     dependencies = tuple(data["project"].get("dependencies", ()))
-    if dependencies != ("pds-core>=0.6.5,<0.7",):
+    if dependencies != ("pds-core>=0.6.6,<0.7",):
         raise RuntimeError(
-            "Issue #101 remains Core-only; Issue #103 raises the Core floor to 0.6.5"
+            "Issue #101 remains Core-only; Issue #103 raises the Core floor to 0.6.6"
         )
     paper = tuple(data["project"]["optional-dependencies"].get("paper", ()))
     for required in ("pypdfium2>=5.13,<6", "qrcode[pil]", "reportlab"):
@@ -227,25 +227,25 @@ def _validate_package_boundary() -> None:
 def _validate_core_qualification() -> None:
     verifier = (ROOT / "scripts/verify_core_wheel.py").read_text(encoding="utf-8")
     for marker in (
-        'EXPECTED_CORE_VERSION = "0.6.5"',
-        'EXPECTED_CORE_WHEEL_FILENAME = "pds_core-0.6.5-py3-none-any.whl"',
-        "9ace75f17b23b7f0ed6a709d531af5120db43d0325b4148d26f2d6ba1d4b3c18",
+        'EXPECTED_CORE_VERSION = "0.6.6"',
+        'EXPECTED_CORE_WHEEL_FILENAME = "pds_core-0.6.6-py3-none-any.whl"',
+        "d6d21e426092b0329bcfd69b6fbee44c345edc46794a914d847d5ea73a2b7301",
     ):
         if marker not in verifier:
             raise RuntimeError(
-                f"Core 0.6.5 exact qualification anchor is missing: {marker}"
+                f"Core 0.6.6 exact qualification anchor is missing: {marker}"
             )
 
     workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     active = workflow.split("\n  live_installed_acceptance:\n", 1)[0]
     for marker in (
-        "pds_core-0.6.5-py3-none-any.whl",
-        "releases/download/v0.6.5/pds_core-0.6.5-py3-none-any.whl",
+        "pds_core-0.6.6-py3-none-any.whl",
+        "releases/download/v0.6.6/pds_core-0.6.6-py3-none-any.whl",
         'python scripts/validate_repository.py --core-wheel "$env:PDS_CORE_WHEEL"',
     ):
         if marker not in active:
             raise RuntimeError(
-                f"active qualification is missing Core 0.6.5 marker: {marker}"
+                f"active qualification is missing Core 0.6.6 marker: {marker}"
             )
 
 
