@@ -73,7 +73,7 @@ def _request(producer_module: str) -> ProducerAdapterSupportRequest:
 
 
 def _installed_context() -> tuple[PublicationProducerProfile, ...]:
-    assert metadata.version("pds-core") == "0.6.5"
+    assert metadata.version("pds-core") == "0.6.6"
     assert metadata.version("pds-vitrine")
     for module in ("pds_core", "vitrine", *EXPECTED_CONTRACTS):
         _assert_wheel_import(module)
