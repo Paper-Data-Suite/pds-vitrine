@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import shutil
 from pathlib import Path
@@ -15,6 +16,7 @@ def _isolated_baseline(tmp_path: Path) -> Path:
         "pyproject.toml",
         "vitrine/_version.py",
         baseline.SNAPSHOT_PATH,
+        baseline.ARCHIVED_V030_VALIDATOR,
     ):
         target = tmp_path / relative
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -43,6 +45,34 @@ def test_issue117_frozen_release_inventory_cannot_shrink(tmp_path: Path) -> None
     record["historical_sha256"].pop(baseline.FROZEN_PATHS[0])
     manifest.write_text(json.dumps(record), encoding="utf-8")
     assert "historical release file inventory was changed" in baseline.validate(root)
+
+
+def test_frozen_v030_validator_archive_detects_byte_drift(tmp_path: Path) -> None:
+    root = _isolated_baseline(tmp_path)
+    archived_path = root / baseline.ARCHIVED_V030_VALIDATOR
+    record = json.loads(archived_path.read_text(encoding="utf-8"))
+    source = bytearray(base64.b64decode(record["source_utf8_base64"]))
+    source[-2] ^= 1
+    record["source_utf8_base64"] = base64.b64encode(source).decode("ascii")
+    archived_path.write_text(json.dumps(record), encoding="utf-8")
+    assert (
+        "historical release evidence modified: scripts/validate_v030_release_audit.py"
+        in baseline.validate(root)
+    )
+
+
+def test_current_v030_validator_is_restricted_to_exact_core_floor_edit(
+    tmp_path: Path,
+) -> None:
+    root = _isolated_baseline(tmp_path)
+    current_path = root / "scripts/validate_v030_release_audit.py"
+    source = current_path.read_text(encoding="utf-8")
+    assert "current repository must retain" in source
+    current_path.write_text(
+        source.replace("current repository must retain", "current repository may retain", 1),
+        encoding="utf-8",
+    )
+    assert "active v0.3.0 validator deviates from the sole approved Core floor update" in baseline.validate(root)
 
 
 def test_issue117_core_floor_and_optional_producers_remain_separate(

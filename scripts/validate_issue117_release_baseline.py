@@ -6,6 +6,7 @@ This is a guard, not a v0.4.0 publication or released-wheel qualification.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import re
@@ -16,6 +17,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT_PATH = "docs/development/issue117-v040-release-baseline.json"
 BASELINE_COMMIT = "95f29168f8b72007b606433da905a09faea3ca07"
+ARCHIVED_V030_VALIDATOR = "docs/development/issue117-v030-validator-archive.json"
+ORIGINAL_V030_VALIDATOR = "scripts/validate_v030_release_audit.py"
+ORIGINAL_CORE_FLOOR_ASSERTION = (
+    b'    if project.get("dependencies") != ["pds-core>=0.6.5,<0.7"]:'
+)
+CURRENT_CORE_FLOOR_ASSERTION = (
+    b'    if project.get("dependencies") != ["pds-core>=0.6.6,<0.7"]:'
+)
 FROZEN_PATHS = (
     "RELEASE_NOTES_v0.3.0.md",
     "docs/release_checklist.md",
@@ -64,6 +73,25 @@ def validate(root: Path = ROOT) -> tuple[str, ...]:
     if raw.get("initial_source_version") != "0.3.0":
         findings.append("initial release identity is not recorded as v0.3.0")
 
+    archived: bytes | None = None
+    try:
+        archive_data = json.loads(
+            (root / ARCHIVED_V030_VALIDATOR).read_text(encoding="utf-8")
+        )
+        if (
+            not isinstance(archive_data, dict)
+            or archive_data.get("contract")
+            != "vitrine_issue117_archived_v030_validator_v1"
+            or archive_data.get("source_path") != ORIGINAL_V030_VALIDATOR
+            or not isinstance(archive_data.get("source_utf8_base64"), str)
+        ):
+            raise ValueError("historical validator archive contract is invalid")
+        archived = base64.b64decode(
+            archive_data["source_utf8_base64"], validate=True
+        )
+    except (OSError, ValueError, TypeError) as exc:
+        findings.append(f"frozen v0.3.0 validator archive unavailable/invalid: {exc}")
+
     hashes = raw.get("historical_sha256")
     if not isinstance(hashes, dict) or set(hashes) != set(FROZEN_PATHS):
         findings.append("historical release file inventory was changed")
@@ -74,7 +102,14 @@ def validate(root: Path = ROOT) -> tuple[str, ...]:
                 findings.append(f"invalid frozen SHA-256: {relative}")
                 continue
             try:
-                actual = hashlib.sha256((root / relative).read_bytes()).hexdigest()
+                frozen_bytes = (
+                    archived if relative == ORIGINAL_V030_VALIDATOR
+                    else (root / relative).read_bytes()
+                )
+                if frozen_bytes is None:
+                    findings.append(f"historical release evidence missing: {relative}")
+                    continue
+                actual = hashlib.sha256(frozen_bytes).hexdigest()
             except OSError as exc:
                 findings.append(
                     f"historical release evidence missing: {relative}: {exc}"
@@ -82,6 +117,31 @@ def validate(root: Path = ROOT) -> tuple[str, ...]:
                 continue
             if actual != expected:
                 findings.append(f"historical release evidence modified: {relative}")
+
+        # The historical source is still authenticated byte-for-byte.
+        # The live validator may differ only in the approved current Core floor.
+        if (
+            archived is not None
+            and isinstance(hashes.get(ORIGINAL_V030_VALIDATOR), str)
+            and hashlib.sha256(archived).hexdigest()
+            == hashes[ORIGINAL_V030_VALIDATOR]
+        ):
+            if archived.count(ORIGINAL_CORE_FLOOR_ASSERTION) != 1:
+                findings.append("archived validator has no unique original Core floor")
+            else:
+                allowed_current = archived.replace(
+                    ORIGINAL_CORE_FLOOR_ASSERTION, CURRENT_CORE_FLOOR_ASSERTION, 1
+                )
+                try:
+                    live = (root / ORIGINAL_V030_VALIDATOR).read_bytes()
+                except OSError as exc:
+                    findings.append(f"active release validator unavailable: {exc}")
+                else:
+                    if live != allowed_current:
+                        findings.append(
+                            "active v0.3.0 validator deviates from the sole "
+                            "approved Core floor update"
+                        )
 
     try:
         project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))[
