@@ -1,4 +1,4 @@
-"""Validate the pds-vitrine v0.3.0 release identity and scope boundary."""
+"""Validate current v0.4.0 identity and frozen v0.3.0 release boundaries."""
 
 from __future__ import annotations
 
@@ -25,9 +25,9 @@ from vitrine.snapshot_materialization import SnapshotBuildAuthorityRequest
 from vitrine.snapshot_planning import UnconfiguredSnapshotPlanningProvider
 from vitrine.workflow_context import default_workflow_dependencies
 
-EXPECTED_VERSION = "0.3.0"
+EXPECTED_VERSION = "0.4.0"
 EXPECTED_CORE_REQUIREMENT = "pds-core>=0.6.3,<0.7"
-CURRENT_DEVELOPMENT_CORE_REQUIREMENT = "pds-core>=0.6.5,<0.7"
+CURRENT_DEVELOPMENT_CORE_REQUIREMENT = "pds-core>=0.6.6,<0.7"
 EXPECTED_CORE_WHEEL = "pds_core-0.6.3-py3-none-any.whl"
 EXPECTED_CORE_SHA256 = (
     "98d7596ce0eed26e4d56a17bbbbd644db3014259b56a45783a173fe8237af5e5"
@@ -418,28 +418,28 @@ def validate(root: Path) -> tuple[str, ...]:
             findings.append(f"MANIFEST.in missing release note: {marker}")
 
     package_checker = (root / "scripts/check_package.py").read_text(encoding="utf-8")
-    if 'metadata.get("Version") != "0.3.0"' not in package_checker:
-        findings.append("package checker does not require distribution version 0.3.0")
+    if 'metadata.get("Version") != "0.4.0"' not in package_checker:
+        findings.append("package checker does not require distribution version 0.4.0")
 
     public_import_test = (root / "tests/test_imports.py").read_text(encoding="utf-8")
-    if 'package.__version__ == "0.3.0"' not in public_import_test:
-        findings.append("public import test does not require package version 0.3.0")
+    if 'package.__version__ == "0.4.0"' not in public_import_test:
+        findings.append("public import test does not require package version 0.4.0")
     if 'package.__version__ == "0.2.0"' in public_import_test:
         findings.append("public import test retains stale package version 0.2.0")
 
     operations_smoke = (
         root / "scripts/smoke_test_operations_wheel.py"
     ).read_text(encoding="utf-8")
-    if 'if "0.3.0" not in version_output:' not in operations_smoke:
+    if 'if "0.4.0" not in version_output:' not in operations_smoke:
         findings.append(
-            "operations wheel smoke does not target Vitrine release version 0.3.0"
+            "operations wheel smoke does not target Vitrine release version 0.4.0"
         )
     if (
-        'importlib.metadata.version("pds-vitrine") == "0.3.0"'
+        'importlib.metadata.version("pds-vitrine") == "0.4.0"'
         not in operations_smoke
     ):
         findings.append(
-            "operations wheel smoke metadata check does not target Vitrine 0.3.0"
+            "operations wheel smoke metadata check does not target Vitrine 0.4.0"
         )
     if '"0.2.0"' in operations_smoke:
         findings.append(
@@ -465,7 +465,7 @@ def main() -> int:
     if findings:
         print("\n".join(findings), file=sys.stderr)
         return 1
-    print("PASS v0.3.0 release contract validation")
+    print("PASS active v0.4.0 release identity and historical v0.3.0 boundary")
     return 0
 
 

@@ -244,7 +244,9 @@ def qualify() -> None:
     quillan_audit = RELEASED_PRODUCER_CONTRACT_BY_MODULE["quillan"]
     _require(
         metadata.version(CORE_0_6_5_AUDIT.distribution_name)
-        == CORE_0_6_5_AUDIT.release_version,
+        == os.environ.get(
+            "PDS_ISSUE117_CORE_VERSION", CORE_0_6_5_AUDIT.release_version
+        ),
         "Core exact-wheel version changed",
     )
     _require(

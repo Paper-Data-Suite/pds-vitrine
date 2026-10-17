@@ -159,6 +159,7 @@ REQUIRED_SDIST_FILES = {
     "MANIFEST.in",
     "RELEASE_NOTES_v0.2.0.md",
     "RELEASE_NOTES_v0.3.0.md",
+    "RELEASE_NOTES_v0.4.0.md",
     "README.md",
     "Security.md",
     "docs/release_checklist.md",
@@ -166,6 +167,13 @@ REQUIRED_SDIST_FILES = {
     "docs/v0.3.0-release-audit.md",
     "docs/v0.2.0-release-compatibility.md",
     "docs/v0.3.0-release-compatibility.md",
+    "docs/v0.4.0-release-compatibility.md",
+    "docs/validation/issue117-slice4-release-wheel-authentication.md",
+    "docs/validation/issue117-slice5-installed-release-qualification.md",
+    "docs/validation/issue117-slice7-core066-adoption.md",
+    "docs/validation/issue117-slice6-windows-viewer-handoff.md",
+    "docs/v0.4.0-release-audit.md",
+    "docs/v0.4.0-release-checklist.md",
     "docs/contracts/foundational-runtime-models-v1.md",
     "docs/contracts/canonical-storage-v1.md",
     "docs/contracts/portfolio-subject-workflows-v1.md",
@@ -215,6 +223,8 @@ REQUIRED_SDIST_FILES = {
     "docs/development/curation-workflows.md",
     "docs/development/snapshot-build-workflows.md",
     "docs/development/improvement-portfolio-vertical-slice.md",
+    "docs/development/issue117-v040-release-baseline.md",
+    "docs/development/issue117-v040-release-baseline.json",
     "docs/development/interface-workflows.md",
     "docs/development/showcase-portfolio-vertical-slice.md",
     "docs/validation/issue-97-selection-placement-guidance-validation.md",
@@ -280,6 +290,11 @@ REQUIRED_SDIST_FILES = {
     "scripts/validate_producer_reader_services.py",
     "scripts/validate_issue103_acceptance.py",
     "scripts/validate_issue104_acceptance.py",
+    "scripts/validate_issue117_release_baseline.py",
+    "scripts/validate_issue117_release_documents.py",
+    "scripts/validate_issue117_release_wheels.py",
+    "scripts/qualify_issue117_installed_release.py",
+    "scripts/validate_issue117_windows_viewer_acceptance.py",
     "scripts/issue104_synthetic_producer_wheels.py",
     "scripts/issue104_installed_reader_probe.py",
     "scripts/smoke_test_issue104_reader_resilience_wheel.py",
@@ -368,6 +383,11 @@ REQUIRED_SDIST_FILES = {
     "tests/test_attention_completion_issue103.py",
     "tests/test_validate_issue103_acceptance.py",
     "tests/test_validate_issue104_acceptance.py",
+    "tests/test_validate_issue117_release_baseline.py",
+    "tests/test_validate_issue117_release_documents.py",
+    "tests/test_validate_issue117_release_wheels.py",
+    "tests/test_qualify_issue117_installed_release.py",
+    "tests/test_validate_issue117_windows_viewer_acceptance.py",
     "tests/test_smoke_issue104_reader_resilience_wheel.py",
     "tests/test_scoreform_adapter.py",
     "tests/test_concord_adapter.py",
@@ -553,7 +573,7 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
     metadata = email.message_from_bytes(metadata_bytes)
     if metadata.get("Name") != "pds-vitrine":
         findings.append(f"unexpected distribution name: {metadata.get('Name')}")
-    if metadata.get("Version") != "0.3.0":
+    if metadata.get("Version") != "0.4.0":
         findings.append(f"unexpected version: {metadata.get('Version')}")
     if metadata.get("Requires-Python") != ">=3.11":
         findings.append(
@@ -561,7 +581,7 @@ def _metadata_findings(metadata_bytes: bytes) -> list[str]:
         )
     requirements = metadata.get_all("Requires-Dist", [])
     normalized = [item.replace(" ", "") for item in requirements]
-    if not any("pds-core<0.7,>=0.6.5" in item for item in normalized):
+    if not any("pds-core<0.7,>=0.6.6" in item for item in normalized):
         findings.append(f"missing Core dependency range: {requirements}")
     extras = tuple(metadata.get_all("Provides-Extra", ()))
     if "paper" not in extras:

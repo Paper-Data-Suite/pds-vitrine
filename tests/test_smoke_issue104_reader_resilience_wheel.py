@@ -78,6 +78,29 @@ def test_probe_fails_closed_on_mismatched_target(monkeypatch: pytest.MonkeyPatch
                      cwd=tmp_path, environment={})
 
 
+def test_issue117_issue104_installed_probe_uses_current_core_066() -> None:
+    """The installed-only #104 probe must qualify the active Core, not 0.6.5."""
+    import tomllib
+
+    from scripts import verify_core_wheel
+
+    root = Path(probe.__file__).resolve().parents[1]
+    source = (root / "scripts/issue104_installed_reader_probe.py").read_text(
+        encoding="utf-8"
+    )
+    core_version = verify_core_wheel.EXPECTED_CORE_VERSION
+    assert core_version == "0.6.6"
+    assert (
+        f'assert metadata.version("pds-core") == "{core_version}"'
+        in source
+    )
+    assert 'assert metadata.version("pds-core") == "0.6.5"' not in source
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    assert project["project"]["dependencies"] == [
+        f"pds-core>={core_version},<0.7"
+    ]
+
+
 def test_issue104_installed_smoke_is_registered_for_complete_validation() -> None:
     import scripts.validate_repository as repository
 

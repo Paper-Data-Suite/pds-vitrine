@@ -10,8 +10,9 @@ from scripts.validate_release_contract import (
 )
 
 
-def test_v030_release_identity_is_frozen() -> None:
-    assert EXPECTED_VERSION == "0.3.0"
+def test_v040_identity_preserves_frozen_v030_qualification_anchor() -> None:
+    assert EXPECTED_VERSION == "0.4.0"
+    # This is the historical v0.3.0 release requirement, not the active floor.
     assert EXPECTED_CORE_REQUIREMENT == "pds-core>=0.6.3,<0.7"
 
 

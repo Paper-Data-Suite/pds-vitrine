@@ -12,7 +12,7 @@ authors = [
     { name = "Stephen Severino" }
 ]
 dependencies = [
-    "pds-core>=0.6.5,<0.7"
+    "pds-core>=0.6.6,<0.7"
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -109,6 +109,11 @@ files = [
     "scripts/validate_producer_reader_services.py",
     "scripts/validate_issue103_acceptance.py",
     "scripts/validate_issue104_acceptance.py",
+    "scripts/validate_issue117_release_baseline.py",
+    "scripts/validate_issue117_release_documents.py",
+    "scripts/validate_issue117_release_wheels.py",
+    "scripts/qualify_issue117_installed_release.py",
+    "scripts/validate_issue117_windows_viewer_acceptance.py",
     "scripts/issue104_synthetic_producer_wheels.py",
     "scripts/issue104_installed_reader_probe.py",
     "scripts/smoke_test_issue104_reader_resilience_wheel.py",

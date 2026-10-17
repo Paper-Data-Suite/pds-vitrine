@@ -177,6 +177,26 @@ VALIDATOR_COMMANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("scripts/validate_v030_release_audit.py",),
     ),
     (
+        "issue #117 v0.4.0 historical baseline",
+        ("scripts/validate_issue117_release_baseline.py",),
+    ),
+    (
+        "issue #117 v0.4.0 candidate documentation",
+        ("scripts/validate_issue117_release_documents.py",),
+    ),
+    (
+        "issue #117 official wheel audit inventory",
+        ("scripts/validate_issue117_release_wheels.py",),
+    ),
+    (
+        "issue #117 installed official-producer acceptance source gate",
+        ("scripts/qualify_issue117_installed_release.py", "--check-source"),
+    ),
+    (
+        "issue #117 Windows viewer source boundary (real GUI gate separate)",
+        ("scripts/validate_issue117_windows_viewer_acceptance.py", "--check-source"),
+    ),
+    (
         "Vitrine workspace relocation",
         ("scripts/validate_workspace_relocation.py",),
     ),

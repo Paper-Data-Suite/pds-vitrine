@@ -5,16 +5,20 @@ provenance, and producing purpose-specific, immutable portfolio snapshots.
 
 ## Current status
 
-Vitrine is in **v0.3.0 release preparation**. The merged implementation consumes
-released ScoreForm 0.11.0, Quillan 0.10.0, and Concord 0.3.0 evidence through public
-producer boundaries while keeping `pds-core>=0.6.3,<0.7` as Vitrine's only
-unconditional runtime dependency.
+Vitrine **v0.3.0 is published and verified**. The current source is
+**v0.4.0 release preparation** under [issue #117](https://github.com/Paper-Data-Suite/pds-vitrine/issues/117):
+its package version has been promoted but the v0.4.0 GitHub Release, exact-wheel
+qualification, artifact hashes, and fresh-download verification are **not yet complete**.
+Do not mistake a source version or successful test run for a published release.
 
-The source release identity is `0.3.0` during issue #72 preparation. That does not
-mean a `v0.3.0` GitHub Release has already been published; exact-main qualification,
-artifact hashing/publication, and fresh-download verification remain separate gates.
+The current package requires `pds-core>=0.6.6,<0.7` and exposes optional public
+ScoreForm, Quillan and Concord reader integrations. Compatible producer releases
+are selected by supported Reader Contract v1 semantics, not release numbers; the
+candidate official-wheel qualification matrix passed authenticated installed
+acceptance under Core 0.6.6; final publication qualification remains pending.
+No producer, Meridian, or Portia distribution is an unconditional dependency.
 
-The v0.3.0 teacher-local workflow provides:
+The current teacher-local workflow provides:
 
 - exact Core-backed Portfolio Subject identity and cross-class linking;
 - packaged Improvement and Showcase starter Profiles;
@@ -55,7 +59,7 @@ Vitrine persists its own canonical metadata beneath `<workspace>/vitrine/` and g
 Snapshot custody beneath `<workspace>/vitrine/snapshots/`. Sealed Edition and Export
 verification is producer-independent after custody is established.
 
-Vitrine v0.3.0 does not implement production institutional authentication,
+Vitrine does not implement production institutional authentication,
 recipient/guardian verification, consent management, production
 redaction/de-identification, disclosure authorization, secure delivery, public
 hosting, or external submission.
@@ -64,18 +68,23 @@ hosting, or external submission.
 
 ```text
 Python >=3.11
-pds-core>=0.6.3,<0.7
+pds-core>=0.6.6,<0.7
 ```
 
-Core v0.6.3 is distributed through its GitHub Release rather than PyPI. Install
-the authenticated Core wheel first:
+For **source-checkout development**, authenticate Core v0.6.6 and install its
+published wheel before installing Vitrine. No v0.4.0 GitHub Release exists yet as
+a result of promoting the source version:
 
 ```powershell
-python scripts\verify_core_wheel.py .\pds_core-0.6.3-py3-none-any.whl
-python -m pip install .\pds_core-0.6.3-py3-none-any.whl
-python -m pip install -e ".[dev]"
+python scripts\verify_core_wheel.py "$HOME\Downloads\pds_core-0.6.6-py3-none-any.whl"
+python -m pip install "$HOME\Downloads\pds_core-0.6.6-py3-none-any.whl"
+python -m pip install --no-deps --no-build-isolation -e .
 python -m pip check
 ```
+
+A future release installation must authenticate the **published Vitrine v0.4.0
+wheel** and its SHA-256 separately. The development editable install above does
+not establish a qualified release artifact.
 
 ## Commands
 
@@ -109,11 +118,12 @@ Direct commands are noninteractive and preserve the same service, authority,
 and optimistic-concurrency boundaries. See
 [teacher-facing and direct workflows](docs/development/interface-workflows.md).
 
-Vitrine declares no `paper_data_suite.modules` routing entry point and no
-`paper_data_suite.publication_producers` entry point. It declares the Core
+Vitrine declares both `paper_data_suite.modules` routing
+(`vitrine = vitrine.pds_module:get_module_profile`) and
 `paper_data_suite.module_operations` provider
-`vitrine = vitrine.pds_operations:get_module_operations_profile` and adds no
-runtime dependency on ScoreForm, Quillan, Concord, Portia, or Meridian.
+(`vitrine = vitrine.pds_operations:get_module_operations_profile`) entry points.
+It does **not** declare `paper_data_suite.publication_producers` and has no
+unconditional runtime dependency on ScoreForm, Quillan, Concord, Portia, or Meridian.
 
 ## Runtime model example
 
@@ -161,7 +171,7 @@ from vitrine.snapshot_distribution import (
 ## Validation
 
 ```powershell
-.\run_tests.ps1 -CoreWheel C:\path\to\pds_core-0.6.3-py3-none-any.whl
+.\run_tests.ps1 -CoreWheel C:\path\to\pds_core-0.6.6-py3-none-any.whl
 ```
 
 Cross-platform form:
@@ -171,7 +181,8 @@ python scripts/validate_repository.py --core-wheel <wheel>
 ```
 
 The complete gate authenticates Core; runs pytest, Ruff, strict Mypy, runtime and
-workflow validators including the narrow v0.2.0 release-contract gate; validates
+workflow validators including current v0.4.0 identity, historical release
+preservation, and candidate-documentation gates; validates
 documentation and representative fixtures; builds distributions; checks
 Twine/package contents; runs the installed-wheel smokes once each;
 runs the combined installed end-to-end acceptance exactly once; and verifies
@@ -201,6 +212,11 @@ Documentation is indexed in [`docs/README.md`](docs/README.md).
 
 Key entry points:
 
+- [v0.4.0 release-candidate notes](RELEASE_NOTES_v0.4.0.md)
+- [v0.4.0 compatibility matrix](docs/v0.4.0-release-compatibility.md)
+- [v0.4.0 provisional audit](docs/v0.4.0-release-audit.md)
+- [v0.4.0 release checklist](docs/v0.4.0-release-checklist.md)
+- [v0.3.0 verified release audit](docs/v0.3.0-release-audit.md)
 - [v0.2.0 release notes](RELEASE_NOTES_v0.2.0.md)
 - [v0.2.0 release audit](docs/v0.2.0-release-audit.md)
 - [v0.2.0 release compatibility](docs/v0.2.0-release-compatibility.md)
